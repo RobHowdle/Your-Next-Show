@@ -7,14 +7,14 @@
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="grid grid-cols-[1.75fr_1.25fr] rounded-lg border border-white">
         <div class="rounded-l-lg border-r border-r-white bg-yns_dark_gray px-8 py-8">
-          <p class="mb-10 text-4xl font-bold text-white">New Budget</p>
+          <p class="mb-10 text-4xl font-bold text-white">Editng Budget</p>
           <form id="finances-form" method="POST">
             @csrf
             <div class="mb-4 grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="group">
                 <x-input-label-dark>Desired Profit</x-input-label-dark>
                 <x-number-input-pound id="desired_profit" name="desired_profit"
-                  :value="old('desired_profit')"></x-number-input-pound>
+                  :value="old('desired_profit', $finance->desired_profit)"></x-number-input-pound>
                 @error('desired_profit')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -23,7 +23,7 @@
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="group">
                 <x-input-label-dark :required="true">Budget Name</x-input-label-dark>
-                <x-text-input id="budget_name" name="budget_name" :required="true" :value="old('budget_name')"></x-text-input>
+                <x-text-input id="budget_name" name="budget_name" :required="true" :value="old('budget_name', $finance->name)"></x-text-input>
                 @error('budget_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -31,7 +31,7 @@
 
               <div class="group">
                 <x-input-label-dark :required="true">Date From</x-input-label-dark>
-                <x-date-input id="date_from" name="date_from" :required="true" :value="old('date_from')"></x-date-input>
+                <x-date-input id="date_from" name="date_from" :required="true" :value="old('date_from', $finance->date_from)"></x-date-input>
                 @error('date_from')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -39,7 +39,7 @@
 
               <div class="group">
                 <x-input-label-dark :required="true">Date To</x-input-label-dark>
-                <x-date-input id="date_to" name="date_to" :required="true" :value="old('date_to')"></x-date-input>
+                <x-date-input id="date_to" name="date_to" :required="true" :value="old('date_to', $finance->date_to)"></x-date-input>
                 @error('date_to')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -47,19 +47,25 @@
 
               <div class="group">
                 <x-input-label-dark>Link To Event</x-input-label-dark>
-                <x-text-input id="link_to_event" name="link_to_event" :value="old('link_to_event')"></x-text-input>
+                <x-text-input id="link_to_event" name="link_to_event" :value="old('link_to_event', $finance->link_to_event)"></x-text-input>
                 @error('link_to_event')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
             </div>
 
+            @php
+              $incomes = json_decode($finance->incoming, true);
+              $presale = collect($incomes)->where('field', 'income_presale')->first()['value'] ?? 0;
+              $otd = collect($incomes)->where('field', 'income_otd')->first()['value'] ?? 0;
+            @endphp
+
             <p class="my-4 text-xl font-bold">Incoming</p>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="income group">
                 <x-input-label-dark>Presale Tickets</x-input-label-dark>
-                <x-number-input-pound id="income_presale" name="income_presale"
-                  :value="old('income_presale')"></x-number-input-pound>
+                <x-number-input-pound id="income_presale" name="income_presale" :value="old('income_presale', $presale)">
+                </x-number-input-pound>
                 @error('income_presale')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -67,7 +73,8 @@
 
               <div class="income group">
                 <x-input-label-dark>On The Door Tickets</x-input-label-dark>
-                <x-number-input-pound id="income_otd" name="income_otd" :value="old('income_otd')"></x-number-input-pound>
+                <x-number-input-pound id="income_otd" name="income_otd" :value="old('income_otd', $otd)">
+                </x-number-input-pound>
                 @error('income_otd')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -78,12 +85,20 @@
               class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Add
               Row <span class="fas fa-plus"></span></button>
 
+            @php
+              $outgoings = json_decode($finance->outgoing, true);
+              $venue = collect($outgoings)->where('field', 'outgoing_venue')->first()['value'] ?? 0;
+              $band = collect($outgoings)->where('field', 'outgoing_band')->first()['value'] ?? 0;
+              $promotion = collect($outgoings)->where('field', 'outgoing_promotion')->first()['value'] ?? 0;
+              $rider = collect($outgoings)->where('field', 'outgoing_rider')->first()['value'] ?? 0;
+            @endphp
+
             <p class="my-4 text-xl font-bold">Outgoings</p>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="outgoing group">
                 <x-input-label-dark>Venue</x-input-label-dark>
                 <x-number-input-pound id="outgoing_venue" name="outgoing_venue"
-                  :value="old('outgoing_venue')"></x-number-input-pound>
+                  :value="old('outgoing_venue', $venue)"></x-number-input-pound>
                 @error('outgoing_venue')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -91,7 +106,7 @@
 
               <div class="outgoing group">
                 <x-input-label-dark>Artist(s)</x-input-label-dark>
-                <x-number-input-pound id="outgoing_band" name="outgoing_band" :value="old('outgoing_band')"></x-number-input-pound>
+                <x-number-input-pound id="outgoing_band" name="outgoing_band" :value="old('outgoing_band', $band)"></x-number-input-pound>
                 @error('outgoing_band')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -100,7 +115,7 @@
               <div class="outgoing group">
                 <x-input-label-dark>Promotion</x-input-label-dark>
                 <x-number-input-pound id="outgoing_promotion" name="outgoing_promotion"
-                  :value="old('outgoing_promotion')"></x-number-input-pound>
+                  :value="old('outgoing_promotion', $promotion)"></x-number-input-pound>
                 @error('outgoing_promotion')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -109,7 +124,7 @@
               <div class="outgoing group">
                 <x-input-label-dark>Rider</x-input-label-dark>
                 <x-number-input-pound id="outgoing_rider" name="outgoing_rider"
-                  :value="old('outgoing_rider')"></x-number-input-pound>
+                  :value="old('outgoing_rider', $rider)"></x-number-input-pound>
                 @error('outgoing_rider')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror

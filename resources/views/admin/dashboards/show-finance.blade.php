@@ -28,12 +28,15 @@
               <p class="mb-2 mt-4 font-heading text-2xl">{{ $finance->finance_type }}</p>
               <p class="mb-2 font-heading">Name: {{ $finance->name }}</p>
               <div class="grid grid-cols-2">
-                <p class="mb-2 font-heading">Date From: {{ $finance->date_from }}</p>
-                <p class="mb-2 font-heading">Date To: {{ $finance->date_to }}</p>
+                <p class="mb-2 font-heading">Date From:
+                  {{ \Carbon\Carbon::parse($finance->date_from)->format('jS M Y') }}</p>
+                <p class="mb-2 font-heading">Date To: {{ \Carbon\Carbon::parse($finance->date_to)->format('jS M Y') }}
+                </p>
               </div>
               <p class="mb-2 font-heading">Link to Event: {{ $finance->external_link ?? 'None' }}</p>
               <div class="grid grid-cols-2">
-                <p class="mb-2 font-heading">Created By: {{ $finance->user->name }}</p>
+                <p class="mb-2 font-heading">Created By: {{ $finance->user->first_name }}
+                  {{ $finance->user->last_name }}</p>
                 <p class="mb-2 font-heading">Linked Promoter: {{ $finance->serviceable->name }}</p>
               </div>
               <p class="mb-2 mt-4 font-heading text-2xl">Incoming</p>

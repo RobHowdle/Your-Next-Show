@@ -1,3 +1,57 @@
+/**
+ * Initializes Alpine.js and SweetAlert2, sets up global utility functions, and configures various jQuery functionalities.
+ *
+ * @file /Users/robhowdle/Files/findmyvenue/resources/js/app.js
+ * @requires alpinejs
+ * @requires sweetalert2
+ * @requires jquery
+ *
+ * @global
+ * @function formatCurrency
+ * @param {number} value - The value to format as currency.
+ * @returns {string} - The formatted currency string.
+ *
+ * @global
+ * @function formatDateToDMY
+ * @param {string} dateString - The date string to format.
+ * @returns {string} - The formatted date string in DMY format.
+ *
+ * @global
+ * @function initialiseSummernote
+ * @param {string} selector - The jQuery selector for the Summernote editor.
+ * @param {string} initialContent - The initial content to set in the Summernote editor.
+ *
+ * @global
+ * @function showSuccessNotification
+ * @param {string} message - The success message to display.
+ *
+ * @global
+ * @function showFailureNotification
+ * @param {string} message - The failure message to display.
+ *
+ * @global
+ * @function showWarningNotification
+ * @param {string} message - The warning message to display.
+ *
+ * @global
+ * @function showConfirmationNotification
+ * @param {Object} options - The options for the confirmation notification.
+ * @param {string} options.text - The text to display in the confirmation notification.
+ * @returns {Promise} - A promise that resolves when the user responds to the confirmation.
+ *
+ * @global
+ * @function showEventBlock
+ * @param {Object} info - The event information.
+ * @param {Object} info.event - The event object.
+ * @param {Object} info.event._def.extendedProps - The extended properties of the event.
+ * @param {string} info.event._def.extendedProps.event_start_time - The start time of the event.
+ * @param {string} info.event._def.extendedProps.description - The description of the event.
+ * @param {Array<string>} info.event._def.extendedProps.bands - The bands performing at the event.
+ * @param {string} info.event._def.extendedProps.location - The location of the event.
+ * @param {string} info.event._def.extendedProps.ticket_url - The URL for event tickets.
+ * @param {string} info.event._def.extendedProps.on_the_door_ticket_price - The on-the-door ticket price.
+ * @returns {Promise} - A promise that resolves when the user responds to the event block.
+ */
 import Alpine from "alpinejs";
 import Swal from "../../node_modules/sweetalert2";
 import $ from "jquery";
@@ -25,6 +79,29 @@ window.formatDateToDMY = function (dateString) {
 
     return `${day}-${month}-${year}`; // Return in DMY format
 };
+
+// Find all disabled elements and add tooltip
+// $(document).ready(function () {
+//     $(".disabled").each(function () {
+//         // Add required classes
+//         $(this).addClass("relative group cursor-not-allowed");
+
+//         // Add opacity if not already styled
+//         if (!$(this).hasClass("opacity-60")) {
+//             $(this).addClass("opacity-60");
+//         }
+
+//         // Insert tooltip span if it doesn't exist
+//         if (!$(this).find(".tooltip-span").length) {
+//             $(this).append(`
+//                 <span class="tooltip-span invisible group-hover:visible absolute left-1/2 -translate-x-1/2 -bottom-8
+//                     w-max px-2 py-1 bg-black/80 text-white text-sm rounded z-50">
+//                     Coming Soon
+//                 </span>
+//             `);
+//         }
+//     });
+// });
 
 // Accordions
 $(document).ready(function () {

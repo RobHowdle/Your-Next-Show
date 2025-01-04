@@ -79,30 +79,7 @@ class OtherServiceController extends Controller
         $serviceCounts = [];
         foreach ($otherServices as $service) {
             $serviceCounts[$service->other_service_id] = $service->total;
-
-            // Split the field containing multiple URLs into an array
-            $urls = explode(',', $service->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                // Store the platform information for each URL
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
-                ];
-            }
-
-            // Add the processed data to the venue
-            $service->platforms = $platforms;
+            $service->platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
         }
 
         return view('other', [

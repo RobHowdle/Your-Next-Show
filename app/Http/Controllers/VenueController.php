@@ -6,6 +6,7 @@ use App\Models\Venue;
 use App\Models\Promoter;
 use App\Models\VenueReview;
 use Illuminate\Http\Request;
+use App\Services\FilterService;
 use App\Helpers\SocialLinksHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -80,39 +81,14 @@ class VenueController extends Controller
             ]);
         }
 
+        $overallReviews = []; // Array to store overall reviews for each venue
         // Process each venue
         foreach ($venues as $venue) {
-            // Split the field containing multiple URLs into an array
-            $urls = explode(',', $venue->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                // Store the platform information for each URL
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
-                ];
-            }
-
-            // Add the processed data to the venue
-            $venue->platforms = $platforms;
-        }
-
-        $overallReviews = []; // Array to store overall reviews for each venue
-
-        foreach ($venues as $venue) {
+            $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
             $overallScore = VenueReview::calculateOverallScore($venue->id);
             $overallReviews[$venue->id] = $this->renderRatingIcons($overallScore);
         }
+
 
         $venuePromoterCount = isset($venue['promoters']) ? count($venue['promoters']) : 0;
         return view('venues', [
@@ -286,92 +262,24 @@ class VenueController extends Controller
 
     public function filterCheckboxesSearch(Request $request)
     {
-        $query = Venue::query();
-
-        // Search Results
-        $searchQuery = $request->input('search_query');
-        if ($searchQuery) {
-            $query->where(function ($query) use ($searchQuery) {
-                $query->where('postal_town', 'LIKE', "%$searchQuery%")
-                    ->orWhere('name', 'LIKE', "%$searchQuery%");
-            });
-        }
-
-        // Band Type Filter
-        if ($request->has('band_type')) {
-            $bandType = $request->input('band_type');
-            if (!empty($bandType)) {
-                $bandType = array_map('trim', $bandType);
-                $query->where(function ($query) use ($bandType) {
-                    foreach ($bandType as $type) {
-                        $query->orWhereRaw('JSON_CONTAINS(band_type, ?)', [json_encode($type)]);
-                    }
-                });
-            }
-        }
-
-        // Genre Filter
-        if ($request->has('genres')) {
-            $genres = $request->input('genres');
-            if (!empty($genres)) {
-                $genres = array_map('trim', $genres);
-                $query->where(function ($query) use ($genres) {
-                    foreach ($genres as $genre) {
-                        $query->orWhereRaw('JSON_CONTAINS(genre, ?)', [json_encode($genre)]);
-                    }
-                });
-            }
-        }
-
-        // Get the venues with pagination
-        $venues = $query->with('promoters')->paginate(10);
-
-        // Process each venue
-        $transformedData = $venues->getCollection()->map(function ($venue) {
-            $urls = explode(',', $venue->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
+        $filters = [
+            'search_fields' => ['postal_town', 'name'], // Fields to search
+            'transform' => function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'postal_town' => $item->postal_town,
+                    'contact_number' => $item->contact_number,
+                    'contact_email' => $item->contact_email,
+                    'platforms' => explode(',', $item->contact_link),
+                    'average_rating' => \App\Models\VenueReview::calculateOverallScore($item->id),
                 ];
-            }
+            },
+        ];
 
-            $overallScore = \App\Models\VenueReview::calculateOverallScore($venue->id);
+        $data = FilterService::filterEntities($request, Venue::class, $filters);
 
-            return [
-                'id' => $venue->id,
-                'name' => $venue->name,
-                'postal_town' => $venue->postal_town,
-                'contact_number' => $venue->contact_number,
-                'contact_email' => $venue->contact_email,
-                'platforms' => $platforms,
-                'promoters' => $venue->promoters,
-                'average_rating' => $overallScore,
-            ];
-        })->toArray();
-
-        // Return the transformed data with pagination info
-        return response()->json([
-            'venues' => $transformedData,
-            'pagination' => [
-                'current_page' => $venues->currentPage(),
-                'last_page' => $venues->lastPage(),
-                'total' => $venues->total(),
-                'per_page' => $venues->perPage(),
-            ]
-        ]);
+        return response()->json($data);
     }
 
     public function submitVenueReview(Request $request, Venue $id)

@@ -44,6 +44,37 @@ abbr:where([title]) {
     text-decoration: underline dotted;
 }
 
+.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    cursor: not-allowed;
+    position: relative;
+}
+
+/* .disabled::after {
+    content: "Coming Soon";
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 5px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.disabled:hover::after {
+    opacity: 1;
+    visibility: visible;
+} */
+
 h1,
 h2,
 h3,
