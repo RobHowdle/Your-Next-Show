@@ -15,8 +15,6 @@ return new class extends Migration
         DB::table('promoters')->whereNotNull('genre')->get()->each(function ($promoter) {
             $genres = json_decode($promoter->genre, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                // Convert non-JSON data into a valid array or empty array if necessary
-                // Here, we assume a simple fix by converting non-JSON strings into an empty array
                 $genres = explode(',', $promoter->genre);
                 DB::table('promoters')->where('id', $promoter->id)->update([
                     'genre' => json_encode($genres),

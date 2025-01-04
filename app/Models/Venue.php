@@ -38,7 +38,7 @@ class Venue extends Model
     ];
 
     protected $casts = [
-        'contact_links' => 'array',
+        'contact_link' => 'array',
     ];
 
     public function users(): MorphToMany

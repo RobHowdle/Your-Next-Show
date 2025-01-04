@@ -24,6 +24,7 @@ use App\Http\Controllers\BandJourneyController;
 use App\Http\Controllers\OtherServiceController;
 use App\Http\Controllers\VenueJourneyController;
 use App\Http\Controllers\DesignerJourneyController;
+use App\Http\Controllers\PromoterJourneyController;
 use App\Http\Controllers\PromoterDashboardController;
 use App\Http\Controllers\PhotographerJourneyController;
 use App\Http\Controllers\VideographerJourneyController;
@@ -104,10 +105,12 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
         Route::post('/band-journey/create', [BandJourneyController::class, 'createBand'])->name('band.store');
     });
 
+    // Promoter Journey
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
-        Route::get('/users/search', [PromoterDashboardController::class, 'searchExistingPromoters'])->name('admin.dashboard.promoter.search');
-        Route::post('/link', [PromoterDashboardController::class, 'linkToExistingPromoter'])->name('admin.dashboard.promoter.link');
-        Route::post('/store', [PromoterDashboardController::class, 'storeNewPromoter'])->name('admin.dashboard.promoter.store');
+        Route::get('/promoter-journey', [PromoterJourneyController::class, 'index'])->name('promoter.journey');
+        Route::get('/promoter-search', [PromoterJourneyController::class, 'search'])->name('promoter.search');
+        Route::post('/promoter-journey/join/{id}', [PromoterJourneyController::class, 'joinPromoter'])->name('promoter.join');
+        Route::post('/promoter-journey/create', [PromoterJourneyController::class, 'createPromoter'])->name('promoter.store');
     });
 
     // Venue Journey
