@@ -74,7 +74,7 @@
               @endif
             </div>
             <div class="group mb-2 flex flex-row items-start justify-center text-center">
-              <span class="fas fa-map-marker-alt"></span>
+              <span class="fas fa-map-marker-alt mr-2"></span>
               @forelse($event->venues as $venue)
                 <a class="transition duration-150 ease-in-out hover:text-yns_yellow"
                   href="{{ route('venues', $venue->id) }}">{{ $venue->location }}</a>
@@ -83,7 +83,7 @@
               @endforelse
 
             </div>
-            <div class="group mb-2 flex flex-row items-start justify-center text-center">
+            <div class="group mb-2 flex flex-row items-center justify-center text-center">
               <span class="fas fa-bullhorn mr-2"></span>
               @forelse($event->promoters as $promoter)
                 <a class="transition duration-150 ease-in-out hover:text-yns_yellow"

@@ -15,53 +15,56 @@
             <div class="col">
               <input type="hidden" id="dashboard_type" value="{{ $dashboardType }}">
               <div class="group mb-4">
-                <x-input-label-dark>Event Name</x-input-label-dark>
-                <x-text-input id="event_name" name="event_name" required></x-text-input>
+                <x-input-label-dark :required="true">Event Name</x-input-label-dark>
+                <x-text-input id="event_name" name="event_name" :required="true" :value="old('event_name')"></x-text-input>
                 @error('event_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
-                <x-input-label-dark>Date & Time of Event</x-input-label-dark>
-                <x-date-input id="merged_date_time" name="merged_date_time"></x-date-input>
+                <x-input-label-dark :required="true">Date & Time of Event</x-input-label-dark>
+                <x-date-input id="merged_date_time" name="merged_date_time" :required="true"
+                  :value="old('')"></x-date-input>
                 @error('merged_date_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
               <div class="group mb-4 hidden">
-                <x-input-label-dark>Date of Event</x-input-label-dark>
+                <x-input-label-dark :required="true">Date of Event</x-input-label-dark>
                 <span>This is supposed to be hidden...naughty naughty</span>
-                <x-date-input id="event_date" name="event_date"></x-date-input>
+                <x-date-input id="event_date" name="event_date" :required="true" :value="old('')"></x-date-input>
                 @error('event_date')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
               <div class="group mb-4 hidden">
-                <x-input-label-dark>Start Time</x-input-label-dark>
+                <x-input-label-dark :required="true">Start Time</x-input-label-dark>
                 <span>This is supposed to be hidden...naughty naughty</span>
-                <x-text-input class="w-auto" id="event_start_time" name="event_start_time"></x-text-input>
+                <x-text-input class="w-auto" id="event_start_time" name="event_start_time" :required="true"
+                  :value="old('')"></x-text-input>
                 @error('event_start_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               @if ($dashboardType === 'promoter')
                 <div class="group mb-4 hidden">
-                  <x-input-label-dark>Promoter</x-input-label-dark>
+                  <x-input-label-dark :required="true">Promoter</x-input-label-dark>
                   <span>This is supposed to be hidden...naughty naughty</span>
-                  <x-text-input class="w-auto" id="promoter_id" name="promoter_id"
-                    value="{{ $role->id }}"></x-text-input>
+                  <x-text-input class="w-auto" id="promoter_id" name="promoter_id" value="{{ $role->id }}"
+                    :required="true"></x-text-input>
                   @error('promoter_id')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
               @else
                 <div class="group mb-4">
-                  <x-input-label-dark>Promoter</x-input-label-dark>
+                  <x-input-label-dark :required="true">Promoter</x-input-label-dark>
                   <x-text-input id="promoter_name" name="promoter_name"
                     placeholder="Search for a promoter..."></x-text-input>
-                  <input type="hidden" id="promoter_id" name="promoter_id" value="">
+                  <input type="hidden" id="promoter_id" name="promoter_id" :value="old('')"
+                    :required="true">
                   <ul id="promoter-suggestions"
                     class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
                   </ul>
@@ -73,15 +76,17 @@
 
               <div class="group mb-4">
                 <x-input-label-dark>End Time</x-input-label-dark>
-                <x-text-input class="w-auto" id="event_end_time" name="event_end_time"></x-text-input>
+                <x-text-input class="w-auto" id="event_end_time" name="event_end_time"
+                  :value="old('')"></x-text-input>
                 @error('event_end_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
               <div class="group mb-4">
-                <x-input-label-dark>Description</x-input-label-dark>
-                <x-textarea-input id="event_description" name="event_description" class="w-full"></x-textarea-input>
+                <x-input-label-dark :required="true">Description</x-input-label-dark>
+                <x-textarea-input id="event_description" name="event_description" class="w-full" :required="true"
+                  :value="old('')"></x-textarea-input>
                 @error('event_description')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -89,21 +94,22 @@
 
               <div class="group mb-4">
                 <x-input-label-dark>Facebook Event Link</x-input-label-dark>
-                <x-text-input id="facebook_event_url" name="facebook_event_url"></x-text-input>
+                <x-text-input id="facebook_event_url" name="facebook_event_url" :value="old('')"></x-text-input>
                 @error('facebook_event_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Pre Sale Ticket Link</x-input-label-dark>
-                <x-text-input id="ticket_url" name="ticket_url"></x-text-input>
+                <x-text-input id="ticket_url" name="ticket_url" :value="old('')"></x-text-input>
                 @error('ticket_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Door Ticket Price</x-input-label-dark>
-                <x-number-input-pound id="otd_ticket_price" name="otd_ticket_price"></x-number-input-pound>
+                <x-number-input-pound id="otd_ticket_price" name="otd_ticket_price"
+                  :value="old('')"></x-number-input-pound>
                 @error('otd_ticket_price')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -111,8 +117,8 @@
             </div>
             <div class="col">
               <div class="group">
-                <x-input-label-dark>Poster</x-input-label-dark>
-                <x-input-file id="poster_url" name="poster_url"></x-input-file>
+                <x-input-label-dark :required="true">Poster</x-input-label-dark>
+                <x-input-file id="poster_url" name="poster_url" :required="true" :value="old('')"></x-input-file>
                 <div class="mt-4">
                   <img id="posterPreview" src="#" alt="Poster Preview" class="hidden h-auto w-400">
                 </div>
@@ -123,13 +129,14 @@
             </div>
             <div class="col">
               <div class="group mb-4">
-                <x-input-label-dark>Venue</x-input-label-dark>
-                <x-text-input id="venue_name" name="venue_name" autocomplete="off"></x-text-input>
+                <x-input-label-dark :required="true">Venue</x-input-label-dark>
+                <x-text-input id="venue_name" name="venue_name" autocomplete="off" :required="true"
+                  :value="old('')"></x-text-input>
                 <ul id="venue-suggestions"
                   class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                 </ul>
-                <x-input-label-dark>Venue ID</x-input-label-dark>
-                <x-text-input id="venue_id" name="venue_id" class=""></x-text-input>
+                <x-input-label-dark :required="true">Venue ID</x-input-label-dark>
+                <x-text-input id="venue_id" name="venue_id" :value="old('')" :required="true"></x-text-input>
                 @error('venue_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -137,12 +144,14 @@
               <div class="group" id="band-rows-container">
                 <!-- Headline Band -->
                 <div class="group mb-4">
-                  <x-input-label-dark>Headline Band</x-input-label-dark>
-                  <x-text-input id="headliner-search" name="headliner" autocomplete="off"></x-text-input>
+                  <x-input-label-dark :required="true">Headline Band</x-input-label-dark>
+                  <x-text-input id="headliner-search" name="headliner" autocomplete="off" :required="true"
+                    :value="old('')"></x-text-input>
                   <ul id="headliner-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-input-label-dark>Headliner Band ID</x-input-label-dark>
-                  <x-text-input id="headliner_id" name="headliner_id" class=""></x-text-input>
+                  <x-input-label-dark :required="true">Headliner Band ID</x-input-label-dark>
+                  <x-text-input id="headliner_id" name="headliner_id" :value="old('')"
+                    :required="true"></x-text-input>
                   @error('headliner')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -151,11 +160,12 @@
                 <!-- Main Support -->
                 <div class="group mb-4">
                   <x-input-label-dark>Main Support</x-input-label-dark>
-                  <x-text-input id="main-support-search" name="main_support" autocomplete="off"></x-text-input>
+                  <x-text-input id="main-support-search" name="main_support" autocomplete="off"
+                    :value="old('')"></x-text-input>
                   <ul id="main-support-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
                   <x-input-label-dark>Main Support Band ID</x-input-label-dark>
-                  <x-text-input id="main_support_id" name="main_support_id" class=""></x-text-input>
+                  <x-text-input id="main_support_id" name="main_support_id" :value="old('')"></x-text-input>
                   @error('mainSupport')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -165,11 +175,12 @@
                 <div class="group mb-4" id="bandsContainer">
                   <x-input-label-dark>Bands</x-input-label-dark>
                   <x-text-input id="bands-search" name="bands" class="band-input" autocomplete="off"
-                    placeholder="Type band name and press Enter, separated by commas"></x-text-input>
+                    placeholder="Type band name and press Enter, separated by commas"
+                    :value="old('')"></x-text-input>
                   <ul id="bands-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
                   <x-input-label-dark>Bands IDs</x-input-label-dark>
-                  <x-text-input id="bands_ids" name="bands_ids" class="" />
+                  <x-text-input id="bands_ids" name="bands_ids" :value="old('')" />
                   @error('bands')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -178,18 +189,17 @@
                 <!-- Opening Band -->
                 <div class="group mb-4">
                   <x-input-label-dark>Opening Band</x-input-label-dark>
-                  <x-text-input id="opener-search" name="opener" autocomplete="off"></x-text-input>
+                  <x-text-input id="opener-search" name="opener" autocomplete="off"
+                    :value="old('')"></x-text-input>
                   <ul id="opener-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
                   <x-input-label-dark>Opening Band ID</x-input-label-dark>
-                  <x-text-input id="opener_id" name="opener_id" class=""></x-text-input>
+                  <x-text-input id="opener_id" name="opener_id" :value="old('')"></x-text-input>
                   @error('opener')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
               </div>
-
-
             </div>
 
             <button type="submit"
