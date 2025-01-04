@@ -191,7 +191,6 @@
     });
 
     // Combine genres and subgenres
-    // var mergedGenres = [...selectedGenres, ...selectedSubgenres];
     var serviceType = '{{ $serviceName }}';
 
     // Send AJAX request to fetch filtered data

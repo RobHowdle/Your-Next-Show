@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Models\Role;
 use App\Models\StandardUser;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -84,6 +85,28 @@ class User extends Authenticatable
                 ];
             }
         });
+    }
+
+    public function linkedCompany()
+    {
+        $service = DB::table('service_user')
+            ->where('user_id', $this->id)
+            ->whereNull('deleted_at')
+            ->first();
+        if (!$service) {
+            return null;
+        }
+
+        switch ($service->serviceable_type) {
+            case 'App\Models\Promoter':
+                return Promoter::find($service->serviceable_id);
+            case 'App\Models\Venue':
+                return Venue::find($service->serviceable_id);
+            case 'App\Models\OtherService':
+                return OtherService::find($service->serviceable_id);
+            default:
+                return null;
+        }
     }
 
 

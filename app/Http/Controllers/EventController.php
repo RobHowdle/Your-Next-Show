@@ -265,35 +265,12 @@ class EventController extends Controller
         return response()->json($promoters);
     }
 
-    public function storeNewEvent($dashboardType, Request $request)
+    public function storeNewEvent($dashboardType, StoreUpdateEventRequest $request)
     {
         $modules = collect(session('modules', []));
 
-        // dd($request);
-
         try {
-            $validatedData = $request->validate([
-                'event_name' => 'required|string',
-                'event_date' => 'required|date_format:d-m-Y',
-                'event_start_time' => 'required|date_format:H:i',
-                'event_end_time' => 'nullable|date_format:H:i',
-                'event_description' => 'nullable',
-                'facebook_event_url' => 'nullable|url',
-                'ticket_url' => 'nullable|url',
-                'otd_ticket_price' => 'required|numeric',
-                'venue_id' => 'required|integer|exists:venues,id',
-                'headliner' => 'required|string',
-                'headliner_id' => 'required|integer',
-                'main_support' => 'required|string',
-                'main_support_id' => 'required|integer',
-                'artist' => 'nullable|array',
-                'bands.*' => 'nullable|string',
-                'bands_ids' => 'required|array',
-                // 'band_id.*' => 'required|integer',
-                'opener' => 'nullable|string',
-                'opener_id' => 'required|integer',
-                'poster_url' => 'required|image|mimes:jpeg,jpg,png,webp,svg|max:5120'
-            ]);
+            $validatedData = $request->validated();
 
             $user = Auth::user()->load('roles');
             $role = $user->getRoleNames()->first();

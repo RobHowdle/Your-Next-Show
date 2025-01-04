@@ -8,8 +8,14 @@ class StoreUpdateEventRequest extends FormRequest
 {
     public function authorize()
     {
-        // Determine if the user is authorized to make this request.
         return true;
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'otd_ticket_price' => $this->otd_ticket_price ?? 0,
+        ]);
     }
 
     public function rules()
@@ -19,21 +25,22 @@ class StoreUpdateEventRequest extends FormRequest
             'event_date' => 'required|date_format:d-m-Y',
             'event_start_time' => 'required|date_format:H:i',
             'event_end_time' => 'nullable|date_format:H:i',
-            'event_description' => 'nullable|string',
+            'promoter_id' => 'required|integer|exists:promoters,id',
+            'event_description' => 'required|string',
             'facebook_event_url' => 'nullable|url',
             'ticket_url' => 'nullable|url',
-            'otd_ticket_price' => 'required|numeric',
+            'otd_ticket_price' => 'nullable|numeric',
             'venue_id' => 'required|integer|exists:venues,id',
             'headliner' => 'required|string',
             'headliner_id' => 'required|integer',
-            'mainSupport' => 'required|string',
-            'main_support_id' => 'required|integer',
+            'main_support' => 'nullable|string',
+            'main_support_id' => 'nullable|integer',
             'artist' => 'nullable|array',
             'band.*' => 'nullable|string',
-            'band_id' => 'required|array',
-            'band_id.*' => 'required|integer',
+            'band_id' => 'nullable|array',
+            'band_id.*' => 'nullable|integer',
             'opener' => 'nullable|string',
-            'opener_id' => 'required|integer',
+            'opener_id' => 'nullable|integer',
         ];
 
         $rules['poster_url'] = [
@@ -58,7 +65,6 @@ class StoreUpdateEventRequest extends FormRequest
         if ($this->isMethod('post')) {
             $rules['poster_url'][] = 'required';
         }
-
 
         return $rules;
     }

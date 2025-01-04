@@ -146,12 +146,13 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
     // Finances
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/finances', [FinanceController::class, 'showFinances'])->name('admin.dashboard.show-finances');
+        Route::get('/finances/data', [FinanceController::class, 'getFinancesData'])->name('admin.dashboard.get-finances-data');
         Route::get('/finances/new-budget', [FinanceController::class, 'createFinance'])->name('admin.dashboard.create-new-finance');
         Route::post('/finances/save-budget', [FinanceController::class, 'storeFinance'])->name('admin.dashboard.store-new-finance');
         Route::post('/finances/export', [FinanceController::class, 'exportFinances'])->name('admin.dashboard.finances.export');
         Route::get('/finances/{id}', [FinanceController::class, 'showSingleFinance'])->name('admin.dashboard.show-finance');
-        Route::get('/finances/{id}/edit', [FinanceController::class, 'editFinance'])->name('admin.dashboard.edit-finance');
-        Route::patch('/finances/{finance}', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finances');
+        Route::get('/finance/{id}/edit', [FinanceController::class, 'editFinance'])->name('admin.dashboard.edit-finance');
+        Route::put('/finance/{id}', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finance');
         Route::post('/finances/{finance}', [FinanceController::class, 'exportSingleFinance'])->name('admin.dashboard.export-finance');
     });
 

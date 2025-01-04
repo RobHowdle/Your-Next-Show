@@ -786,9 +786,23 @@ class ProfileController extends Controller
         $myEvents = $venue ? $venue->events()->with('venues')->get() : collect();
         $uniqueBands = $this->getUniqueBandsForPromoterEvents($venue->id);
         $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true);
+        $data = json_decode($genreList, true) ?? [];
+        $isAllGenres = in_array('All', $data);
         $genres = $data['genres'];
         $venueGenres = is_array($venue->genre) ? $venue->genre : json_decode($venue->genre, true);
+        $normalizedVenueGenres = [];
+        if ($venueGenres) {
+            foreach ($venueGenres as $genreName => $genreData) {
+                $normalizedVenueGenres[$genreName] = [
+                    'all' => $genreData['all'] ?? 'false',
+                    'subgenres' => isset($genreData['subgenres'][0])
+                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
+                        : []
+                ];
+            }
+        }
+
+        $bandTypes = json_decode($venue->band_type) ?? [];
         $additionalInfo = $venue ? $venue->additional_info : '';
 
         return [
@@ -810,6 +824,9 @@ class ProfileController extends Controller
             'uniqueBands' => $uniqueBands,
             'genres' => $genres,
             'venueGenres' => $venueGenres,
+            'isAllGenres' => $isAllGenres,
+            'venueGenres' => $normalizedVenueGenres,
+            'bandTypes' => $bandTypes,
             'capacity' => $capacity,
             'additionalInfo' => $additionalInfo,
         ];
@@ -1021,7 +1038,6 @@ class ProfileController extends Controller
             'environmentTypes' => $environmentTypes,
             'groups' => $groupedData,
             'workingTimes' => $workingTimes,
-            'genres' => $genres,
             'isAllGenres' => $isAllGenres,
             'photographerGenres' => $normalizedPhotographerGenres,
             'bandTypes' => $bandTypes,
@@ -1529,7 +1545,7 @@ class ProfileController extends Controller
                 $userType = $band;
                 break;
             case 'venue':
-                $venue = Venue::where('user_id', $user->id)->first();
+                $venue = $user->venues()->first();
                 $userType = $venue;
                 break;
             case 'photographer':
@@ -1549,7 +1565,11 @@ class ProfileController extends Controller
             $storedGenres = is_array($userType->genre) ? $userType->genre : json_decode($userType->genre, true);
             $newGenres = $request->input('genres');
 
+            // dd($newGenres);
+
             $mergedGenres = array_merge($storedGenres, $newGenres);
+
+            dd($mergedGenres);
 
             // Only update if the genres have actually changed
             if ($storedGenres !== $mergedGenres) {
