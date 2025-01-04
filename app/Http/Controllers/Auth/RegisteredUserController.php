@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\View\View;
 use App\Models\StandardUser;
@@ -79,7 +80,9 @@ class RegisteredUserController extends Controller
                             'user_id' => $user->id,
                             'serviceable_id' => $standardUser->id,
                             'serviceable_type' => 'App\Models\StandardUser',
-                            'role' => 'Standard'
+                            'role' => 'Standard',
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
                         ]);
                     }
 

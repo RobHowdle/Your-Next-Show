@@ -12,7 +12,7 @@
             @csrf
             <div class="flex flex-row items-center gap-8 border-b border-b-white pb-4">
               <div class="group">
-                <x-input-label>Item</x-input-label>
+                <x-input-label-dark>Item</x-input-label-dark>
                 <x-textarea-input class="mt-2 h-32 w-96" id="taskInput" name="task"></x-textarea-input>
               </div>
               <button type="submit" id="addTaskButton"

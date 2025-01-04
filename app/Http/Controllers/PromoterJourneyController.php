@@ -133,7 +133,7 @@ class PromoterJourneyController extends Controller
                 return back()->withErrors(['error' => 'No authenticated user']);
             }
 
-            $user->otherService()->attach($promoter->id);
+            $user->promoters()->attach($promoter->id);
 
             return redirect()->route('dashboard', $dashboardType)->with('success', 'Successfully created and joined the new promoter!');
         } catch (\Exception $e) {

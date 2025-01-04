@@ -29,7 +29,7 @@
 
       <div class="group mb-4">
         <x-input-label-dark>Date</x-input-label-dark>
-        <x-date-input id="note-date" value="{{ now()->format('Y-m-d') }}"></x-date-input>
+        <x-date-time-input id="note-date" value="{{ now()->format('Y-m-d') }}"></x-date-time-input>
       </div>
 
       <div class="group mb-4 flex flex-row-reverse justify-end gap-2">

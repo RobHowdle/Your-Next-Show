@@ -23,8 +23,8 @@
               </div>
               <div class="group mb-4">
                 <x-input-label-dark :required="true">Date & Time of Event</x-input-label-dark>
-                <x-date-input id="merged_date_time" name="merged_date_time" :required="true"
-                  :value="old('')"></x-date-input>
+                <x-date-time-input id="merged_date_time" name="merged_date_time" :required="true"
+                  :value="old('')"></x-date-time-input>
                 @error('merged_date_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -33,7 +33,8 @@
               <div class="group mb-4 hidden">
                 <x-input-label-dark :required="true">Date of Event</x-input-label-dark>
                 <span>This is supposed to be hidden...naughty naughty</span>
-                <x-date-input id="event_date" name="event_date" :required="true" :value="old('')"></x-date-input>
+                <x-date-time-input id="event_date" name="event_date" :required="true"
+                  :value="old('')"></x-date-time-input>
                 @error('event_date')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror

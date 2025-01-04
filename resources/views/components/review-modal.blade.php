@@ -28,12 +28,12 @@
           @endforeach
 
           <div class="mt-4">
-            <x-input-label for="review_author" :value="__('Your Name')" />
+            <x-input-label-dark for="review_author" :value="__('Your Name')" />
             <x-text-input name="review_author" id="review_author" class="mt-1 block w-full" required
               autocomplete="name" />
           </div>
           <div class="mt-4">
-            <x-input-label for="review_message" :value="__('Your Review')" />
+            <x-input-label-dark for="review_message" :value="__('Your Review')" />
             <x-textarea-input name="review_message" id="review_message" class="mt-1 block w-full" required />
           </div>
           <button type="submit"

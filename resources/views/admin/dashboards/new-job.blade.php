@@ -14,34 +14,36 @@
               @csrf
               <div class="grid grid-cols-2 gap-4 py-8">
                 <div class="group">
-                  <x-input-label>Client</x-input-label>
+                  <x-input-label-dark>Client</x-input-label-dark>
                   <select id="client-search" name="client_search"
                     class="mt-1 block w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600">
                     <option value="">Search for a client</option>
                   </select>
                   <div class="group hidden">
-                    <x-input-label>Client Type - You're not supposed to see this... sneaky sneaky!</x-input-label>
+                    <x-input-label-dark>Client Type - You're not supposed to see this... sneaky
+                      sneaky!</x-input-label-dark>
                     <x-text-input id="client_service" name="client_service"></x-text-input>
                   </div>
                   <div class="group hidden">
-                    <x-input-label>Client Name - You're not supposed to see this... sneaky sneaky!</x-input-label>
+                    <x-input-label-dark>Client Name - You're not supposed to see this... sneaky
+                      sneaky!</x-input-label-dark>
                     <x-text-input id="client_name" name="client_name"></x-text-input>
                   </div>
                 </div>
 
                 <div class="group hidden">
-                  <x-input-label>Start Date</x-input-label>
-                  <x-date-input id="job-start-date" name="job_start_date"
-                    value="{{ now()->format('Y-m-d\TH:i') }}"></x-date-input>
+                  <x-input-label-dark>Start Date</x-input-label-dark>
+                  <x-date-time-input id="job-start-date" name="job_start_date"
+                    value="{{ now()->format('Y-m-d\TH:i') }}"></x-date-time-input>
                 </div>
 
                 <div class="group">
-                  <x-input-label>Deadline Date</x-input-label>
-                  <x-date-input id="job-deadline-date" name="job_deadline_date"></x-date-input>
+                  <x-input-label-dark>Deadline Date</x-input-label-dark>
+                  <x-date-time-input id="job-deadline-date" name="job_deadline_date"></x-date-time-input>
                 </div>
 
                 <div class="group">
-                  <x-input-label>Job Type</x-input-label>
+                  <x-input-label-dark>Job Type</x-input-label-dark>
                   <select id="job-type" name="job_type"
                     class="mt-1 block w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600">
                     <option value="" disabled selected>Select a Job Type</option>
@@ -49,7 +51,7 @@
                 </div>
 
                 <div class="group">
-                  <x-input-label>Priority</x-input-label>
+                  <x-input-label-dark>Priority</x-input-label-dark>
                   <select id="job-priority" name="job_priority"
                     class="mt-1 block w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600">
                     <option value="" disabled>Select a priority</option>
@@ -62,7 +64,7 @@
                 </div>
 
                 <div class="group">
-                  <x-input-label>Status</x-input-label>
+                  <x-input-label-dark>Status</x-input-label-dark>
                   <select id="job-status" name="job_status"
                     class="mt-1 block w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600">
                     <option value="not-started">Not Started</option>
@@ -76,17 +78,17 @@
                 </div>
 
                 <div class="group">
-                  <x-input-label>Upload Files</x-input-label>
+                  <x-input-label-dark>Upload Files</x-input-label-dark>
                   <x-input-file id="job_scope_file" name="job_scope_file"></x-input-file>
                 </div>
 
                 <div class="group">
-                  <x-input-label>Amount</x-input-label>
+                  <x-input-label-dark>Amount</x-input-label-dark>
                   <x-number-input-pound id="job-cost" name="job_cost"></x-number-input-pound>
                 </div>
 
                 <div class="group">
-                  <x-input-label>Scope</x-input-label>
+                  <x-input-label-dark>Scope</x-input-label-dark>
                   <x-textarea-input id="job-text-scope" name="job_text_scope" class="w-full"></x-textarea-input>
                 </div>
 

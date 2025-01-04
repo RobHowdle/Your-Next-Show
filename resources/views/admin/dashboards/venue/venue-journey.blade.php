@@ -60,7 +60,8 @@
                 </div>
 
                 <div class="group">
-                  <x-input-label-dark>Do you have any gear in house that you allow artists to use?</x-input-label-dark>
+                  <x-input-label-dark>Do you have any gear in house that you allow artists to
+                    use?</x-input-label-dark>
                   <x-textarea-input class="w-full" id="in_house_gear"
                     name="in_house_gear">{{ old('in_house_gear') }}</x-textarea-input>
                   @error('in_house_gear')

@@ -9,34 +9,34 @@
     @csrf
     @method('PUT')
     <div>
-      <x-input-label for="firstName" :value="__('First Name')" />
+      <x-input-label-dark for="firstName" :value="__('First Name')" />
       <x-text-input id="firstName" class="mt-1 block w-full" type="text" name="firstName" :value="old('firstName', $firstName ?? '')" required
         autofocus autocomplete="firstName" />
       <x-input-error :messages="$errors->get('firstName')" class="mt-2" />
     </div>
     <div class="mt-4">
-      <x-input-label for="lastName" :value="__('Last Name')" />
+      <x-input-label-dark for="lastName" :value="__('Last Name')" />
       <x-text-input id="lastName" class="mt-1 block w-full" type="text" name="lastName" :value="old('lastName', $lastName ?? '')" required
         autofocus autocomplete="lastName" />
       <x-input-error :messages="$errors->get('lastName')" class="mt-2" />
     </div>
 
     <div class="mt-4">
-      <x-input-label for="email" :value="__('Email')" />
+      <x-input-label-dark for="email" :value="__('Email')" />
       <x-text-input id="email" class="mt-1 block w-full" type="email" name="email" :value="old('email', $email ?? '')" required
         autocomplete="username" />
       <x-input-error :messages="$errors->get('email')" class="mt-2" />
     </div>
 
     <div class="mt-4">
-      <x-input-label for="password" :value="__('Password')" />
+      <x-input-label-dark for="password" :value="__('Password')" />
       <x-text-input id="password" class="mt-1 block w-full" type="password" name="password"
         autocomplete="new-password" />
       <x-input-error :messages="$errors->get('password')" class="mt-2" />
     </div>
 
     <div class="mt-4">
-      <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+      <x-input-label-dark for="password_confirmation" :value="__('Confirm Password')" />
       <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password" name="password_confirmation"
         autocomplete="new-password" />
       <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
@@ -83,7 +83,7 @@
         <h2 id="editModalTitle" class="text-lg font-semibold">Edit Role</h2>
         <input type="hidden" id="edit-role-id" />
         <div class="mt-2">
-          <x-input-label for="role" :value="__('Role')" />
+          <x-input-label-dark for="role" :value="__('Role')" />
           <select id="role" name="role"
             class="mt-1 block w-full rounded-md border-yns_red capitalize shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600"
             autofocus autocomplete="role">
