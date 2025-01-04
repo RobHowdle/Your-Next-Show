@@ -77,7 +77,7 @@
 
               <div class="group mb-4">
                 <x-input-label-dark>End Time</x-input-label-dark>
-                <x-text-input class="w-auto" id="event_end_time" name="event_end_time"
+                <x-text-input class="w-full" id="event_end_time" name="event_end_time"
                   :value="old('')"></x-text-input>
                 @error('event_end_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
