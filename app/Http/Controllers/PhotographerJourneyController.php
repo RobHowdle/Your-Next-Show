@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,10 +18,14 @@ class PhotographerJourneyController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
         $photographers = OtherService::photographers()->get();
 
         return view('admin.dashboards.photographer.photographer-journey', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'photographers' => $photographers,
@@ -65,7 +70,7 @@ class PhotographerJourneyController extends Controller
             ], 404);
         }
 
-        // Check if the user is already part of the band
+        // Check if the user is already part of the photography company
         if ($user->otherService('photographer')->where('serviceable_id', $photographerId)->exists()) {
             return response()->json([
                 'success' => false,
@@ -73,13 +78,16 @@ class PhotographerJourneyController extends Controller
             ], 400);
         }
 
-        // Add the user to the band
-        $user->otherService('photographer')->attach($photographerId);
+        // Add the user to the photography company
+        $user->otherService('photographer')->attach($photographerId, [
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Successfully joined the photography company!',
-            'redirect_url' => route('dashboard', ['dashboardType' => $dashboardType]),
+            'message' => 'Successfully joined!',
+            'redirect' => route('dashboard', ['dashboardType' => $dashboardType]),
         ], 200);
     }
 

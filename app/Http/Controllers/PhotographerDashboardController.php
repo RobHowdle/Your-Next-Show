@@ -21,17 +21,17 @@ class PhotographerDashboardController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
 
         $pendingReviews = OtherServicesReview::with('otherService')->where('review_approved', '0')->whereNull('deleted_at')->count();
-        $photographer = Auth::user()->load(['otherService', 'roles']);
-        $role = $photographer->roles->first()->name;
-        $todoItemsCount = $photographer->otherService("Photography")->with(['todos' => function ($query) {
+        $todoItemsCount = $user->otherService("Photography")->with(['todos' => function ($query) {
             $query->where('completed', 0)->whereNull('deleted_at');
         }])->get()->pluck('todos')->flatten()->count();
 
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
-        $jobsCount = $photographer->otherService('Photography')
+        $jobsCount = $user->otherService('Photography')
             ->with(['jobs' => function ($query) use ($startOfWeek, $endOfWeek) {
                 $query->whereBetween('job_start_date', [$startOfWeek, $endOfWeek]);
             }])
@@ -40,15 +40,13 @@ class PhotographerDashboardController extends Controller
             ->flatten()
             ->count();
 
-
-        $service = $photographer->otherService(ucfirst($role))->first();
-
         return view('admin.dashboards.photographer-dash', [
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'pendingReviews' => $pendingReviews,
-            'photographer' => $photographer,
+            'user' => $user,
+            'role' => $role,
             'todoItemsCount' => $todoItemsCount,
             'jobsCount' => $jobsCount,
         ]);

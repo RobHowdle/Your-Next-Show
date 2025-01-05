@@ -28,13 +28,24 @@ class VideographerJourneyController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->input('query');
-        $videographers = OtherService::videographers()->where('name', 'LIKE', '%' . $query . '%')->get();
+        $query = $request->get('query');
 
-        return response()->json([
-            'results' => $videographers,
-            'count' => $videographers->count()
-        ]);
+        if ($query) {
+            $videographers = OtherService::where('other_service_id', 2)
+                ->where('name', 'like', '%' . $query . '%')
+                ->get();
+        } else {
+            $videographers = OtherService::where('other_service_id', 2)
+                ->limit(8)
+                ->get();
+        }
+
+        $html = '';
+        foreach ($videographers as $videographer) {
+            $html .= view('admin.dashboards.partials.videographer-row', compact('videographer'))->render();
+        }
+
+        return response()->json(['html' => $html]);
     }
 
     public function joinVideographer($dashboardType, Request $request)
@@ -52,14 +63,14 @@ class VideographerJourneyController extends Controller
             ], 400);
         }
 
-        if ($user->otherService('videographer')->where('serviceable_id', $videographerId)->exists()) {
+        if ($user->otherService('videography')->where('serviceable_id', $videographerId)->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are already linked'
             ], 400);
         }
 
-        $user->otherService('videographer')->attach($videographerId);
+        $user->otherService('videography')->attach($videographerId);
 
         return response()->json([
             'success' => true,

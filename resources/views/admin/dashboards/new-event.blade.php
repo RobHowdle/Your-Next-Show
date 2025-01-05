@@ -62,14 +62,18 @@
               @else
                 <div class="group mb-4">
                   <x-input-label-dark :required="true">Promoter</x-input-label-dark>
-                  <x-text-input id="promoter_name" name="promoter_name"
-                    placeholder="Search for a promoter..."></x-text-input>
-                  <input type="hidden" id="promoter_id" name="promoter_id" :value="old('')"
-                    :required="true">
+                  <x-text-input id="promoter_name" name="promoter_name" autocomplete="off" :required="true"
+                    :value="old('')"></x-text-input>
+                  <ul id="promoter-suggestions"
+                    class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
+                  </ul>
+                  <x-input-label-dark :required="true">Promoter ID</x-input-label-dark>
+                  <x-text-input id="promoter_id" name="promoter_id" :value="old('')"
+                    :required="true"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
                   </ul>
-                  @error('promoter_id')
+                  @error('promoter_name')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
@@ -306,6 +310,116 @@
         }
       });
     });
+
+    // Promoter Search
+    const handlePromoterSearch = () => {
+      const inputElement = $('#promoter_name');
+      const idInput = $('#promoter_id');
+      const suggestionsList = $('#promoter-suggestions');
+
+      if (!inputElement.length) {
+        console.error('Promoter search input not found');
+        return;
+      }
+
+      let debounceTimer;
+
+      inputElement.on('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const search = $(this).val().trim();
+          if (search.length > 2) {
+            $.ajax({
+              url: `/api/promoters/search?q=${search}`,
+              method: 'GET',
+              data: {
+                search: search
+              },
+              success: function(response) {
+                suggestionsList.empty().removeClass('hidden');
+
+                const promoters = response?.promoters || [];
+
+                if (promoters.length === 0) {
+                  suggestionsList.append(
+                    `<li class="suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white">No promoters found</li>`
+                  );
+                  return;
+                }
+
+                promoters.forEach(promoter => {
+                  const li = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white'
+                    )
+                    .text(promoter.name)
+                    .on('click', () => {
+                      inputElement.val(promoter.name);
+                      idInput.val(promoter.id);
+                      suggestionsList.addClass('hidden');
+                    });
+                  suggestionsList.append(li);
+                });
+              },
+              error: function(xhr, status, error) {
+                console.error('Search failed:', error);
+                suggestionsList.empty().append(`
+                                <li class="suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-red">Error loading promoters</li>
+                            `);
+              }
+            });
+          } else {
+            suggestionsList.addClass('hidden');
+          }
+        }, 300);
+      });
+
+      $(document).on('click', function(e) {
+        if (!$(e.target).closest('#promoter_name, #promoter-suggestions').length) {
+          suggestionsList.addClass('hidden');
+        }
+      });
+    };
+
+    handlePromoterSearch();
+
+    function createNewPromoter(promoterName, inputElement, suggestionsElement, setterCallback, idField) {
+      $.ajax({
+        url: '/api/promoters/create',
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+          name: promoterName
+        },
+        success: function(response) {
+          if (inputElement.attr('id') === 'promoters-search') {
+            const currentValue = inputElement.val();
+            const existingPromoters = currentValue.split(',')
+              .map(b => b.trim())
+              .filter(b => b.length > 0)
+              .slice(0, -1);
+
+            existingPromoters.push(promoterName);
+            inputElement.val(existingPromoters.join(', ') + ', ');
+
+            selectedPromoterIds.push(response.promoter.id);
+            promoterIdsField.val(selectedPromoterIds.join(','));
+          } else {
+            setterCallback(response.promoter);
+            idField.val(response.promoter.id);
+          }
+
+          suggestionsElement.empty().addClass('hidden');
+          showSuccessNotification('Promoter created successfully');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          console.error('Error creating promoter:', errorThrown);
+          showFailureNotification('Failed to create promoter');
+        }
+      });
+    }
 
     // Venue Search
     const venueInput = document.getElementById('venue_name');

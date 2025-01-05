@@ -70,20 +70,18 @@ Route::get('/events', [EventController::class, 'getPublicEvents'])->name('public
 Route::get('/events/{eventId}', [EventController::class, 'getSinglePublicEvent'])->name('public-event');
 
 
-Route::middleware(['auth', 'web', 'verified'])->group(function () {
-    // Dashboards - Main Dashboard
+Route::middleware(['web', 'auth', 'verified'])->group(function () {
+    // Main Dashboard Route
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-    // Dashboards - Role Based Dashboards
+    // Dynamic Dashboard Routing
     Route::prefix('/dashboard')->group(function () {
         Route::get('/{dashboardType}', function ($dashboardType) {
-            // Determine the appropriate controller based on the dashboard type
             $controllerName = ucfirst($dashboardType) . 'DashboardController';
+            $controllerClass = "App\\Http\\Controllers\\$controllerName";
 
-            // Check if the controller class exists
-            if (class_exists("App\\Http\\Controllers\\$controllerName")) {
-                // Create an instance of the controller and call the index method
-                return app("App\\Http\\Controllers\\$controllerName")->index($dashboardType);
+            if (class_exists($controllerClass)) {
+                return app($controllerClass)->index($dashboardType);
             }
 
             abort(404);
@@ -113,7 +111,6 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
         Route::get('/venue-journey', [VenueJourneyController::class, 'index'])->name('venue.journey');
         Route::get('/venue-search', [VenueJourneyController::class, 'searchVenue'])->name('venue.search');
-        Route::get('/venue-select', [VenueJourneyController::class, 'selectVenue'])->name('venue.select');
         Route::post('/venue-journey/join/{id}', [VenueJourneyController::class, 'joinVenue'])->name('venue.link');
         Route::post('/venue/create', [VenueJourneyController::class, 'createVenue'])->name('venue.store');
     });
@@ -122,7 +119,6 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
         Route::get('/photographer-journey', [PhotographerJourneyController::class, 'index'])->name('photographer.journey');
         Route::get('/photographer-search', [PhotographerJourneyController::class, 'searchPhotographer'])->name('photographer.search');
-        Route::get('/photographer-select', [PhotographerJourneyController::class, 'selectPhotogrpher'])->name('photographer.select');
         Route::post('/photographer-journey/join/{id}', [PhotographerJourneyController::class, 'joinPhotographer'])->name('photographer.link');
         Route::post('/photographer/create', [PhotographerJourneyController::class, 'createPhotographer'])->name('photographer.store');
     });
@@ -132,14 +128,15 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
         Route::get('/designer-journey', [DesignerJourneyController::class, 'index'])->name('designer.journey');
         Route::get('/designer-search', [DesignerJourneyController::class, 'search'])->name('designer.search');
         Route::post('/designer-journey/join/{id}', [DesignerJourneyController::class, 'joinDesigner'])->name('designer.join');
-        Route::post('/designer-journey/create', [DesignerJourneyController::class, 'createDesigner'])->name('designer.create');
+        Route::post('/designer-journey/create', [DesignerJourneyController::class, 'createDesigner'])->name('designer.store');
     });
 
+    // Videographer Journey
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
         Route::get('/videographer-journey', [VideographerJourneyController::class, 'index'])->name('videographer.journey');
         Route::get('/videographer-search', [VideographerJourneyController::class, 'search'])->name('videographer.search');
         Route::post('/videographer-journey/join/{id}', [VideographerJourneyController::class, 'joinVideographer'])->name('videographer.join');
-        Route::post('/videographer-journey/create', [VideographerJourneyController::class, 'createVideographer'])->name('videographer.create');
+        Route::post('/videographer-journey/create', [VideographerJourneyController::class, 'createVideographer'])->name('videographer.store');
     });
 
     // Finances
@@ -150,8 +147,8 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
         Route::post('/finances/save-budget', [FinanceController::class, 'storeFinance'])->name('admin.dashboard.store-new-finance');
         Route::post('/finances/export', [FinanceController::class, 'exportFinances'])->name('admin.dashboard.finances.export');
         Route::get('/finances/{id}', [FinanceController::class, 'showSingleFinance'])->name('admin.dashboard.show-finance');
-        Route::get('/finance/{id}/edit', [FinanceController::class, 'editFinance'])->name('admin.dashboard.edit-finance');
-        Route::put('/finance/{id}', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finance');
+        Route::get('/finances/{id}/edit', [FinanceController::class, 'editFinance'])->name('admin.dashboard.edit-finance');
+        Route::put('/finances/{id}', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finance');
         Route::post('/finances/{finance}', [FinanceController::class, 'exportSingleFinance'])->name('admin.dashboard.export-finance');
     });
 
