@@ -1,12 +1,9 @@
 <?php
 
-use App\Models\OtherService;
-use App\Services\What3WordsService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JobsController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TodoController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\VenueController;
 use App\Http\Controllers\ReviewController;
@@ -25,7 +22,6 @@ use App\Http\Controllers\OtherServiceController;
 use App\Http\Controllers\VenueJourneyController;
 use App\Http\Controllers\DesignerJourneyController;
 use App\Http\Controllers\PromoterJourneyController;
-use App\Http\Controllers\PromoterDashboardController;
 use App\Http\Controllers\PhotographerJourneyController;
 use App\Http\Controllers\VideographerJourneyController;
 
@@ -226,20 +222,27 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
     });
 
     // To-Do List
-    Route::prefix('/dashboard/{dashboardType}')->group(function () {
-        Route::get('/todo-list', [TodoController::class, 'showTodos'])->name('admin.dashboard.todo-list');
-        Route::get('/todo-items', [TodoController::class, 'getTodos'])->name('admin.dashboard.todo-items');
-        Route::post('/todo-list/new', [TodoController::class, 'newTodoItem'])->name('admin.dashboard.new-todo-item');
-        Route::post('/todo-item/{id}/complete', [TodoController::class, 'completeTodoItem'])->name('admin.dashboard.complete-todo-item');
-        Route::post('/todo-item/{id}/uncomplete', [TodoController::class, 'uncompleteTodoItem'])->name('admin.dashboard.uncomplete-todo-item');
-        Route::delete('/todo-item/{id}', [TodoController::class, 'deleteTodoItem'])->name('admin.dashboard.delete-todo-item');
-        Route::get('/todo-item/completed-items', [TodoController::class, 'showCompletedTodoItems'])->name('admin.dashboard.completed-todo-items');
+    Route::prefix('/dashboard/{dashboardType}/todo-list')->group(function () {
+        // View Routes
+        Route::get('/', [TodoController::class, 'showTodos'])->name('admin.dashboard.todo-list');
+        Route::get('/completed', [TodoController::class, 'showCompletedTodoItems'])->name('admin.dashboard.completed-todos');
+        Route::get('/uncompleted', [TodoController::class, 'showUncompletedTodoItems'])->name('admin.dashboard.uncompleted-todos');
+        Route::get('/load-more', [TodoController::class, 'loadMoreTodos'])->name('admin.dashboard.load-more-todos');
+
+        // Action Routes
+        Route::post('/new', [TodoController::class, 'newTodoItem'])->name('admin.dashboard.new-todo');
+        Route::post('/{id}/complete', [TodoController::class, 'completeTodoItem'])->name('admin.dashboard.complete-todo');
+        Route::post('/{id}/uncomplete', [TodoController::class, 'uncompleteTodoItem'])->name('admin.dashboard.uncomplete-todo');
+        Route::delete('/{id}', [TodoController::class, 'deleteTodoItem'])->name('admin.dashboard.delete-todo');
+
+        // Status Check Routes
+        Route::get('/has-completed', [TodoController::class, 'hasCompletedTodos'])->name('admin.dashboard.has-completed-todos');
+        Route::get('/has-uncompleted', [TodoController::class, 'hasUncompletedTodos'])->name('admin.dashboard.has-cunompleted-todos');
     });
 
     // Jobs
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/jobs', [JobsController::class, 'showJobs'])->name('admin.dashboard.jobs');
-        // Route::get('/job-items', [JobsController::class, 'getJobs'])->name('admin.dashboard.job-items');
         Route::get('/jobs/new', [JobsController::class, 'newJob'])->name('admin.dashboard.jobs.create');
         Route::post('/jobs/store', [JobsController::class, 'storeJob'])->name('admin.dashboard.jobs.store');
         Route::get('/job/{id}', [JobsController::class, 'viewJob'])->name('admin.dashboard.job.view');
