@@ -45,15 +45,18 @@ class StoreUpdateEventRequest extends FormRequest
 
         $rules['poster_url'] = [
             'nullable',
+            'max:10240',
             function ($attribute, $value, $fail) {
-                // Check if `poster_url` is a file upload
                 if ($this->file('poster_url')) {
-                    // Validate as an image file if it's a file upload
-                    if (!$value->isValid() || !in_array($value->extension(), ['jpeg', 'jpg', 'png', 'webp', 'svg'])) {
-                        $fail('The poster must be a valid image file (jpeg, jpg, png, webp, svg).');
+                    if (!$value->isValid()) {
+                        if ($value->getError() === UPLOAD_ERR_INI_SIZE) {
+                            $maxSize = ini_get('upload_max_filesize');
+                            $fail("The poster file size must not exceed {$maxSize}.");
+                        } elseif (!in_array($value->extension(), ['jpeg', 'jpg', 'png', 'webp', 'svg'])) {
+                            $fail('The poster must be a valid image file (jpeg, jpg, png, webp, svg).');
+                        }
                     }
                 } elseif (is_string($value)) {
-                    // If it's a string, validate as an existing URL
                     if (!preg_match('/\.(jpeg|jpg|png|webp|svg)$/i', $value)) {
                         $fail('The poster URL must be a valid image URL.');
                     }
@@ -67,5 +70,12 @@ class StoreUpdateEventRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function messages()
+    {
+        return [
+            'poster_url.max' => 'The poster file size must not exceed 10MB.'
+        ];
     }
 }
