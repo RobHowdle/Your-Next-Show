@@ -87,7 +87,6 @@ class BandJourneyController extends Controller
         ], 200);
     }
 
-
     public function createBand(Request $request)
     {
         $dashboardType = 'Artist';

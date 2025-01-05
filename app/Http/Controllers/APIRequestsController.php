@@ -5,18 +5,19 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Event;
+use App\Models\Promoter;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class APIRequestsController extends Controller
 {
+    /**
+     * Events - Searching for bands
+     */
     public function searchBands(Request $request)
     {
         $query = $request->input('q');
-
-        // Clean the query (assuming cleanQuery is a helper function)
-        // $cleanedQuery = cleanQuery($query);
 
         if (empty($query)) {
             return response()->json(['error' => 'Query is required'], 400);
@@ -47,7 +48,9 @@ class APIRequestsController extends Controller
         return response()->json($bands);
     }
 
-
+    /**
+     * Events - Create a new band from search input
+     */
     public function createBand(Request $request)
     {
         $this->validate($request, [
@@ -80,9 +83,43 @@ class APIRequestsController extends Controller
     }
 
     /**
+     * Events - Searching for promoters
+     */
+    public function searchPromoters(Request $request)
+    {
+        $query = $request->input('q');
+
+        if (empty($query)) {
+            return response()->json(['error' => 'Query is required'], 400);
+        }
+
+        // Fetch bands with the specified other_service_id
+        $promoters = Promoter::where('name', 'LIKE', '%' . $query . '%')
+            ->get(['id', 'name']);
+
+        // Prepare response
+        if ($promoters->isEmpty()) {
+            $promoters = [
+                'promoters' => [],
+                'createNewBandOption' => [
+                    'name' => $query,
+                    'message' => "No results found. Click to create a new band: $query",
+                ],
+            ];
+        } else {
+            $promoters = [
+                'promoters' => $promoters,
+                'createNewPromoterOption' => null,
+            ];
+        }
+
+        // Return the response as JSON
+        return response()->json($promoters);
+    }
+
+    /**
      * Get Users Calendar Events
      */
-
     public function getUserCalendarEvents($dashboardType, Request $request, $userId)
     {
         // Fetch the current user along with relationships

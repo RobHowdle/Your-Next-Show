@@ -38,30 +38,38 @@
         <div class="grid grid-cols-2 gap-x-4 font-heading text-lg">
           <div class="col px-8 pt-8">
             <div class="group border-b border-white">
-              <div class="group mb-4 text-center">
-                <p class="flex flex-col text-2xl font-bold underline">Headliner</p>
-                <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $headliner->id]) }}"
-                  class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $headliner->name ?? 'No Headliner' }}</a>
-              </div>
-              <div class="group mb-4 text-center">
-                <p class="flex flex-col text-xl font-bold underline">Main Support</p>
-                <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $mainSupport->id]) }}"
-                  class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $mainSupport->name ?? 'No Main Support' }}</a>
-              </div>
-              <div class="group mb-4 flex flex-col text-center">
-                @if (count($otherBands) > 0)
-                  <p class="text-lg font-bold underline">Band</p>
-                  @foreach ($otherBands as $band)
-                    <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $band->id]) }}"
-                      class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $band->name }}</a>
-                  @endforeach
-                @endif
-              </div>
-              <div class="group mb-4 text-center">
-                <p class="text-md flex flex-col font-bold underline">Opener</p>
-                <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $opener->id]) }}"
-                  class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $opener->name ?? 'No Opener' }}</a>
-              </div>
+              @if ($headliner)
+                <div class="group mb-4 text-center">
+                  <p class="flex flex-col text-2xl font-bold underline">Headliner</p>
+                  <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $headliner->id]) }}"
+                    class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $headliner->name ?? 'No Headliner' }}</a>
+                </div>
+              @endif
+              @if ($mainSupport)
+                <div class="group mb-4 text-center">
+                  <p class="flex flex-col text-xl font-bold underline">Main Support</p>
+                  <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $mainSupport->id]) }}"
+                    class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $mainSupport->name ?? 'No Main Support' }}</a>
+                </div>
+              @endif
+              @if ($otherBands)
+                <div class="group mb-4 flex flex-col text-center">
+                  @if (count($otherBands) > 0)
+                    <p class="text-lg font-bold underline">Band</p>
+                    @foreach ($otherBands as $band)
+                      <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $band->id]) }}"
+                        class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $band->name }}</a>
+                    @endforeach
+                  @endif
+                </div>
+              @endif
+              @if ($opener)
+                <div class="group mb-4 text-center">
+                  <p class="text-md flex flex-col font-bold underline">Opener</p>
+                  <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $opener->id]) }}"
+                    class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $opener->name ?? 'No Opener' }}</a>
+                </div>
+              @endif
             </div>
             @if ($event->event_description)
               <div class="group my-2 flex flex-row items-center justify-center text-center">

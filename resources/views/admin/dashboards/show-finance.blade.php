@@ -11,7 +11,7 @@
             <div class="mb-8 flex flex-row items-center justify-between">
               <p class="font-heading text-3xl font-bold">Finance Record: #{{ $finance->id }}</p>
               <div class="group flex gap-4">
-                <a href="{{ route('admin.dashboard.edit-finance', ['dashboardType' => $dashboardType, 'id' => $finance->id]) }}"
+                <a href="{{ route('admin.dashboard.edit-finances', ['dashboardType' => $dashboardType, 'id' => $finance->id]) }}"
                   class="rounded-lg border bg-white px-4 py-2 font-bold text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Edit<span
                     class="fas fa-edit ml-2"></span></a>
                 <form

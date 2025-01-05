@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use App\Models\Job;
-use Illuminate\Http\Request;
 use App\Models\VideographyReviews;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,10 +17,11 @@ class VideographerDashboardController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $videographer = Auth::user()->load(['roles', 'otherService']);
+        $role = $videographer->roles->first()->name;
 
-        $designer = Auth::user()->load(['roles', 'otherService']);
-        $role = $designer->roles->first()->name;
-        $todoItemsCount = $designer->otherService()->with(['todos' => function ($query) {
+        $todoItemsCount = $videographer->otherService()->with(['todos' => function ($query) {
             $query->where('completed', 0)->whereNull('deleted_at');
         }])->get()->pluck('todos')->flatten()->count();
         $jobCount = Job::where('user_id', $this->getUserId())->whereNotIn('job_status', ['done', 'cancelled'])->count();
@@ -32,9 +32,11 @@ class VideographerDashboardController extends Controller
 
         return view('admin.dashboards.videographer-dash', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
-            'designer' => $designer,
+            'videographer' => $videographer,
             'todoItemsCount' => $todoItemsCount,
             'jobCount' => $jobCount,
             'pendingReviews' => $pendingReviews,

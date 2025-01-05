@@ -101,7 +101,6 @@ class SubNav extends Component
                 $output .= '<img src="' . $emptyIcon . '" alt="Empty Icon" />';
             }
         }
-        dd($output);
         return $output;
     }
 
@@ -196,7 +195,7 @@ class SubNav extends Component
 
     private function loadVideographerData($user)
     {
-        $videographers = $user->otherService('Videographer')->get();
+        $videographers = $user->otherService('Videography')->get();
         if ($videographers->isNotEmpty()) {
             $videographer = $videographers->first();
             $this->videographerId = $videographer->id;

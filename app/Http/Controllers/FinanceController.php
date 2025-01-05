@@ -22,6 +22,8 @@ class FinanceController extends Controller
     {
         $modules = collect(session('modules', []));
         $user = Auth::user();
+        $role = $user->roles->first()->name;
+
         $linkedCompany = $user->linkedCompany();
         $serviceableId = $linkedCompany->id;
         $serviceableType = get_class($linkedCompany);
@@ -35,7 +37,6 @@ class FinanceController extends Controller
             return response()->json(['error' => 'No company linked to user'], 404);
         }
 
-
         $totalIncome = $finances->sum('total_incoming'); // Replace 'incoming' with the correct column
         $totalOutgoing = $finances->sum('total_outgoing'); // Replace 'outgoing' with the correct column
         $totalProfit = $totalIncome - $totalOutgoing;
@@ -46,6 +47,8 @@ class FinanceController extends Controller
                 'totalOutgoing' => $totalOutgoing,
                 'totalProfit' => $totalProfit,
                 'modules' => $modules,
+                'user' => $user,
+                'role' => $role,
                 'financeRecords' => $finances->map(function ($finance, $dashboardType) {
                     return [
                         'name' => $finance->name, // Replace with actual column
@@ -71,6 +74,8 @@ class FinanceController extends Controller
             'totalOutgoing' => $totalOutgoing,
             'totalProfit' => $totalProfit,
             'modules' => $modules,
+            'user' => $user,
+            'role' => $role,
         ]);
     }
 
@@ -140,9 +145,14 @@ class FinanceController extends Controller
     public function createFinance($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
+
 
         return view('admin.dashboards.new-finance', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
         ]);
@@ -277,11 +287,15 @@ class FinanceController extends Controller
     public function showSingleFinance($dashboardType, $id)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
 
         $finance = Finance::findOrFail($id)->load('user', 'serviceable');
 
         return view('admin.dashboards.show-finance', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'finance' => $finance,
@@ -291,13 +305,18 @@ class FinanceController extends Controller
     public function editFinance($dashboardType, $id)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
+
         $finance = Finance::findOrFail($id);
 
         return view('admin.dashboards.edit-finance', [
+            'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'finance' => $finance,
-            'userId' => $this->getUserId()
         ]);
     }
 
