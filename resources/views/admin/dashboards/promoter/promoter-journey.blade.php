@@ -9,16 +9,16 @@
         <p class="mb-3 text-3xl font-bold text-white">Oops, you're not linked to anywhere! Let's fix that!</p>
         <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-4">
           <div class="group">
-            <x-input-label-dark>What is the name of your venue?
+            <x-input-label-dark>What is the name of your promotions company?
               <span id="result-count"></span>
             </x-input-label-dark>
-            <x-text-input id="venue-search"></x-text-input>
-            <h2 class="my-4 text-xl font-semibold" id="venue-table-title">Available Venues</h2>
-            <table class="w-full border border-white text-left font-sans rtl:text-right" id="venuesTable">
+            <x-text-input id="promoter-search"></x-text-input>
+            <h2 class="my-4 text-xl font-semibold" id="promoter-table-title">Available Promoters</h2>
+            <table class="w-full border border-white text-left font-sans rtl:text-right" id="promotersTable">
               <thead class="underline">
                 <tr>
                   <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
-                    Venue Name</th>
+                    Promoter Name</th>
                   <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
                     Action</th>
                 </tr>
@@ -26,16 +26,16 @@
               <tbody>
               </tbody>
             </table>
-            <p id="noVenueMessage" class="mt-4 hidden">No venues available to join at the moment.</p>
+            <p id="noPromoterMessage" class="mt-4 hidden">No promoters available to join at the moment.</p>
           </div>
         </div>
         <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-4">
           <div class="mb-4">
-            <div class="col-span-2" id="create-venue-form" style="display: none;">
+            <div class="col-span-2" id="create-promoter-form" style="display: none;">
               <p class="col-span-2 mb-3 font-bold">It looks like you're not already in the system - Let's get you added!
               </p>
-              <form action="{{ route('venue.store', ['dashboardType' => $dashboardType]) }}"
-                class="grid grid-cols-2 gap-x-8 gap-y-4" id="create-venue-form" method="POST"
+              <form action="{{ route('promoter.store', ['dashboardType' => $dashboardType]) }}"
+                class="grid grid-cols-2 gap-x-8 gap-y-4" id="create-promoter-form" method="POST"
                 enctype="multipart/form-data">
                 @csrf
                 <x-google-address-picker id="location" name="location" label="Where are you based?"
@@ -43,7 +43,7 @@
                   postalTown=""></x-google-address-picker>
 
                 <div class="group">
-                  <x-input-label-dark>Venue Name</x-input-label-dark>
+                  <x-input-label-dark>Promoter Name</x-input-label-dark>
                   <x-text-input id="name" name="name" value="{{ old('name') }}"></x-text-input>
                   @error('name')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
@@ -55,24 +55,6 @@
                   <x-textarea-input class="w-full" id="description"
                     name="description">{{ old('description') }}</x-textarea-input>
                   @error('description')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-
-                <div class="group">
-                  <x-input-label-dark>Do you have any gear in house that you allow artists to
-                    use?</x-input-label-dark>
-                  <x-textarea-input class="w-full" id="in_house_gear"
-                    name="in_house_gear">{{ old('in_house_gear') }}</x-textarea-input>
-                  @error('in_house_gear')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-
-                <div class="group">
-                  <x-input-label-dark>What is your venue capacity?</x-input-label-dark>
-                  <x-text-input id="capacity" name="capacity" value="{{ old('capacity') }}"></x-text-input>
-                  @error('capacity')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
@@ -108,12 +90,12 @@
 </x-app-layout>
 <script>
   jQuery(document).ready(function() {
-    jQuery('#venue-search').on('keyup', function() {
+    jQuery('#promoter-search').on('keyup', function() {
       let query = jQuery(this).val();
       const dashboardType = "{{ $dashboardType }}";
 
       $.ajax({
-        url: `/${dashboardType}/venue-search`,
+        url: `/${dashboardType}/promoter-search`,
         type: 'GET',
         data: {
           query: query
@@ -121,32 +103,32 @@
         success: function(data) {
           console.log(data.html);
           if (data.html.trim() === '') {
-            jQuery('#venuesTable').hide();
-            jQuery('#venue-table-title').hide();
-            jQuery('#noVenuesMessage').removeClass('hidden');
-            jQuery('#create-venue-form').show();
+            jQuery('#promotersTable').hide();
+            jQuery('#promoter-table-title').hide();
+            jQuery('#noPromoterMessage').removeClass('hidden');
+            jQuery('#create-promoter-form').show();
           } else {
-            jQuery('#venuesTable tbody').html(data.html);
-            jQuery('#noVenuesMessage').addClass('hidden');
+            jQuery('#promotersTable tbody').html(data.html);
+            jQuery('#noPromoterMessage').addClass('hidden');
           }
         }
       });
     });
 
     // Event delegation for dynamically created buttons
-    jQuery(document).on('click', '.join-venue-btn', function() {
-      const venueId = jQuery(this).data('venue-id'); // Retrieve the id from data-id attribute
-      linkUserToVenue(venueId); // Call your function
+    jQuery(document).on('click', '.join-promoter-btn', function() {
+      const promoterId = jQuery(this).data('promoter-id'); // Retrieve the id from data-id attribute
+      linkUserToPromoter(promoterId); // Call your function
     });
 
-    function linkUserToVenue(venueId) {
+    function linkUserToPromoter(promoterId) {
       const dashboardType = "{{ $dashboardType }}";
       $.ajax({
-        url: `/${dashboardType}/venue-journey/join/${venueId}`,
+        url: `/${dashboardType}/promoter-journey/join/${promoterId}`,
         type: 'POST',
         data: {
           _token: '{{ csrf_token() }}',
-          serviceable_id: venueId
+          serviceable_id: promoterId
         },
         success: function(response) {
           if (response.success) {

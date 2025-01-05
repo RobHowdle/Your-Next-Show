@@ -31,7 +31,8 @@
 
               <div class="group">
                 <x-input-label-dark :required="true">Date From</x-input-label-dark>
-                <x-date-input id="date_from" name="date_from" :required="true" :value="old('date_from')"></x-date-input>
+                <x-date-time-input id="date_from" name="date_from" :required="true"
+                  :value="old('date_from')"></x-date-time-input>
                 @error('date_from')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -39,7 +40,8 @@
 
               <div class="group">
                 <x-input-label-dark :required="true">Date To</x-input-label-dark>
-                <x-date-input id="date_to" name="date_to" :required="true" :value="old('date_to')"></x-date-input>
+                <x-date-time-input id="date_to" name="date_to" :required="true"
+                  :value="old('date_to')"></x-date-time-input>
                 @error('date_to')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror

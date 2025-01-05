@@ -36,7 +36,7 @@
             ]" :selected="['5']" />
           </div>
           <div class="group flex items-center gap-2">
-            <x-input-label class="mb-0">Show Other Gigs</x-input-label>
+            <x-input-label-dark class="mb-0">Show Other Gigs</x-input-label-dark>
             <x-input-checkbox id="show-other-gigs" name="showOtherGigs"></x-input-checkbox>
           </div>
         </div>

@@ -24,8 +24,8 @@
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Date & Time of Event</x-input-label-dark>
-                <x-date-input id="combinedDateTime" name="combinedDateTime"
-                  value="{{ old('combinedDateTime', $combinedDateTime) }}"></x-date-input>
+                <x-date-time-input id="combinedDateTime" name="combinedDateTime"
+                  value="{{ old('combinedDateTime', $combinedDateTime) }}"></x-date-time-input>
                 @error('combinedDateTime')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -33,8 +33,8 @@
               <div class="group mb-4 hidden">
                 <x-input-label-dark>Date of Event</x-input-label-dark>
                 <span>This is supposed to be hidden...naughty naughty</span>
-                <x-date-input id="formattedEventDate" name="formattedEventDate"
-                  value="{{ old('formattedEventDate', $formattedEventDate) }}"></x-date-input>
+                <x-date-time-input id="formattedEventDate" name="formattedEventDate"
+                  value="{{ old('formattedEventDate', $formattedEventDate) }}"></x-date-time-input>
                 @error('formattedEventDate')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror

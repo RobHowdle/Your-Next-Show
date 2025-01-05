@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
-use App\Models\Venue;
+use App\Models\Promoter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class VenueJourneyController extends Controller
+class PromoterJourneyController extends Controller
 {
     protected function getUserId()
     {
@@ -17,64 +17,66 @@ class VenueJourneyController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
-        $venues = Venue::get();
+        $promoters = Promoter::get();
 
-
-        return view('admin.dashboards.venue.venue-journey', [
+        return view('admin.dashboards.promoter.promoter-journey', [
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'modules' => $modules,
-            'venues' => $venues,
+            'promoters' => $promoters,
         ]);
     }
 
-    public function searchVenue(Request $request)
+    public function search(Request $request)
     {
         $query = $request->get('query');
 
         if ($query) {
-            $venues = Venue::where('name', 'like', '%' . $query . '%')
+            $promoters = Promoter::where('name', 'like', '%' . $query . '%')
                 ->get();
         } else {
-            $venues = Venue::where('name', 'like', '%' . $query . '%')
+            $promoters = Promoter::where('name', 'like', '%' . $query . '%')
                 ->limit(8)
                 ->get();
         }
 
         $html = '';
-        foreach ($venues as $venue) {
-            $html .= view('admin.dashboards.partials.venue-row', compact('venue'))->render();
+        foreach ($promoters as $promoter) {
+            $html .= view('admin.dashboards.partials.promoter-row', compact('promoter'))->render();
         }
 
         return response()->json(['html' => $html]);
     }
 
-    public function joinVenue($dashboardType, Request $request)
+
+    public function joinPromoter($dashboardType, Request $request)
     {
-        $serviceableId = $request->input('serviceable_id');
+        $promoterId = $request->input('serviceable_id');
+        $user = Auth::user();
 
-        $user = auth()->user();
-        $venue = Venue::find($serviceableId);
+        // Check if the band exists
+        $promoter = Promoter::find($promoterId);
 
-        if (!$venue) {
+        if (!$promoter) {
             return response()->json([
                 'success' => false,
-                'message' => 'Venue not found'
+                'message' => 'The promoter does not exist.'
             ], 404);
         }
 
-        if ($user->venues()->where('venues.id', $serviceableId)->exists()) {
+        // Check if the user is already part of the band
+        if ($user->promoters()->where('serviceable_id', $promoterId)->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are already linked to this venue'
+                'message' => 'You are already a member of this artist.'
             ], 400);
         }
 
-        $user->venues()->attach($serviceableId, [
+        // Add the user to the band
+        $user->promoters()->attach($promoterId, [
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
         ]);
-
 
         return response()->json([
             'success' => true,
@@ -83,11 +85,12 @@ class VenueJourneyController extends Controller
         ], 200);
     }
 
-    public function createVenue(Request $request)
-    {
-        $dashboardType = 'Venue';
-        $platformsJson = determinePlatform($request->input('contact_link'));
 
+    public function createPromoter(Request $request)
+    {
+        $dashboardType = 'Promoter';
+        $platformsJson = determinePlatform($request->input('contact_link'));
+        // Validate and create a new promoter
         $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
@@ -95,8 +98,6 @@ class VenueJourneyController extends Controller
             'latitude' => 'required',
             'longitude' => 'required',
             'description' => 'required|string|max:255',
-            'capacity' => 'required',
-            'in_house_gear' => 'required',
             'contact_name' => 'required',
             'contact_number' => 'required',
             'contact_email' => 'required',
@@ -104,14 +105,13 @@ class VenueJourneyController extends Controller
         ]);
 
         try {
-            $venue = Venue::create([
+            // Create new promoter
+            $promoter = Promoter::create([
                 'name' => $request->name,
                 'location' => $request->location,
                 'postal_town' => $request->postal_town,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
-                'capacity' => $request->capacity,
-                'in_house_gear' => $request->in_house_gear,
                 'description' => $request->description,
                 'contact_name' => $request->contact_name,
                 'contact_number' => $request->contact_number,
@@ -121,28 +121,23 @@ class VenueJourneyController extends Controller
                 'genre' => json_encode([]),
             ]);
 
-            if (!$venue) {
-                logger()->error('Failed to create venue');
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create venue'
-                ], 400);
+            if (!$promoter) {
+                logger()->error('Promoter creation failed');
+                return back()->withErrors(['error' => 'Failed to create the promoter']);
             }
 
+            // Associate the user with the new promoter
             $user = auth()->user();
             if (!$user) {
                 logger()->error('No authenticated user found');
                 return back()->withErrors(['error' => 'No authenticated user']);
             }
 
-            $user->venues()->attach($venue->id, [
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now()
-            ]);
+            $user->promoters()->attach($promoter->id);
 
-            return redirect()->route('dashboard', ['dashboardType' => $dashboardType])->with('success', 'Venue created successfully and joined!');
+            return redirect()->route('dashboard', $dashboardType)->with('success', 'Successfully created and joined the new promoter!');
         } catch (\Exception $e) {
-            logger()->error('Failed to create venue', ['error' => $e->getMessage()]);
+            logger()->error('Error in createPromoter:', ['error' => $e->getMessage()]);
             return back()->withErrors(['error' => 'Something went wrong. We\'ve logged the error and will fix it soon.']);
         }
     }

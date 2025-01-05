@@ -27,6 +27,10 @@ html {
     font-family: Figtree, sans-serif;
     font-feature-settings: normal;
 }
+/* 
+.swal2-html-container {
+    color: white !important;
+} */
 
 body {
     margin: 0;
@@ -876,6 +880,12 @@ video {
 
 .group:hover .group-hover\:block {
     display: block;
+}
+
+.relative input[type="password"]:focus + .password-toggle-icon {
+    right: 40px;
+    z-index: 10;
+    transition: right 0.3s ease-in-out, z-index 0.3s ease-in-out;
 }
 
 /* Register Form Password Metere */

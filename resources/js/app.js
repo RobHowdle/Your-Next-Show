@@ -430,7 +430,8 @@ window.showWarningNotification = function (message) {
         customClass: {
             popup: "bg-yns_dark_gray !important rounded-lg font-heading",
             title: "text-yns_red",
-            html: "text-white",
+            htmlContainer: "!text-white",
+            content: "!text-white",
         },
         icon: "warning",
         title: "Warning!",

@@ -21,19 +21,19 @@
                 <div class="col">
                   <div class="group mb-4">
                     <x-input-label-dark>Date</x-input-label-dark>
-                    <x-date-input id="dateInput" name="date"></x-date-input>
+                    <x-date-time-input id="dateInput" name="date"></x-date-time-input>
                   </div>
                 </div>
 
                 <div class="col-span-2">
                   <div class="group mb-4">
-                    <x-input-label>Text</x-input-label>
+                    <x-input-label-dark>Text</x-input-label-dark>
                     <x-textarea-input id="textInput" name="text" class="w-full"></x-textarea-input>
                   </div>
                 </div>
 
                 <div class="col-span-2 flex flex-row-reverse items-end justify-end gap-2">
-                  <x-input-label>Convert to Todo Item</x-input-label>
+                  <x-input-label-dark>Convert to Todo Item</x-input-label-dark>
                   <x-input-checkbox id="isTodoInput" name="isTodo"></x-input-checkbox>
                 </div>
               </div>
