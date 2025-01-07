@@ -13,6 +13,7 @@
           <input
             class="search map-input w-full rounded-bl rounded-tl border-b border-l border-r-0 border-t border-white bg-yns_light_gray font-sans text-xl focus:border-white md:w-4/6"
             type="search" id="address-input" name="search_query" placeholder="Search..." />
+
           <button type="submit" id="search-button"
             class="search-button rounded-br rounded-tr border-b border-r border-t border-white bg-black p-4 text-white hover:bg-gray-800">
             <span class="fas fa-search"></span>
@@ -129,7 +130,7 @@
 
       <a class="font-sans text-base transition duration-150 ease-in-out hover:text-yns_yellow lg:text-lg"
         href="https://buymeacoffee.com/yournextshow" target="_blank">
-        <span class="fas fa-coffee mr-2 text-2xl"></span>By Me A Coffee
+        <span class="fas fa-coffee mr-2 text-2xl"></span>Buy Me A Coffee
       </a>
 
       <p class="font-sans text-base lg:text-lg"><span class="font-bold">PLEASE NOTE:</span> You are not obligated to

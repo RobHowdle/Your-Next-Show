@@ -214,7 +214,7 @@
         if (data.results && Array.isArray(data.results)) {
           updateTable(data);
         } else {
-          console.error("The 'venue' field is not an array or is missing:", data.otherServices);
+          console.error("The 'venue' field is not an array or is missing:", data.venues);
         }
       },
       error: function(err) {
@@ -223,26 +223,25 @@
     });
   }
 
-  function updateResultsTable(filteredOtherServices, pagination) {
-    if (!Array.isArray(filteredOtherServices)) {
-      console.error("filteredOtherServices is not an array:", filteredOtherServices);
+  function updateResultsTable(filteredVenues, pagination) {
+    if (!Array.isArray(filteredVenues)) {
+      console.error("filteredVenues is not an array:", filteredVenues);
       return;
     }
 
-    console.log(typeof(filteredOtherServices));
+    console.log(typeof(filteredVenues));
 
-    var otherRoute = "{{ route('singleService', [':serviceName', ':serviceId']) }}";
+    var venueRoute = "{{ route('venues', [':serviceId']) }}";
 
-    var rowsHtml = filteredOtherServices.map(function(otherService) {
-      var finalRoute = otherRoute
-        .replace(':serviceName', otherService.service_type)
-        .replace(':serviceId', otherService.id);
+    var rowsHtml = filteredVenues.map(function(venue) {
+      var finalRoute = venueRoute
+        .replace(':serviceId', venue.id);
 
-      var ratingHtml = getRatingHtml(otherService.average_rating);
+      var ratingHtml = getRatingHtml(venue.average_rating);
       var platformsHtml = '';
 
-      if (otherService.platforms && Array.isArray(otherService.platforms)) {
-        platformsHtml = otherService.platforms.map(function(platform) {
+      if (venue.platforms && Array.isArray(venue.platforms)) {
+        platformsHtml = venue.platforms.map(function(platform) {
           try {
             // Access platform properties directly
             const platformType = platform.platform;
@@ -291,21 +290,21 @@
       return `
       <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
         <th scope="row" class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="${finalRoute}" class="venue-link transition duration-150 ease-in-out hover:text-yns_yellow">${otherService.name}</a>
+          <a href="${finalRoute}" class="venue-link transition duration-150 ease-in-out hover:text-yns_yellow">${venue.name}</a>
         </th>
         <td class="rating-wrapper px:2 py:2 hidden whitespace-nowrap sm:text-base md:px-6 md:py-3 lg:flex lg:px-8 lg:py-4">
           ${ratingHtml}
         </td>
         <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          ${otherService.postal_town || ''}
+          ${venue.postal_town || ''}
         </td>
         <td class="hidden whitespace-nowrap px-2 py-2 align-middle text-white md:block md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          ${otherService.contact_number ? 
-            `<a href="tel:${otherService.contact_number}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
+          ${venue.contact_number ? 
+            `<a href="tel:${venue.contact_number}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
               <span class="fas fa-phone"></span>
             </a>` : ''}
-          ${otherService.contact_email ? 
-            `<a href="mailto:${otherService.contact_email}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
+          ${venue.contact_email ? 
+            `<a href="mailto:${venue.contact_email}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
               <span class="fas fa-envelope"></span>
             </a>` : ''}
           ${platformsHtml}
@@ -361,27 +360,27 @@
   function updateTable(data) {
     console.log("Data:", data); // Check the entire data object
 
-    // If the data doesn't have otherServices, we'll log an error and exit
+    // If the data doesn't have venues, we'll log an error and exit
     if (!data || !data.results) {
-      console.error("Other services data is missing or undefined.");
+      console.error("Venues data is missing or undefined.");
       return; // Exit the function if the data is not structured as expected
     }
 
-    var otherServices = data.results;
+    var venues = data.results;
     var pagination = data.pagination;
 
-    console.log("Other Services:", otherServices);
+    console.log("Venues:", venues);
 
     // Check if data is not null or empty array
-    if (otherServices && otherServices.length > 0) {
-      updateResultsTable(otherServices, pagination);
+    if (venues && venues.length > 0) {
+      updateResultsTable(venues, pagination);
     } else {
-      var noOtherServicesRow = `
+      var noVenuesRow = `
             <tr class=" border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-                <td colspan="5" class="whitespace-nowrap font-sans text-white sm:px-2 sm:py-3 sm:text-base md:px-6 md:py-2 md:text-lg lg:px-8 lg:py-4 uppercase text-center">No Services Found</td>
+                <td colspan="5" class="whitespace-nowrap font-sans text-white sm:px-2 sm:py-3 sm:text-base md:px-6 md:py-2 md:text-lg lg:px-8 lg:py-4 uppercase text-center">No Venues Found</td>
             </tr>
         `;
-      jQuery('#resultsTableBody').html(noOtherServicesRow);
+      jQuery('#resultsTableBody').html(noVenuesRow);
     }
   }
 
