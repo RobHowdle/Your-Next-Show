@@ -28,7 +28,7 @@
             ])
           @elseif($dashboardType == 'venue')
             @include('profile.partials.venue-profile', [
-                'venueData' => $venueData,
+                'venueUserData' => $venueUserData,
             ])
           @elseif($dashboardType == 'photographer')
             @include('profile.partials.photographer-profile', [
@@ -106,7 +106,7 @@
           ])
         @elseif($dashboardType == 'venue')
           @include('profile.partials.venue-profile-tabs', [
-              'venueData' => $venueData,
+              'venueUserData' => $venueUserData,
           ])
         @elseif($dashboardType == 'photographer')
           @include('profile.partials.photographer-profile-tabs', [

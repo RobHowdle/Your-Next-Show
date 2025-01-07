@@ -368,15 +368,17 @@ class EventController extends Controller
             }
 
             // Event Promoter Creation
-            if (isset($promoter)) {
-                $event->promoters()->attach(
-                    $promoter->id,
-                    [
-                        'event_id' => $event->id,
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
-                    ]
-                );
+            if (isset($validatedData['promoter_ids'])) {
+                foreach ($validatedData['promoter_ids'] as $promoterId) {
+                    $event->promoters()->attach(
+                        $promoterId,
+                        [
+                            'event_id' => $event->id,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
+                        ]
+                    );
+                }
             }
 
             return response()->json([
@@ -460,68 +462,85 @@ class EventController extends Controller
 
     public function editEvent($dashboardType, $id)
     {
-        $modules = collect(session('modules', []));
+        try {
+            $modules = collect(session('modules', []));
 
-        $promoter = Auth::user()->promoters()->first();
+            // Load event with relationships
+            $event = Event::with(['promoters', 'venues', 'services'])->findOrFail($id);
 
-        $event = Event::with(['promoters', 'venues', 'services'])->findOrFail($id);
-        $eventDate = Carbon::parse($event->event_date)->toDateString();
-        $eventTime = $event->event_start_time;
-        $combinedDateTime = Carbon::parse($eventDate . ' ' . $eventTime)->format('Y-m-d\TH:i');
-        $formattedEndTime = \Carbon\Carbon::parse($event->event_end_time)->format('H:i');
-        $formattedEventDate = \Carbon\Carbon::parse($event->event_date)->format('Y-m-d\TH:i');
+            // Get venue with null check
+            $venue = $event->venues->first();
 
-        $bandRoles = json_decode($event->band_ids, true);
+            // Get promoters with null check
+            $promoters = $event->promoters ?? collect();
 
-        $headlinerId = null;
-        $mainSupportId = null;
-        $openerId = null;
-        $bands = [];
+            // Format dates and times
+            $eventDate = Carbon::parse($event->event_date)->toDateString();
+            $eventTime = $event->event_start_time;
+            $combinedDateTime = $eventDate . 'T' . $eventTime;
 
-        // Iterate through the decoded roles and IDs
-        foreach ($bandRoles as $band) {
-            switch ($band['role']) {
-                case 'Headliner':
-                    $headlinerId = $band['band_id'];
-                    break;
-                case 'Main Support':
-                    $mainSupportId = $band['band_id'];
-                    break;
-                case 'Opener':
-                    $openerId = $band['band_id'];
-                    break;
-                case 'Artist':
-                    $bands[] = $band['band_id'];
-                    break;
+            $formattedEndTime = Carbon::parse($event->event_end_time)->format('H:i');
+            $formattedEventDate = Carbon::parse($event->event_date)->format('Y-m-d\TH:i');
+
+            // Process band roles
+            $bandRoles = json_decode($event->band_ids, true) ?? [];
+            $headlinerId = null;
+            $mainSupportId = null;
+            $openerId = null;
+            $bands = [];
+
+            foreach ($bandRoles as $band) {
+                switch ($band['role']) {
+                    case 'Headliner':
+                        $headlinerId = $band['band_id'];
+                        break;
+                    case 'Main Support':
+                        $mainSupportId = $band['band_id'];
+                        break;
+                    case 'Opener':
+                        $openerId = $band['band_id'];
+                        break;
+                    case 'Artist':
+                        $bands[] = $band['band_id'];
+                        break;
+                }
             }
-        }
 
-        $headliner = $headlinerId ? OtherService::find($headlinerId) : null;
-        $mainSupport = $mainSupportId ? OtherService::find($mainSupportId) : null;
-        $opener = $openerId ? OtherService::find($openerId) : null;
+            // Get band objects with null checks
+            $headliner = $headlinerId ? OtherService::find($headlinerId) : null;
+            $mainSupport = $mainSupportId ? OtherService::find($mainSupportId) : null;
+            $opener = $openerId ? OtherService::find($openerId) : null;
 
-        $bandObjects = [];
-        foreach ($bands as $bandId) {
-            $band = OtherService::find($bandId);
-            if ($band) {
-                $bandObjects[] = $band;
+            $bandObjects = [];
+            foreach ($bands as $bandId) {
+                $band = OtherService::find($bandId);
+                if ($band) {
+                    $bandObjects[] = $band;
+                }
             }
-        }
 
-        return view('admin.dashboards.edit-event', [
-            'userId' => $this->getUserId(),
-            'dashboardType' => $dashboardType,
-            'modules' => $modules,
-            'event' => $event,
-            'combinedDateTime' => $combinedDateTime,
-            'promoter' => $promoter,
-            'formattedEndTime' => $formattedEndTime,
-            'formattedEventDate' => $formattedEventDate,
-            'headliner' => $headliner,
-            'mainSupport' => $mainSupport,
-            'bandObjects' => $bandObjects,
-            'opener' => $opener,
-        ]);
+            return view(
+                'admin.dashboards.edit-event',
+                [
+                    'userId' => $this->getUserId(),
+                    'dashboardType' => $dashboardType,
+                    'modules' => $modules,
+                    'event' => $event,
+                    'venue' => $venue,
+                    'promoters' => $promoters,
+                    'combinedDateTime' => $combinedDateTime,
+                    'formattedEndTime' => $formattedEndTime,
+                    'formattedEventDate' => $formattedEventDate,
+                    'headliner' => $headliner,
+                    'mainSupport' => $mainSupport,
+                    'bandObjects' => $bandObjects,
+                    'opener' => $opener,
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error('Error editing event: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error loading event details');
+        }
     }
 
     public function updateEvent($dashboardType, StoreUpdateEventRequest $request, $eventId)
