@@ -61,15 +61,14 @@
                 </div>
               @else
                 <div class="group mb-4">
-                  <x-input-label-dark :required="true">Promoter</x-input-label-dark>
-                  <x-text-input id="promoter_name" name="promoter_name" autocomplete="off" :required="true"
+                  <x-input-label-dark>Promoter</x-input-label-dark>
+                  <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
                     :value="old('')"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                   </ul>
-                  <x-input-label-dark :required="true">Promoter ID</x-input-label-dark>
-                  <x-text-input id="promoter_id" name="promoter_id" :value="old('')"
-                    :required="true"></x-text-input>
+                  <x-input-label-dark>Promoter ID</x-input-label-dark>
+                  <x-text-input id="promoter_id" name="promoter_id" :value="old('')"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
                   </ul>
