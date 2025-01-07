@@ -127,11 +127,12 @@ class VenueController extends Controller
         $reviewCount = VenueReview::getReviewCount($id);
 
         $genres = json_decode($venue->genre);
+        $genreNames = collect($genres)->keys()->toArray();
 
         return view('venue', compact(
             'venue',
             'venueId',
-            'genres',
+            'genreNames',
             'overallScore',
             'overallReviews',
             'averageCommunicationRating',
@@ -167,35 +168,42 @@ class VenueController extends Controller
         $longitude = $request->input('longitude');
         $searchQuery = $request->input('search_query');
 
-        // Filter venues by latitude and longitude
-        $venuesByCoordinatesQuery = Venue::where('latitude', $latitude)
-            ->where('longitude', $longitude);
+        $genreList = file_get_contents(public_path('text/genre_list.json'));
+        $data = json_decode($genreList, true);
+        $genres = $data['genres'];
 
-        // Initialize query for venues by address
-        $venuesByAddressQuery = Venue::query();
+        $query = Venue::query();
 
+        // If we have a search query with comma (town, address format)
         if (strpos($searchQuery, ',') !== false) {
             list($town, $address) = explode(',', $searchQuery);
-            $venuesByAddressQuery->where(function ($query) use ($town, $address) {
-                $query->where('postal_town', 'LIKE', "%$address%")
-                    ->orWhere('postal_town', 'LIKE', "%$town%");
+            $query->where(function ($q) use ($town, $latitude, $longitude) {
+                $q->where('postal_town', 'LIKE', "%$town%");
+                // ->where('latitude', $latitude)
+                // ->where('longitude', $longitude);
             });
         } else {
-            $venuesByAddressQuery->where('postal_town', 'LIKE', "%$searchQuery%");
+            // Search by town name only
+            $query->where('postal_town', 'LIKE', "%$searchQuery%");
+            // ->where('latitude', $latitude)
+            // ->where('longitude', $longitude);
         }
 
-        $venuesByCoordinates = $venuesByCoordinatesQuery->paginate(10, ['*'], 'coordinates_page');
-        $venuesByAddress = $venuesByAddressQuery->paginate(10, ['*'], 'address_page');
+        // Get paginated results
+        $venues = $query->paginate(10);
 
-        // Process social links for each venue
-        foreach ($venuesByCoordinates as $venue) {
+        $overallReviews = [];
+
+        // Process social links
+        foreach ($venues as $venue) {
             $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
-        }
-        foreach ($venuesByAddress as $venue) {
-            $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
+            $overallScore = VenueReview::calculateOverallScore($venue->id);
+            $overallReviews[$venue->id] = $this->renderRatingIcons($overallScore);
         }
 
-        return view('filtered-venues', compact('venuesByCoordinates', 'venuesByAddress'));
+        $venuePromoterCount = isset($venue['promoters']) ? count($venue['promoters']) : 0;
+
+        return view('venues', compact('venues', 'genres', 'venuePromoterCount', 'overallReviews'));
     }
 
     public function filterCheckboxesSearch(Request $request)
