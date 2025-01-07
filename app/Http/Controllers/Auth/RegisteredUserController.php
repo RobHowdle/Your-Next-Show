@@ -69,7 +69,6 @@ class RegisteredUserController extends Controller
                     $this->createStandardUserService($user);
                 }
 
-
                 $this->setDefaultModules($user, $role->name);
                 $this->setDefaultMailingPreferences($user);
 

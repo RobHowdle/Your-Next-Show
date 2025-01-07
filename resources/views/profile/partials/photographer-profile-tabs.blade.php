@@ -2,15 +2,17 @@
   <div class="w-full">
     <p class="text-xl font-bold">Your Details</p>
     @include('profile.photographer.basic-information-form', [
-        'firstName' => $firstName,
-        'lastName' => $lastName,
-        'location' => $location,
-        'name' => $photographerUserData['name'],
+        'name' => $photographerUserData['photographerName'],
+        'photographerLocation' => $photographerUserData['photographerLocation'],
+        'photographerPostalTown' => $photographerUserData['photographerPostalTown'],
+        'photographerLat' => $photographerUserData['photographerLat'],
+        'photographerLong' => $photographerUserData['photographerLong'],
+        'phone' => $photographerUserData['photographerPhone'],
         'contact_name' => $photographerUserData['contact_name'],
         'contact_email' => $photographerUserData['contact_email'],
         'contact_number' => $photographerUserData['contact_number'],
-        'platformsToCheck' => $photographerUserData['platformsToCheck'],
         'platforms' => $photographerUserData['platforms'],
+        'platformsToCheck' => $photographerUserData['platformsToCheck'],
         'logo' => $photographerUserData['logo'],
     ])
   </div>
@@ -19,7 +21,7 @@
   <div class="w-full">
     <p class="text-xl font-bold">About You</p>
     @include('profile.photographer.about', [
-        'about' => $photographerUserData['about'],
+        'description' => $photographerUserData['description'],
     ])
   </div>
 </div>
@@ -40,10 +42,6 @@
     @include('profile.photographer.my-genres', [
         'dashboardType' => $dashboardType,
         'userRole' => $userRole,
-        'firstName' => $firstName,
-        'lastName' => $lastName,
-        'email' => $email,
-        'location' => $location,
         'genres' => $photographerUserData['genres'],
         'photographerGenres' => $photographerUserData['photographerGenres'],
         'userId' => $userId,

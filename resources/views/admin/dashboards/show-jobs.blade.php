@@ -11,7 +11,7 @@
           <div class="flex flex-row justify-between">
             <h1 class="font-heading text-4xl font-bold">My Jobs</h1>
             <a href="{{ route('admin.dashboard.jobs.create', ['dashboardType' => $dashboardType]) }}"
-              class="rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">New
+              class="inline-flex items-center rounded-md border border-white bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">New
               Job</a>
           </div>
         </div>
@@ -79,8 +79,10 @@
                   </td>
                 </tr>
               @empty
-                <tr class="border-b border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-                  <td colspan="6" class="text-center text-2xl text-white dark:bg-gray-900">No jobs found</td>
+                <tr class="border-b border-white odd:dark:bg-black even:dark:bg-gray-900">
+                  <td colspan="6"
+                    class="whitespace-nowrap px-2 py-2 text-center font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                    No jobs found</td>
                 </tr>
               @endforelse
             @endif

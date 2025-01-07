@@ -10,14 +10,13 @@ use Illuminate\Support\Str;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Models\UserModuleSetting;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\ImageManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
-use Intervention\Image\Drivers\Gd\Driver;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\BandProfileUpdateRequest;
 use App\Http\Requests\VenueProfileUpdateRequest;
@@ -37,17 +36,10 @@ class ProfileController extends Controller
      */
     public function edit($dashboardType, $user): View
     {
-        // dd($dashboardType);
         $modules = collect(session('modules', []));
         $user = User::where('id', $user)->first();
         $roles = Role::where('name', '!=', 'administrator')->get();
         $userRole = $user->roles;
-        $firstName = $user->first_name;
-        $lastName = $user->last_name;
-        $email = $user->email;
-        $location = $user->location;
-        $longitude = $user->longitude;
-        $latitude = $user->latitude;
 
         // Initialize promoter variables
         $promoterData = [];
@@ -106,12 +98,14 @@ class ProfileController extends Controller
             'user' => $user,
             'roles' => $roles,
             'userRole' => $userRole,
-            'firstName' => $firstName,
-            'lastName' => $lastName,
-            'email' => $email,
-            'location' => $location,
-            'longitude' => $longitude,
-            'latitude' => $latitude,
+            'userFirstName' => $user->first_name,
+            'userLastName' => $user->last_name,
+            'userEmail' => $user->email,
+            'userDob' => $user->date_of_birth,
+            'userLocation' => $user->location,
+            'userPostalTown' => $user->postal_town,
+            'userLat' => $user->latitude,
+            'userLong' => $user->longitude,
             'modules' => $modulesWithSettings,
             'communications' => $communicationSettings,
         ]);
@@ -134,10 +128,11 @@ class ProfileController extends Controller
             $user->email = $userData['email'];
         }
 
-        if (isset($userData['latitude']) && isset($userData['longitude']) && isset($userData['location'])) {
+        if (isset($userData['latitude']) && isset($userData['postal_town']) && isset($userData['longitude']) && isset($userData['location'])) {
             $user->location = $userData['location'];
-            $user->latitude = $userData['location'];
-            $user->longitude = $userData['location'];
+            $user->postal_town = $userData['postal_town'];
+            $user->latitude = $userData['latitude'];
+            $user->longitude = $userData['longitude'];
         }
 
         if ($request->has('role') && $user->hasRole($request->role)) {
@@ -494,91 +489,132 @@ class ProfileController extends Controller
 
     public function updatePhotographer($dashboardType, PhotographerProfileUpdateRequest $request, $user)
     {
-        if ($dashboardType !== 'photographer') {
-            return response()->json(['error' => 'Invalid dashboard type'], 400);
-        }
-
-        $user = User::findOrFail($user);
-        $userData = $request->validated();
-
-        $photographer = OtherService::where('other_service_id', 1)
-            ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
-            ->first();
-
-        if (!$photographer) {
-            return response()->json(['error' => 'Photographer not found'], 404);
-        }
-
-        $fieldsToUpdate = ['name', 'contact_name', 'contact_email', 'contact_number', 'description'];
-        foreach ($fieldsToUpdate as $field) {
-            if (isset($userData[$field]) && $photographer->$field !== $userData[$field]) {
-                $photographer->update([$field => $userData[$field]]);
+        try {
+            // Validate dashboard type
+            if ($dashboardType !== 'photographer') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid dashboard type'
+                ], 400);
             }
-        }
 
-        // Contact Links
-        if (isset($userData['contact_links'])) {
-            $this->updateJsonField($photographer, 'contact_link', $userData['contact_links']);
-        }
+            // Find user with error handling
+            try {
+                $user = User::findOrFail($user);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
 
-        // Genres
-        if (isset($userData['genres'])) {
-            $this->updateJsonField($photographer, 'genre', $userData['genres']);
-        }
+            $userData = $request->validated();
 
-        // Logo Upload
-        if (isset($userData['logo_url'])) {
-            $logoPath = $this->uploadLogo($userData['logo_url'], $userData['name']);
-            $photographer->update(['logo_url' => $logoPath]);
-        }
+            // Find photographer with error handling
+            $photographer = OtherService::where('other_service_id', 1)
+                ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
+                ->first();
 
-        // Working Times
-        if (isset($userData['working_times'])) {
-            $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            if (!$photographer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Photographer not found'
+                ], 404);
+            }
 
-            // Sort the working times to follow the weekly order
-            $sortedWorkingTimes = array_merge(
-                array_flip($weekDaysOrder), // Create keys in the correct order
-                array_intersect_key($userData['working_times'], array_flip($weekDaysOrder)) // Add existing data
-            );
-
-            // Remove null/empty placeholders
-            $sortedWorkingTimes = array_filter($sortedWorkingTimes, fn($value) => $value !== null);
-
-            // Validate time ranges
-            foreach ($sortedWorkingTimes as $day => $time) {
-                if (is_array($time)) {
-                    $start = $time['start'] ?? null;
-                    $end = $time['end'] ?? null;
-
-                    if ($start && $end && $start >= $end) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => "Start time must be earlier than end time for $day.",
-                        ], 422);
+            DB::beginTransaction();
+            try {
+                // Update basic fields
+                $fieldsToUpdate = ['name', 'contact_name', 'contact_email', 'contact_number', 'description'];
+                $updates = [];
+                foreach ($fieldsToUpdate as $field) {
+                    if (isset($userData[$field]) && $photographer->$field !== $userData[$field]) {
+                        $updates[$field] = $userData[$field];
                     }
                 }
+
+                if (!empty($updates)) {
+                    $photographer->update($updates);
+                }
+
+                // Contact Links
+                if (isset($userData['contact_links'])) {
+                    $this->updateJsonField($photographer, 'contact_link', $userData['contact_links']);
+                }
+
+                // Genres
+                if (isset($userData['genres'])) {
+                    $this->updateJsonField($photographer, 'genre', $userData['genres']);
+                }
+
+                // Logo Upload
+                if (isset($userData['logo_url'])) {
+                    try {
+                        $logoPath = $this->uploadLogo($userData['logo_url'], $userData['name']);
+                        $photographer->update(['logo_url' => $logoPath]);
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Failed to upload logo: ' . $e->getMessage()
+                        ], 500);
+                    }
+                }
+
+                // Working Times
+                if (isset($userData['working_times'])) {
+                    $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                    // Sort and validate working times
+                    $sortedWorkingTimes = array_merge(
+                        array_flip($weekDaysOrder),
+                        array_intersect_key($userData['working_times'], array_flip($weekDaysOrder))
+                    );
+
+                    $sortedWorkingTimes = array_filter($sortedWorkingTimes, fn($value) => $value !== null);
+
+                    // Validate time ranges
+                    foreach ($sortedWorkingTimes as $day => $time) {
+                        if (is_array($time)) {
+                            $start = $time['start'] ?? null;
+                            $end = $time['end'] ?? null;
+
+                            if ($start && $end) {
+                                if ($start >= $end) {
+                                    DB::rollBack();
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => "Start time must be earlier than end time for $day."
+                                    ], 422);
+                                }
+                            }
+                        }
+                    }
+
+                    $photographer->update(['working_times' => json_encode($sortedWorkingTimes)]);
+                }
+
+                DB::commit();
+
+                return redirect()
+                    ->route('profile.edit', [
+                        'dashboardType' => $dashboardType,
+                        'id' => $user->id
+                    ])
+                    ->with('success', 'Photographer profile updated successfully!');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update photographer profile: ' . $e->getMessage()
+                ], 500);
             }
-            // Store sorted and validated data in the database
-            $photographer->update(['working_times' => json_encode($sortedWorkingTimes)]);
-
+        } catch (\Exception $e) {
             return response()->json([
-                'success' => true,
-                'message' => 'Working Times updated successfully',
-            ]);
+                'success' => false,
+                'message' => 'An unexpected error occurred: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'No working times provided.',
-        ], 400); // Bad request
-
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Photographer profile updated successfully!',
-            'redirect_url' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id]),
-        ]);
     }
 
     // Helper for JSON Fields
@@ -939,12 +975,16 @@ class ProfileController extends Controller
         $serviceableId = $photographer->id;
         $serviceableType = 'App\Models\OtherService';
 
-        $name = $photographer ? $photographer->name : '';
-        $location = $photographer ? $photographer->location : '';
+        // Basic Information
+        $photographerName = $photographer ? $photographer->name : '';
+        $photographerLocation = $photographer ? $photographer->location : '';
+        $photographerPostalTown = $photographer ? $photographer->postal_town : '';
+        $photographerLat = $photographer ? $photographer->latitude : '';
+        $photographerLong = $photographer ? $photographer->longitude : '';
         $logo = $photographer && $photographer->logo_url
             ? (filter_var($photographer->logo_url, FILTER_VALIDATE_URL) ? $photographer->logo_url : Storage::url($photographer->logo_url))
             : asset('images/system/yns_no_image_found.png');
-        $phone = $photographer ? $photographer->contact_number : '';
+        $photographerPhone = $photographer ? $photographer->contact_number : '';
         $contact_name = $photographer ? $photographer->contact_name : '';
         $contact_email = $photographer ? $photographer->contact_email : '';
         $contact_number = $photographer ? $photographer->contact_number : '';
@@ -968,7 +1008,7 @@ class ProfileController extends Controller
             }
         }
 
-        $about = $photographer ? $photographer->description : '';
+        $description = $photographer ? $photographer->description : '';
         $genreList = file_get_contents(public_path('text/genre_list.json'));
         $data = json_decode($genreList, true);
         $genres = $data['genres'];
@@ -985,12 +1025,13 @@ class ProfileController extends Controller
         }
 
         $groupedEnvironmentTypes = config('environment_types');
+
         $environmentTypes = json_decode($photographer->environment_type, true);
         $groupedData = [];
 
         foreach ($groupedEnvironmentTypes as $groupName => $items) {
             foreach ($items as $item) {
-                if (in_array($item, $environmentTypes)) {
+                if ($environmentTypes && is_array($environmentTypes)) {
                     $groupedData[$groupName][] = $item;
                 }
             }
@@ -1016,19 +1057,21 @@ class ProfileController extends Controller
 
         $bandTypes = json_decode($photographer->band_type) ?? [];
 
-
         return [
             'photographer' => $photographer,
-            'name' => $name,
-            'location' => $location,
+            'photographerName' => $photographerName,
+            'photographerLocation' => $photographerLocation,
+            'photographerPostalTown' => $photographerPostalTown,
+            'photographerLat' => $photographerLat,
+            'photographerLong' => $photographerLong,
             'logo' => $logo,
-            'phone' => $phone,
-            'about' => $about,
+            'photographerPhone' => $photographerPhone,
             'contact_name' => $contact_name,
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'platformsToCheck' => $platformsToCheck,
+            'description' => $description,
             'genres' => $genres,
             'photographerGenres' => $photographerGenres,
             'portfolio_link' => $portfolioLink,
@@ -1493,38 +1536,54 @@ class ProfileController extends Controller
 
     public function updateEnvironmentTypes(Request $request)
     {
-        // Validate the incoming request
-        $request->validate([
-            'environment_type' => 'array',
-            'environment_type.*' => 'string',
-        ]);
+        try {
+            // Validate request
+            $request->validate([
+                'environment_types' => 'required|array',
+                'environment_types.*' => 'string|distinct',
+            ]);
 
-        // Get the current user (or the specific photographer)
-        $user = auth()->user();
-        $userId = $user->id;
-        $photographer = OtherService::where('other_service_id', 1)->whereHas('linkedUsers', function ($query) use ($userId) {
-            $query->where('user_id', $userId);
-        })->first();
+            // Get photographer
+            $user = auth()->user();
+            $photographer = OtherService::where('other_service_id', 1)
+                ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
+                ->first();
 
-        // If the photographer doesn't have the environment_types field, initialize it
-        $environmentType = $photographer->environment_type ? json_decode($photographer->environment_type, true) : [];
+            if (!$photographer) {
+                return redirect()->back()->with('error', 'Photographer profile not found.');
+            }
 
-        $selectedEnvironmentTypes = $request->input('environment_types', []);
+            DB::beginTransaction();
+            try {
+                // Get current environment types
+                $currentTypes = $photographer->environment_type ?
+                    json_decode($photographer->environment_type, true) : [];
 
-        // Merge the new environment types with the existing ones
-        $updatedEnvironmentTypes = array_merge($environmentType, $selectedEnvironmentTypes);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new \Exception('Invalid JSON in existing environment types');
+                }
 
-        // Store the updated environment types as JSON
-        $photographer->environment_type = json_encode($updatedEnvironmentTypes);
+                // Update environment types
+                $selectedTypes = $request->input('environment_types', []);
+                $updatedTypes = array_values(array_unique(array_merge($currentTypes, $selectedTypes)));
 
-        // Save the photographer
-        $photographer->save();
+                $photographer->environment_type = json_encode($updatedTypes);
+                $photographer->save();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Environment types updated successfully!',
-            'environment_type' => $updatedEnvironmentTypes,
-        ]);
+                DB::commit();
+
+                return redirect()
+                    ->route('profile.edit', ['dashboardType' => 'photographer'])
+                    ->with('success', 'Environment types updated successfully!');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error('Environment types update failed: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'Failed to update environment types.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Environment types validation failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Invalid environment types data.');
+        }
     }
 
     /**
@@ -1548,7 +1607,7 @@ class ProfileController extends Controller
                 $venue = $user->venues()->first();
                 $userType = $venue;
                 break;
-            case 'photographer':
+            case 'photography':
                 $photographer = $user->otherService('Photography')->first();
                 $userType = $photographer;
                 break;
@@ -1565,11 +1624,7 @@ class ProfileController extends Controller
             $storedGenres = is_array($userType->genre) ? $userType->genre : json_decode($userType->genre, true);
             $newGenres = $request->input('genres');
 
-            // dd($newGenres);
-
             $mergedGenres = array_merge($storedGenres, $newGenres);
-
-            dd($mergedGenres);
 
             // Only update if the genres have actually changed
             if ($storedGenres !== $mergedGenres) {
@@ -1619,7 +1674,6 @@ class ProfileController extends Controller
                 break;
             case 'photographer':
                 $photographer = $user->otherService('Photography')->first();
-                dd($photographer);
                 $userType = $photographer;
                 break;
             default:

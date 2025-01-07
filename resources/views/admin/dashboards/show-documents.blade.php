@@ -5,73 +5,85 @@
 
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
-      <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
-        <div class="header border-b border-b-white px-8 py-8">
-          <div class="mb-8 flex flex-row justify-between">
+      <div
+        class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray px-8 py-8 text-white">
+        <div class="header mb-8">
+          <div class="flex flex-row justify-between">
             <h1 class="font-heading text-4xl font-bold">Documents</h1>
-            <x-button href="{{ route('admin.dashboard.document.create', ['dashboardType' => $dashboardType]) }}"
-              id="new-document-btn" label="New Document" />
+            <a href="{{ route('admin.dashboard.document.create', ['dashboardType' => $dashboardType]) }}"
+              class="inline-flex items-center rounded-md border border-white bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">New
+              Job</a>
           </div>
-          <table class="w-full border border-white text-left font-sans" id="documents">
-            <thead class="text-white dark:bg-black">
-              <tr>
-                <th scope="col" class="px-6 py-4 text-lg" onclick="sortTable('title')">Document</th>
-                <th scope="col" class="px-6 py-4 text-lg" onclick="sortTable('description')">Description</th>
-                <th scope="col" class="px-6 py-4 text-lg" onclick="sortTable('category')">Category</th>
-                <th scope="col" class="px-6 py-4 text-lg" onclick="sortTable('created_at')">Uploaded</th>
-                <th scope="col" class="px-6 py-4 text-lg">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse ($documents as $document)
-                <tr id="document-row-{{ $document->id }}"
-                  class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-                  <th scope="row" class="whitespace-nowrap px-6 py-4 font-sans text-lg text-white">
-                    <a class="transition-all duration-150 ease-in-out hover:text-yns_yellow"
-                      href="{{ route('admin.dashboard.document.show', ['dashboardType' => $dashboardType, 'id' => $document->id]) }}">{{ $document->title }}</a>
-                  </th>
-                  <td class="whitespace-nowrap px-6 py-4 text-lg">
-                    {{ $document->description }}
-                  </td>
-                  <td class="whitespace-nowrap px-6 py-4 text-lg">
-                    @php
-                      $categories = json_decode($document->category, true) ?? [];
-                    @endphp
-
-                    @if (!empty($categories) && is_array($categories))
-                      @foreach ($categories as $tag)
-                        <span
-                          class="inline-block rounded-full bg-yns_yellow px-2 py-1 text-xs font-semibold text-black">
-                          {{ htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') }}
-                        </span>
-                      @endforeach
-                    @else
-                      No categories available
-                    @endif
-                  </td>
-
-                  <td class="whitespace-nowrap px-6 py-4 text-lg">
-                    {{ $document->created_at->format('d-m-Y') }}
-                  </td>
-                  <td class="whitespace-nowrap px-6 py-4 text-lg">
-                    <a href="{{ route('admin.dashboard.document.download', ['dashboardType' => $dashboardType, 'id' => $document->id]) }}"
-                      class="hover:text-yns_yellow"><span class="fas fa-download"></span></a>
-                    <a href="{{ route('admin.dashboard.document.edit', ['dashboardType' => $dashboardType, 'id' => $document->id]) }}"
-                      class="ml-4 hover:text-yns_yellow"><span class="fas fa-edit"></span></a>
-                    <button class="delete-btn ml-4 hover:text-yns_red" data-id="{{ $document->id }}"
-                      data-dashboard-type="{{ $dashboardType }}"><span class="fas fa-trash-alt"></span>
-                    </button>
-
-                  </td>
-                </tr>
-              @empty
-                <tr class="border-b border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-                  <td colspan="5" class="text-center text-2xl text-white dark:bg-gray-900">No documents found</td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
         </div>
+        <table class="w-full border border-white text-left font-sans" id="documents">
+          <thead class="border border-b-white bg-black text-white underline">
+            <tr>
+              <th scope="col" class="px-2 py-2 text-base md:px-6 md:py-3 md:text-xl lg:px-8 lg:py-4 lg:text-2xl"
+                onclick="sortTable('title')">Document</th>
+              <th scope="col" class="px-2 py-2 text-base md:px-6 md:py-3 md:text-xl lg:px-8 lg:py-4 lg:text-2xl"
+                onclick="sortTable('description')">Description</th>
+              <th scope="col" class="px-2 py-2 text-base md:px-6 md:py-3 md:text-xl lg:px-8 lg:py-4 lg:text-2xl"
+                onclick="sortTable('category')">Category</th>
+              <th scope="col" class="px-2 py-2 text-base md:px-6 md:py-3 md:text-xl lg:px-8 lg:py-4 lg:text-2xl"
+                onclick="sortTable('created_at')">Uploaded</th>
+              <th scope="col" class="px-2 py-2 text-base md:px-6 md:py-3 md:text-xl lg:px-8 lg:py-4 lg:text-2xl">
+                Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse ($documents as $document)
+              <tr id="document-row-{{ $document->id }}" class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
+                <th scope="row"
+                  class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                  <a class="transition-all duration-150 ease-in-out hover:text-yns_yellow"
+                    href="{{ route('admin.dashboard.document.show', ['dashboardType' => $dashboardType, 'id' => $document->id]) }}">{{ $document->title }}</a>
+                </th>
+                <td
+                  class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                  {{ $document->description }}
+                </td>
+                <td
+                  class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                  @php
+                    $categories = json_decode($document->category, true) ?? [];
+                  @endphp
+
+                  @if (!empty($categories) && is_array($categories))
+                    @foreach ($categories as $tag)
+                      <span class="inline-block rounded-full bg-yns_yellow px-2 py-1 text-xs font-semibold text-black">
+                        {{ htmlspecialchars($tag, ENT_QUOTES, 'UTF-8') }}
+                      </span>
+                    @endforeach
+                  @else
+                    No categories available
+                  @endif
+                </td>
+
+                <td
+                  class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                  {{ $document->created_at->format('d-m-Y') }}
+                </td>
+                <td
+                  class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                  <a href="{{ route('admin.dashboard.document.download', ['dashboardType' => $dashboardType, 'id' => $document->id]) }}"
+                    class="hover:text-yns_yellow"><span class="fas fa-download"></span></a>
+                  <a href="{{ route('admin.dashboard.document.edit', ['dashboardType' => $dashboardType, 'id' => $document->id]) }}"
+                    class="ml-4 hover:text-yns_yellow"><span class="fas fa-edit"></span></a>
+                  <button class="delete-btn ml-4 hover:text-yns_red" data-id="{{ $document->id }}"
+                    data-dashboard-type="{{ $dashboardType }}"><span class="fas fa-trash-alt"></span>
+                  </button>
+
+                </td>
+              </tr>
+            @empty
+              <tr class="border-b border-white odd:dark:bg-black even:dark:bg-gray-900">
+                <td colspan="5"
+                  class="whitespace-nowrap px-2 py-2 text-center font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                  No documents found</td>
+              </tr>
+            @endforelse
+          </tbody>
+        </table>
       </div>
     </div>
 </x-app-layout>

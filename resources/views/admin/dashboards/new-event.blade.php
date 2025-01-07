@@ -254,7 +254,15 @@
     // Poster Preview
     $('#poster_url').on('change', function(event) {
       const file = event.target.files[0];
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+
       if (file) {
+        if (file.size > maxSize) {
+          showFailureNotification('File size exceeds 10MB limit');
+          this.value = ''; // Clear the file input
+          $('#posterPreview').addClass('hidden').attr('src', '#');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           $('#posterPreview').attr('src', e.target.result).removeClass('hidden');
@@ -305,8 +313,11 @@
           }
         },
         error: function(jqXHR, textStatus, errorThrown) {
-          console.error('AJAX error:', textStatus, errorThrown); // Log any AJAX errors
-          showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
+          if (jqXHR.status === 413) {
+            showFailureNotification('The uploaded file is too large. Maximum size is 10MB.');
+          } else {
+            showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
+          }
         }
       });
     });

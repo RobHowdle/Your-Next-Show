@@ -21,6 +21,7 @@ class ProfileUpdateRequest extends FormRequest
             'email' => ['sometimes', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($this->user()->id)],
             'role' => ['sometimes', 'exists:App\Models\Role,id'],
             'location' => ['sometimes', 'string'],
+            'postal_town' => ['sometimes', 'string'],
             'latitude' => ['sometimes', 'numeric'],
             'longitude' => ['sometimes', 'numeric'],
         ];

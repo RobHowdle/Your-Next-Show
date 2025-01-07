@@ -8,12 +8,12 @@
     name="location" placeholder="{{ htmlspecialchars($placeholder) }}"
     value="{{ htmlspecialchars(is_array($value) ? $value['location'] ?? '' : $value) }}" data-id="{{ $dataId }}" />
 
-  <input type="hidden" id="postal_town_{{ $dataId }}" name="postal_town" value="{{ $postalTown }}"
+  <input type="" id="postal_town_{{ $dataId }}" name="postal_town" value="{{ $postalTown }}"
     data-id="{{ $dataId }}">
 
-  <input type="hidden" id="latitude_{{ $dataId }}" name="latitude" value="{{ $latitude }}"
+  <input type="" id="latitude_{{ $dataId }}" name="latitude" value="{{ $latitude }}"
     data-id="{{ $dataId }}">
-  <input type="hidden" id="longitude_{{ $dataId }}" name="longitude" value="{{ $longitude }}"
+  <input type="" id="longitude_{{ $dataId }}" name="longitude" value="{{ $longitude }}"
     data-id="{{ $dataId }}">
 </div>
 

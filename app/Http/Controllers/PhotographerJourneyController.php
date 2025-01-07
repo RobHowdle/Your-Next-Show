@@ -139,7 +139,10 @@ class PhotographerJourneyController extends Controller
                 return back()->withErrors(['error' => 'No authenticated user']);
             }
 
-            $user->otherService()->attach($photographer->id);
+            $user->otherService()->attach($photographer->id, [
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ]);
 
             return redirect()->route('dashboard', ['dashboardType' => $dashboardType])->with('success', 'Successfully created and joined the new photography company!');
         } catch (\Exception $e) {

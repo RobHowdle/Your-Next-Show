@@ -26,38 +26,12 @@
     </div>
 
     <div class="group mb-6">
-      <x-input-label-dark>Where are you based?</x-input-label-dark>
-      <x-text-input id="address-input" name="address-input"
-        value="{{ old('location', $photographerUserData['location']) }}" class="map-input"></x-text-input>
-      @error('address-input')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
-
-    <div id="address-map-container" style="width: 100%; height: 400px; display: none;">
-      <div style="width: 100%; height: 100%;" id="address-map"></div>
-    </div>
-
-    <div class="group relative z-0 mb-5 hidden w-full">
-      <input
-        class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
-        type="text" id="postal-town-input" name="postal-town-input" placeholder="Postal Town Input"
-        value="{{ old('postal-town-input') }}">
-      @error('postal-town-input')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-      <input
-        class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
-        type="text" id="address-latitude" name="latitude" placeholder="Latitude" value="{{ old('latitude') }}">
-      @error('latitude')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-      <input
-        class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
-        type="text" id="address-longitude" name="longitude" placeholder="Longitude" value="{{ old('longitude') }}">
-      @error('longitude')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
+      @php
+        $dataId = 1;
+      @endphp
+      <x-google-address-picker :postalTown="old('photographerPostalTown', $photographerPostalTown ?? '')" :dataId="$dataId" id="location_{{ $dataId }}" name="location"
+        label="Where are you based?" placeholder="Enter an address" :value="old('photographerLocation', $photographerLocation ?? '')" :latitude="old('photographerLat', $photographerLat ?? '')"
+        :longitude="old('photographerLong', $photographerLong ?? '')" />
     </div>
 
     <div class="group mb-6">

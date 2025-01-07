@@ -28,7 +28,7 @@ class PhotographerProfileUpdateRequest extends FormRequest
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'logo' => 'nullable|image|mimes:jpeg,jpg,png,webp,svg|max:5120',
-            'about' => 'nullable|string',
+            'description' => 'nullable|string',
             'genres' => 'nullable|array',
             'band_types' => 'nullable|array',
             'contact_name' => 'nullable|string',
