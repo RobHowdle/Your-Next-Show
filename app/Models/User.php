@@ -34,6 +34,7 @@ class User extends Authenticatable
         'password',
         'date_of_birth',
         'location',
+        'postal_town',
         'latitude',
         'longitude',
         'apple_calendar_synced',

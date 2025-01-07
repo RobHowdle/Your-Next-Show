@@ -6,7 +6,7 @@
         },
         {
             "name": "Blues",
-            "subgenres": ["Acoustic Blues","African Blues","Blues Rock","Blues Shouter","British Blues","Canadian Blues","Chicago Blues","Classic Blues","Classic Female Blues","Contemporary Blues","Contemporary RnB","Country Blues","Dark Blues","Delta Blues","Detroit Blues","Doom Blues","Electric Blues","Folk Blues","Gospel Blues","Harmonica Blues","Hill Country Blues","Hokum Blues","Jazz Blues","Jump Blues","Kansas City Blues","Louisiana Blues","Memphis Blues","Modern Blues","New Orlean Blues","NY Blues","Piano Blues","Piedmont Blues","Ragtime Blues","Rhythm Blues","Soul Blues","St Louis Blues","Soul Blues","Swamp Blues","Texas Blues","Urban Blues","Vandeville","West Coast Blues","Zydeco"]
+            "subgenres": ["Acoustic Blues","African Blues","Blues Rock","Blues Shouter","British Blues","Canadian Blues","Chicago Blues","Classic Blues","Classic Female Blues","Contemporary Blues","Contemporary RnB","Country Blues","Dark Blues","Delta Blues","Detroit Blues","Doom Blues","Electric Blues","Folk Blues","Gospel Blues","Harmonica Blues","Hill Country Blues","Hokum Blues","Jazz Blues","Jump Blues","Kansas City Blues","Louisiana Blues","Memphis Blues","Modern Blues","New Orlean Blues","NY Blues","Piano Blues","Piedmont Blues","Ragtime Blues","Rhythm Blues","St Louis Blues","Soul Blues","Swamp Blues","Texas Blues","Urban Blues","Vandeville","West Coast Blues"]
         },
         {
             "name": "Classical",
@@ -14,27 +14,27 @@
         },
         {
             "name": "Country",
-            "subgenres": ["Alternative Country","Americana","Australian Country","Bakersfield Sound","Bluegrass","Progressive Bluegrass","Reactionary Bluegrass","Blues Country","Cajun Fiddle Tunes","Christian Country","Classic Country","Close Harmony","Contemporary Bluegrass","Contemporary Country","Country Gospel","Country Pop","Country Rap","Country Rock","Country Soul","Cowboy Western","Dansband","Honky Tonk","Franco Country","Gulf and Western","Hellbilly Music","Honky Tonk","Instrumental Country","Lubbock Sound","Nashville Sound","Neotraditional Country","Outlaw Country","Progressive","Red Dirt","Sertanejo","Texas County","Traditional Bluegrass","Traditional Country","Truck Driving Country","Urban Cowboy","Western Swing","Zydeco"]
+            "subgenres": ["Alternative Country","Americana","Australian Country","Bakersfield Sound","Bluegrass","Progressive Bluegrass","Reactionary Bluegrass","Blues Country","Cajun Fiddle Tunes","Christian Country","Classic Country","Close Harmony","Contemporary Bluegrass","Contemporary Country","Country Gospel","Country Pop","Country Rock","Country Soul","Cowboy Western","Dansband","Honky Tonk","Franco Country","Gulf and Western","Hellbilly Music","Instrumental Country","Lubbock Sound","Nashville Sound","Neotraditional Country","Outlaw Country","Progressive","Red Dirt","Sertanejo","Texas County","Traditional Bluegrass","Traditional Country","Truck Driving Country","Urban Cowboy","Western Swing","Zydeco"]
         },
         {
             "name": "Dance",
-            "subgenres": ["Club Dance","Breakcore","Breakbeat Breakstep","4 Beat","Acid Breaks","Baltimore Club","Big Beat","Breakbeat Hardcore","Broken Beat","Florida Breaks","Nu Skool Breaks","Brostep","Chillstep","Deep House","Dubstep","Electro House","Electroswing","Exercise","Future Garage","Garage","Glitch Hop","Glitch Pop","Grime","Hardcore","Bouncy House","Bouncy Techno","Breakcore","Digital Hardcore","Doomcore","Dubstyle","Gabber","Happy Hardcore","Hardstyle","Jumpstyle","Makina","Speedcore","Terrorcore","Uk Hardcore","Hard Dance","Hi NRG Eurodance","Horrorcore","House","Acid House","Chicago House","Deep House","Diva House","Dutch House","Electro House","Freestyle House","French House","Funky House","Ghetto House","Hardbag","Hip House","Italo House","Latin House","Minimal House","Progressive House","Rave Music","Swing House","Tech House","Tribal House","Tropical House","UK Hard House","US Garage","Vocal House","Jackin House","Jungle Drum’n'bass","Liquid Dub","Regstep","Speedcore","Techno","Acid Techno","Detroit Techno","Free Tekno","Ghettotech","Minimal","Nortec","Schranz","Techno Dnb","Technopop","Tecno Brega","Toytown Techno","Trance","Acid Trance","Acid House","Classic Trance","Dark Psy","Deep House","Dream Trance","Goa Trance","Dark Psytrance","Full on","Psybreaks","Psyprog","Suomisaundi","Hard Trance","Prog. Trance","Psy Trance","Minimal Techno","Tech House","Tech Trance","Uplifting Trance","Orchestral Uplifting","Vocal Trance","Trap"]
+            "subgenres": ["Club Dance","Breakbeat Breakstep","4 Beat","Acid Breaks","Baltimore Club","Big Beat","Breakbeat Hardcore","Broken Beat","Florida Breaks","Nu Skool Breaks","Brostep","Chillstep","Dubstep","Electroswing","Exercise","Future Garage","Garage","Glitch Hop","Glitch Pop","Grime","Hardcore","Bouncy House","Bouncy Techno","Breakcore","Digital Hardcore","Doomcore","Dubstyle","Gabber","Happy Hardcore","Jumpstyle","Makina","Terrorcore","Uk Hardcore","Hard Dance","Hi NRG Eurodance","House","Chicago House","Diva House","Dutch House","Electro House","Freestyle House","French House","Funky House","Ghetto House","Hardbag","Hip House","Italo House","Latin House","Minimal House","Progressive House","Rave Music","Swing House","Tribal House","Tropical House","UK Hard House","US Garage","Vocal House","Jackin House","Jungle Drum and bass","Liquid Dub","Regstep","Speedcore","Techno","Acid Techno","Detroit Techno","Free Tekno","Ghettotech","Minimal","Nortec","Schranz","Techno Dnb","Technopop","Tecno Brega","Toytown Techno","Trance","Acid Trance","Acid House","Classic Trance","Dark Psy","Deep House","Dream Trance","Goa Trance","Dark Psytrance","Full on","Psybreaks","Psyprog","Suomisaundi","Hard Trance","Prog Trance","Psy Trance","Minimal Techno","Tech House","Tech Trance","Uplifting Trance","Orchestral Uplifting","Vocal Trance", "Trap"]
         },
         {
             "name": "Easy Listening",
-            "subgenres": ["Background","Bop","Elevator","Furniture","Lounge","Middle of the Road","Swing"]
+            "subgenres": ["Background","Bop","Elevator","Furniture","Lounge","Middle of the Road"]
         },
         {
             "name": "Electronic",
-            "subgenres": ["2 Step","8 bit, Bitpop and Chiptune","Ambient","Ambient Dub","Ambient House","Ambient Techno","Dark Ambient","Drone Music","Illbient","Isolationism","Lowercase","Asian Underground","Bassline","Chillwave","Chiptune","Bitpop","Game Boy","Nintendocore","Video Game Music","Yorkshire Bleeps and Bass","Crunk","Downtempo","Acid Jazz","Balearic Beat","Chill Out","Dub Music","Dubtronica","Ethnic Electronica","Moombahton","Nu Jazz","Trip Hop","Drum & Bass","Darkcore","Darkstep","Drumfunk","Drumstep","Hardstep","Intelligent Drum and Bass","Jump Up","Liquid Funk","Neurofunk","Oldschool Jungle:","Darkside Jungle","Ragga Jungle","Raggacore","Sambass","Techstep","Electro","Crunk","Electro Backbeat","Electro Grime","Electropop","Electro swing","Electroacoustic","Acousmatic Music","Computer Music","Electroacoustic Improvisation","Field Recording","Live Coding","Live Electronics","Soundscape Composition","Tape Music","Electronica","Berlin School","Chillwave","Electronic Art Music","Electronic Dance Music","Folktronica","Freestyle Music","Glitch","Idm","Laptronica","Skweee","Sound Art","Synthcore","Electronic Rock","Alternative Dance","Baggy","Madchester","Dance Rock","Dark Wave","Electroclash","Electronicore","Ethereal Wave","Indietronica","New Rave","Space Rock","Synthpop","Eurodance","Bubblegum Dance","Italo Dance","Turbofolk","Hardstyle","Hi Nrg","Eurobeat","Hard Nrg","New Beat","IDM Experimental","Industrial","Trip Hop","Vaporwave","Hyponagogic","Vektroid","Mallsoft","Vaportrap","Vaporhop","Protovapor","UK Garage","2 Step","4×4","Bassline","Grime","Speed Garage"]
+            "subgenres": ["2 Step","8 bit Bitpop and Chiptune","Ambient","Ambient Dub","Ambient House","Ambient Techno","Dark Ambient","Drone Music","Illbient","Isolationism","Lowercase","Asian Underground","Chillwave","Chiptune","Bitpop","Game Boy","Nintendocore","Video Game Music","Yorkshire Bleeps and Bass","Downtempo","Acid Jazz","Balearic Beat","Chill Out","Dub Music","Dubtronica","Ethnic Electronica","Moombahton","Nu Jazz","Drum and Bass","Darkcore","Darkstep","Drumfunk","Drumstep","Hardstep","Intelligent Drum and Bass","Jump Up","Liquid Funk","Neurofunk","Oldschool Jungle","Darkside Jungle","Ragga Jungle","Raggacore","Sambass","Techstep","Electro","Crunk","Electro Backbeat","Electro Grime","Electropop","Electro swing","Electroacoustic","Acousmatic Music","Computer Music","Electroacoustic Improvisation","Field Recording","Live Coding","Live Electronics","Soundscape Composition","Tape Music","Electronica","Berlin School","Electronic Art Music","Electronic Dance Music","Folktronica","Freestyle Music","Glitch","Idm","Laptronica","Skweee","Sound Art","Synthcore","Electronic Rock","Alternative Dance","Baggy","Madchester","Dance Rock","Dark Wave","Electroclash","Electronicore","Ethereal Wave","Indietronica","New Rave","Space Rock","Synthpop","Eurodance","Bubblegum Dance","Italo Dance","Turbofolk","Hardstyle","Hi Nrg","Eurobeat","Hard Nrg","New Beat","IDM Experimental","Industrial","Trip Hop","Vaporwave","Hyponagogic","Vektroid","Mallsoft","Vaportrap","Vaporhop","Protovapor","UK Garage","4 x 4","Bassline","Speed Garage"]
         },
         {
             "name": "Folk",
             "subgenres": ["American Folk Revival","Anti Folk","British Folk Revival","Contemporary Folk","Filk Music","Freak Folk","Indie Folk","Industrial Folk","Neofolk","Progressive Folk","Psychedelic Folk","Sung Poetry","Techno Folk"]
         },
         {
-            "name": "Hip Hop/Rap",
-            "subgenres": ["Alternative Rap","Avant Garde","Bounce","Chap Hop","Christian Hip Hop","Conscious Hip Hop","Country Rap","Grunk","Crunkcore","Cumbia Rap","Dirty South","East Coast","Brick City Club","Hardcore Hip Hop","Mafioso Rap","New Jersey Hip Hop","Freestyle Rap","G Funk","Gangsta Rap","Golden Age","Grime","Hardcore Rap","Hip Hop","Hip Pop","Horrorcore","Hyphy","Industrial Hip Hop","Instrumental Hip Hop","Jazz Rap","Latin Rap","Low Bap","Lyrical Hip Hop","Merenrap","Midwest Hip Hop","Chicago Hip Hop","Detroit Hip Hop","Horrorcore","St Louis Hip Hop","Twin Cities Hip Hop","Motswako","Nerdcore","New Jack Swing","New School Hip Hop","Old School Rap","Rap","Trap","Turntablism","Underground Rap","West Coast Rap"]
+            "name": "Hip Hop Rap",
+            "subgenres": ["Alternative Rap","Bounce","Chap Hop","Christian Hip Hop","Conscious Hip Hop","Country Rap","Grunk","Crunkcore","Cumbia Rap","Dirty South","East Coast","Brick City Club","Hardcore Hip Hop","Mafioso Rap","New Jersey Hip Hop","Freestyle Rap","G Funk","Gangsta Rap","Golden Age","Hardcore Rap","Hip Hop","Hip Pop","Hyphy","Industrial Hip Hop","Instrumental Hip Hop","Jazz Rap","Latin Rap","Low Bap","Lyrical Hip Hop","Merenrap","Midwest Hip Hop","Chicago Hip Hop","Detroit Hip Hop","Horrorcore","St Louis Hip Hop","Twin Cities Hip Hop","Motswako","Nerdcore","New Jack Swing","New School Hip Hop","Old School Rap","Rap","Turntablism","Underground Rap","West Coast Rap"]
         },
         {
             "name": "Indie",
@@ -45,8 +45,8 @@
             "subgenres": ["Aggrotech","Coldwave","Cybergrind","Dark Electro","Death Industrial","Electro Industrial","Electronic Body Music","Futurepop","Industrial Metal","Neue Deutsche Harte","Industrial Rock","Noise","Japanoise","Power Electronics","Power Noise","Witch House"]
         },
         {
-            "name": "Christian & Gospel",
-            "subgenres": ["CCM","Christian Metal","Christian Pop","Christian Rap","Christian Rock","Classic Christian","Contemporary Gospel","Gospel","Christian and Gospel","Praise & Worship","Qawwali","Southern Gospel","Traditional Gospel"]
+            "name": "Christian and Gospel",
+            "subgenres": ["CCM","Christian Metal","Christian Pop","Christian Rap","Christian Rock","Classic Christian","Contemporary Gospel","Gospel","Christian and Gospel","Praise and Worship","Qawwali","Southern Gospel","Traditional Gospel"]
         },
         {
             "name": "Jazz",
@@ -55,7 +55,7 @@
         {
             "name": "Latin",
             "subgenres": [
-                "Alternativo & Rock Latino", "Argentine Tango", "Bachata", "Baithak Gana", "Baladas y Boleros", "Bolero", "Bossa Nova", "Brazilian", "Axe", "Brazilian Rock", "Brega", "Choro", "Forro", "Frevo", "Funk Carioca", "Lambada", "Maracatu", "Musica Popular Brasileira", "Musica Sertaneja", "Pagode", "Samba", "Samba Rock", "Tecnobrega", "Tropicalia", "Zouk Lambada", "Chicha", "Criolla", "Contemporary Latin", "Cumbia", "Flamenco Spanish Flamenco", "Huayno", "Joropo", "Latin Jazz", "Mambo", "Mariachi", "Merengue Tipico", "Nuevo Flamenco", "Pop Latino", "Portuguese Fado", "Punta", "Punta Rock", "Ranchera", "Raices", "Raison", "Reggaeton y Hip Hop", "Regional Mexicano", "Salsa y Tropical", "Soca", "Son", "Tejano", "Timba", "Twoubadou", "Vallenato", "Zouk"
+                "Alternativo and Rock Latino", "Argentine Tango", "Bachata", "Baithak Gana", "Baladas y Boleros", "Bolero", "Bossa Nova", "Brazilian", "Axe", "Brazilian Rock", "Brega", "Choro", "Forro", "Frevo", "Funk Carioca", "Lambada", "Maracatu", "Musica Popular Brasileira", "Musica Sertaneja", "Pagode", "Samba", "Samba Rock", "Tecnobrega", "Tropicalia", "Zouk Lambada", "Chicha", "Criolla", "Contemporary Latin", "Cumbia", "Flamenco Spanish Flamenco", "Huayno", "Joropo", "Latin Jazz", "Mambo", "Mariachi", "Merengue Tipico", "Nuevo Flamenco", "Pop Latino", "Portuguese Fado", "Punta", "Punta Rock", "Ranchera", "Raices", "Raison", "Reggaeton y Hip Hop", "Regional Mexicano", "Salsa y Tropical", "Soca", "Son", "Tejano", "Timba", "Twoubadou", "Vallenato", "Zouk"
             ]
         },
         {
@@ -75,7 +75,7 @@
         },
         {
             "name": "Progressive",
-            "subgenres": ["Progressive House Trance", "Disco House", "Dream House", "Space House", "Japanese House", "Bounce Scouse House", "Progressive Breaks", "Progressive Drum & Bass", "Progressive Techno"]
+            "subgenres": ["Progressive House Trance", "Disco House", "Dream House", "Space House", "Japanese House", "Bounce Scouse House", "Progressive Breaks", "Progressive Drum and Bass", "Progressive Techno"]
         },
         {
             "name": "Punk",
@@ -83,26 +83,26 @@
             ]
         },
         {
-            "name": "R&B/Soul",
-            "subgenres": ["Carolina Beach Music", "Contemporary R&B", "Disco", "Doo Wop", "Funk", "Modern Soul", "Motown", "Neo Soul", "Northern Soul", "Psychedelic Soul", "Quiet Storm", "Soul", "Soul Blues", "Southern Soul"]
+            "name": "R and B Soul",
+            "subgenres": ["Carolina Beach Music", "Contemporary R and B", "Disco", "Doo Wop", "Funk", "Modern Soul", "Motown", "Neo Soul", "Northern Soul", "Psychedelic Soul", "Quiet Storm", "Soul", "Soul Blues", "Southern Soul"]
         },
         {
             "name": "Reggae",
-            "subgenres": ["2 Tone", "Dub", "Roots Reggae", "Reggae Fusion", "Reggae en Espanol", "Spanish Reggae", "Reggae 110", "Reggae Bultron", "Romantic Flow", "Lovers Rock", "Raggamuffin", "Ragga", "Dancehall", "Ska", "Dub", "Rocksteady"]
+            "subgenres": ["2 Tone", "Roots Reggae", "Reggae Fusion", "Reggae en Espanol", "Spanish Reggae", "Reggae 110", "Reggae Bultron", "Romantic Flow", "Lovers Rock", "Raggamuffin", "Ragga", "Dancehall", "Ska", "Dub", "Rocksteady"]
         },
         {
             "name": "Rock",
             "subgenres": [
-                "Acid Rock", "Adult Oriented Rock", "Adult Alternative", "Alternative Rock", "American Traditional Rock", "Anatolian Rock", "Arena Rock", "Art Rock", "Blues Rock", "British Invasion", "Cult Rock", "Emo Rock", "Glam Rock", "Hard Rock", "Math Rock", "Noise Rock", "Jam Bands",  "Post Rock", "Prog Rock Art Rock", "Psychedelic",  "Rock & Roll", "Rockabilly", "Roots Rock", "Southern Rock", "Surf", "Trip Hop", "Yacht Rock"
+                "Acid Rock", "Adult Oriented Rock", "Adult Alternative", "Alternative Rock", "American Traditional Rock", "Anatolian Rock", "Arena Rock", "Art Rock", "Blues Rock", "British Invasion", "Cult Rock", "Emo Rock", "Glam Rock", "Hard Rock", "Math Rock", "Noise Rock", "Jam Bands",  "Post Rock", "Prog Rock", "Psychedelic",  "Rock and Roll", "Rockabilly", "Roots Rock", "Southern Rock", "Surf", "Yacht Rock"
             ]
         },
         {
-            "name": "Singer/Songwriter",
+            "name": "Singer Songwriter",
             "subgenres": ["Alternative Folk", "Contemporary Folk", "Contemporary Singer Songwriter", "Indie Folk", "Folk Rock", "Love Song", "New Acoustic", "Traditional Folk"]
         },
         {
             "name": "Vocal",
-            "subgenres": ["A cappella", "Barbershop", "Cantique", "Doo wop", "Gregorian Chant", "Standards", "Traditional Pop", "Vocal Jazz", "Vocal Pop", "Yodel"]
+            "subgenres": ["Acappella", "Barbershop", "Cantique", "Doo wop", "Gregorian Chant", "Standards", "Traditional Pop", "Vocal Jazz", "Vocal Pop", "Yodel"]
         }
     ]
 }

@@ -61,15 +61,14 @@
                 </div>
               @else
                 <div class="group mb-4">
-                  <x-input-label-dark :required="true">Promoter</x-input-label-dark>
-                  <x-text-input id="promoter_name" name="promoter_name" autocomplete="off" :required="true"
+                  <x-input-label-dark>Promoter</x-input-label-dark>
+                  <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
                     :value="old('')"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                   </ul>
-                  <x-input-label-dark :required="true">Promoter ID</x-input-label-dark>
-                  <x-text-input id="promoter_id" name="promoter_id" :value="old('')"
-                    :required="true"></x-text-input>
+                  <x-input-label-dark>Promoter ID</x-input-label-dark>
+                  <x-text-input id="promoter_id" name="promoter_id" :value="old('')"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
                   </ul>
@@ -254,7 +253,15 @@
     // Poster Preview
     $('#poster_url').on('change', function(event) {
       const file = event.target.files[0];
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+
       if (file) {
+        if (file.size > maxSize) {
+          showFailureNotification('File size exceeds 10MB limit');
+          this.value = ''; // Clear the file input
+          $('#posterPreview').addClass('hidden').attr('src', '#');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           $('#posterPreview').attr('src', e.target.result).removeClass('hidden');
@@ -305,8 +312,11 @@
           }
         },
         error: function(jqXHR, textStatus, errorThrown) {
-          console.error('AJAX error:', textStatus, errorThrown); // Log any AJAX errors
-          showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
+          if (jqXHR.status === 413) {
+            showFailureNotification('The uploaded file is too large. Maximum size is 10MB.');
+          } else {
+            showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
+          }
         }
       });
     });

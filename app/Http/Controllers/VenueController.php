@@ -171,93 +171,31 @@ class VenueController extends Controller
         $venuesByCoordinatesQuery = Venue::where('latitude', $latitude)
             ->where('longitude', $longitude);
 
-        // Initialize an empty query for venues by address
+        // Initialize query for venues by address
         $venuesByAddressQuery = Venue::query();
 
-        // Check if the search query contains a comma (indicating both town and specific address)
         if (strpos($searchQuery, ',') !== false) {
-            // If the search query contains a comma, split it into town and address
             list($town, $address) = explode(',', $searchQuery);
-
-            // Perform search for venues matching the town or the address
             $venuesByAddressQuery->where(function ($query) use ($town, $address) {
                 $query->where('postal_town', 'LIKE', "%$address%")
                     ->orWhere('postal_town', 'LIKE', "%$town%");
             });
         } else {
-            // If the search query does not contain a comma, search for venues matching the town only
             $venuesByAddressQuery->where('postal_town', 'LIKE', "%$searchQuery%");
         }
 
-        // Get the paginated results
         $venuesByCoordinates = $venuesByCoordinatesQuery->paginate(10, ['*'], 'coordinates_page');
         $venuesByAddress = $venuesByAddressQuery->paginate(10, ['*'], 'address_page');
 
-        // Merge the paginated results, ensure to avoid duplicates
-        $mergedVenues = $venuesByCoordinates->merge($venuesByAddress)->unique('id');
-
-        // Paginate the merged results manually if needed (assuming 10 per page)
-        $perPage = 10;
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $currentPageResults = $mergedVenues->slice(($currentPage - 1) * $perPage, $perPage)->all();
-        $paginatedResults = new LengthAwarePaginator($currentPageResults, $mergedVenues->count(), $perPage, $currentPage, [
-            'path' => LengthAwarePaginator::resolveCurrentPath(),
-            'pageName' => 'page',
-        ]);
-
-        // Process contact links for each venue to identify platforms
-        foreach ($paginatedResults as $venue) {
-            if ($venue->contact_link) {
-                $urls = explode(',', $venue->contact_link);
-                $platforms = [];
-
-                // Check each URL against the platforms
-                foreach ($urls as $url) {
-                    // Initialize the platform as unknown
-                    $matchedPlatform = 'Unknown';
-
-                    // Check if the URL contains platform names
-                    $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                    foreach ($platformsToCheck as $platform) {
-                        if (stripos($url, $platform) !== false) {
-                            $matchedPlatform = $platform;
-                            break;
-                        }
-                    }
-
-                    // Store the platform information for each URL
-                    $platforms[] = [
-                        'url' => $url,
-                        'platform' => $matchedPlatform
-                    ];
-                }
-
-                // Add the processed data to the venue
-                $venue->platforms = $platforms;
-            }
+        // Process social links for each venue
+        foreach ($venuesByCoordinates as $venue) {
+            $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
+        }
+        foreach ($venuesByAddress as $venue) {
+            $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
         }
 
-        // Fetch genres for initial page load
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true);
-        $genres = $data['genres'];
-
-        $overallReviews = [];
-
-        foreach ($paginatedResults as $venue) {
-            $overallScore = VenueReview::calculateOverallScore($venue->id);
-            $overallReviews[$venue->id] = $this->renderRatingIcons($overallScore);
-        }
-
-        $venuePromoterCount = isset($venue['promoters']) ? count($venue['promoters']) : 0;
-
-        return view('venues', [
-            'venues' => $paginatedResults,
-            'genres' => $genres,
-            'searchQuery' => $searchQuery,
-            'overallReviews' => $overallReviews,
-            'venuePromoterCount' => $venuePromoterCount,
-        ]);
+        return view('filtered-venues', compact('venuesByCoordinates', 'venuesByAddress'));
     }
 
     public function filterCheckboxesSearch(Request $request)

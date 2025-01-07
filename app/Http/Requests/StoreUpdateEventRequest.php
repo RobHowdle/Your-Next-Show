@@ -25,7 +25,7 @@ class StoreUpdateEventRequest extends FormRequest
             'event_date' => 'required|date_format:d-m-Y',
             'event_start_time' => 'required|date_format:H:i',
             'event_end_time' => 'nullable|date_format:H:i',
-            'promoter_id' => 'required|integer|exists:promoters,id',
+            'promoter_id' => 'nullable|sometimes|integer|exists:promoters,id',
             'event_description' => 'required|string',
             'facebook_event_url' => 'nullable|url',
             'ticket_url' => 'nullable|url',

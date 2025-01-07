@@ -32,7 +32,7 @@
             ])
           @elseif($dashboardType == 'photographer')
             @include('profile.partials.photographer-profile', [
-                'photographerUserData' => $photographerUserData,
+                'photographerUserData' => $photographerUserData ?? [],
             ])
           @elseif($dashboardType == 'standard')
             @include('profile.partials.standard-profile', [
@@ -85,12 +85,14 @@
             <p class="text-xl font-bold">User Settings</p>
             @include('profile.partials.edit-user-details', [
                 'userRole' => $userRole,
-                'firstName' => $firstName,
-                'lastName' => $lastName,
-                'email' => $email,
-                'location' => $location,
-                'latitude' => $latitude,
-                'longitude' => $longitude,
+                'userFirstName' => $userFirstName,
+                'userLastName' => $userLastName,
+                'userEmail' => $userEmail,
+                'userDob' => $userDob,
+                'userLocation' => $userLocation,
+                'userPostalTown' => $userPostalTown,
+                'userLat' => $userLat,
+                'userLong' => $userLong,
             ])
           </div>
         </div>
@@ -185,40 +187,40 @@
   }
 </style>
 <script>
-  document.getElementById('sync-all-events-apple').addEventListener('click', function() {
-    var calendarEl = document.getElementById("calendar");
-    var userId = calendarEl.getAttribute("data-user-id");
-    const url = `/profile/events/${userId}/apple/sync`; // Define your route for syncing
+  // document.getElementById('sync-all-events-apple').addEventListener('click', function() {
+  //   var calendarEl = document.getElementById("calendar");
+  //   var userId = calendarEl.getAttribute("data-user-id");
+  //   const url = `/profile/events/${userId}/apple/sync`; // Define your route for syncing
 
-    // Show loading state if needed
-    this.textContent = 'Syncing...';
+  //   // Show loading state if needed
+  //   this.textContent = 'Syncing...';
 
-    // Make an AJAX request to trigger the download
-    fetch(url)
-      .then(response => {
-        if (response.ok) {
-          return response.blob(); // Return blob data for the .ics file
-        }
-        throw new Error('Network response was not ok.');
-      })
-      .then(blob => {
-        // Create a link element to download the file
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'events.ics'; // Set a name for the file
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
+  //   // Make an AJAX request to trigger the download
+  //   fetch(url)
+  //     .then(response => {
+  //       if (response.ok) {
+  //         return response.blob(); // Return blob data for the .ics file
+  //       }
+  //       throw new Error('Network response was not ok.');
+  //     })
+  //     .then(blob => {
+  //       // Create a link element to download the file
+  //       const url = window.URL.createObjectURL(blob);
+  //       const a = document.createElement('a');
+  //       a.href = url;
+  //       a.download = 'events.ics'; // Set a name for the file
+  //       document.body.appendChild(a);
+  //       a.click();
+  //       a.remove();
+  //       window.URL.revokeObjectURL(url);
 
-        // Reset button text
-        this.textContent = 'Sync All Events to Apple Calendar';
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to sync events. Please try again.');
-        this.textContent = 'Sync All Events to Apple Calendar';
-      });
-  });
+  //       // Reset button text
+  //       this.textContent = 'Sync All Events to Apple Calendar';
+  //     })
+  //     .catch(error => {
+  //       console.error('Error:', error);
+  //       alert('Failed to sync events. Please try again.');
+  //       this.textContent = 'Sync All Events to Apple Calendar';
+  //     });
+  // });
 </script>

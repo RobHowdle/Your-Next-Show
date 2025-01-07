@@ -1,57 +1,3 @@
-/**
- * Initializes Alpine.js and SweetAlert2, sets up global utility functions, and configures various jQuery functionalities.
- *
- * @file /Users/robhowdle/Files/findmyvenue/resources/js/app.js
- * @requires alpinejs
- * @requires sweetalert2
- * @requires jquery
- *
- * @global
- * @function formatCurrency
- * @param {number} value - The value to format as currency.
- * @returns {string} - The formatted currency string.
- *
- * @global
- * @function formatDateToDMY
- * @param {string} dateString - The date string to format.
- * @returns {string} - The formatted date string in DMY format.
- *
- * @global
- * @function initialiseSummernote
- * @param {string} selector - The jQuery selector for the Summernote editor.
- * @param {string} initialContent - The initial content to set in the Summernote editor.
- *
- * @global
- * @function showSuccessNotification
- * @param {string} message - The success message to display.
- *
- * @global
- * @function showFailureNotification
- * @param {string} message - The failure message to display.
- *
- * @global
- * @function showWarningNotification
- * @param {string} message - The warning message to display.
- *
- * @global
- * @function showConfirmationNotification
- * @param {Object} options - The options for the confirmation notification.
- * @param {string} options.text - The text to display in the confirmation notification.
- * @returns {Promise} - A promise that resolves when the user responds to the confirmation.
- *
- * @global
- * @function showEventBlock
- * @param {Object} info - The event information.
- * @param {Object} info.event - The event object.
- * @param {Object} info.event._def.extendedProps - The extended properties of the event.
- * @param {string} info.event._def.extendedProps.event_start_time - The start time of the event.
- * @param {string} info.event._def.extendedProps.description - The description of the event.
- * @param {Array<string>} info.event._def.extendedProps.bands - The bands performing at the event.
- * @param {string} info.event._def.extendedProps.location - The location of the event.
- * @param {string} info.event._def.extendedProps.ticket_url - The URL for event tickets.
- * @param {string} info.event._def.extendedProps.on_the_door_ticket_price - The on-the-door ticket price.
- * @returns {Promise} - A promise that resolves when the user responds to the event block.
- */
 import Alpine from "alpinejs";
 import Swal from "../../node_modules/sweetalert2";
 import $ from "jquery";
@@ -79,29 +25,6 @@ window.formatDateToDMY = function (dateString) {
 
     return `${day}-${month}-${year}`; // Return in DMY format
 };
-
-// Find all disabled elements and add tooltip
-// $(document).ready(function () {
-//     $(".disabled").each(function () {
-//         // Add required classes
-//         $(this).addClass("relative group cursor-not-allowed");
-
-//         // Add opacity if not already styled
-//         if (!$(this).hasClass("opacity-60")) {
-//             $(this).addClass("opacity-60");
-//         }
-
-//         // Insert tooltip span if it doesn't exist
-//         if (!$(this).find(".tooltip-span").length) {
-//             $(this).append(`
-//                 <span class="tooltip-span invisible group-hover:visible absolute left-1/2 -translate-x-1/2 -bottom-8
-//                     w-max px-2 py-1 bg-black/80 text-white text-sm rounded z-50">
-//                     Coming Soon
-//                 </span>
-//             `);
-//         }
-//     });
-// });
 
 // Accordions
 $(document).ready(function () {
@@ -310,81 +233,32 @@ jQuery(document).ready(function () {
 });
 
 // Function to initialize Summernote
-window.initialiseSummernote = function (selector, initialContent) {
-    $(selector).summernote({
-        height: 300,
-        toolbar: [
-            ["style", ["style"]],
-            ["font", ["bold", "italic", "underline", "clear"]],
-            ["fontname", ["fontname"]],
-            ["fontsize", ["fontsize"]],
-            ["fontSizeUnits", ["px", "pt"]],
-            ["color", ["color"]],
-            ["para", ["ul", "ol", "paragraph"]],
-            ["table", ["table"]],
-            ["insert", ["link", "picture", "video"]],
-            ["view", ["fullscreen", "help"]],
-        ],
-        callbacks: {
-            onInit: function () {
-                jQuery(this).summernote("code", initialContent); // Set the initial content
-            },
-            onKeyup: function () {
-                var editor = jQuery(this);
-                var content = editor.summernote("code");
-
-                // Analyze and get the highlighted content
-                // var highlightedContent = analyzeText(content);
-
-                // Update only if the content has changed
-                // if (highlightedContent !== content) {
-                //     // Get the current selection before updating the content
-                //     var selection = window.getSelection();
-                //     var range = selection.getRangeAt(0);
-
-                //     // Update the content directly
-                //     editor.summernote("code", highlightedContent);
-
-                //     // Restore the selection
-                //     setTimeout(function () {
-                //         // Get the editable area
-                //         var $editable = editor.summernote("editable")[0];
-
-                //         // Set the cursor position back to where it was
-                //         selection.removeAllRanges(); // Clear existing selections
-                //         selection.addRange(range); // Set the new range
-
-                //         // Refocus on the editor
-                //         $editable.focus(); // Focus the editable area
-                //     }, 0); // Use a small delay to ensure the content is rendered before moving the cursor
-                // }
-            },
-        },
-    });
-};
-
-// Function to analyze text for venue names
-
-// function analyzeText(inputText) {
-//     const venues = [
-//         {
-//             name: "The Forum",
-//             link: "https://www.google.com/theforummusiccenter",
+// window.initialiseSummernote = function (selector, initialContent) {
+//     $(selector).summernote({
+//         height: 300,
+//         toolbar: [
+//             ["style", ["style"]],
+//             ["font", ["bold", "italic", "underline", "clear"]],
+//             ["fontname", ["fontname"]],
+//             ["fontsize", ["fontsize"]],
+//             ["fontSizeUnits", ["px", "pt"]],
+//             ["color", ["color"]],
+//             ["para", ["ul", "ol", "paragraph"]],
+//             ["table", ["table"]],
+//             ["insert", ["link", "picture", "video"]],
+//             ["view", ["fullscreen", "help"]],
+//         ],
+//         callbacks: {
+//             onInit: function () {
+//                 jQuery(this).summernote("code", initialContent); // Set the initial content
+//             },
+//             onKeyup: function () {
+//                 var editor = jQuery(this);
+//                 var content = editor.summernote("code");
+//             },
 //         },
-//         { name: "The Turks Head", link: "https://www.google.com/theturkshead" },
-//     ];
-
-//     let highlightedContent = inputText; // Start with the original input text
-
-//     venues.forEach((venue) => {
-//         const regex = new RegExp(`\\b(${venue.name})\\b`, "gi");
-//         highlightedContent = highlightedContent.replace(
-//             regex,
-//             `<span class="highlight" data-link="${venue.link}">$1</span>`
-//         );
 //     });
-//     return highlightedContent; // Return the modified content
-// }
+// };
 
 // Sweet Alert 2 Notifications
 window.showSuccessNotification = function (message) {

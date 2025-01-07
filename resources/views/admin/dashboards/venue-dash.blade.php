@@ -64,7 +64,7 @@
               class="fas fa-sticky-note mb-4 h-14 w-14 rounded-lg bg-white px-1 py-1 text-black transition duration-150 ease-in-out group-hover:text-yns_yellow"></span>
             New Note
           </button>
-          <a href="{{ route('admin.dashboard.new-todo', ['dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('admin.dashboard.todo-list', ['dashboardType' => $dashboardType]) }}"
             class="group flex flex-col items-center text-center transition duration-150 ease-in-out hover:text-yns_yellow">
             <span
               class="fas fa-list mb-4 h-14 w-14 rounded-lg bg-white px-1 py-1 text-black transition duration-150 ease-in-out group-hover:text-yns_yellow"></span>
