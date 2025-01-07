@@ -231,7 +231,7 @@
 
     console.log(typeof(filteredVenues));
 
-    var venueRoute = "{{ route('venues', [':serviceId']) }}";
+    var venueRoute = "{{ route('venue', [':serviceId']) }}";
 
     var rowsHtml = filteredVenues.map(function(venue) {
       var finalRoute = venueRoute
