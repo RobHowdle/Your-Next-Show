@@ -13,7 +13,6 @@ use App\Models\UserModuleSetting;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
-use Intervention\Image\ImageManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
@@ -44,7 +43,7 @@ class ProfileController extends Controller
         // Initialize promoter variables
         $promoterData = [];
         $bandData = [];
-        $venueData = [];
+        $venueUserData = [];
         $photographerUserData = [];
         $standardUserData = [];
         $designerUserData = [];
@@ -55,7 +54,7 @@ class ProfileController extends Controller
         } elseif ($dashboardType === 'artist') {
             $bandData = $this->getBandData($user);
         } elseif ($dashboardType === 'venue') {
-            $venueData = $this->getVenueData($user);
+            $venueUserData = $this->getVenueUserData($user);
         } elseif ($dashboardType === 'photographer') {
             $photographerUserData = $this->getPhotographerData($user);
         } elseif ($dashboardType === 'standard') {
@@ -91,7 +90,7 @@ class ProfileController extends Controller
             'modules' => $modules,
             'promoterData' => $promoterData,
             'bandData' => $bandData,
-            'venueData' => $venueData,
+            'venueUserData' => $venueUserData,
             'photographerUserData' => $photographerUserData,
             'standardUserData' => $standardUserData,
             'designerUserData' => $designerUserData,
@@ -780,24 +779,26 @@ class ProfileController extends Controller
         ];
     }
 
-    private function getVenueData(User $user)
+    private function getVenueUserData(User $user)
     {
         $venue = $user->venues()->first();
 
-        $name = $venue ? $venue->name : '';
-        $location = $venue ? $venue->location : '';
-        $latitude = $venue ? $venue->latitude : '';
-        $longitude = $venue ? $venue->longitude : '';
+        // Basic Information
+        $venueName = $venue ? $venue->name : '';
+        $venueLocation = $venue ? $venue->location : '';
+        $venuePostalTown = $venue ? $venue->postal_town : '';
+        $venueLat = $venue ? $venue->latitude : '';
+        $venueLong = $venue ? $venue->longitude : '';
         $w3w = $venue ? $venue->w3w : '';
         $logo = $venue && $venue->logo_url
             ? (filter_var($venue->logo_url, FILTER_VALIDATE_URL) ? $venue->logo_url : Storage::url($venue->logo_url))
             : asset('images/system/yns_no_image_found.png');
 
         $capacity = $venue ? $venue->capacity : '';
+        $contact_name = $venue ? $venue->contact_name : '';
         $contact_number = $venue ? $venue->contact_number : '';
         $contact_email = $venue ? $venue->contact_email : '';
         $contactLinks = $venue ? json_decode($venue->contact_link, true) : [];
-        $contact_name = $venue ? $venue->contact_name : '';
 
         $platforms = [];
         $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
@@ -817,8 +818,13 @@ class ProfileController extends Controller
             }
         }
 
-        $about = $venue ? $venue->description : '';
+        // Aout Section
+        $description = $venue ? $venue->description : '';
+
+        // In House Gear
         $inHouseGear = $venue ? $venue->in_house_gear : '';
+
+        // My Events
         $myEvents = $venue ? $venue->events()->with('venues')->get() : collect();
         $uniqueBands = $this->getUniqueBandsForPromoterEvents($venue->id);
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -843,16 +849,17 @@ class ProfileController extends Controller
 
         return [
             'venue' => $venue,
-            'name' => $name,
-            'location' => $location,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
+            'venueName' => $venueName,
+            'venueLocation' => $venueLocation,
+            'venuePostalTown' => $venuePostalTown,
+            'venueLat' => $venueLat,
+            'venueLong' => $venueLong,
             'w3w' => $w3w,
             'logo' => $logo,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'platformsToCheck' => $platformsToCheck,
-            'about' => $about,
+            'description' => $description,
             'inHouseGear' => $inHouseGear,
             'myEvents' => $myEvents,
             'contact_email' => $contact_email,
@@ -984,10 +991,9 @@ class ProfileController extends Controller
         $logo = $photographer && $photographer->logo_url
             ? (filter_var($photographer->logo_url, FILTER_VALIDATE_URL) ? $photographer->logo_url : Storage::url($photographer->logo_url))
             : asset('images/system/yns_no_image_found.png');
-        $photographerPhone = $photographer ? $photographer->contact_number : '';
         $contact_name = $photographer ? $photographer->contact_name : '';
-        $contact_email = $photographer ? $photographer->contact_email : '';
         $contact_number = $photographer ? $photographer->contact_number : '';
+        $contact_email = $photographer ? $photographer->contact_email : '';
         $contactLinks = $photographer ? json_decode($photographer->contact_link, true) : [];
 
         $platforms = [];
@@ -1065,7 +1071,6 @@ class ProfileController extends Controller
             'photographerLat' => $photographerLat,
             'photographerLong' => $photographerLong,
             'logo' => $logo,
-            'photographerPhone' => $photographerPhone,
             'contact_name' => $contact_name,
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,

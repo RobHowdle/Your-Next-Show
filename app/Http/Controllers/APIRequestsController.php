@@ -118,6 +118,47 @@ class APIRequestsController extends Controller
     }
 
     /**
+     * Events - Searching for promoters
+     */
+    public function createPromoter(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+            ]);
+
+            $query = $request->input('name');
+            $cleanedQuery = cleanQuery($query);
+
+            $newPromoter = Promoter::create([
+                'name' => $cleanedQuery,
+                'location' => 'Unknown',
+                'postal_town' => 'Unknown',
+                'longitude' => 0,
+                'latitude' => 0,
+                'description' => 'Nothing here yet!',
+                'contact_name' => 'Unknown',
+                'contact_number' => '00000000000',
+                'contact_email' => 'blank@yournextshow.co.uk',
+                'contact_link' => json_encode(['website' => 'https://yournextshow.co.uk']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'promoter' => [
+                    'id' => $newPromoter->id,
+                    'name' => $newPromoter->name
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create promoter'
+            ], 500);
+        }
+    }
+
+    /**
      * Get Users Calendar Events
      */
     public function getUserCalendarEvents($dashboardType, Request $request, $userId)

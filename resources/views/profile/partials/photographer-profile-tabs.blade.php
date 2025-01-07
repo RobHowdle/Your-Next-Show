@@ -7,7 +7,6 @@
         'photographerPostalTown' => $photographerUserData['photographerPostalTown'],
         'photographerLat' => $photographerUserData['photographerLat'],
         'photographerLong' => $photographerUserData['photographerLong'],
-        'phone' => $photographerUserData['photographerPhone'],
         'contact_name' => $photographerUserData['contact_name'],
         'contact_email' => $photographerUserData['contact_email'],
         'contact_number' => $photographerUserData['contact_number'],

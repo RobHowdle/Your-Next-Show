@@ -27,4 +27,4 @@ Route::get('/dashboard/{$dashboardType}/finances', [FinanceController::class, 'g
 Route::get('/bands/search', [APIRequestsController::class, 'searchBands']);
 Route::post('/bands/create', [APIRequestsController::class, 'createBand']);
 Route::get('/promoters/search', [APIRequestsController::class, 'searchPromoters']);
-Route::post('/promoters/create', [APIRequestsController::class, 'createPromoters']);
+Route::post('/promoters/create', [APIRequestsController::class, 'createPromoter']);

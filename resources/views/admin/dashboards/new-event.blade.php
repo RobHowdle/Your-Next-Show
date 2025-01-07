@@ -68,7 +68,7 @@
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                   </ul>
                   <x-input-label-dark>Promoter ID</x-input-label-dark>
-                  <x-text-input id="promoter_id" name="promoter_id" :value="old('')"></x-text-input>
+                  <x-text-input id="promoter_ids" name="promoter_ids" :value="old('')"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
                   </ul>
@@ -276,12 +276,23 @@
 
       const dashboardType = "{{ $dashboardType }}"; // Capture the dashboard type from the template
       const bandIds = $('#bands_ids').val().split(',').filter(id => id.trim());
+      const promoterIds = $('#promoter_ids').val().split(',').filter(id => id.trim());
+
+      console.log('Promoter IDs before submit:', promoterIds); // Debug log
 
       const formData = new FormData(this); // Get form data
       formData.delete('bands_ids');
       bandIds.forEach(id => {
         formData.append('bands_ids[]', id);
       });
+      promoterIds.forEach(id => {
+        formData.append('promoter_ids[]', id);
+      });
+
+      // Debug log FormData
+      for (var pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
 
       $.ajax({
         url: "{{ route('admin.dashboard.store-new-event', ['dashboardType' => ':dashboardType']) }}"
@@ -322,38 +333,83 @@
     });
 
     // Promoter Search
-    const handlePromoterSearch = () => {
-      const inputElement = $('#promoter_name');
-      const idInput = $('#promoter_id');
-      const suggestionsList = $('#promoter-suggestions');
-
-      if (!inputElement.length) {
-        console.error('Promoter search input not found');
-        return;
-      }
-
+    function handlePromoterSearch() {
+      const searchInput = $('#promoter_name');
+      const suggestionsElement = $('#promoter-suggestions');
+      const promoterIdsField = $('#promoter_ids');
+      let selectedPromoterIds = [];
       let debounceTimer;
 
-      inputElement.on('input', function() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          const search = $(this).val().trim();
-          if (search.length > 2) {
-            $.ajax({
-              url: `/api/promoters/search?q=${search}`,
-              method: 'GET',
-              data: {
-                search: search
-              },
-              success: function(response) {
-                suggestionsList.empty().removeClass('hidden');
+      function createNewPromoter(promoterName, inputElement, suggestionsElement, setterCallback, idField) {
+        $.ajax({
+          url: '/api/promoters/create',
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          },
+          data: {
+            name: promoterName
+          },
+          success: function(response) {
+            if (response.success && response.promoter) {
+              const promoterId = response.promoter.id;
+              let currentIds = promoterIdsField.val() ? promoterIdsField.val().split(',') : [];
+              currentIds.push(promoterId);
+              promoterIdsField.val(currentIds.join(','));
 
-                const promoters = response?.promoters || [];
+              setterCallback(response.promoter);
+              suggestionsElement.empty().addClass('hidden');
+              showSuccessNotification('Promoter created successfully');
+            }
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error creating promoter:', errorThrown);
+            showFailureNotification('Failed to create promoter');
+          }
+        });
+      }
+
+      searchInput.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
+          debounceTimer = setTimeout(() => {
+            $.ajax({
+              url: `/api/promoters/search?q=${searchQuery}`,
+              method: 'GET',
+              success: function(response) {
+                suggestionsElement.empty().removeClass('hidden');
+                const promoters = response.promoters || [];
 
                 if (promoters.length === 0) {
-                  suggestionsList.append(
-                    `<li class="suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white">No promoters found</li>`
-                  );
+                  const createOption = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer px-4 py-2 bg-opac_8_black text-yns_yellow font-bold'
+                    )
+                    .html(`<i class="fas fa-plus mr-2"></i>Create new promoter "${searchQuery}"`)
+                    .on('click', function() {
+                      createNewPromoter(
+                        searchQuery,
+                        searchInput,
+                        suggestionsElement,
+                        (promoter) => {
+                          const currentValue = searchInput.val();
+                          const existingPromoters = currentValue.split(',')
+                            .map(p => p.trim())
+                            .filter(p => p.length > 0)
+                            .slice(0, -1);
+
+                          existingPromoters.push(promoter.name);
+                          searchInput.val(existingPromoters.join(', ') + ', ');
+
+                          selectedPromoterIds.push(promoter.id);
+                          promoterIdsField.val(selectedPromoterIds.join(','));
+                        },
+                        promoterIdsField
+                      );
+                    });
+                  suggestionsElement.append(createOption);
                   return;
                 }
 
@@ -364,72 +420,45 @@
                     )
                     .text(promoter.name)
                     .on('click', () => {
-                      inputElement.val(promoter.name);
-                      idInput.val(promoter.id);
-                      suggestionsList.addClass('hidden');
+                      const currentValue = searchInput.val();
+                      const existingPromoters = currentValue.split(',')
+                        .map(p => p.trim())
+                        .filter(p => p.length > 0)
+                        .slice(0, -1);
+
+                      existingPromoters.push(promoter.name);
+                      searchInput.val(existingPromoters.join(', ') + ', ');
+
+                      selectedPromoterIds.push(promoter.id);
+                      promoterIdsField.val(selectedPromoterIds.join(','));
+
+                      suggestionsElement.addClass('hidden');
                     });
-                  suggestionsList.append(li);
+                  suggestionsElement.append(li);
                 });
               },
               error: function(xhr, status, error) {
                 console.error('Search failed:', error);
-                suggestionsList.empty().append(`
-                                <li class="suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-red">Error loading promoters</li>
-                            `);
+                suggestionsElement.empty()
+                  .append(
+                    '<li class="suggestion-item text-red-500 px-4 py-2">Error loading promoters</li>')
+                  .removeClass('hidden');
               }
             });
-          } else {
-            suggestionsList.addClass('hidden');
-          }
-        }, 300);
+          }, 300);
+        } else {
+          suggestionsElement.addClass('hidden');
+        }
       });
 
       $(document).on('click', function(e) {
         if (!$(e.target).closest('#promoter_name, #promoter-suggestions').length) {
-          suggestionsList.addClass('hidden');
-        }
-      });
-    };
-
-    handlePromoterSearch();
-
-    function createNewPromoter(promoterName, inputElement, suggestionsElement, setterCallback, idField) {
-      $.ajax({
-        url: '/api/promoters/create',
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        data: {
-          name: promoterName
-        },
-        success: function(response) {
-          if (inputElement.attr('id') === 'promoters-search') {
-            const currentValue = inputElement.val();
-            const existingPromoters = currentValue.split(',')
-              .map(b => b.trim())
-              .filter(b => b.length > 0)
-              .slice(0, -1);
-
-            existingPromoters.push(promoterName);
-            inputElement.val(existingPromoters.join(', ') + ', ');
-
-            selectedPromoterIds.push(response.promoter.id);
-            promoterIdsField.val(selectedPromoterIds.join(','));
-          } else {
-            setterCallback(response.promoter);
-            idField.val(response.promoter.id);
-          }
-
-          suggestionsElement.empty().addClass('hidden');
-          showSuccessNotification('Promoter created successfully');
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-          console.error('Error creating promoter:', errorThrown);
-          showFailureNotification('Failed to create promoter');
+          suggestionsElement.addClass('hidden');
         }
       });
     }
+
+    handlePromoterSearch();
 
     // Venue Search
     const venueInput = document.getElementById('venue_name');

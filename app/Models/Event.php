@@ -48,7 +48,7 @@ class Event extends Model
 
     public function promoters()
     {
-        return $this->belongsToMany(Promoter::class);
+        return $this->belongsToMany(Promoter::class, 'event_promoter');
     }
 
     public function bands()
