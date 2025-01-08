@@ -210,6 +210,7 @@
         serviceType: serviceType,
       },
       success: function(data) {
+        console.log(Array.isArray(data.results));
         // Extract venues array and pass it to the function
         if (data.results && Array.isArray(data.results)) {
           updateTable(data);

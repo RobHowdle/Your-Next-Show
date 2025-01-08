@@ -200,7 +200,7 @@ class OtherServiceController extends Controller
         ];
 
         $model = '';
-
+      
         switch ($serviceType) {
             case 'Artist':
                 $model = OtherService::class;
@@ -208,6 +208,7 @@ class OtherServiceController extends Controller
             case 'Photography':
                 $model = OtherService::class;
                 break;
+
             case 'Videography':
                 $model = OtherService::class;
                 break;
