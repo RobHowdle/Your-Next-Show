@@ -180,8 +180,10 @@ class OtherServiceController extends Controller
 
     public function filterCheckboxesSearch(Request $request, $serviceType)
     {
+        $serviceTypeId = OtherServiceList::where('service_name', $serviceType)->first()->id;
+
         $filters = [
-            'service_type' => 'services', // The column to filter by service type
+            'service_type' => $serviceTypeId, // The column to filter by service type
             'search_fields' => ['postal_town', 'name'], // Fields to search
             'transform' => function ($item) {
                 return [
@@ -206,7 +208,7 @@ class OtherServiceController extends Controller
             case 'Photography':
                 $model = OtherService::class;
                 break;
-            case 'Videographer':
+            case 'Videography':
                 $model = OtherService::class;
                 break;
             case 'Designer':
