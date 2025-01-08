@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
+use function PHPUnit\Framework\isNull;
 
 class UpdateOtherServicePortfolioImages extends Command
 {
@@ -52,6 +53,23 @@ class UpdateOtherServicePortfolioImages extends Command
             $this->info('Dry run mode: No changes were made.');
             return Command::SUCCESS;
         }
+
+        $emptyRows = DB::table('other_services')
+            ->whereNull('portfolio_images')
+            ->get();
+        if ($emptyRows->count() > 0) {
+            $this->info('Found ' . $emptyRows->count() . ' rows with NULL portfolio images');
+
+            DB::table('other_services')
+                ->whereNull('portfolio_images')
+                ->update(['portfolio_images' => json_encode([])]);
+
+            $this->info('Successfully updated portfolio_images to empty arrays');
+            return Command::SUCCESS;
+        }
+
+        $this->info('No NULL portfolio_images found');
+        return Command::SUCCESS;
 
         // Perform the update
         $updatedRows = DB::table('other_services')
