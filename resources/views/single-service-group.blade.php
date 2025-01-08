@@ -193,6 +193,10 @@
     // Combine genres and subgenres
     var serviceType = '{{ $serviceName }}';
 
+    $('.search').on('change', function() {
+      console.log(serviceType);;
+    });
+
     // Send AJAX request to fetch filtered data
     $.ajax({
       url: `/other/${serviceType}/filter`,
@@ -220,16 +224,21 @@
     });
   }
 
+  // Update search input handler
+  $('#address-input').on('input', function() {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      applyFilters();
+    }, 300);
+  });
+
   function updateResultsTable(filteredOtherServices, pagination) {
     if (!Array.isArray(filteredOtherServices)) {
       console.error("filteredOtherServices is not an array:", filteredOtherServices);
       return;
     }
 
-    console.log(typeof(filteredOtherServices));
-
     var otherRoute = "{{ route('singleService', [':serviceName', ':serviceId']) }}";
-
     var rowsHtml = filteredOtherServices.map(function(otherService) {
       var finalRoute = otherRoute
         .replace(':serviceName', otherService.service_type)
@@ -356,8 +365,6 @@
 
   // Update the updateTable function to pass the filtered venues to updateVenuesTable
   function updateTable(data) {
-    console.log("Data:", data); // Check the entire data object
-
     // If the data doesn't have otherServices, we'll log an error and exit
     if (!data || !data.results) {
       console.error("Other services data is missing or undefined.");
@@ -366,8 +373,6 @@
 
     var otherServices = data.results;
     var pagination = data.pagination;
-
-    console.log("Other Services:", otherServices);
 
     // Check if data is not null or empty array
     if (otherServices && otherServices.length > 0) {
