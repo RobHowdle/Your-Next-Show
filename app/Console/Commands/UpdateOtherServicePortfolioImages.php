@@ -14,7 +14,7 @@ class UpdateOtherServicePortfolioImages extends Command
      *
      * @var string
      */
-    protected $signature = 'other-services:update-records {--dry-run : Preview the changes without updating the database}';
+    protected $signature = 'other-services:update-images {--dry-run : Preview the changes without updating the database}';
 
     /**
      * The console command description.
