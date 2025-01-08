@@ -81,8 +81,7 @@ class VenueController extends Controller
             ]);
         }
 
-        $overallReviews = []; // Array to store overall reviews for each venue
-        // Process each venue
+        $overallReviews = [];
         foreach ($venues as $venue) {
             $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
             $overallScore = VenueReview::calculateOverallScore($venue->id);

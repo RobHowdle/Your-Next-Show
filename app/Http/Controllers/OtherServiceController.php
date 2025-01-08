@@ -114,22 +114,24 @@ class OtherServiceController extends Controller
             ]);
         }
 
+
+        $overallReviews = [];
         // Process contact links using SocialLinksHelper
         foreach ($singleServices as $singleOtherService) {
             $singleOtherService->platforms = SocialLinksHelper::processSocialLinks($singleOtherService->contact_link);
-        }
-
-        $overallReviews = []; // Array to store overall reviews for each venue
-
-        foreach ($singleServices as $service) {
-            $overallScore = OtherServicesReview::calculateOverallScore($service->id);
-            $overallReviews[$service->id] = $this->renderRatingIcons($overallScore);
+            $overallScore = OtherServicesReview::calculateOverallScore($singleOtherService->id);
+            $overallReviews[$singleOtherService->id] = $this->renderRatingIcons($overallScore);
         }
 
         $firstService = $singleServices->first();
         $serviceName = $firstService->services;
 
-        return view('single-service-group', compact('singleServices', 'genres', 'overallReviews', 'serviceName'));
+        return view('single-service-group', [
+            'singleServices' => $singleServices,
+            'genres' => $genres,
+            'overallReviews' => $overallReviews,
+            'serviceName' => $serviceName,
+        ]);
     }
 
     public function show(Request $request, $serviceName, $serviceId)
