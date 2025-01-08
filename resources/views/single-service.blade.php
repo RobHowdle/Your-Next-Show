@@ -41,6 +41,7 @@
                 @elseif($singleService->services == 'Videographer')
                   ({{ $singleVideographerData['reviewCount'] ?? 0 }})
                 @elseif($singleService->services == 'Designer')
+                  ({{ $singleDesignerData['reviewCount'] ?? 0 }})
                 @endif
               </p>
               <div class="ratings flex">
@@ -432,7 +433,7 @@
                   @endforeach
                   @if ($singlePhotographerData['portfolioLink'])
                     <p class="mt-2">You can view our full portfolio here - <a
-                        class="underline hover:text-yns_yellow" href="{{ $singleDesignerData['portfolioLink'] }}"
+                        class="underline hover:text-yns_yellow" href="{{ $singlePhotographerData['portfolioLink'] }}"
                         target="_blank">{{ $singlePhotographerData['portfolioLink'] }}</a></p>
                   @endif
                 @else
