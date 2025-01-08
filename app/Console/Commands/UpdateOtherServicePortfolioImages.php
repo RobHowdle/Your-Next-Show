@@ -14,14 +14,14 @@ class UpdateOtherServicePortfolioImages extends Command
      *
      * @var string
      */
-    protected $signature = 'other-services:update-images {--dry-run : Preview the changes without updating the database}';
+    protected $signature = 'other-services:update-records {--dry-run : Preview the changes without updating the database}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Convert all portfolio images in the other services table from "[]" (string) to an empty JSON array ([])';
+    protected $description = '';
 
     /**
      * Execute the console command.
@@ -34,8 +34,9 @@ class UpdateOtherServicePortfolioImages extends Command
 
         // Select rows where genres is the string "[]"
         $otherServices = DB::table('other_services')
-            ->where('portfolio_images', 'like', '%[]%')
-            ->get(['id', 'portfolio_images']); // Retrieve ID and portfolio_images for preview
+            ->where('genre', 'like', '%[]%')
+            ->orWhere('portfolio_images', 'like', '%[]%')
+            ->get(['id', 'genre', 'portfolio_images']); // Retrieve ID and portfolio_images for preview
 
         if ($otherServices->isEmpty()) {
             $this->info('No records found with portfolio images set to "[]".');
@@ -45,7 +46,7 @@ class UpdateOtherServicePortfolioImages extends Command
         // Display the rows to be updated
         $this->info("Found {$otherServices->count()} rows to update:");
         foreach ($otherServices as $otherService) {
-            $this->line(" - OtherService ID: {$otherService->id}, Genres: {$otherService->portfolio_images}");
+            $this->line(" - OtherService ID: {$otherService->id}, Genres: {$otherService->genre}, Portfolio Images: {$otherService->portfolio_images}");
         }
 
         // If dry-run is enabled, do not update
@@ -55,16 +56,21 @@ class UpdateOtherServicePortfolioImages extends Command
         }
 
         $emptyRows = DB::table('other_services')
-            ->whereNull('portfolio_images')
+            ->whereNull('genre')
+            ->orWhereNull('portfolio_images')
+            ->orWhereNull('portfolio_link')
             ->get();
         if ($emptyRows->count() > 0) {
-            $this->info('Found ' . $emptyRows->count() . ' rows with NULL portfolio images');
+            $this->info('Found ' . $emptyRows->count() . ' rows with NULL values');
 
             DB::table('other_services')
-                ->whereNull('portfolio_images')
-                ->update(['portfolio_images' => json_encode([])]);
+                ->whereNull('genre')
+                ->orWhereNull('portfolio_images')
+                ->orWhereNull('portfolio_link')
 
-            $this->info('Successfully updated portfolio_images to empty arrays');
+                ->update(['genre' => [], 'portfolio_images' => [], 'portfolio_link' => 'https://www.yournextshow.co.uk']);
+
+            $this->info('Successfully updated rows to empty arrays');
             return Command::SUCCESS;
         }
 
@@ -73,8 +79,9 @@ class UpdateOtherServicePortfolioImages extends Command
 
         // Perform the update
         $updatedRows = DB::table('other_services')
-            ->where('portfolio_images', 'like', '%[]%')
-            ->update(['portfolio_images' => []]);
+            ->where('genre', 'like', '%[]%')
+            ->orWhere('portfolio_images', 'like', '%[]%')
+            ->update(['genre' => [], 'portfolio_images' => []]);
 
         $this->info("Successfully updated {$updatedRows} rows.");
         return Command::SUCCESS;

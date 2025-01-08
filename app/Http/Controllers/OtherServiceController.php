@@ -268,8 +268,8 @@ class OtherServiceController extends Controller
 
         $description = $service ? $service->description : '';
         $packages = $service ? json_decode($service->packages) : [];
-        $portfolioImages = $service->portfolio_images;
-        $portfolioLink = $service->portfolio_link;
+        $portfolioImages = $service ? $service->portfolio_images : [];
+        $portfolioLink = $service ? $service->portfolio_link : '';
         $platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
         $service->platforms = $platforms;
         $environmentTypes = $service ? json_decode($service->environment_type, true) : [];
