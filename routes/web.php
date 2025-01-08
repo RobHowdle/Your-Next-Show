@@ -59,7 +59,8 @@ Route::post('/other/{serviceType}/filter', [OtherServiceController::class, 'filt
 Route::get('/other/{serviceName}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
 Route::get('/other/{serviceName}/{serviceId}', [OtherServiceController::class, 'show'])->name('singleService');
 
-Route::get('/gig-guide', [GigGuideController::class, 'showGigGuide'])->name('gig-guide');
+// Gig Guide
+Route::get('/gig-guide', [GigGuideController::class, 'index'])->name('gig-guide');
 Route::get('/gigs/filter', [GigGuideController::class, 'filterGigs'])->name('gigs.filter');
 Route::view('/privacy-policy', 'privacy-policy');
 Route::view('/about', 'about');
