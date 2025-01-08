@@ -90,6 +90,17 @@ class EventController extends Controller
                 })
                 ->orderBy('event_date', 'asc')
                 ->get();
+        } elseif ($role === "venue") {
+            // Promoter can see their own events and those created by users in their company
+            $upcomingEvents = Event::where('event_date', '>', now())
+                ->where('user_id', $user->id) // events created by this promoter
+                ->orWhereIn('id', function ($query) use ($service) {
+                    $query->select('event_id')
+                        ->from('event_venue')
+                        ->where('venue_id', $service->id); // events associated with the promoter
+                })
+                ->orderBy('event_date', 'asc')
+                ->get();
         } else {
             // Default case for any other roles (if necessary)
             $upcomingEvents = Event::where('event_date', '>', now())
