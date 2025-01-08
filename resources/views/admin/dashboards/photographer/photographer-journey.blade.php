@@ -40,41 +40,46 @@
                 @csrf
                 <x-google-address-picker id="location" name="location" label="Where are you based?"
                   placeholder="Search for a location..." value="" latitude="" longitude="" dataId=""
-                  postalTown=""></x-google-address-picker>
+                  postalTown="" :required="true"></x-google-address-picker>
 
                 <div class="group">
-                  <x-input-label-dark>Photography Name</x-input-label-dark>
-                  <x-text-input id="name" name="name" value="{{ old('name') }}"></x-text-input>
+                  <x-input-label-dark :required="true">Photography Name</x-input-label-dark>
+                  <x-text-input id="name" name="name" value="{{ old('name') }}"
+                    :required="true"></x-text-input>
                   @error('name')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
 
                 <div class="group">
-                  <x-input-label-dark>Tell us a bit about you</x-input-label-dark>
-                  <x-textarea-input class="w-full" id="description"
-                    name="description">{{ old('description') }}</x-textarea-input>
+                  <x-input-label-dark :required="true">Tell us a bit about you</x-input-label-dark>
+                  <x-textarea-input class="w-full" id="description" name="description"
+                    :required="true">{{ old('description') }}</x-textarea-input>
                   @error('description')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
 
                 <div class="group">
-                  <x-input-label-dark for="contact_name">Contact Name</x-input-label-dark>
-                  <x-text-input id="contact_name" name="contact_name" />
+                  <x-input-label-dark for="contact_name" :required="true">Contact Name</x-input-label-dark>
+                  <x-text-input id="contact_name" name="contact_name" value="{{ old('contact_name') }}"
+                    :required="true" />
                 </div>
 
                 <div class="group">
-                  <x-input-label-dark for="contact_number">Contact Number</x-input-label-dark>
-                  <x-text-input id="contact_number" name="contact_number" />
+                  <x-input-label-dark for="contact_number" :required="true">Contact Number</x-input-label-dark>
+                  <x-text-input id="contact_number" name="contact_number" value="{{ old('contact_number') }}"
+                    :required="true" />
                 </div>
                 <div class="group">
-                  <x-input-label-dark for="contact_email">Contact Email</x-input-label-dark>
-                  <x-text-input id="contact_email" name="contact_email" />
+                  <x-input-label-dark for="contact_email" :required="true">Contact Email</x-input-label-dark>
+                  <x-text-input id="contact_email" name="contact_email" value="{{ old('contact_email') }}"
+                    :required="true" />
                 </div>
                 <div class="group">
-                  <x-input-label-dark for="contact_link">Social Links</x-input-label-dark>
-                  <x-text-input id="contact_link" name="contact_link" />
+                  <x-input-label-dark for="contact_link" :required="true">Social Links (separate by
+                    coma)</x-input-label-dark>
+                  <x-text-input id="contact_link" name="contact_link" :required="true" />
                 </div>
 
                 <div class="group">
