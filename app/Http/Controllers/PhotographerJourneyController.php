@@ -124,6 +124,8 @@ class PhotographerJourneyController extends Controller
                 'contact_number' => $request->contact_number,
                 'contact_email' => $request->contact_email,
                 'contact_link' => $platformsJson,
+                'portfoilio_link' => 'https://www.yournextshow.co.uk',
+                'portfolio_images' => [],
                 'other_service_id' => 1,
                 'services' => 'Photography',
             ]);
