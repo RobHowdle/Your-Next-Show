@@ -12,7 +12,7 @@
     <x-textarea-input id="description" name="description">{{ old('description', $description ?? '') }}</x-textarea-input>
 
     {{-- <x-textarea-input class="summernote" id="about" name="about"></x-textarea-input> --}}
-    @error('about')
+    @error('description')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror
   </div>

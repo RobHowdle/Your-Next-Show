@@ -4,7 +4,6 @@
   </h2>
 </header>
 <div class="group mb-6">
-  <x-input-label-dark>Your recent events</x-input-label-dark>
   <table class="mt-4 w-full border border-white text-left font-sans text-xl rtl:text-right">
     <thead class="border-b border-b-white text-xl text-white underline dark:bg-black">
       <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
