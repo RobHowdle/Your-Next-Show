@@ -48,8 +48,6 @@
         },
       });
 
-      console.log('Autocomplete initialized for:', addressPicker);
-
       // Add a listener for the place_changed event
       autocomplete.addListener("place_changed", function() {
         const place = autocomplete.getPlace();
@@ -74,9 +72,6 @@
           document.getElementById(`longitude_${index}`).value = longitude;
           document.getElementById(`location_${index}`).value = place.formatted_address;
           document.getElementById(`postal_town_${index}`).value = postalTown;
-
-          // Optional: Log the postal town
-          console.log("Postal Town:", postalTown);
 
           // Submit the form if necessary
           form.submit();
@@ -112,8 +107,6 @@
             document.getElementById(`longitude_${index}`).value = longitude;
             document.getElementById(`location_${index}`).value = place.formatted_address;
             document.getElementById(`postal_town_${index}`).value = postalTown;
-
-            console.log("Postal Town:", postalTown);
 
             form.submit();
           }

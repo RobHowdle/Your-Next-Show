@@ -7,8 +7,11 @@
   @csrf
   @method('PUT')
   <div class="group mb-6">
-    <x-input-label-dark for="myVenues">Tell us about the venues you've worked with</x-input-label-dark>
-    <x-textarea-input class="summernote" id="inHouseGear" name="inHouseGear"></x-textarea-input>
+    <x-input-label-dark for="myVenues">Do you have any gear in house that you are happy to allow artists to
+      use?</x-input-label-dark>
+    <x-textarea-input id="inHouseGear" name="inHouseGear">{{ old('inHouseGear', $inHouseGear ?? '') }}</x-textarea-input>
+
+    {{-- <x-textarea-input class="summernote" id="inHouseGear" name="inHouseGear"></x-textarea-input> --}}
     @error('inHouseGear')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror
@@ -26,11 +29,11 @@
     @endif
   </div>
 </form>
-@push('scripts')
+{{-- @push('scripts')
   <script>
     var inHouseGearContent = @json(old('inHouseGear', $inHouseGear));
     jQuery(document).ready(function() {
       initialiseSummernote("#inHouseGear", inHouseGearContent);
     });
   </script>
-@endpush
+@endpush --}}
