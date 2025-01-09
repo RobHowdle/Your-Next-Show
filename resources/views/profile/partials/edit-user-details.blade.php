@@ -4,8 +4,7 @@
       {{ __('Change your user details') }}
     </h2>
   </header>
-  <form method="POST" action="{{ route('profile.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}"
-    class="mt-6 space-y-6">
+  <form class="mt-6 space-y-6" id="saveProfile">
     @csrf
     @method('PUT')
     <div>
@@ -22,8 +21,8 @@
     </div>
 
     <div class="mt-4">
-      <x-input-label-dark for="email" :value="__('Email')" />
-      <x-text-input id="userEmail" class="mt-1 block w-full" type="email" name="userEmail" :value="old('userEmail', $userEmail ?? '')" required
+      <x-input-label-dark for="userEmail" :value="__('Email')" />
+      <x-text-input id="userEmail" class="mt-1 block w-full" type="email" name="email" :value="old('userEmail', $userEmail ?? '')" required
         autocomplete="email" />
       <x-input-error :messages="$errors->get('userEmail')" class="mt-2" />
     </div>
@@ -53,19 +52,44 @@
       @php
         $dataId = 1;
       @endphp
-      <x-google-address-picker :postalTown="old('userPostalTown', $userPostalTown ?? '')" :dataId="$dataId" id="location_{{ $dataId }}" name="location"
-        label="Location" placeholder="Enter an address" :value="old('userLocation', $userLocation ?? '')" :latitude="old('userLat', $userLat ?? '')" :longitude="old('userLong', $userLong ?? '')" />
+      <x-google-address-picker :postalTown="old('postal_town', $userPostalTown ?? '')" :dataId="$dataId" id="location_{{ $dataId }}" name="location"
+        label="Your Location" placeholder="Enter an address" :value="old('location', $userLocation ?? '')" :latitude="old('latitude', $userLat ?? '')" :longitude="old('longitude', $userLong ?? '')" />
     </div>
-
-
 
     <div class="flex items-center gap-4">
       <button type="submit"
         class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading font-bold text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
-      @if (session('status') === 'profile-updated')
-        <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
-          class="text-sm text-gray-600 dark:text-gray-400">{{ __('Saved.') }}</p>
-      @endif
     </div>
   </form>
 </section>
+@push('scripts')
+  <script>
+    $(document).ready(function() {
+      const dashboardType = "{{ $dashboardType }}";
+      const userId = "{{ $user->id }}";
+
+      $('#saveProfile').on('submit', function(e) {
+        e.preventDefault();
+
+        const form = $(this);
+        const formData = new FormData(this);
+
+        $.ajax({
+          url: '{{ route('profile.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}',
+          method: 'POST',
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function(response) {
+            showSuccessNotification(response.message);
+            window.location.href = response.redirect;
+          },
+          error: function(xhr) {
+            const response = xhr.responseJSON;
+            showFailureNotification(response);
+          }
+        });
+      });
+    })
+  </script>
+@endpush

@@ -35,6 +35,10 @@
     @endforelse
   </x-other-service-table>
 </x-guest-layout>
+@stack('scripts')
+<script
+  src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initialize"
+  async defer></script>
 <script>
   // Search Bar
   function initialize() {

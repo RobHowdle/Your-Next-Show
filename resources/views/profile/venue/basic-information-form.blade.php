@@ -26,8 +26,8 @@
     </div>
 
     <div class="group mb-6">
-      <x-google-address-picker :postalTown="old('postalTown', $venueUserData['postal_town'] ?? '')" data-id="2" id="location" name="location" label="Location"
-        placeholder="Enter an address" :value="old('location', $venueUserData['location'] ?? '')" :latitude="old('latitude', $venueUserData['latitude'] ?? '')" :longitude="old('longitude', $venueUserData['longitude'] ?? '')" />
+      <x-google-address-picker :postalTown="old('venuePostalTown', $venueUserData['venuePostalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
+        placeholder="Enter an address" :value="old('venueLocation', $venueUserData['venueLocation'] ?? '')" :latitude="old('venueLat', $venueUserData['venueLat'] ?? '')" :longitude="old('venueLong', $venueUserData['venueLong'] ?? '')" />
     </div>
 
     <div class="group mb-6">

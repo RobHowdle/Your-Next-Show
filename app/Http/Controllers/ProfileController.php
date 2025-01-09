@@ -33,10 +33,10 @@ class ProfileController extends Controller
     /**
      * Display the user's profile form.
      */
-    public function edit($dashboardType, $user): View
+    public function edit($dashboardType, $userId): View
     {
         $modules = collect(session('modules', []));
-        $user = User::where('id', $user)->first();
+        $user = User::where('id', $userId)->first();
         $roles = Role::where('name', '!=', 'administrator')->get();
         $userRole = $user->roles;
 
@@ -113,36 +113,50 @@ class ProfileController extends Controller
     /**
      * Update the user's profile information.
      */
-    public function update($dashboardType, ProfileUpdateRequest $request, $userId): RedirectResponse
+    public function update($dashboardType, ProfileUpdateRequest $request, $userId)
     {
-        $user = User::findOrFail($userId);
-        $userData = $request->validated();
+        try {
+            $user = User::findOrFail($userId);
+            $userData = $request->validated();
 
-        if (isset($userData['firstName']) || isset($userData['lastName'])) {
-            $user->first_name = $userData['firstName'];
-            $user->last_name = $userData['lastName'];
+            if (isset($userData['userFirstName']) || isset($userData['userLastName'])) {
+                $user->first_name = $userData['userFirstName'];
+                $user->last_name = $userData['userLastName'];
+            }
+
+            if (isset($userData['userDob'])) {
+                $user->date_of_birth = $userData['userDob'];
+            }
+
+            if (isset($userData['userEmail'])) {
+                $user->email = $userData['userEmail'];
+            }
+
+            if (isset($userData['latitude']) && isset($userData['postal_town']) && isset($userData['longitude']) && isset($userData['location'])) {
+                $user->location = $userData['location'];
+                $user->postal_town = $userData['postal_town'];
+                $user->latitude = $userData['latitude'];
+                $user->longitude = $userData['longitude'];
+            }
+
+            if ($request->has('role') && $user->hasRole($request->role)) {
+                $user->syncRoles([$request->role]);
+            }
+
+            $user->fill($userData);
+
+            $user->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully',
+                'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update profile: ' . $e->getMessage()
+            ], 500);
         }
-
-        if (isset($userData['email'])) {
-            $user->email = $userData['email'];
-        }
-
-        if (isset($userData['latitude']) && isset($userData['postal_town']) && isset($userData['longitude']) && isset($userData['location'])) {
-            $user->location = $userData['location'];
-            $user->postal_town = $userData['postal_town'];
-            $user->latitude = $userData['latitude'];
-            $user->longitude = $userData['longitude'];
-        }
-
-        if ($request->has('role') && $user->hasRole($request->role)) {
-            $user->syncRoles([$request->role]);
-        }
-
-        $user->fill($userData);
-
-        $user->save();
-
-        return redirect()->route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])->with('status', 'profile-updated');
     }
 
     public function updatePromoter($dashboardType, PromoterProfileUpdateRequest $request, $user)
@@ -246,6 +260,7 @@ class ProfileController extends Controller
 
     public function updateVenue($dashboardType, VenueProfileUpdateRequest $request, $user)
     {
+        dd('update venue');
         $user = User::findOrFail($user);
         $userId = $user->id;
         $userData = $request->validated();
@@ -267,11 +282,12 @@ class ProfileController extends Controller
                     $venue->update(['contact_name' => $userData['contact_name']]);
                 }
                 // Location
-                if (isset($userData['location']) && isset($userData['latitude']) && isset($userData['longitude'])) {
+                if (isset($userData['location']) && isset($userData['latitude']) && isset($userData['longitude']) && isset($userData['postal_town'])) {
                     $venue->update([
                         'location' => $userData['location'],
                         'latitude' => $userData['latitude'],
                         'longitude' => $userData['longitude'],
+                        'postal_town' => $userData['postal_town'],
                     ]);
                 }
 
@@ -309,8 +325,8 @@ class ProfileController extends Controller
                 }
 
                 // About
-                if (isset($userData['about']) && $venue->description !== $userData['about']) {
-                    $venue->update(['description' => $userData['about']]);
+                if (isset($userData['description']) && $venue->description !== $userData['description']) {
+                    $venue->update(['description' => $userData['description']]);
                 }
 
                 // My Venues
@@ -332,8 +348,8 @@ class ProfileController extends Controller
                 }
 
                 // Logo
-                if (isset($userData['logo'])) {
-                    $venueLogoFile = $userData['logo'];
+                if (isset($userData['logo_url'])) {
+                    $venueLogoFile = $userData['logo_url'];
 
                     // Generate the file name
                     $venueName = $request->input('name');
@@ -355,6 +371,10 @@ class ProfileController extends Controller
                     $venue->update(['capacity' => $userData['capacity']]);
                 }
 
+                // Additional Info
+                if (isset($userData['additionalInfo'])) {
+                    $venue->update(['additional_info' => $userData['additionalInfo']]);
+                }
 
                 // Return success message with redirect
                 return redirect()->route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])->with('status', 'profile-updated');
