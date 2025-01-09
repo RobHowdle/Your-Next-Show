@@ -199,7 +199,7 @@ class APIRequestsController extends Controller
             $end = $request->query('end');
 
             // Fetch events based on the service type
-            $events = Event::with(['artist', 'services', 'venues'])
+            $events = Event::with(['promoters', 'services', 'venues'])
                 ->where(function ($query) use ($dashboardType, $service) {
                     switch ($dashboardType) {
                         case 'promoter':

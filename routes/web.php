@@ -214,7 +214,7 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/events/{id}', [EventController::class, 'showEvent'])->name('admin.dashboard.show-event');
         Route::get('/events/{id}/edit', [EventController::class, 'editEvent'])->name('admin.dashboard.edit-event');
         Route::put('/events/{id}/update', [EventController::class, 'updateEvent'])->name('admin.dashboard.update-event');
-        Route::post('/events/{id}/add-to-calendar', [CalendarController::class, 'addEventToCalendar'])->name('admin.dashboard.add-event-to-calendar');
+        Route::post('/events/{id}/add-to-calendar', [CalendarController::class, 'addEventToInternalCalendar'])->name('admin.dashboard.add-event-to-calendar');
         Route::get('/events/{user}/check-linked-calendars', [CalendarController::class, 'checkLinkedCalendars']);
         Route::delete('/events/{id}/delete', [EventController::class, 'deleteEvent'])->name('admin.dashboard.delete-event');
     });
@@ -286,10 +286,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Google calendar routes
-    Route::get('auth/google', [CalendarController::class, 'redirectToGoogle'])->name('google.redirect');
-    Route::get('auth/google/callback', [CalendarController::class, 'handleGoogleCallback']);
-    Route::post('google/sync', [CalendarController::class, 'syncGoogleCalendar'])->name('google.sync');
-    Route::post('google/unlink', [CalendarController::class, 'unlinkGoogle'])->name('google.unlink');
+    Route::get('/dashboard/{dashboardType}/auth/google', [CalendarController::class, 'redirectToGoogle'])->name('google.redirect');
+    Route::get('/auth/google/callback', [CalendarController::class, 'handleGoogleCallback'])->name('google.callback');
+    Route::post('/dashboard/{dashboardType}/google/sync', [CalendarController::class, 'syncGoogleCalendar'])->name('google.sync');
+    Route::post('/dashboard/{dashboardType}/google/unlink', [CalendarController::class, 'unlinkGoogle'])->name('google.unlink');
 });
 
 require __DIR__ . '/auth.php';

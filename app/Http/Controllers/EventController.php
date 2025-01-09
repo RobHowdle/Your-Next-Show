@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use App\Jobs\SyncGoogleCalendarEvents;
 use App\Http\Requests\StoreUpdateEventRequest;
 
 class EventController extends Controller
@@ -390,6 +391,39 @@ class EventController extends Controller
                         ]
                     );
                 }
+            }
+
+            // Add to internal calendar
+            $calendarController = new CalendarController();
+            $calendarRequest = new Request([
+                'event_id' => $event->id,
+                'title' => $event->event_name,
+                'date' => Carbon::parse($event_date)->format('Y-m-d'),
+                'start_time' => $validatedData['event_start_time'],
+                'end_time' => $validatedData['event_end_time'],
+                'location' => Venue::find($validatedData['venue_id'])->name ?? '',
+                'description' => $validatedData['description'] ?? '',
+                'calendar_service' => 'internal'
+            ]);
+
+            $calendarController->addEventToInternalCalendar($calendarRequest);
+
+            // Check for Google Calendar integration
+            if ($user->google_access_token) {
+                $googleRequest = new Request([
+                    'event_id' => $event->id,
+                    'title' => $event->event_name,
+                    'date' => Carbon::parse($event_date)->format('Y-m-d'),
+                    'start_time' => $validatedData['event_start_time'],
+                    'end_time' => $validatedData['event_end_time'],
+                    'location' => Venue::find($validatedData['venue_id'])->name ?? '',
+                    'description' => $validatedData['description'] ?? '',
+                    'calendar_service' => 'google'
+                ]);
+
+                $calendarController->addEventToInternalCalendar($googleRequest);
+                \Log::info('Dispatching SyncGoogleCalendarEvents job');
+                SyncGoogleCalendarEvents::dispatch($event, Auth::id())->delay(now()->addSeconds(20))->onQueue('default');
             }
 
             return response()->json([

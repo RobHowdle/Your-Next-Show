@@ -30,85 +30,109 @@ class CalendarController extends Controller
         $this->client->addScope(Google_Service_Calendar::CALENDAR);
     }
 
-    public function redirectToGoogle()
+    public function redirectToGoogle($dashboardType)
     {
+        $state = base64_encode(json_encode(['dashboardType' => $dashboardType]));
+        $this->client->setState($state);
         $authUrl = $this->client->createAuthUrl();
         return redirect()->away($authUrl);
     }
 
     public function handleGoogleCallback(Request $request)
     {
-        if (!$request) {
-            return redirect('/')->with('error', 'Request object is null.');
+        if (!$request->has('state') || !$request->has('code')) {
+            return redirect('/')->with('error', 'Invalid callback request');
         }
 
-        if ($request->has('code')) {
-            $token = $this->client->fetchAccessTokenWithAuthCode($request->code);
-            if (isset($token['access_token'])) {
-                $this->client->setAccessToken($token['access_token']);
-                Auth::user()->update([
-                    'google_access_token' => $token['access_token'],
-                    'google_refresh_token' => $token['refresh_token'],
-                ]);
+        $state = json_decode(base64_decode($request->state), true);
+        $dashboardType = $state['dashboardType'] ?? 'default';
 
-                return redirect()->route('profile.edit', Auth::user()->id)->with('success', 'Google Calendar linked successfully!');
-            } else {
-                return redirect('/')->with('error', 'Failed to link Google Calendar: invalid token.');
-            }
-        }
-
-        return redirect('/')->with('error', 'Failed to link Google Calendar: no authorization code.');
-    }
-
-    public function syncGoogleCalendar(Request $request)
-    {
-        $user = Auth::user();
-        $accessToken = $user->google_access_token;
-
-        if (!$accessToken) {
-            return redirect()->back()->with('error', 'Google Calendar is not linked.');
-        }
-
-        $this->client->setAccessToken($accessToken);
-
-        if ($this->client->isAccessTokenExpired()) {
-            if ($user->google_refresh_token) {
-                $this->client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
-                $user->update(['google_access_token' => $this->client->getAccessToken()]);
-            }
-        }
-
-        $eventsToSync = [
-            [
-                'title' => 'Event Title',
-                'start' => '2024-10-20T10:00:00-07:00',
-                'end' => '2024-10-20T11:00:00-07:00',
-            ],
-        ];
-
-        $service = new Google_Service_Calendar($this->client);
-
-        foreach ($eventsToSync as $eventData) {
-            $event = new Google_Service_Calendar_Event([
-                'summary' => $eventData['title'],
-                'start' => [
-                    'dateTime' => $eventData['start'],
-                    'timeZone' => 'America/Los_Angeles',
-                ],
-                'end' => [
-                    'dateTime' => $eventData['end'],
-                    'timeZone' => 'America/Los_Angeles',
-                ],
+        $token = $this->client->fetchAccessTokenWithAuthCode($request->code);
+        if (isset($token['access_token'])) {
+            $this->client->setAccessToken($token);
+            Auth::user()->update([
+                'google_access_token' => json_encode($token), // Store entire token object
+                'google_refresh_token' => $token['refresh_token'] ?? null,
             ]);
 
-            try {
-                $service->events->insert('primary', $event);
-            } catch (Exception $e) {
-                return redirect()->back()->with('error', 'Error syncing events: ' . $e->getMessage());
-            }
+            return redirect()->route('profile.edit', [
+                'dashboardType' => $dashboardType,
+                'id' => Auth::user()->id
+            ])->with('success', 'Google Calendar linked successfully!');
         }
 
-        return redirect()->back()->with('success', 'Calendar synced successfully!');
+        return redirect()->route('profile.edit', [
+            'dashboardType' => $dashboardType,
+            'id' => Auth::user()->id
+        ])->with('error', 'Failed to link Google Calendar');
+    }
+
+    public function syncGoogleCalendar(Request $request, $user = null)
+    {
+        try {
+            \Log::info('Starting Google Calendar sync', [
+                'request_data' => $request->all(),
+                'user_id' => $user ? $user->id : Auth::id()
+            ]);
+
+            $user = $user ?? Auth::user();
+            if (!$user) {
+                throw new \Exception('No authenticated user found');
+            }
+
+            $accessToken = is_array($user->google_access_token)
+                ? $user->google_access_token
+                : json_decode($user->google_access_token, true);
+
+            if (!$accessToken) {
+                throw new \Exception('Invalid access token format');
+            }
+
+            $this->client->setAccessToken($accessToken);
+
+            if ($this->client->isAccessTokenExpired()) {
+                \Log::info('Token expired, attempting refresh');
+                if ($user->google_refresh_token) {
+                    $this->client->fetchAccessTokenWithRefreshToken($accessToken['refresh_token']);
+                    $newToken = $this->client->getAccessToken();
+                    \Log::info('Token refreshed', ['new_token' => $newToken]);
+                    $user->update(['google_access_token' => json_encode($newToken)]);
+                }
+            }
+
+            $service = new Google_Service_Calendar($this->client);
+
+            $event = new Google_Service_Calendar_Event([
+                'summary' => $request->title,
+                'start' => [
+                    'dateTime' => Carbon::parse($request->date . ' ' . $request->start_time)->toRfc3339String(),
+                    'timeZone' => 'Europe/London',
+                ],
+                'end' => [
+                    'dateTime' => Carbon::parse($request->date . ' ' . $request->end_time)->toRfc3339String(),
+                    'timeZone' => 'Europe/London',
+                ],
+                'description' => $request->description ?? '',
+                'location' => $request->location ?? ''
+            ]);
+
+            \Log::info('Attempting to create event', ['event_data' => $event]);
+
+            $createdEvent = $service->events->insert('primary', $event);
+
+            \Log::info('Event created in Google Calendar', [
+                'google_event_id' => $createdEvent->id,
+                'event_link' => $createdEvent->htmlLink
+            ]);
+
+            return redirect()->back()->with('success', 'Calendar synced successfully!');
+        } catch (\Exception $e) {
+            \Log::error('Google Calendar sync failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Error syncing events: ' . $e->getMessage());
+        }
     }
 
     public function unlinkGoogle(Request $request)
@@ -118,7 +142,7 @@ class CalendarController extends Controller
         return redirect()->route('profile.edit', $user->id)->with('success', 'Google Calendar unlinked successfully!');
     }
 
-    public function addEventToCalendar(Request $request)
+    public function addEventToInternalCalendar(Request $request)
     {
         try {
             $validatedData = $request->validate([
