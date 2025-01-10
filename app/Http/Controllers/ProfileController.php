@@ -1354,7 +1354,7 @@ class ProfileController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log the error and return a response
-            // \Log::error('Error removing role: ' . $e->getMessage());
+            \Log::error('Error removing role: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while removing the role.'

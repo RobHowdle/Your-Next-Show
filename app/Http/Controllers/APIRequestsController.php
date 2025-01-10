@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Event;
+use App\Models\Venue;
 use App\Models\Promoter;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class APIRequestsController extends Controller
 {
@@ -103,7 +103,7 @@ class APIRequestsController extends Controller
                 'promoters' => [],
                 'createNewBandOption' => [
                     'name' => $query,
-                    'message' => "No results found. Click to create a new band: $query",
+                    'message' => "No results found. Click to create a new promoter: $query",
                 ],
             ];
         } else {
@@ -121,6 +121,70 @@ class APIRequestsController extends Controller
      * Events - Searching for promoters
      */
     public function createPromoter(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+            ]);
+
+            $query = $request->input('name');
+            $cleanedQuery = cleanQuery($query);
+
+            $newPromoter = Promoter::create([
+                'name' => $cleanedQuery,
+                'location' => 'Unknown',
+                'postal_town' => 'Unknown',
+                'longitude' => 0,
+                'latitude' => 0,
+                'description' => 'Nothing here yet!',
+                'contact_name' => 'Unknown',
+                'contact_number' => '00000000000',
+                'contact_email' => 'blank@yournextshow.co.uk',
+                'contact_link' => json_encode(['website' => 'https://yournextshow.co.uk']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'promoter' => [
+                    'id' => $newPromoter->id,
+                    'name' => $newPromoter->name
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create promoter'
+            ], 500);
+        }
+    }
+
+    /**
+     * Events - Searching for venues
+     */
+    public function searchVenues(Request $request)
+    {
+        try {
+            $query = $request->get('q');
+
+            if (strlen($query) < 3) {
+                return response()->json(['venues' => []], 200);
+            }
+
+            $venues = Venue::where('name', 'like', '%' . $query . '%')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json(['venues' => $venues]);
+        } catch (\Exception $e) {
+            \Log::error('Venue search failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Search failed'], 500);
+        }
+    }
+
+    /**
+     * Events - Searching for venue
+     */
+    public function createVenue(Request $request)
     {
         try {
             $this->validate($request, [

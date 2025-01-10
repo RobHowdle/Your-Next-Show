@@ -11,8 +11,7 @@
         <th class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">Location</th>
         <th class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">Date</th>
         <th class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">Actions</th>
-      </tr>
-    </thead>
+      </tr </thead>
     <tbody>
       @foreach ($myEvents as $event)
         <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">

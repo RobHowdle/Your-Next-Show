@@ -6,8 +6,8 @@
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
-        <div class="header border-b border-b-white px-8 py-8">
-          <div class="flex flex-row items-center justify-between">
+        <div class="header border-b border-b-white px-6 py-8">
+          <div class="flex flex-row items-center justify-between gap-2">
             <div class="group">
               <h1 class="font-heading text-4xl font-bold">{{ $event->event_name }}</h1>
               <p class="text-xl">Date: {{ $event->event_date->format('jS F Y') }}</p>

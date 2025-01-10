@@ -14,7 +14,7 @@ class StoreUpdateEventRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge([
-            'otd_ticket_price' => $this->otd_ticket_price ?? 0,
+            'on_the_door_ticket_price' => $this->on_the_door_ticket_price ?? 0,
         ]);
     }
 
@@ -30,16 +30,15 @@ class StoreUpdateEventRequest extends FormRequest
             'event_description' => 'required|string',
             'facebook_event_url' => 'nullable|url',
             'ticket_url' => 'nullable|url',
-            'otd_ticket_price' => 'nullable|numeric',
+            'on_the_door_ticket_price' => 'nullable|numeric',
             'venue_id' => 'required|integer|exists:venues,id',
             'headliner' => 'required|string',
             'headliner_id' => 'required|integer',
             'main_support' => 'nullable|string',
             'main_support_id' => 'nullable|integer',
-            'artist' => 'nullable|array',
-            'band.*' => 'nullable|string',
-            'band_id' => 'nullable|array',
-            'band_id.*' => 'nullable|integer',
+            'bands' => 'nullable|string',
+            'bands_ids' => 'nullable|array',
+            'bands_ids.*' => 'nullable|integer',
             'opener' => 'nullable|string',
             'opener_id' => 'nullable|integer',
         ];
