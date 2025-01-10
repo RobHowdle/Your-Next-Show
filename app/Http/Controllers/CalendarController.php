@@ -135,11 +135,14 @@ class CalendarController extends Controller
         }
     }
 
-    public function unlinkGoogle(Request $request)
+    public function unlinkGoogle($dashboardType)
     {
         $user = Auth::user();
         $user->update(['google_access_token' => null]);
-        return redirect()->route('profile.edit', $user->id)->with('success', 'Google Calendar unlinked successfully!');
+        return redirect()->route('profile.edit', [
+            'dashboardType' => $dashboardType,
+            'id' => $user->id
+        ]);
     }
 
     public function addEventToInternalCalendar(Request $request)
