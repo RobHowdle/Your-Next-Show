@@ -50,6 +50,7 @@
         'genres' => $venueUserData['genres'],
         'promoterGenres' => $venueUserData['venueGenres'],
         'venue' => $venueUserData['venue'],
+        'bandTypes' => $venueUserData['bandTypes'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 9" x-init="if (selectedTab === 9) { initializeMaps() }" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>

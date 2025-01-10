@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 class Job extends Model
 {
-    protected $table = 'jobs';
+    protected $table = 'module_jobs';
 
     protected $fillable = [
         'name',

@@ -1,6 +1,6 @@
 <header>
   <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Update your basic information') }}
+    {{ __('Let\'s get the basics out of the way!') }}
   </h2>
 </header>
 <form method="POST" action="{{ route('promoter.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}"
@@ -9,7 +9,7 @@
   @method('PUT')
   <div class="col-start-1 col-end-2">
     <div class="group mb-6">
-      <x-input-label-dark for="name">Promotions Company Name</x-input-label-dark>
+      <x-input-label-dark for="name">Promotions Company Name:</x-input-label-dark>
       <x-text-input id="name" name="name" value="{{ old('name', $name) }}"></x-text-input>
       @error('name')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
@@ -17,7 +17,7 @@
     </div>
 
     <div class="group mb-6">
-      <x-input-label-dark for="promoterName">Contact Name</x-input-label-dark>
+      <x-input-label-dark for="promoterName">Contact Name:</x-input-label-dark>
       <x-text-input id="contact_name" name="contact_name"
         value="{{ old('contact_name', $contact_name) }}"></x-text-input>
       @error('contact_name')
@@ -26,19 +26,12 @@
     </div>
 
     <div class="group mb-6">
-      <x-input-label-dark>Where are you based?</x-input-label-dark>
-      <x-text-input id="address-input" name="address-input" value="{{ old('location', $promoterData['location']) }}"
-        class="map-input"></x-text-input>
-      @error('address-input')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
+      <x-google-address-picker :postalTown="old('promoterPostalTown', $promoterUserData['promoterPostalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
+        placeholder="Enter an address" :value="old('promoterLocation', $promoterUserData['promoterLocation'] ?? '')" :latitude="old('promoterLat', $promoterUserData['promoterLat'] ?? '')" :longitude="old('promoterLong', $promoterUserData['promoterLong'] ?? '')" />
     </div>
 
-    {{-- <x-google-address-picker id="location" name="location" label="Venue Location" placeholder="Enter an address" /> --}}
-
-
     <div class="group mb-6">
-      <x-input-label-dark for="email">Email</x-input-label-dark>
+      <x-input-label-dark for="email">Email:</x-input-label-dark>
       <x-text-input id="contact_email" name="contact_email"
         value="{{ old('contact_email', $promoterData['contact_email']) }}"></x-text-input>
       @error('contact_email')
@@ -47,7 +40,7 @@
     </div>
 
     <div class="group mb-6">
-      <x-input-label-dark for="phone">Contact Phone</x-input-label-dark>
+      <x-input-label-dark for="phone">Contact Phone:</x-input-label-dark>
       <x-text-input id="contact_number" name="contact_number"
         value="{{ old('contact_number', $promoterData['contact_number']) }}"></x-text-input>
       @error('contact_number')
@@ -91,20 +84,17 @@
           @enderror
         </div>
       @endforeach
-
     </div>
   @endif
 
   <div class="col-start-3 col-end-4">
     <div class="group mb-6 flex flex-col items-center">
-      <x-input-label-dark for="logo" class="text-left">Logo</x-input-label-dark>
+      <x-input-label-dark for="logo" class="text-left">Logo:</x-input-label-dark>
       <x-input-file id="logo" name="logo" onchange="previewLogo(event)"></x-input-file>
 
       <!-- Preview Image -->
       <img id="logo-preview" src="{{ $logo }}" alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
         style="display: {{ $logo ? 'block' : 'none' }};">
-
-
 
       @error('logo')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>

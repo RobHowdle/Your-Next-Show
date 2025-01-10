@@ -38,20 +38,20 @@
           :class="{ 'opacity-100': selected === 4, 'opacity-0': selected !== 4 }"></span>
         <span class="relative z-10">My Venues</span>
       </button>
-      {{-- <button @click="selected = 5; selectedTab = 5"
+      <button @click="selected = 5; selectedTab = 5"
         :class="{ 'bg-gradient-button': selected === 5, 'bg-yns_dark_gray': selected !== 5 }"
         class="group relative w-full px-8 py-2 text-left text-white transition duration-150 ease-in-out">
         <span class="absolute inset-0 transition-opacity duration-300 ease-in-out"
           :class="{ 'opacity-100': selected === 5, 'opacity-0': selected !== 5 }"></span>
         <span class="relative z-10">My Events</span>
-      </button> --}}
-      {{-- <button @click="selected = 6; selectedTab = 6"
+      </button>
+      <button @click="selected = 6; selectedTab = 6"
         :class="{ 'bg-gradient-button': selected === 6, 'bg-yns_dark_gray': selected !== 6 }"
         class="group relative w-full px-8 py-2 text-left text-white transition duration-150 ease-in-out">
         <span class="absolute inset-0 transition-opacity duration-300 ease-in-out"
           :class="{ 'opacity-100': selected === 6, 'opacity-0': selected !== 6 }"></span>
         <span class="relative z-10">My Bands</span>
-      </button> --}}
+      </button>
       <button @click="selected = 7; selectedTab = 7"
         :class="{ 'bg-gradient-button': selected === 7, 'bg-yns_dark_gray': selected !== 7 }"
         class="group relative w-full px-8 py-2 text-left text-white transition duration-150 ease-in-out">

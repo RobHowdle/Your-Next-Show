@@ -126,39 +126,15 @@
           ]) --}}
         @endif
 
-        @if ($dashboardType !== 'designer')
-          <div x-show="selectedTab === 10" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
-            <div class="w-full">
-              <div class="flex items-center justify-center">
-                <div class="group">
-                  @if (Auth::user()->google_access_token)
-                    <form action="{{ route('google.unlink') }}" method="POST">
-                      @csrf
-                      <x-button type="submit" label="Unlink Google Calendar"></x-button>
-                    </form>
-                  @else
-                    <a href="{{ route('google.redirect') }}" class="btn btn-primary">Link Google Calendar</a>
-                  @endif
-                </div>
-                <div class="group">
-                  <form action="{{ route('google.sync') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-success">Manual Google Sync</button>
-                  </form>
-                </div>
-                {{-- <div class="group">
-                <button id="sync-all-events-apple"
-                  class="rounded bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
-                  title="Sync All Events to Apple Calendar">
-                  Sync All Events to Apple Calendar
-                </button>
-              </div> --}}
-              </div>
-              <div id="calendar" data-user-id="{{ Auth::check() ? Auth::user()->id : '' }}"
-                data-dashboard-type="{{ $dashboardType }}"></div>
-            </div>
+
+        <div x-show="selectedTab === 10" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
+          <div class="w-full">
+            @include('profile.partials.calendar', [
+                'dashboardType' => $dashboardType,
+            ])
           </div>
-        @endif
+        </div>
+
         <div x-show="selectedTab === 11" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
           <div class="w-full">
             <div class="group">

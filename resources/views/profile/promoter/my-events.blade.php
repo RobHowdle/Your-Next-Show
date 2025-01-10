@@ -1,6 +1,6 @@
 <header>
   <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Your Events') }}
+    {{ __('A handful of your latest events') }}
   </h2>
 </header>
 <div class="group mb-6">

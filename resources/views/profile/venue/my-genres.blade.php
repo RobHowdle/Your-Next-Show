@@ -1,10 +1,10 @@
 <header>
   <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Your Genres & Band Types') }}
+    {{ __('The genres and band types you prefer to work with') }}
   </h2>
 </header>
 
-<x-input-label-dark>Select your genres</x-input-label-dark>
+<x-input-label-dark class="mt-6">Select your genres:</x-input-label-dark>
 <div class="grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
   @php
     $venueGenres = is_string($venue->genre) ? json_decode($venue->genre, true) : $venue->genre;

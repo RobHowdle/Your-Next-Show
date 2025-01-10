@@ -724,12 +724,15 @@ class ProfileController extends Controller
     {
         $promoter = $user->promoters()->first();
 
-        $name = $promoter ? $promoter->name : '';
-        $location = $promoter ? $promoter->location : '';
+        // Basic Information
+        $promoterName = $promoter ? $promoter->name : '';
+        $promoterLocation = $promoter ? $promoter->location : '';
+        $promoterPostalTown = $promoter ? $promoter->postal_town : '';
+        $promoterLat = $promoter ? $promoter->latitude : '';
+        $promoterLong = $promoter ? $promoter->longitude : '';
         $logo = $promoter && $promoter->logo_url
             ? (filter_var($promoter->logo_url, FILTER_VALIDATE_URL) ? $promoter->logo_url : Storage::url($promoter->logo_url))
             : asset('images/system/yns_no_image_found.png');
-
 
         $contact_number = $promoter ? $promoter->contact_number : '';
         $contact_email = $promoter ? $promoter->contact_email : '';
@@ -754,17 +757,23 @@ class ProfileController extends Controller
             }
         }
 
-        $about = $promoter ? $promoter->description : '';
+        // About Section
+        $description = $promoter ? $promoter->description : '';
+
+        // My Venues
         $myVenues = $promoter ? $promoter->my_venues : '';
+
+        // My Events
         $myEvents = $promoter ? $promoter->events()->with('venues')->get() : collect();
         $uniqueBands = $this->getUniqueBandsForPromoterEvents($promoter->id);
+
+        // Genres
         $genreList = file_get_contents(public_path('text/genre_list.json'));
         $data = json_decode($genreList, true) ?? [];
         $isAllGenres = in_array('All', $data);
         $genres = $data['genres'];
         $promoterGenres = is_array($promoter->genre) ? $promoter->genre : json_decode($promoter->genre, true);
         $normalizedPromoterGenres = [];
-
         if ($promoterGenres) {
             foreach ($promoterGenres as $genreName => $genreData) {
                 $normalizedPromoterGenres[$genreName] = [
@@ -780,19 +789,23 @@ class ProfileController extends Controller
 
         return [
             'promoter' => $promoter,
-            'name' => $name,
-            'location' => $location,
+            'promoterName' => $promoterName,
+            'promoterLocation' => $promoterLocation,
+            'promoterPostalTown' => $promoterPostalTown,
+            'promoterLat' => $promoterLat,
+            'promoterLong' => $promoterLong,
             'logo' => $logo,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'platformsToCheck' => $platformsToCheck,
-            'about' => $about,
+            'description' => $description,
             'myVenues' => $myVenues,
             'myEvents' => $myEvents,
             'contact_email' => $contact_email,
             'contact_name' => $contact_name,
             'uniqueBands' => $uniqueBands,
             'genres' => $genres,
+            'promoterGenres' => $promoterGenres,
             'isAllGenres' => $isAllGenres,
             'promoterGenres' => $normalizedPromoterGenres,
             'bandTypes' => $bandTypes,
@@ -838,7 +851,7 @@ class ProfileController extends Controller
             }
         }
 
-        // Aout Section
+        // About Section
         $description = $venue ? $venue->description : '';
 
         // In House Gear
@@ -847,6 +860,8 @@ class ProfileController extends Controller
         // My Events
         $myEvents = $venue ? $venue->events()->with('venues')->get() : collect();
         $uniqueBands = $this->getUniqueBandsForPromoterEvents($venue->id);
+
+        // Genres
         $genreList = file_get_contents(public_path('text/genre_list.json'));
         $data = json_decode($genreList, true) ?? [];
         $isAllGenres = in_array('All', $data);
@@ -1339,7 +1354,7 @@ class ProfileController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log the error and return a response
-            // \Log::error('Error removing role: ' . $e->getMessage());
+            \Log::error('Error removing role: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while removing the role.'

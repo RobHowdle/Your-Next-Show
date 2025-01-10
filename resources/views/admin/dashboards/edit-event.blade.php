@@ -23,33 +23,35 @@
                 @enderror
               </div>
               <div class="group mb-4">
-                <x-input-label-dark :required="true">Date & Time of Event</x-input-label-dark>
-                <x-date-time-input id="merged_date_time" name="merged_date_time" :required="true"
-                  :value="old('combinedDateTime', $combinedDateTime)"></x-date-time-input>
-                @error('merged_date_time')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4">
-                <x-input-label-dark :required="true">Date of Event</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-date-time-input id="event_date" name="event_date" :required="true"
-                  :value="old('event_date', $event->event_date)"></x-date-time-input>
+                <x-input-label-dark :required="true">Event Date</x-input-label-dark>
+                <x-date-input id="event_date" name="event_date"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_date', $eventDate) }}"></x-date-input>
                 @error('event_date')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
               <div class="group mb-4">
-                <x-input-label-dark :required="true">Start Time</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-text-input class="w-auto" id="event_start_time" name="event_start_time" :required="true"
-                  :value="old('event_start_time', $event->event_start_time)"></x-text-input>
+                <x-input-label-dark :required="true">Event Start Time</x-input-label-dark>
+                <x-time-input id="event_start_time" name="event_start_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_start_time', $event->event_start_time) }}"></x-time-input>
                 @error('event_start_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
+
+              <div class="group mb-4">
+                <x-input-label-dark>Event End Time</x-input-label-dark>
+                <x-time-input id="event_end_time" name="event_end_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  value="{{ old('event_end_time', $event->event_end_time) }}"></x-time-input>
+                @error('event_end_time')
+                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                @enderror
+              </div>
+
               @if ($dashboardType === 'promoter')
                 <div class="group mb-4 hidden">
                   <x-input-label-dark :required="true">Promoter</x-input-label-dark>
@@ -64,13 +66,15 @@
                 <div class="group mb-4">
                   <x-input-label-dark>Promoter</x-input-label-dark>
                   <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
-                    value="{{ $promoters->pluck('name')->join(', ') }}"></x-text-input>
+                    :value="old(
+                        'promoter_name',
+                        $promoters->isNotEmpty() ? $promoters->pluck('name')->join(', ') : '',
+                    )"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                   </ul>
                   <x-input-label-dark>Promoter ID</x-input-label-dark>
-                  <x-text-input id="promoter_ids" name="promoter_ids"
-                    value="{{ $promoters->pluck('id')->join(',') }}"></x-text-input>
+                  <x-text-input id="promoter_ids" name="promoter_ids" :value="old('promoter_id', $promoters->isNotEmpty() ? $promoters->pluck('id')->join(', ') : '')"></x-text-input>
                   <ul id="promoter-suggestions"
                     class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
                   </ul>
@@ -81,18 +85,9 @@
               @endif
 
               <div class="group mb-4">
-                <x-input-label-dark>End Time</x-input-label-dark>
-                <x-text-input class="w-full" id="event_end_time" name="event_end_time"
-                  :value="old('event_end_time', $event->event_end_time)"></x-text-input>
-                @error('event_end_time')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4">
                 <x-input-label-dark :required="true">Description</x-input-label-dark>
                 <x-textarea-input id="event_description" name="event_description" class="w-full" :required="true"
-                  :value="$event->event_description">{{ $event->event_description }}</x-textarea-input>
+                  :value="old('event_description', $event->event_description)">{{ $event->event_description }}</x-textarea-input>
                 @error('event_description')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -114,19 +109,22 @@
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Door Ticket Price</x-input-label-dark>
-                <x-number-input-pound id="otd_ticket_price" name="otd_ticket_price" :value="$event->on_the_door_ticket_price ?? ''" />
-                @error('otd_ticket_price')
+                <x-number-input-pound id="on_the_door_ticket_price" name="on_the_door_ticket_price"
+                  :value="old('on_the_door_ticket_price', $event->on_the_door_ticket_price ?? '')" />
+                @error('on_the_door_ticket_price')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
             </div>
             <div class="col">
               <div class="group">
-                <x-input-label-dark :required="true">Poster</x-input-label-dark>
-                <x-input-file id="poster_url" name="poster_url" :required="true" :value="old('')"></x-input-file>
-                <div class="mt-4">
-                  <img id="posterPreview" src="#" alt="Poster Preview" class="hidden h-auto w-400">
-                </div>
+                <x-input-label-dark>Event Poster</x-input-label-dark>
+                <x-input-file id="poster_url" name="poster_url" accept="image/*" :value="old('poster_url', $event->poster_url)"></x-input-file>
+                @if ($event->poster_url)
+                  <div class="mt-4">
+                    <img src="{{ asset($event->poster_url) }}" alt="Current Event Poster" class="h-auto w-400">
+                  </div>
+                @endif
                 @error('poster_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -218,11 +216,18 @@
 <script>
   $(document).ready(function() {
     // Initialize the date pickers
-    flatpickr('#event_end_time', {
-      enableTime: true,
-      noCalendar: true,
-      dateFormat: "H:i",
-      time_24hr: true,
+    flatpickr('#event_date', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      defaultDate: "{{ $eventDate }}",
+      onChange: function(selectedDates, dateStr) {
+        const formattedDate = selectedDates[0].toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }).split('/').join('-');
+        document.getElementById('event_date').value = formattedDate;
+      }
     });
     flatpickr('#event_start_time', {
       enableTime: true,
@@ -230,28 +235,11 @@
       dateFormat: "H:i",
       time_24hr: true,
     });
-    flatpickr('#merged_date_time', {
+    flatpickr('#event_end_time', {
       enableTime: true,
-      dateFormat: "d-m-Y H:i",
+      noCalendar: true,
+      dateFormat: "H:i",
       time_24hr: true,
-    });
-    flatpickr('#event_date', {
-      enableTime: true,
-      dateFormat: "d-m-Y H:i",
-      time_24hr: true,
-    });
-
-    $('#merged_date_time').on('change', function(event) {
-      event.preventDefault();
-      console.log('DateTime changed:', $(this).val());
-      const dateTimeValue = $(this).val();
-
-      const [date, time] = dateTimeValue.split(' ');
-
-      $('#event_date').val(date);
-      console.log('DateTime changed:Event Date');
-      $('#event_start_time').val(time);
-      console.log('DateTime changed:Event Start Time Date');
     });
 
     // Poster Preview

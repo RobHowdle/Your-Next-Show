@@ -11,6 +11,7 @@
         </div>
         <form id="eventForm" method="POST" enctype="multipart/form-data" data-dashboard-type="{{ $dashboardType }}">
           @csrf
+
           <div class="grid grid-cols-3 gap-x-8 px-8 py-8">
             <div class="col">
               <input type="hidden" id="dashboard_type" value="{{ $dashboardType }}">
@@ -22,30 +23,31 @@
                 @enderror
               </div>
               <div class="group mb-4">
-                <x-input-label-dark :required="true">Date & Time of Event</x-input-label-dark>
-                <x-date-time-input id="merged_date_time" name="merged_date_time" :required="true"
-                  :value="old('')"></x-date-time-input>
-                @error('merged_date_time')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4 hidden">
-                <x-input-label-dark :required="true">Date of Event</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-date-time-input id="event_date" name="event_date" :required="true"
-                  :value="old('')"></x-date-time-input>
+                <x-input-label-dark :required="true">Event Date</x-input-label-dark>
+                <x-date-input id="event_date" name="event_date"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_date') }}"></x-date-input>
                 @error('event_date')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
-              <div class="group mb-4 hidden">
-                <x-input-label-dark :required="true">Start Time</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-text-input class="w-auto" id="event_start_time" name="event_start_time" :required="true"
-                  :value="old('')"></x-text-input>
+              <div class="group mb-4">
+                <x-input-label-dark :required="true">Event Start Time</x-input-label-dark>
+                <x-time-input id="event_start_time" name="event_start_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_start_time') }}"></x-time-input>
                 @error('event_start_time')
+                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                @enderror
+              </div>
+
+              <div class="group mb-4">
+                <x-input-label-dark>Event End Time</x-input-label-dark>
+                <x-time-input id="event_end_time" name="event_end_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  value="{{ old('event_end_time') }}"></x-time-input>
+                @error('event_end_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
@@ -79,15 +81,6 @@
               @endif
 
               <div class="group mb-4">
-                <x-input-label-dark>End Time</x-input-label-dark>
-                <x-text-input class="w-full" id="event_end_time" name="event_end_time"
-                  :value="old('')"></x-text-input>
-                @error('event_end_time')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4">
                 <x-input-label-dark :required="true">Description</x-input-label-dark>
                 <x-textarea-input id="event_description" name="event_description" class="w-full" :required="true"
                   :value="old('')"></x-textarea-input>
@@ -112,9 +105,9 @@
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Door Ticket Price</x-input-label-dark>
-                <x-number-input-pound id="otd_ticket_price" name="otd_ticket_price"
+                <x-number-input-pound id="on_the_door_ticket_price" name="on_the_door_ticket_price"
                   :value="old('')"></x-number-input-pound>
-                @error('otd_ticket_price')
+                @error('on_the_door_ticket_price')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
@@ -217,11 +210,10 @@
 <script>
   $(document).ready(function() {
     // Initialize the date pickers
-    flatpickr('#event_end_time', {
-      enableTime: true,
-      noCalendar: true,
-      dateFormat: "H:i",
-      time_24hr: true,
+    flatpickr('#event_date', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      dateFormat: "d-m-Y",
     });
     flatpickr('#event_start_time', {
       enableTime: true,
@@ -229,25 +221,11 @@
       dateFormat: "H:i",
       time_24hr: true,
     });
-    flatpickr('#merged_date_time', {
+    flatpickr('#event_end_time', {
       enableTime: true,
-      dateFormat: "d-m-Y H:i",
+      noCalendar: true,
+      dateFormat: "H:i",
       time_24hr: true,
-    });
-    flatpickr('#event_date', {
-      enableTime: true,
-      dateFormat: "d-m-Y H:i",
-      time_24hr: true,
-    });
-
-    $('#merged_date_time').on('change', function(event) {
-      event.preventDefault();
-      const dateTimeValue = $(this).val();
-
-      const [date, time] = dateTimeValue.split(' ');
-
-      $('#event_date').val(date);
-      $('#event_start_time').val(time);
     });
 
     // Poster Preview
@@ -277,8 +255,6 @@
       const dashboardType = "{{ $dashboardType }}"; // Capture the dashboard type from the template
       const bandIds = $('#bands_ids').val().split(',').filter(id => id.trim());
       const promoterIds = $('#promoter_ids').val().split(',').filter(id => id.trim());
-
-      console.log('Promoter IDs before submit:', promoterIds); // Debug log
 
       const formData = new FormData(this); // Get form data
       formData.delete('bands_ids');
@@ -441,7 +417,8 @@
                 console.error('Search failed:', error);
                 suggestionsElement.empty()
                   .append(
-                    '<li class="suggestion-item text-red-500 px-4 py-2">Error loading promoters</li>')
+                    '<li class="suggestion-item text-red-500 px-4 py-2 bg-opac_8_black">Error loading promoters</li>'
+                  )
                   .removeClass('hidden');
               }
             });
@@ -461,70 +438,111 @@
     handlePromoterSearch();
 
     // Venue Search
-    const venueInput = document.getElementById('venue_name');
-    const suggestionsList = document.getElementById('venue-suggestions');
+    function handleVenueSearch() {
+      const searchInput = $('#venue_name');
+      const suggestionsElement = $('#venue-suggestions');
+      const venueIdField = $('#venue_id');
+      let selectedVenueId = null;
+      let debounceTimer;
 
-    venueInput.addEventListener('input', function() {
-      const query = this.value;
-
-      if (query.length < 3) {
-        suggestionsList.innerHTML = '';
-        suggestionsList.classList.add('hidden');
-        return;
-      }
-
-      const dashboardType = document.getElementById('dashboard_type').value;
-
-      fetch(`/dashboard/${dashboardType}/events/search-venues?query=${encodeURIComponent(query)}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+      function createNewVenue(venueName, inputElement, suggestionsElement, setterCallback, idField) {
+        $.ajax({
+          url: '/api/venues/create',
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          },
+          data: {
+            name: venueName
+          },
+          success: function(response) {
+            if (response.success && response.venue) {
+              const venueId = response.venue.id;
+              venueIdField.val(venueId);
+              setterCallback(response.venue);
+              suggestionsElement.empty().addClass('hidden');
+              showSuccessNotification('Venue created successfully');
+            }
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error creating venue:', errorThrown);
+            showFailureNotification('Failed to create venue');
           }
-          return response.json();
-        })
-        .then(data => {
-          suggestionsList.innerHTML = '';
-          data.forEach(venue => {
-            const suggestionItem = document.createElement('li');
-            suggestionItem.textContent = venue.name;
-            suggestionItem.setAttribute('data-id', venue.id);
-            suggestionItem.classList.add(
-              'cursor-pointer',
-              'hover:text-yns_yellow',
-              'px-4',
-              'py-2',
-              'bg-opac_8_black',
-              'text-white'
-            );
-
-            // Fixed the event listener setup here
-            suggestionItem.addEventListener('click', function() {
-              venueInput.value = venue.name;
-              document.getElementById('venue_id').value = venue.id;
-              suggestionsList.classList.add('hidden');
-            });
-
-            suggestionsList.appendChild(suggestionItem);
-          });
-
-          if (data.length) {
-            suggestionsList.classList.remove('hidden');
-          } else {
-            suggestionsList.classList.add('hidden');
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching venue suggestions:', error);
-          suggestionsList.classList.add('hidden');
         });
-    });
-
-    // Venue Hide suggestions when clicking outside
-    document.addEventListener('click', function(event) {
-      if (!venueInput.contains(event.target) && !suggestionsList.contains(event.target)) {
-        suggestionsList.classList.add('hidden');
       }
-    });
+
+      searchInput.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
+          debounceTimer = setTimeout(() => {
+            $.ajax({
+              url: `/api/venues/search?q=${searchQuery}`,
+              method: 'GET',
+              success: function(response) {
+                suggestionsElement.empty().removeClass('hidden');
+                const venues = response.venues || [];
+
+                if (venues.length === 0) {
+                  const createOption = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer px-4 py-2 bg-opac_8_black text-yns_yellow font-bold'
+                    )
+                    .html(`<i class="fas fa-plus mr-2"></i>Create new venue "${searchQuery}"`)
+                    .on('click', function() {
+                      createNewVenue(
+                        searchQuery,
+                        searchInput,
+                        suggestionsElement,
+                        (venue) => {
+                          searchInput.val(venue.name);
+                          venueIdField.val(venue.id);
+                        },
+                        venueIdField
+                      );
+                    });
+                  suggestionsElement.append(createOption);
+                  return;
+                }
+
+                venues.forEach(venue => {
+                  const li = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white'
+                    )
+                    .text(venue.name)
+                    .on('click', () => {
+                      searchInput.val(venue.name);
+                      venueIdField.val(venue.id);
+                      suggestionsElement.addClass('hidden');
+                    });
+                  suggestionsElement.append(li);
+                });
+              },
+              error: function(xhr, status, error) {
+                console.error('Search failed:', error);
+                suggestionsElement.empty()
+                  .append(
+                    '<li class="suggestion-item text-red-500 px-4 py-2 bg-opac_8_black">Error loading venues</li>'
+                  )
+                  .removeClass('hidden');
+              }
+            });
+          }, 300);
+        } else {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+
+      $(document).on('click', function(e) {
+        if (!$(e.target).closest('#venue_name, #venue-suggestions').length) {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+    }
+
+    handleVenueSearch();
 
 
     const headlinerSearchInput = $('#headliner-search');
