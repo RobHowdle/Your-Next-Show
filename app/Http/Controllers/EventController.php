@@ -426,7 +426,7 @@ class EventController extends Controller
                 ]);
 
                 $calendarController->addEventToInternalCalendar($googleRequest);
-                \Log::info('Dispatching SyncGoogleCalendarEvents job');
+                // \Log::info('Dispatching SyncGoogleCalendarEvents job');
                 SyncGoogleCalendarEvents::dispatch($event, Auth::id())->delay(now()->addSeconds(20))->onQueue('default');
             }
 
@@ -603,7 +603,7 @@ class EventController extends Controller
         $modules = collect(session('modules', []));
         try {
             $validatedData = $request->validated();
-            \Log::info('Validated data:', $validatedData);
+            // \Log::info('Validated data:', $validatedData);
             $user = Auth::user()->load('roles');
             $role = $user->getRoleNames()->first();
 
@@ -635,7 +635,7 @@ class EventController extends Controller
                 $bandsArray[] = ['role' => 'Opener', 'band_id' => $validatedData['opener_id']];
             }
 
-            \Log::info('Bands array:', $bandsArray);
+            // \Log::info('Bands array:', $bandsArray);
 
 
             // Poster Upload
@@ -678,7 +678,7 @@ class EventController extends Controller
                 'band_ids' => json_encode($bandsArray)
             ];
 
-            \Log::info('Update data:', $updateData);
+            // \Log::info('Update data:', $updateData);
 
 
             // Update the event
