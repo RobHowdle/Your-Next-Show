@@ -569,10 +569,41 @@
 
     // Handle band search for all fields (Headline, Main Support, Opener, Bands)
     function handleBandSearch(inputElement, suggestionsElement, setterCallback, idField) {
-      inputElement.on('input', function() {
-        let searchQuery = inputElement.val().split(',').pop().trim();
+      let debounceTimer;
 
-        if (searchQuery.length >= 2) {
+      if (inputElement.attr('id') === 'bands-search') {
+        inputElement.on('keydown', function(e) {
+          if (e.key === 'Backspace') {
+            const value = inputElement.val();
+            const cursorPosition = this.selectionStart;
+            const bands = value.split(',').map(b => b.trim()).filter(b => b.length > 0);
+
+            let currentPosition = 0;
+            let bandIndex = -1;
+
+            for (let i = 0; i < bands.length; i++) {
+              currentPosition += bands[i].length + 2;
+              if (cursorPosition <= currentPosition) {
+                bandIndex = i;
+                break;
+              }
+            }
+
+            if (bandIndex !== -1) {
+              e.preventDefault();
+              bands.splice(bandIndex, 1);
+              selectedBandIds.splice(bandIndex, 1);
+              inputElement.val(bands.length ? bands.join(', ') + ', ' : '');
+              bandIdsField.val(selectedBandIds.join(','));
+            }
+          }
+        });
+      }
+      inputElement.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
           $.ajax({
             url: `/api/bands/search?q=${searchQuery}`,
             method: 'GET',

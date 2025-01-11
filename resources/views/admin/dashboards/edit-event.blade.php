@@ -215,6 +215,8 @@
 </x-app-layout>
 <script>
   $(document).ready(function() {
+    let selectedBands = []; // Normal bands list (multiple bands)
+    let selectedBandIds = []; // IDs for normal bands
     // Initialize the date pickers
     flatpickr('#event_date', {
       altInput: true,
@@ -542,19 +544,67 @@
     const openerIdField = $('#opener_id');
     const bandIdsField = $('#bands_ids');
 
-    let selectedBands = []; // Normal bands list (multiple bands)
-    let selectedBandIds = []; // IDs for normal bands
-
     let headlinerId = null;
     let mainSupportId = null;
     let openerId = null;
 
+    const existingBands = $('#bands-search').val().split(',').map(b => b.trim()).filter(b => b.length > 0);
+    const existingIds = $('#bands_ids').val().split(',').filter(id => id.length > 0);
+
+    // Create initial band-ID pairs
+    existingBands.forEach((bandName, index) => {
+      selectedBands.push({
+        name: bandName,
+        id: existingIds[index]
+      });
+      selectedBandIds.push(existingIds[index]);
+    });
+
     // Handle band search for all fields (Headline, Main Support, Opener, Bands)
     function handleBandSearch(inputElement, suggestionsElement, setterCallback, idField) {
-      inputElement.on('input', function() {
-        let searchQuery = inputElement.val().split(',').pop().trim();
+      let debounceTimer;
 
-        if (searchQuery.length >= 2) {
+      if (inputElement.attr('id') === 'bands-search') {
+        inputElement.on('keydown', function(e) {
+          if (e.key === 'Backspace') {
+            const value = inputElement.val();
+            const cursorPosition = this.selectionStart;
+            const bands = value.split(',').map(b => b.trim()).filter(b => b.length > 0);
+
+            let currentPosition = 0;
+            let bandIndex = -1;
+
+            for (let i = 0; i < bands.length; i++) {
+              currentPosition += bands[i].length + 2;
+              if (cursorPosition <= currentPosition) {
+                bandIndex = i;
+                break;
+              }
+            }
+
+            if (bandIndex !== -1) {
+              e.preventDefault();
+              const removedBand = bands[bandIndex];
+              bands.splice(bandIndex, 1);
+
+              // Find and remove the corresponding ID
+              const removedBandIndex = selectedBands.findIndex(b => b.name === removedBand);
+              if (removedBandIndex !== -1) {
+                selectedBands.splice(removedBandIndex, 1);
+                selectedBandIds.splice(removedBandIndex, 1);
+              }
+
+              inputElement.val(bands.length ? bands.join(', ') + ', ' : '');
+              bandIdsField.val(selectedBandIds.join(','));
+            }
+          }
+        });
+      }
+      inputElement.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
           $.ajax({
             url: `/api/bands/search?q=${searchQuery}`,
             method: 'GET',
