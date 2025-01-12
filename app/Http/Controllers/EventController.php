@@ -203,11 +203,19 @@ class EventController extends Controller
     public function createNewEvent($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $promoterData = [];
 
         $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
         switch ($dashboardType) {
             case 'promoter':
                 $role = $user->promoters()->first();
+
+                if ($role) {
+                    $promoterData = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                };
                 break;
             case 'artist':
                 $role = $user->otherService('service')->first();
@@ -231,6 +239,7 @@ class EventController extends Controller
 
         return view('admin.dashboards.new-event', [
             'role' => $role,
+            'promoterData' => $promoterData,
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'modules' => $modules,
@@ -426,7 +435,7 @@ class EventController extends Controller
                 ]);
 
                 $calendarController->addEventToInternalCalendar($googleRequest);
-                \Log::info('Dispatching SyncGoogleCalendarEvents job');
+                // \Log::info('Dispatching SyncGoogleCalendarEvents job');
                 SyncGoogleCalendarEvents::dispatch($event, Auth::id())->delay(now()->addSeconds(20))->onQueue('default');
             }
 
@@ -563,6 +572,38 @@ class EventController extends Controller
                 }
             }
 
+            $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
+            switch ($dashboardType) {
+                case 'promoter':
+                    $role = $user->promoters()->first();
+
+                    if ($role) {
+                        $promoterData = [
+                            'id' => $role->id,
+                            'name' => $role->name,
+                        ];
+                    };
+                    break;
+                case 'artist':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'designer':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'videographer':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'photographer':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'venue':
+                    $role = $user->venues()->first();
+                    break;
+                default:
+                    $role = 'guest';
+                    break;
+            }
+
             // Get existing poster URL
             $posterUrl = $event->poster_url;
             $hasPoster = !empty($posterUrl);
@@ -584,7 +625,9 @@ class EventController extends Controller
                     'bandObjects' => $bandObjects,
                     'opener' => $opener,
                     'posterUrl' => $posterUrl,
-                    'hasPoster' => $hasPoster
+                    'hasPoster' => $hasPoster,
+                    'promoterData' => $promoterData,
+                    'role' => $role,
                 ]
             );
         } catch (\Exception $e) {
@@ -603,7 +646,7 @@ class EventController extends Controller
         $modules = collect(session('modules', []));
         try {
             $validatedData = $request->validated();
-            \Log::info('Validated data:', $validatedData);
+            // \Log::info('Validated data:', $validatedData);
             $user = Auth::user()->load('roles');
             $role = $user->getRoleNames()->first();
 
@@ -635,7 +678,7 @@ class EventController extends Controller
                 $bandsArray[] = ['role' => 'Opener', 'band_id' => $validatedData['opener_id']];
             }
 
-            \Log::info('Bands array:', $bandsArray);
+            // \Log::info('Bands array:', $bandsArray);
 
 
             // Poster Upload
@@ -678,7 +721,7 @@ class EventController extends Controller
                 'band_ids' => json_encode($bandsArray)
             ];
 
-            \Log::info('Update data:', $updateData);
+            // \Log::info('Update data:', $updateData);
 
 
             // Update the event
