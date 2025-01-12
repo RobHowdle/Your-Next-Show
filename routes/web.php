@@ -1,12 +1,9 @@
 <?php
 
-use App\Models\OtherService;
-use App\Services\What3WordsService;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JobsController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TodoController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\VenueController;
 use App\Http\Controllers\ReviewController;
@@ -24,7 +21,7 @@ use App\Http\Controllers\BandJourneyController;
 use App\Http\Controllers\OtherServiceController;
 use App\Http\Controllers\VenueJourneyController;
 use App\Http\Controllers\DesignerJourneyController;
-use App\Http\Controllers\PromoterDashboardController;
+use App\Http\Controllers\PromoterJourneyController;
 use App\Http\Controllers\PhotographerJourneyController;
 use App\Http\Controllers\VideographerJourneyController;
 
@@ -62,7 +59,8 @@ Route::post('/other/{serviceType}/filter', [OtherServiceController::class, 'filt
 Route::get('/other/{serviceName}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
 Route::get('/other/{serviceName}/{serviceId}', [OtherServiceController::class, 'show'])->name('singleService');
 
-Route::get('/gig-guide', [GigGuideController::class, 'showGigGuide'])->name('gig-guide');
+// Gig Guide
+Route::get('/gig-guide', [GigGuideController::class, 'index'])->name('gig-guide');
 Route::get('/gigs/filter', [GigGuideController::class, 'filterGigs'])->name('gigs.filter');
 Route::view('/privacy-policy', 'privacy-policy');
 Route::view('/about', 'about');
@@ -73,20 +71,18 @@ Route::get('/events', [EventController::class, 'getPublicEvents'])->name('public
 Route::get('/events/{eventId}', [EventController::class, 'getSinglePublicEvent'])->name('public-event');
 
 
-Route::middleware(['auth', 'web', 'verified'])->group(function () {
-    // Dashboards - Main Dashboard
+Route::middleware(['web', 'auth', 'verified'])->group(function () {
+    // Main Dashboard Route
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-    // Dashboards - Role Based Dashboards
+    // Dynamic Dashboard Routing
     Route::prefix('/dashboard')->group(function () {
         Route::get('/{dashboardType}', function ($dashboardType) {
-            // Determine the appropriate controller based on the dashboard type
             $controllerName = ucfirst($dashboardType) . 'DashboardController';
+            $controllerClass = "App\\Http\\Controllers\\$controllerName";
 
-            // Check if the controller class exists
-            if (class_exists("App\\Http\\Controllers\\$controllerName")) {
-                // Create an instance of the controller and call the index method
-                return app("App\\Http\\Controllers\\$controllerName")->index($dashboardType);
+            if (class_exists($controllerClass)) {
+                return app($controllerClass)->index($dashboardType);
             }
 
             abort(404);
@@ -101,21 +97,22 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
         Route::get('/band-journey', [BandJourneyController::class, 'index'])->name('band.journey');
         Route::get('/band-search', [BandJourneyController::class, 'search'])->name('band.search');
         Route::post('/band-journey/join/{id}', [BandJourneyController::class, 'joinBand'])->name('band.join');
-        Route::post('/band-journey/create', [BandJourneyController::class, 'createBand'])->name('band.create');
+        Route::post('/band-journey/create', [BandJourneyController::class, 'createBand'])->name('band.store');
     });
 
+    // Promoter Journey
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
-        Route::get('/users/search', [PromoterDashboardController::class, 'searchExistingPromoters'])->name('admin.dashboard.promoter.search');
-        Route::post('/link', [PromoterDashboardController::class, 'linkToExistingPromoter'])->name('admin.dashboard.promoter.link');
-        Route::post('/store', [PromoterDashboardController::class, 'storeNewPromoter'])->name('admin.dashboard.promoter.store');
+        Route::get('/promoter-journey', [PromoterJourneyController::class, 'index'])->name('promoter.journey');
+        Route::get('/promoter-search', [PromoterJourneyController::class, 'search'])->name('promoter.search');
+        Route::post('/promoter-journey/join/{id}', [PromoterJourneyController::class, 'joinPromoter'])->name('promoter.join');
+        Route::post('/promoter-journey/create', [PromoterJourneyController::class, 'createPromoter'])->name('promoter.store');
     });
 
     // Venue Journey
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
         Route::get('/venue-journey', [VenueJourneyController::class, 'index'])->name('venue.journey');
         Route::get('/venue-search', [VenueJourneyController::class, 'searchVenue'])->name('venue.search');
-        Route::get('/venue-select', [VenueJourneyController::class, 'selectVenue'])->name('venue.select');
-        Route::post('/venue-journey/link/{id}', [VenueJourneyController::class, 'linkVenue'])->name('venue.link');
+        Route::post('/venue-journey/join/{id}', [VenueJourneyController::class, 'joinVenue'])->name('venue.link');
         Route::post('/venue/create', [VenueJourneyController::class, 'createVenue'])->name('venue.store');
     });
 
@@ -123,8 +120,7 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
         Route::get('/photographer-journey', [PhotographerJourneyController::class, 'index'])->name('photographer.journey');
         Route::get('/photographer-search', [PhotographerJourneyController::class, 'searchPhotographer'])->name('photographer.search');
-        Route::get('/photographer-select', [PhotographerJourneyController::class, 'selectPhotogrpher'])->name('photographer.select');
-        Route::post('/photographer-journey/link/{id}', [PhotographerJourneyController::class, 'linkPhotographer'])->name('photographer.link');
+        Route::post('/photographer-journey/join/{id}', [PhotographerJourneyController::class, 'joinPhotographer'])->name('photographer.link');
         Route::post('/photographer/create', [PhotographerJourneyController::class, 'createPhotographer'])->name('photographer.store');
     });
 
@@ -133,25 +129,27 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
         Route::get('/designer-journey', [DesignerJourneyController::class, 'index'])->name('designer.journey');
         Route::get('/designer-search', [DesignerJourneyController::class, 'search'])->name('designer.search');
         Route::post('/designer-journey/join/{id}', [DesignerJourneyController::class, 'joinDesigner'])->name('designer.join');
-        Route::post('/designer-journey/create', [DesignerJourneyController::class, 'createDesigner'])->name('designer.create');
+        Route::post('/designer-journey/create', [DesignerJourneyController::class, 'createDesigner'])->name('designer.store');
     });
 
+    // Videographer Journey
     Route::prefix('/{dashboardType}')->middleware(['auth'])->group(function () {
         Route::get('/videographer-journey', [VideographerJourneyController::class, 'index'])->name('videographer.journey');
         Route::get('/videographer-search', [VideographerJourneyController::class, 'search'])->name('videographer.search');
         Route::post('/videographer-journey/join/{id}', [VideographerJourneyController::class, 'joinVideographer'])->name('videographer.join');
-        Route::post('/videographer-journey/create', [VideographerJourneyController::class, 'createVideographer'])->name('videographer.create');
+        Route::post('/videographer-journey/create', [VideographerJourneyController::class, 'createVideographer'])->name('videographer.store');
     });
 
     // Finances
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/finances', [FinanceController::class, 'showFinances'])->name('admin.dashboard.show-finances');
+        Route::get('/finances/data', [FinanceController::class, 'getFinancesData'])->name('admin.dashboard.get-finances-data');
         Route::get('/finances/new-budget', [FinanceController::class, 'createFinance'])->name('admin.dashboard.create-new-finance');
         Route::post('/finances/save-budget', [FinanceController::class, 'storeFinance'])->name('admin.dashboard.store-new-finance');
         Route::post('/finances/export', [FinanceController::class, 'exportFinances'])->name('admin.dashboard.finances.export');
         Route::get('/finances/{id}', [FinanceController::class, 'showSingleFinance'])->name('admin.dashboard.show-finance');
         Route::get('/finances/{id}/edit', [FinanceController::class, 'editFinance'])->name('admin.dashboard.edit-finance');
-        Route::patch('/finances/{finance}', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finances');
+        Route::put('/finances/{id}', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finance');
         Route::post('/finances/{finance}', [FinanceController::class, 'exportSingleFinance'])->name('admin.dashboard.export-finance');
     });
 
@@ -216,26 +214,33 @@ Route::middleware(['auth', 'web', 'verified'])->group(function () {
         Route::get('/events/{id}', [EventController::class, 'showEvent'])->name('admin.dashboard.show-event');
         Route::get('/events/{id}/edit', [EventController::class, 'editEvent'])->name('admin.dashboard.edit-event');
         Route::put('/events/{id}/update', [EventController::class, 'updateEvent'])->name('admin.dashboard.update-event');
-        Route::post('/events/{id}/add-to-calendar', [CalendarController::class, 'addEventToCalendar'])->name('admin.dashboard.add-event-to-calendar');
+        Route::post('/events/{id}/add-to-calendar', [CalendarController::class, 'addEventToInternalCalendar'])->name('admin.dashboard.add-event-to-calendar');
         Route::get('/events/{user}/check-linked-calendars', [CalendarController::class, 'checkLinkedCalendars']);
         Route::delete('/events/{id}/delete', [EventController::class, 'deleteEvent'])->name('admin.dashboard.delete-event');
     });
 
     // To-Do List
-    Route::prefix('/dashboard/{dashboardType}')->group(function () {
-        Route::get('/todo-list', [TodoController::class, 'showTodos'])->name('admin.dashboard.todo-list');
-        Route::get('/todo-items', [TodoController::class, 'getTodos'])->name('admin.dashboard.todo-items');
-        Route::post('/todo-list/new', [TodoController::class, 'newTodoItem'])->name('admin.dashboard.new-todo-item');
-        Route::post('/todo-item/{id}/complete', [TodoController::class, 'completeTodoItem'])->name('admin.dashboard.complete-todo-item');
-        Route::post('/todo-item/{id}/uncomplete', [TodoController::class, 'uncompleteTodoItem'])->name('admin.dashboard.uncomplete-todo-item');
-        Route::delete('/todo-item/{id}', [TodoController::class, 'deleteTodoItem'])->name('admin.dashboard.delete-todo-item');
-        Route::get('/todo-item/completed-items', [TodoController::class, 'showCompletedTodoItems'])->name('admin.dashboard.completed-todo-items');
+    Route::prefix('/dashboard/{dashboardType}/todo-list')->group(function () {
+        // View Routes
+        Route::get('/', [TodoController::class, 'showTodos'])->name('admin.dashboard.todo-list');
+        Route::get('/completed', [TodoController::class, 'showCompletedTodoItems'])->name('admin.dashboard.completed-todos');
+        Route::get('/uncompleted', [TodoController::class, 'showUncompletedTodoItems'])->name('admin.dashboard.uncompleted-todos');
+        Route::get('/load-more', [TodoController::class, 'loadMoreTodos'])->name('admin.dashboard.load-more-todos');
+
+        // Action Routes
+        Route::post('/new', [TodoController::class, 'newTodoItem'])->name('admin.dashboard.new-todo');
+        Route::post('/{id}/complete', [TodoController::class, 'completeTodoItem'])->name('admin.dashboard.complete-todo');
+        Route::post('/{id}/uncomplete', [TodoController::class, 'uncompleteTodoItem'])->name('admin.dashboard.uncomplete-todo');
+        Route::delete('/{id}', [TodoController::class, 'deleteTodoItem'])->name('admin.dashboard.delete-todo');
+
+        // Status Check Routes
+        Route::get('/has-completed', [TodoController::class, 'hasCompletedTodos'])->name('admin.dashboard.has-completed-todos');
+        Route::get('/has-uncompleted', [TodoController::class, 'hasUncompletedTodos'])->name('admin.dashboard.has-cunompleted-todos');
     });
 
     // Jobs
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/jobs', [JobsController::class, 'showJobs'])->name('admin.dashboard.jobs');
-        // Route::get('/job-items', [JobsController::class, 'getJobs'])->name('admin.dashboard.job-items');
         Route::get('/jobs/new', [JobsController::class, 'newJob'])->name('admin.dashboard.jobs.create');
         Route::post('/jobs/store', [JobsController::class, 'storeJob'])->name('admin.dashboard.jobs.store');
         Route::get('/job/{id}', [JobsController::class, 'viewJob'])->name('admin.dashboard.job.view');
@@ -281,10 +286,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Google calendar routes
-    Route::get('auth/google', [CalendarController::class, 'redirectToGoogle'])->name('google.redirect');
-    Route::get('auth/google/callback', [CalendarController::class, 'handleGoogleCallback']);
-    Route::post('google/sync', [CalendarController::class, 'syncGoogleCalendar'])->name('google.sync');
-    Route::post('google/unlink', [CalendarController::class, 'unlinkGoogle'])->name('google.unlink');
+    Route::get('/dashboard/{dashboardType}/auth/google', [CalendarController::class, 'redirectToGoogle'])->name('google.redirect');
+    Route::get('/auth/google/callback', [CalendarController::class, 'handleGoogleCallback'])->name('google.callback');
+    Route::post('/dashboard/{dashboardType}/google/sync', [CalendarController::class, 'syncGoogleCalendar'])->name('google.sync');
+    Route::post('/dashboard/{dashboardType}/google/unlink', [CalendarController::class, 'unlinkGoogle'])->name('google.unlink');
 });
 
 require __DIR__ . '/auth.php';

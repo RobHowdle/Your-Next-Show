@@ -7,93 +7,98 @@
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
         <div class="header px-8 pt-8">
-          <h1 class="mb-8 font-heading text-4xl font-bold">Edit Event</h1>
+          <h1 class="mb-8 font-heading text-4xl font-bold">Editing Event #{{ $event->id }}</h1>
         </div>
         <form id="eventForm" method="POST" enctype="multipart/form-data" data-dashboard-type="{{ $dashboardType }}">
           @csrf
           @method('PUT')
           <div class="grid grid-cols-3 gap-x-8 px-8 py-8">
             <div class="col">
+              <input type="hidden" id="dashboard_type" value="{{ $dashboardType }}">
               <div class="group mb-4">
-                <x-input-label-dark>Event Name</x-input-label-dark>
-                <x-text-input id="event_name" name="event_name"
-                  value="{{ old('event_name', $event->event_name) }}"></x-text-input>
+                <x-input-label-dark :required="true">Event Name</x-input-label-dark>
+                <x-text-input id="event_name" name="event_name" :required="true" :value="old('event_name', $event->event_name)"></x-text-input>
                 @error('event_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
-                <x-input-label-dark>Date & Time of Event</x-input-label-dark>
-                <x-date-input id="combinedDateTime" name="combinedDateTime"
-                  value="{{ old('combinedDateTime', $combinedDateTime) }}"></x-date-input>
-                @error('combinedDateTime')
+                <x-input-label-dark :required="true">Event Date</x-input-label-dark>
+                <x-date-input id="event_date" name="event_date"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_date', $eventDate) }}"></x-date-input>
+                @error('event_date')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
-              <div class="group mb-4 hidden">
-                <x-input-label-dark>Date of Event</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-date-input id="formattedEventDate" name="formattedEventDate"
-                  value="{{ old('formattedEventDate', $formattedEventDate) }}"></x-date-input>
-                @error('formattedEventDate')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
+
               <div class="group mb-4">
-                <x-input-label-dark>Start Time</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-text-input class="w-auto" id="event_start_time" name="event_start_time"
-                  value="{{ old('event_start_time', $event->event_start_time) }}"></x-text-input>
+                <x-input-label-dark :required="true">Event Start Time</x-input-label-dark>
+                <x-time-input id="event_start_time" name="event_start_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_start_time', $event->event_start_time) }}"></x-time-input>
                 @error('event_start_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
-              <div class="group mb-4 hidden">
-                <x-input-label-dark>Promoter</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-text-input class="w-auto" id="promoter_id" name="promoter_id" value="{{ $promoter->id }}"
-                  readonly></x-text-input>
-                @error('promoter_id')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
+
               <div class="group mb-4">
-                <x-input-label-dark>End Time</x-input-label-dark>
-                <x-text-input class="w-auto" id="event_end_time" name="event_end_time"
-                  value="{{ old('event_end_time', $event->event_end_time) }}"></x-text-input>
+                <x-input-label-dark>Event End Time</x-input-label-dark>
+                <x-time-input id="event_end_time" name="event_end_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  value="{{ old('event_end_time', $event->event_end_time) }}"></x-time-input>
                 @error('event_end_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
+
               <div class="group mb-4">
-                <x-input-label-dark>Description</x-input-label-dark>
-                <x-textarea-input id="event_description" name="event_description"
-                  class="w-full">{{ old('event_description', $event->event_description) }}</x-textarea-input>
+                <x-input-label-dark>Promoter</x-input-label-dark>
+                <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
+                  :value="old(
+                      'promoter_name',
+                      $promoters->isNotEmpty() ? $promoters->pluck('name')->join(', ') : '',
+                  )"></x-text-input>
+                <ul id="promoter-suggestions"
+                  class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
+                </ul>
+                <x-input-label-dark>Promoter ID</x-input-label-dark>
+                <x-text-input id="promoter_ids" name="promoter_ids" :value="old('promoter_id', $promoters->isNotEmpty() ? $promoters->pluck('id')->join(', ') : '')"></x-text-input>
+                <ul id="promoter-suggestions"
+                  class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
+                </ul>
+                @error('promoter_name')
+                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                @enderror
+              </div>
+
+              <div class="group mb-4">
+                <x-input-label-dark :required="true">Description</x-input-label-dark>
+                <x-textarea-input id="event_description" name="event_description" class="w-full" :required="true"
+                  :value="old('event_description', $event->event_description)">{{ $event->event_description }}</x-textarea-input>
                 @error('event_description')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
+
               <div class="group mb-4">
                 <x-input-label-dark>Facebook Event Link</x-input-label-dark>
-                <x-text-input id="facebook_event_url" name="facebook_event_url"
-                  value="{{ old('facebook_event_url', $event->facebook_event_url) }}"></x-text-input>
+                <x-text-input id="facebook_event_url" name="facebook_event_url" :value="old('facebook_event_url', $event->facebook_event_url)"></x-text-input>
                 @error('facebook_event_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Pre Sale Ticket Link</x-input-label-dark>
-                <x-text-input id="ticket_url" name="ticket_url"
-                  value="{{ old('ticket_url', $event->ticket_url) }}"></x-text-input>
+                <x-text-input id="ticket_url" name="ticket_url" :value="old('ticket_url', $event->ticket_url)"></x-text-input>
                 @error('ticket_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Door Ticket Price</x-input-label-dark>
-                <input type="hidden" name="existing_poster_url" value="{{ $event->poster_url }}">
                 <x-number-input-pound id="on_the_door_ticket_price" name="on_the_door_ticket_price"
-                  value="{{ old('on_the_door_ticket_price', $event->on_the_door_ticket_price) }}"></x-number-input-pound>
+                  :value="old('on_the_door_ticket_price', $event->on_the_door_ticket_price ?? '')" />
                 @error('on_the_door_ticket_price')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -101,12 +106,13 @@
             </div>
             <div class="col">
               <div class="group">
-                <x-input-label-dark>Poster</x-input-label-dark>
-                <x-input-file id="poster_url" name="poster_url"></x-input-file>
-                <div class="mt-4">
-                  <img id="posterPreview" src="{{ asset($event->poster_url) }}" alt="Poster Preview"
-                    class="h-auto w-400">
-                </div>
+                <x-input-label-dark>Event Poster</x-input-label-dark>
+                <x-input-file id="poster_url" name="poster_url" accept="image/*" :value="old('poster_url', $event->poster_url)"></x-input-file>
+                @if ($event->poster_url)
+                  <div class="mt-4">
+                    <img src="{{ asset($event->poster_url) }}" alt="Current Event Poster" class="h-auto w-400">
+                  </div>
+                @endif
                 @error('poster_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -114,435 +120,365 @@
             </div>
             <div class="col">
               <div class="group mb-4">
-                <x-input-label-dark>Venue</x-input-label-dark>
-                <x-text-input id="venue_name" name="venue_name"
-                  value="{{ old('venue_name', $event->venues->first()->name ?? '') }}"
-                  autocomplete="off"></x-text-input>
+                <x-input-label-dark :required="true">Venue</x-input-label-dark>
+                <x-text-input id="venue_name" name="venue_name" autocomplete="off" :required="true"
+                  :value="old('venue_name', optional($event->venues->first())->name ?? '')"></x-text-input>
                 <ul id="venue-suggestions"
-                  class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                <x-text-input id="venue_id" name="venue_id" class="hidden"
-                  value="{{ old('venue_id', $event->venues->first()->id ?? '') }}"></x-text-input>
+                  class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
+                </ul>
+                <x-input-label-dark :required="true">Venue ID</x-input-label-dark>
+                <x-text-input id="venue_id" name="venue_id" :value="old('venue_id', optional($event->venues->first())->id ?? '')" :required="true"></x-text-input>
                 @error('venue_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group" id="band-rows-container">
+                <!-- Headline Band -->
                 <div class="group mb-4">
-                  <x-input-label-dark>Headline Band</x-input-label-dark>
-                  <x-text-input id="headliner-search" name="headliner"
-                    value="{{ old('headliner', $headliner->name ?? '') }}" autocomplete="off"></x-text-input>
+                  <x-input-label-dark :required="true">Headline Band</x-input-label-dark>
+                  <x-text-input id="headliner-search" name="headliner" autocomplete="off" :required="true"
+                    :value="old('headliner', optional($headliner)->name ?? '')"></x-text-input>
                   <ul id="headliner-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-text-input id="headliner_id" name="headliner_id" class="hidden"
-                    value="{{ old('headliner_id', $headliner->id ?? '') }}"></x-text-input>
+                  <x-input-label-dark :required="true">Headliner Band ID</x-input-label-dark>
+                  <x-text-input id="headliner_id" name="headliner_id" :value="old('headliner_id', optional($headliner)->id ?? '')"
+                    :required="true"></x-text-input>
                   @error('headliner')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
 
+                <!-- Main Support -->
                 <div class="group mb-4">
                   <x-input-label-dark>Main Support</x-input-label-dark>
-                  <x-text-input id="mainSupport-search" name="mainSupport"
-                    value="{{ old('mainSupport', $mainSupport->name ?? '') }}" autocomplete="off"></x-text-input>
-                  <ul id="mainSupport-suggestions"
+                  <x-text-input id="main-support-search" name="main_support" autocomplete="off"
+                    :value="old('main_support', optional($mainSupport)->name ?? '')"></x-text-input>
+                  <ul id="main-support-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-text-input id="main_support_id" name="main_support_id" class="hidden"
-                    value="{{ old('main_support_id', $mainSupport->id ?? '') }}"></x-text-input>
+                  <x-input-label-dark>Main Support Band ID</x-input-label-dark>
+                  <x-text-input id="main_support_id" name="main_support_id" :value="old('main_support_id', optional($mainSupport)->id ?? '')"></x-text-input>
                   @error('mainSupport')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
 
+                <!-- Bands (Comma-Separated Input) -->
                 <div class="group mb-4" id="bandsContainer">
-                  @if (!empty($bandObjects))
-                    @foreach ($bandObjects as $index => $band)
-                      <div class="band-input-row mt-4 flex">
-                        <div class="flex w-full flex-row">
-                          <div class="group w-full">
-                            <x-input-label-dark>Band</x-input-label-dark>
-                            <x-text-input id="band_{{ $index + 1 }}" name="band[]" class="band-input"
-                              value="{{ old('band.' . $index, $band->name) }}" autocomplete="off"></x-text-input>
-                            <ul id="band-suggestions-{{ $index + 1 }}"
-                              class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
-                            </ul>
-                            <x-text-input id="band_id_{{ $index + 1 }}" name="band_id[]" class="hidden"
-                              value="{{ old('band_id.' . $index, $band->id) }}"></x-text-input>
-                            @error('band.' . $index)
-                              <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                            @enderror
-                          </div>
-                          @if ($index > 0)
-                            <button type="button"
-                              class="remove-band mt-7 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">
-                              <span class="fas fa-minus"></span>
-                            </button>
-                          @endif
-                        </div>
-                      </div>
-                    @endforeach
-                  @else
-                    <p>No bands added.</p>
-                  @endif
-                  <button type="button" id="add-band-row"
-                    class="add-band mt-7 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">
-                    <span class="fas fa-plus"></span> Add Band
-                  </button>
+                  <x-input-label-dark>Bands</x-input-label-dark>
+                  <x-text-input id="bands-search" name="bands" class="band-input" autocomplete="off"
+                    placeholder="Type band name and press Enter, separated by commas"
+                    :value="collect($bandObjects)->pluck('name')->join(', ')"></x-text-input>
+                  <ul id="bands-suggestions"
+                    class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
+                  <x-input-label-dark>Bands IDs</x-input-label-dark>
+                  <x-text-input id="bands_ids" name="bands_ids" :value="collect($bandObjects)->pluck('id')->join(',')" />
+                  @error('bands')
+                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                  @enderror
                 </div>
 
+                <!-- Opening Band -->
                 <div class="group mb-4">
-                  <x-input-label-dark>Opener</x-input-label-dark>
-                  <x-text-input id="opener-search" name="opener" value="{{ old('opener', $opener->name ?? '') }}"
-                    autocomplete="off"></x-text-input>
+                  <x-input-label-dark>Opening Band</x-input-label-dark>
+                  <x-text-input id="opener-search" name="opener" autocomplete="off"
+                    :value="old('opener', optional($opener)->name ?? '')"></x-text-input>
                   <ul id="opener-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-text-input id="opener_id" name="opener_id" class="hidden"
-                    value="{{ old('opener_id', $mainSupport->id ?? '') }}"></x-text-input>
+                  <x-input-label-dark>Opening Band ID</x-input-label-dark>
+                  <x-text-input id="opener_id" name="opener_id" :value="old('opener_id', optional($opener)->id ?? '')"></x-text-input>
                   @error('opener')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
               </div>
             </div>
-            <x-button type="submit" class="text-center" label="Save" />
+
+            <button type="submit"
+              class="mt-7 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 </x-app-layout>
-
 <script>
-  flatpickr('#event_end_time', {
-    enableTime: true,
-    noCalendar: true,
-    dateFormat: "H:i",
-    time_24hr: true,
-  });
-  flatpickr('#event_start_time', {
-    enableTime: true,
-    noCalendar: true,
-    dateFormat: "H:i",
-    time_24hr: true,
-  });
-  flatpickr('#combinedDateTime', {
-    enableTime: true,
-    dateFormat: "d-m-Y H:i",
-    time_24hr: true,
-  });
-  flatpickr('#event_date', {
-    enableTime: true,
-    dateFormat: "d-m-Y H:i",
-    time_24hr: true,
-  });
-
-  document.getElementById('combinedDateTime').addEventListener('change', function(event) {
-    event.preventDefault();
-    const dateTimeValue = event.target.value;
-
-    const [date, time] = dateTimeValue.split(' ');
-
-    const startDateInput = document.getElementById('formattedEventDate');
-    const startTimeInput = document.getElementById('event_start_time');
-
-    startDateInput.value = date;
-    startTimeInput.value = time;
-
-    // Check if the inputs exist before setting values
-    if (startDateInput && startTimeInput) {
-      startDateInput.value = date;
-      startTimeInput.value = time;
-    } else {
-      console.error("Start date or time input not found");
-    }
-  });
-
-  // Poster Preview
-  document.getElementById('poster_url').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = document.getElementById('posterPreview');
-        img.src = e.target.result;
-        img.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  // Venue Search
-  const venueInput = document.getElementById('venue_name');
-  const suggestionsList = document.getElementById('venue-suggestions');
-
-  venueInput.addEventListener('input', function() {
-    const query = this.value;
-
-    if (query.length < 3) {
-      suggestionsList.innerHTML = '';
-      suggestionsList.classList.add('hidden');
-      return;
-    }
-
-    fetch(`/dashboard/promoter/events/search-venues?query=${encodeURIComponent(query)}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        suggestionsList.innerHTML = '';
-        data.forEach(venue => {
-          const suggestionItem = document.createElement('li');
-          suggestionItem.textContent = venue.name;
-          suggestionItem.setAttribute('data-id', venue.id);
-          suggestionItem.classList.add(
-            'cursor-pointer',
-            'hover:text-yns_yellow',
-            'px-4',
-            'py-2',
-            'bg-opac_8_black',
-            'text-white'
-          );
-
-          // Fixed the event listener setup here
-          suggestionItem.addEventListener('click', function() {
-            venueInput.value = venue.name;
-            document.getElementById('venue_id').value = venue.id;
-            suggestionsList.classList.add('hidden');
-          });
-
-          suggestionsList.appendChild(suggestionItem);
-        });
-
-        if (data.length) {
-          suggestionsList.classList.remove('hidden');
-        } else {
-          suggestionsList.classList.add('hidden');
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching venue suggestions:', error);
-        suggestionsList.classList.add('hidden');
-      });
-  });
-
-  // Venue Hide suggestions when clicking outside
-  document.addEventListener('click', function(event) {
-    if (!venueInput.contains(event.target) && !suggestionsList.contains(event.target)) {
-      suggestionsList.classList.add('hidden');
-    }
-  });
-
-  // Band Search
-  const bandsContainer = document.getElementById('bandsContainer');
-  const addBandRowButton = document.getElementById('add-band-row');
-  let bandRowCount = 1;
-
-  // Update Gap Class if there is more than 1 band row
-  function updateGapClass() {
-    const bandRows = bandsContainer.querySelectorAll('.band-input-row');
-    const removeButtons = bandsContainer.querySelectorAll('.remove-band');
-
-    bandRows.forEach(row => {
-      const childDivs = row.querySelectorAll('.flex');
-
-      childDivs.forEach((childDiv) => {
-        if (bandRows.length === 1) {
-          childDiv.classList.add('gap-275');
-          childDiv.classList.remove('gap-1');
-        } else {
-          childDiv.classList.add('gap-1');
-          childDiv.classList.remove('gap-275');
-        }
-      });
-    });
-
-    // Show/Hide remove buttons
-    if (bandRows.length > 1) {
-      removeButtons.forEach(button => button.classList.remove('hidden'));
-    } else {
-      if (removeButtons.length > 0) {
-        removeButtons[0].classList.add('hidden');
-      }
-    }
-  };
-
-  // Initial class update
-  updateGapClass();
-
-  // Function to initialize event listeners for existing band inputs
-  function initializeExistingBandInputs() {
-    const existingBandInputs = document.querySelectorAll('.band-input');
-    existingBandInputs.forEach(input => {
-      const suggestionsList = input.nextElementSibling; // Assuming the next sibling is the <ul>
-
-      // Add input event listener to the band input
-      input.addEventListener('input', function() {
-        const query = this.value.trim();
-        if (query.length > 0) {
-          searchBand(query, `band-suggestions-${bandRowCount}`, 'artist', `band_id_${bandRowCount}`,
-            bandRowCount);
-        } else {
-          suggestionsList.classList.add('hidden');
-          suggestionsList.innerHTML = ''; // Clear suggestions if the input is empty
-        }
-      });
-
-      // Add event listener for suggestion clicks
-      suggestionsList.addEventListener('click', function(event) {
-        if (event.target.tagName === 'LI') {
-          const band = {
-            id: event.target.dataset.id,
-            name: event.target.textContent
-          };
-          selectBand(band, suggestionsList, 'artist', `band_id_${bandRowCount}`);
-        }
-      });
-    });
-  }
-
-  // Call the function after the DOM content is fully loaded
-  document.addEventListener('DOMContentLoaded', () => {
-    initializeExistingBandInputs(); // Initialize existing inputs
-    const addBandRowButton = document.getElementById('add-band-row');
-
-    // Existing code for adding new band rows
-    addBandRowButton.addEventListener('click', function(event) {
-      event.preventDefault();
-      createBandRow();
-    });
-  });
-
-  // Function to create a new band row
-  function createBandRow() {
-    bandRowCount++;
-    const newBandRow = document.createElement('div');
-    newBandRow.classList.add('flex', 'items-center', 'mt-4', 'band-input-row');
-    newBandRow.innerHTML = `
-    <div class="flex flex-row">
-      <div class="group w-full">
-        <x-input-label-dark>Band</x-input-label-dark>
-        <x-text-input id="band_${bandRowCount}" name="band[]" class="band-input"></x-text-input>
-        <ul id="band-suggestions-${bandRowCount}" class="hidden max-h-60 absolute z-10 overflow-auto border border-gray-300 bg-white"></ul>
-        <x-text-input id="band_id_${bandRowCount}" name="band_id[]" class="hidden"/>
-      </div>
-      <button type="button" class="mt-7 remove-band mt-7 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow"><span class="fas fa-minus"></span></button>
-    </div>
-  `;
-
-    bandsContainer.appendChild(newBandRow);
-    updateGapClass();
-
-    // Add event listener for the band input to handle searching
-    const bandInput = newBandRow.querySelector(`#band_${bandRowCount}`);
-    const suggestionsList = newBandRow.querySelector(`#band-suggestions-${bandRowCount}`);
-
-    bandInput.addEventListener('input', function() {
-      const query = this.value;
-      if (query.length > 0) {
-        searchBand(query, `band-suggestions-${bandRowCount}`, 'artist', `band_id_${bandRowCount}`);
-      } else {
-        suggestionsList.classList.add('hidden');
-        suggestionsList.innerHTML = ''; // Clear previous suggestions
-      }
-    });
-
-    // Handle removing the row
-    newBandRow.querySelector('.remove-band').addEventListener('click', function() {
-      newBandRow.remove();
-      updateGapClass();
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    // Initialize event listeners for band input fields
-    const bandFields = [{
-        inputId: 'headliner-search',
-        suggestionsId: 'headliner-suggestions',
-        hiddenInputId: 'headliner_id',
-        fieldType: 'headliner'
+  $(document).ready(function() {
+    let selectedBands = []; // Normal bands list (multiple bands)
+    let selectedBandIds = []; // IDs for normal bands
+    // Initialize the date pickers
+    flatpickr('#event_date', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      defaultDate: "{{ $eventDate }}",
+      formatDate: (date) => {
+        // Format date as dd-mm-yyyy
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
       },
-      {
-        inputId: 'mainSupport-search',
-        suggestionsId: 'mainSupport-suggestions',
-        hiddenInputId: 'main_support_id',
-        fieldType: 'main-support'
-      },
-      {
-        inputId: 'opener-search',
-        suggestionsId: 'opener-suggestions',
-        hiddenInputId: 'opener_id',
-        fieldType: 'opener'
+      onChange: function(selectedDates, dateStr) {
+        if (selectedDates.length > 0) {
+          const formattedDate = this.formatDate(selectedDates[0]);
+          document.getElementById('event_date').value = formattedDate;
+        } else {
+          document.getElementById('event_date').value = "{{ $eventDate }}";
+        }
       }
-    ];
+    });
+    flatpickr('#event_start_time', {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "H:i",
+      time_24hr: true,
+    });
+    flatpickr('#event_end_time', {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "H:i",
+      time_24hr: true,
+    });
 
-    for (let i = 1; i <= bandRowCount; i++) {
-      bandFields.push({
-        inputId: `band_${i}`,
-        suggestionsId: `band-suggestions-${i}`,
-        hiddenInputId: `band_id_${i}`,
-        fieldType: 'artist'
+    // Poster Preview
+    $('#poster_url').on('change', function(event) {
+      const file = event.target.files[0];
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+
+      if (file) {
+        if (file.size > maxSize) {
+          showFailureNotification('File size exceeds 10MB limit');
+          this.value = ''; // Clear the file input
+          $('#posterPreview').addClass('hidden').attr('src', '#');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          $('#posterPreview').attr('src', e.target.result).removeClass('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Handle form submission
+    $('#eventForm').on('submit', function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      const dashboardType = "{{ $dashboardType }}"; // Capture the dashboard type from the template
+      const bandIds = $('#bands_ids').val().split(',').filter(id => id.trim());
+      const promoterIds = $('#promoter_ids').val().split(',').filter(id => id.trim());
+
+      console.log('Promoter IDs before submit:', promoterIds); // Debug log
+
+      const formData = new FormData(this); // Get form data
+      formData.delete('bands_ids');
+      bandIds.forEach(id => {
+        formData.append('bands_ids[]', id);
       });
-    }
+      promoterIds.forEach(id => {
+        formData.append('promoter_ids[]', id);
+      });
 
-    bandFields.forEach(({
-      inputId,
-      suggestionsId,
-      hiddenInputId,
-      fieldType,
-    }) => {
-      const inputField = document.getElementById(inputId);
-      const suggestionsList = document.getElementById(suggestionsId);
-      const hiddenInput = document.getElementById(hiddenInputId);
+      // Debug log FormData
+      for (var pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
 
-      if (inputField) {
-        inputField.addEventListener('input', function() {
-          const query = this.value;
-          if (query.length > 0) {
-            searchBand(query, suggestionsId, fieldType, hiddenInputId); // Pass hiddenInput to searchBand
+      $.ajax({
+        url: "{{ route('admin.dashboard.update-event', ['dashboardType' => ':dashboardType', 'id' => ':id']) }}"
+          .replace(':dashboardType', dashboardType)
+          .replace(':id', "{{ $event->id }}"),
+        method: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}' // Include the CSRF token
+        },
+        success: function(data) {
+          if (data.success) {
+            showSuccessNotification(data.message); // Show success notification
+            setTimeout(() => {
+              window.location.href = data.redirect_url; // Redirect after 2 seconds
+            }, 2000);
           } else {
-            suggestionsList.classList.add('hidden');
-            suggestionsList.innerHTML = ''; // Clear previous suggestions
+            if (data.errors) {
+              Object.keys(data.errors).forEach(key => {
+                const error = data.errors[key];
+                showFailureNotification(error); // Show error notification
+              });
+            } else {
+              showFailureNotification(
+                'An unexpected error occurred. Please try again.'); // General error message
+            }
           }
-        });
-      }
-
-      if (suggestionsList) {
-        suggestionsList.addEventListener('click', (event) => {
-          if (event.target.tagName === 'LI') {
-            const band = {
-              id: event.target.dataset.id,
-              name: event.target.textContent
-            };
-            selectBand(band, suggestionsId, fieldType, hiddenInputId); // Pass hiddenInput directly
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status === 413) {
+            showFailureNotification('The uploaded file is too large. Maximum size is 10MB.');
+          } else {
+            showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
           }
-        });
-      }
-    });
-  });
-
-  // Search for bands and update suggestions
-  function searchBand(query, suggestionsId, fieldType, hiddenInputId) {
-    fetch(`/api/bands/search?name=${encodeURIComponent(query)}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
-      })
-      .then(data => {
-        const suggestionsList = document.getElementById(suggestionsId);
-        suggestionsList.innerHTML = ''; // Clear previous suggestions
+      });
+    });
 
-        if (data.length) {
-          suggestionsList.classList.remove('hidden');
-          data.forEach(band => {
-            const listItem = document.createElement('li');
-            listItem.textContent = band.name;
-            listItem.setAttribute('data-id', band.id);
-            listItem.onclick = () => selectBand(band, suggestionsId, fieldType, hiddenInputId);
-            listItem.classList.add(
+    // Promoter Search
+    function handlePromoterSearch() {
+      const searchInput = $('#promoter_name');
+      const suggestionsElement = $('#promoter-suggestions');
+      const promoterIdsField = $('#promoter_ids');
+      let selectedPromoterIds = [];
+      let debounceTimer;
+
+      function createNewPromoter(promoterName, inputElement, suggestionsElement, setterCallback, idField) {
+        $.ajax({
+          url: '/api/promoters/create',
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          },
+          data: {
+            name: promoterName
+          },
+          success: function(response) {
+            if (response.success && response.promoter) {
+              const promoterId = response.promoter.id;
+              let currentIds = promoterIdsField.val() ? promoterIdsField.val().split(',') : [];
+              currentIds.push(promoterId);
+              promoterIdsField.val(currentIds.join(','));
+
+              setterCallback(response.promoter);
+              suggestionsElement.empty().addClass('hidden');
+              showSuccessNotification('Promoter created successfully');
+            }
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error creating promoter:', errorThrown);
+            showFailureNotification('Failed to create promoter');
+          }
+        });
+      }
+
+      searchInput.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
+          debounceTimer = setTimeout(() => {
+            $.ajax({
+              url: `/api/promoters/search?q=${searchQuery}`,
+              method: 'GET',
+              success: function(response) {
+                suggestionsElement.empty().removeClass('hidden');
+                const promoters = response.promoters || [];
+
+                if (promoters.length === 0) {
+                  const createOption = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer px-4 py-2 bg-opac_8_black text-yns_yellow font-bold'
+                    )
+                    .html(`<i class="fas fa-plus mr-2"></i>Create new promoter "${searchQuery}"`)
+                    .on('click', function() {
+                      createNewPromoter(
+                        searchQuery,
+                        searchInput,
+                        suggestionsElement,
+                        (promoter) => {
+                          const currentValue = searchInput.val();
+                          const existingPromoters = currentValue.split(',')
+                            .map(p => p.trim())
+                            .filter(p => p.length > 0)
+                            .slice(0, -1);
+
+                          existingPromoters.push(promoter.name);
+                          searchInput.val(existingPromoters.join(', ') + ', ');
+
+                          selectedPromoterIds.push(promoter.id);
+                          promoterIdsField.val(selectedPromoterIds.join(','));
+                        },
+                        promoterIdsField
+                      );
+                    });
+                  suggestionsElement.append(createOption);
+                  return;
+                }
+
+                promoters.forEach(promoter => {
+                  const li = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white'
+                    )
+                    .text(promoter.name)
+                    .on('click', () => {
+                      const currentValue = searchInput.val();
+                      const existingPromoters = currentValue.split(',')
+                        .map(p => p.trim())
+                        .filter(p => p.length > 0)
+                        .slice(0, -1);
+
+                      existingPromoters.push(promoter.name);
+                      searchInput.val(existingPromoters.join(', ') + ', ');
+
+                      selectedPromoterIds.push(promoter.id);
+                      promoterIdsField.val(selectedPromoterIds.join(','));
+
+                      suggestionsElement.addClass('hidden');
+                    });
+                  suggestionsElement.append(li);
+                });
+              },
+              error: function(xhr, status, error) {
+                console.error('Search failed:', error);
+                suggestionsElement.empty()
+                  .append(
+                    '<li class="suggestion-item text-red-500 px-4 py-2">Error loading promoters</li>')
+                  .removeClass('hidden');
+              }
+            });
+          }, 300);
+        } else {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+
+      $(document).on('click', function(e) {
+        if (!$(e.target).closest('#promoter_name, #promoter-suggestions').length) {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+    }
+
+    handlePromoterSearch();
+
+    // Venue Search
+    const venueInput = document.getElementById('venue_name');
+    const suggestionsList = document.getElementById('venue-suggestions');
+
+    venueInput.addEventListener('input', function() {
+      const query = this.value;
+
+      if (query.length < 3) {
+        suggestionsList.innerHTML = '';
+        suggestionsList.classList.add('hidden');
+        return;
+      }
+
+      const dashboardType = document.getElementById('dashboard_type').value;
+
+      fetch(`/dashboard/${dashboardType}/events/search-venues?query=${encodeURIComponent(query)}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          suggestionsList.innerHTML = '';
+          data.forEach(venue => {
+            const suggestionItem = document.createElement('li');
+            suggestionItem.textContent = venue.name;
+            suggestionItem.setAttribute('data-id', venue.id);
+            suggestionItem.classList.add(
               'cursor-pointer',
               'hover:text-yns_yellow',
               'px-4',
@@ -550,120 +486,289 @@
               'bg-opac_8_black',
               'text-white'
             );
-            suggestionsList.appendChild(listItem);
+
+            // Fixed the event listener setup here
+            suggestionItem.addEventListener('click', function() {
+              venueInput.value = venue.name;
+              document.getElementById('venue_id').value = venue.id;
+              suggestionsList.classList.add('hidden');
+            });
+
+            suggestionsList.appendChild(suggestionItem);
+          });
+
+          if (data.length) {
+            suggestionsList.classList.remove('hidden');
+          } else {
+            suggestionsList.classList.add('hidden');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching venue suggestions:', error);
+          suggestionsList.classList.add('hidden');
+        });
+    });
+
+    // Venue Hide suggestions when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!venueInput.contains(event.target) && !suggestionsList.contains(event.target)) {
+        suggestionsList.classList.add('hidden');
+      }
+    });
+
+
+    const headlinerSearchInput = $('#headliner-search');
+    const mainSupportSearchInput = $('#main-support-search');
+    const openerSearchInput = $('#opener-search');
+    const bandSearchInput = $('#bands-search');
+
+    const headlinerSuggestions = $('#headliner-suggestions');
+    const mainSupportSuggestions = $('#main-support-suggestions');
+    const openerSuggestions = $('#opener-suggestions');
+    const bandSuggestions = $('#bands-suggestions');
+
+    const headlinerIdField = $('#headliner_id');
+    const mainSupportIdField = $('#main_support_id');
+    const openerIdField = $('#opener_id');
+    const bandIdsField = $('#bands_ids');
+
+    let headlinerId = null;
+    let mainSupportId = null;
+    let openerId = null;
+
+    const existingBands = $('#bands-search').val().split(',').map(b => b.trim()).filter(b => b.length > 0);
+    const existingIds = $('#bands_ids').val().split(',').filter(id => id.length > 0);
+
+    // Create initial band-ID pairs
+    existingBands.forEach((bandName, index) => {
+      selectedBands.push({
+        name: bandName,
+        id: existingIds[index]
+      });
+      selectedBandIds.push(existingIds[index]);
+    });
+
+    // Handle band search for all fields (Headline, Main Support, Opener, Bands)
+    function handleBandSearch(inputElement, suggestionsElement, setterCallback, idField) {
+      let debounceTimer;
+
+      if (inputElement.attr('id') === 'bands-search') {
+        inputElement.on('keydown', function(e) {
+          if (e.key === 'Backspace') {
+            const value = inputElement.val();
+            const cursorPosition = this.selectionStart;
+            const bands = value.split(',').map(b => b.trim()).filter(b => b.length > 0);
+
+            let currentPosition = 0;
+            let bandIndex = -1;
+
+            for (let i = 0; i < bands.length; i++) {
+              currentPosition += bands[i].length + 2;
+              if (cursorPosition <= currentPosition) {
+                bandIndex = i;
+                break;
+              }
+            }
+
+            if (bandIndex !== -1) {
+              e.preventDefault();
+              const removedBand = bands[bandIndex];
+              bands.splice(bandIndex, 1);
+
+              // Find and remove the corresponding ID
+              const removedBandIndex = selectedBands.findIndex(b => b.name === removedBand);
+              if (removedBandIndex !== -1) {
+                selectedBands.splice(removedBandIndex, 1);
+                selectedBandIds.splice(removedBandIndex, 1);
+              }
+
+              inputElement.val(bands.length ? bands.join(', ') + ', ' : '');
+              bandIdsField.val(selectedBandIds.join(','));
+            }
+          }
+        });
+      }
+      inputElement.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
+          $.ajax({
+            url: `/api/bands/search?q=${searchQuery}`,
+            method: 'GET',
+            success: function(data) {
+              suggestionsElement.empty().removeClass('hidden');
+
+              if (data.bands.length) {
+                // Show existing bands
+                data.bands.forEach(band => {
+                  const suggestionItem = $('<li>')
+                    .text(band.name)
+                    .addClass(
+                      'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white'
+                    )
+                    .on('click', function() {
+                      if (inputElement.attr('id') === 'bands-search') {
+                        const currentValue = inputElement.val();
+                        const existingBands = currentValue.split(',')
+                          .map(b => b.trim())
+                          .filter(b => b.length > 0)
+                          .slice(0, -1);
+
+                        existingBands.push(band.name);
+                        inputElement.val(existingBands.join(', ') + ', ');
+
+                        selectedBandIds.push(band.id);
+                        bandIdsField.val(selectedBandIds.join(','));
+                      } else {
+                        setterCallback(band);
+                        idField.val(band.id);
+                      }
+                      suggestionsElement.empty().addClass('hidden');
+                    });
+                  suggestionsElement.append(suggestionItem);
+                });
+
+                // Add "Create New Band" option if no exact match
+                const exactMatch = data.bands.some(band =>
+                  band.name.toLowerCase() === searchQuery.toLowerCase()
+                );
+
+                if (!exactMatch) {
+                  const createOption = $('<li>')
+                    .text(`Create new band: "${searchQuery}"`)
+                    .addClass(
+                      'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white font-bold'
+                    )
+                    .on('click', function() {
+                      createNewBand(searchQuery, inputElement, suggestionsElement, setterCallback,
+                        idField);
+                    });
+                  suggestionsElement.append(createOption);
+                }
+              } else {
+                // No results - show create option
+                const createOption = $('<li>')
+                  .text(`Create new band: "${searchQuery}"`)
+                  .addClass(
+                    'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white font-bold'
+                  )
+                  .on('click', function() {
+                    createNewBand(searchQuery, inputElement, suggestionsElement, setterCallback,
+                      idField);
+                  });
+                suggestionsElement.append(createOption);
+              }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              console.error('Error fetching bands:', textStatus, errorThrown);
+            }
           });
         } else {
-          suggestionsList.classList.add('hidden');
+          suggestionsElement.empty().addClass('hidden');
         }
-      })
-      .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
       });
-  }
-
-  // Select a band from suggestions
-  function selectBand(band, suggestionsId, fieldType, hiddenInputId) {
-    const hiddenInput = document.getElementById(hiddenInputId);
-    if (hiddenInput) {
-      hiddenInput.value = band.id; // Set hidden input value
     }
 
-    // Determine the input field for displaying the band name
-    let inputFieldId = '';
-    switch (fieldType) {
-      case 'headliner':
-        inputFieldId = 'headliner-search';
-        break;
-      case 'main-support':
-        inputFieldId = 'mainSupport-search';
-        break;
-      case 'artist':
-        const bandIndex = hiddenInputId.split('_')[2];
-        inputFieldId = `band_${bandIndex}`;
-        break;
-      case 'opener':
-        inputFieldId = 'opener-search';
-        break;
-      default:
-        console.error(`Unknown field type: ${fieldType}`);
-    }
+    function createNewBand(bandName, inputElement, suggestionsElement, setterCallback, idField) {
+      $.ajax({
+        url: '/api/bands/create',
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+          name: bandName
+        },
+        success: function(response) {
+          if (inputElement.attr('id') === 'bands-search') {
+            const currentValue = inputElement.val();
+            const existingBands = currentValue.split(',')
+              .map(b => b.trim())
+              .filter(b => b.length > 0)
+              .slice(0, -1);
 
-    const inputField = document.getElementById(inputFieldId);
-    if (inputField) {
-      inputField.value = band.name; // Set the input field value
-    }
+            existingBands.push(bandName);
+            inputElement.val(existingBands.join(', ') + ', ');
 
-    // Hide suggestions after selection
-    const suggestionsList = document.getElementById(suggestionsId);
-    if (suggestionsList) {
-      suggestionsList.classList.add('hidden');
-      suggestionsList.innerHTML = ''; // Clear the suggestions
-    }
-  }
-
-  // Handle form submission
-  document.getElementById('eventForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    // console.log(document.getElementById('poster_url'));
-
-    const dashboardType = "{{ $dashboardType }}";
-    const otd_ticket_price = document.getElementById('on_the_door_ticket_price').value;
-    const event_date = document.getElementById('combinedDateTime').value;
-    const formattedDate = event_date.split(' ')[0];
-    const eventId = "{{ $event->id }}";
-
-    const formData = new FormData(this); // Get form data
-    formData.delete('on_the_door_ticket_price');
-    formData.append('otd_ticket_price', otd_ticket_price);
-    formData.append('event_date', formattedDate);
-    const fileInput = document.getElementById('poster_url');
-    const file = fileInput.files[0]; // Get the uploaded file if one exists
-
-    if (fileInput.files.length === 0) {
-      formData.delete('poster_url');
-
-      const existingPosterUrl = document.querySelector('input[name="existing_poster_url"]').value;
-      formData.append('poster_url', existingPosterUrl); // Include existing poster URL
-    }
-
-    // console.log('Form Data:', [...formData]);
-
-    $.ajax({
-      url: "{{ route('admin.dashboard.update-event', ['dashboardType' => ':dashboardType', 'id' => ':id']) }}"
-        .replace(':dashboardType', dashboardType)
-        .replace(':id', eventId),
-      method: 'POST',
-      data: formData,
-      contentType: false,
-      processData: false,
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}' // Include the CSRF token
-      },
-      success: function(data) {
-        // console.log('Data processed:', data); // Log the data
-        if (data.success) {
-          showSuccessNotification(data.message); // Show success notification
-          setTimeout(() => {
-            // console.log('Redirecting to:', data.redirect_url); // Log redirect URL
-            window.location.href = data.redirect_url; // Redirect after 2 seconds
-          }, 2000);
-        } else {
-          // console.log('Errors:', data.errors); // Log any errors
-          if (data.errors) {
-            Object.keys(data.errors).forEach(key => {
-              const error = data.errors[key];
-              showFailureNotification(error); // Show error notification
-            });
+            selectedBandIds.push(response.band.id);
+            bandIdsField.val(selectedBandIds.join(','));
           } else {
-            showFailureNotification(
-              'An unexpected error occurred. Please try again.'); // General error message
+            setterCallback(response.band);
+            idField.val(response.band.id);
           }
+
+          suggestionsElement.empty().addClass('hidden');
+          showSuccessNotification('Band created successfully');
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          console.error('Error creating band:', errorThrown);
+          showFailureNotification('Failed to create band');
         }
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        // console.error('AJAX error:', textStatus, errorThrown); // Log any AJAX errors
-        showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
+      });
+    }
+
+    // Initialize band search inputs
+    handleBandSearch(headlinerSearchInput, headlinerSuggestions, function(band) {
+      headlinerSearchInput.val(band.name);
+      headlinerId = band.id;
+    }, headlinerIdField);
+
+    handleBandSearch(mainSupportSearchInput, mainSupportSuggestions, function(band) {
+      mainSupportSearchInput.val(band.name);
+      mainSupportId = band.id;
+    }, mainSupportIdField);
+
+    handleBandSearch(openerSearchInput, openerSuggestions, function(band) {
+      openerSearchInput.val(band.name);
+      openerId = band.id;
+    }, openerIdField);
+
+    handleBandSearch(bandSearchInput, bandSuggestions, function(band) {
+      const currentValue = bandSearchInput.val().trim();
+      const newValue = currentValue ? `${currentValue.split(',').slice(0, -1).join(',')}, ${band.name}` :
+        `${band.name}`;
+      bandSearchInput.val(newValue + ',');
+      selectedBandIds.push(band.id);
+      bandIdsField.val(selectedBandIds.join(','));
+      const bandItem = $('<li>')
+        .text(band.name)
+        .addClass('suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white');
+      bandSuggestions.append(bandItem);
+    }, bandIdsField);
+
+    // Handle comma-separated band input
+    bandSearchInput.on('keydown', function(event) {
+      if (event.key === ',') {
+        event.preventDefault();
+        const bandName = bandSearchInput.val().split(',').pop().trim();
+
+        if (bandName) {
+          $.ajax({
+            url: `/api/bands/search?q=${bandName}`,
+            method: 'GET',
+            success: function(data) {
+              if (data.bands.length) {
+                const band = data.bands[0];
+                const currentValue = bandSearchInput.val().trim();
+                const newValue = currentValue ?
+                  `${currentValue.split(',').slice(0, -1).join(',')}, ${band.name}` : `${band.name}`;
+                bandSearchInput.val(newValue + ',');
+                selectedBandIds.push(band.id);
+                bandIdsField.val(selectedBandIds.join(','));
+                const bandItem = $('<li>')
+                  .text(band.name)
+                  .addClass(
+                    'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white'
+                  );
+                bandSuggestions.append(bandItem);
+              }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              console.error('Error fetching bands:', textStatus, errorThrown);
+            }
+          });
+        }
       }
     });
   });

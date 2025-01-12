@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Finance;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -17,36 +18,24 @@ class FinanceController extends Controller
         return Auth::id();
     }
 
-    public function showFinances($dashboardType)
+    public function showFinances($dashboardType, Request $request)
     {
         $modules = collect(session('modules', []));
         $user = Auth::user();
-        $service = null;
-        $serviceType = null;
+        $role = $user->roles->first()->name;
 
-        if ($dashboardType == 'promoter') {
-            $service = $user->promoters()->first();
-            $serviceType = 'App\Models\Promoter';
-        } elseif ($dashboardType == 'artist') {
-            $service = $user->otherService("Artist")->first();
-            $serviceType = 'App\Models\OtherService';
-        } elseif ($dashboardType == 'designer') {
-            $service = $user->otherService("Designer")->first();
-            $serviceType = 'App\Models\OtherService';
-        } elseif ($dashboardType == 'photographer') {
-            $service = $user->otherService("Photographer")->first();
-            $serviceType = 'App\Models\OtherService';
-        } elseif ($dashboardType == 'videographer') {
-            $service = $user->otherService("Videographer")->first();
-            $serviceType = 'App\Models\OtherService';
-        } elseif ($dashboardType == 'venue') {
-            $service = $user->venues()->first();
-            $serviceType = 'App\Models\Venue';
-        }
+        $linkedCompany = $user->linkedCompany();
+        $serviceableId = $linkedCompany->id;
+        $serviceableType = get_class($linkedCompany);
 
-        $finances = Finance::where('serviceable_id', $service->id)
-            ->where('serviceable_type', $serviceType)
+        $finances = Finance::where('serviceable_id', $serviceableId)
+            ->where('serviceable_type', $serviceableType)
             ->get();
+
+        if (!$linkedCompany) {
+            // Handle case where no company is linked
+            return response()->json(['error' => 'No company linked to user'], 404);
+        }
 
         $totalIncome = $finances->sum('total_incoming'); // Replace 'incoming' with the correct column
         $totalOutgoing = $finances->sum('total_outgoing'); // Replace 'outgoing' with the correct column
@@ -58,6 +47,8 @@ class FinanceController extends Controller
                 'totalOutgoing' => $totalOutgoing,
                 'totalProfit' => $totalProfit,
                 'modules' => $modules,
+                'user' => $user,
+                'role' => $role,
                 'financeRecords' => $finances->map(function ($finance, $dashboardType) {
                     return [
                         'name' => $finance->name, // Replace with actual column
@@ -77,21 +68,91 @@ class FinanceController extends Controller
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'finances' => $finances,
-            'service' => $service,
-            'serviceType' => $serviceType,
+            'serviceableType' => $serviceableType,
+            'serviceableId' => $serviceableId,
             'totalIncome' => $totalIncome,
             'totalOutgoing' => $totalOutgoing,
             'totalProfit' => $totalProfit,
             'modules' => $modules,
+            'user' => $user,
+            'role' => $role,
         ]);
+    }
+
+    public function getFinancesData(Request $request, $dashboardType)
+    {
+        try {
+            $rawDate = $request->get('date');
+            $cleanDate = preg_replace('/GMT.*$/', '', $rawDate);
+            $date = Carbon::parse(trim($cleanDate));
+            $filter = $request->get('filter', 'day');
+            $serviceableType = str_replace('AppModels', 'App\\Models\\', $request->get('serviceable_type'));
+            $serviceableId = $request->get('serviceable_id');
+
+            $query = Finance::where('serviceable_type', $serviceableType)
+                ->where('serviceable_id', $serviceableId);
+
+            // Add different date filtering based on filter type
+            if ($filter === 'day') {
+                $query->whereDate('date_from', '=', $date->toDateString());
+            } else {
+                $dateRange = match ($filter) {
+                    'week' => [
+                        $date->copy()->startOfWeek()->toDateString(),
+                        $date->copy()->endOfWeek()->toDateString()
+                    ],
+                    'month' => [
+                        $date->copy()->startOfMonth()->toDateString(),
+                        $date->copy()->endOfMonth()->toDateString()
+                    ],
+                    'year' => [
+                        $date->copy()->startOfYear()->toDateString(),
+                        $date->copy()->endOfYear()->toDateString()
+                    ],
+                    default => [$date->toDateString(), $date->toDateString()]
+                };
+
+                $query->whereBetween('date_from', $dateRange);
+            }
+
+            $finances = $query->get();
+
+            return response()->json([
+                'dates' => $finances->pluck('date_from'),
+                'incomeData' => $finances->pluck('total_incoming'),
+                'outgoingData' => $finances->pluck('total_outgoing'),
+                'profitData' => $finances->pluck('total_profit'),
+                'financeRecords' => $finances->map(fn($finance) => [
+                    'name' => $finance->name,
+                    'link' => route('admin.dashboard.show-finance', [
+                        'dashboardType' => $dashboardType,
+                        'id' => $finance->id
+                    ])
+                ]),
+                'totalIncome' => $finances->sum('total_incoming'),
+                'totalOutgoing' => $finances->sum('total_outgoing'),
+                'totalProfit' => $finances->sum('total_profit')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Date parsing error:', [
+                'message' => $e->getMessage(),
+                'date' => $request->get('date')
+            ]);
+            return response()->json(['error' => 'Invalid date format'], 400);
+        }
     }
 
     public function createFinance($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
+
 
         return view('admin.dashboards.new-finance', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
         ]);
@@ -217,19 +278,42 @@ class FinanceController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ]);
+                'message' => 'Error saving budget. Please check the form for errors.',
+                'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : []
+            ], 422);
         }
     }
 
     public function showSingleFinance($dashboardType, $id)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
 
         $finance = Finance::findOrFail($id)->load('user', 'serviceable');
 
         return view('admin.dashboards.show-finance', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
+            'dashboardType' => $dashboardType,
+            'modules' => $modules,
+            'finance' => $finance,
+        ]);
+    }
+
+    public function editFinance($dashboardType, $id)
+    {
+        $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $role = $user->roles->first()->name;
+
+        $finance = Finance::findOrFail($id);
+
+        return view('admin.dashboards.edit-finance', [
+            'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'finance' => $finance,

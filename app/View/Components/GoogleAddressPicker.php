@@ -14,12 +14,14 @@ class GoogleAddressPicker extends Component
     public $latitude;
     public $longitude;
     public $dataId;
+    public $postalTown;
 
     public function __construct(
         string $id,
         string $name,
         string $label,
         string $placeholder,
+        string $postalTown,
         $value = null,
         $latitude = null,
         $longitude = null,
@@ -33,6 +35,7 @@ class GoogleAddressPicker extends Component
         $this->latitude = $latitude;
         $this->longitude = $longitude;
         $this->dataId = $dataId;
+        $this->postalTown = $postalTown;
     }
 
     public function render()

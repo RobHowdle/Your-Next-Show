@@ -68,7 +68,7 @@
                       <div class="accordion-item">
                         <input type="checkbox"
                           class="genre-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-600 bg-gray-700 ring-offset-gray-800 focus:ring-blue-600 focus:ring-offset-gray-800"
-                          id="all-genre-{{ $index }}" name="genres[]" value="All {{ $genre['name'] }}"
+                          id="all-genre-{{ $index }}" name="genres[]" value="{{ $genre['name'] }}"
                           {{ in_array('All ' . $genre['name'], old('genres', [])) ? 'checked' : '' }}>
                         <label for="all-genre-{{ $index }}"
                           class="accordion-title ml-2 text-sm font-medium text-gray-300">All

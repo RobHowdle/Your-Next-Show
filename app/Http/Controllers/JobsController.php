@@ -29,13 +29,13 @@ class JobsController extends Controller
         $role = $user->roles->first()->name;
         $service = $user->otherService(ucfirst($role))->first();
 
-        $jobs = DB::table('jobs')
-            ->join('job_service', 'jobs.id', '=', 'job_service.job_id')
+        $jobs = DB::table('module_jobs')
+            ->join('job_service', 'module_jobs.id', '=', 'job_service.job_id')
             ->join('other_services', function ($join) {
                 $join->on('job_service.serviceable_id', '=', 'other_services.id')
                     ->where('job_service.serviceable_type', '=', \App\Models\OtherService::class);
             })
-            ->where('jobs.user_id', '=', Auth::id())
+            ->where('module_jobs.user_id', '=', Auth::id())
             ->select(
                 'jobs.*',
                 'other_services.*',

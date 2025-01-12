@@ -37,6 +37,10 @@ class Venue extends Model
         'logo_url',
     ];
 
+    protected $casts = [
+        'contact_link' => 'array',
+    ];
+
     public function users(): MorphToMany
     {
         return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id');

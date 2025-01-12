@@ -6,6 +6,7 @@ use App\Models\Venue;
 use App\Models\Promoter;
 use App\Models\VenueReview;
 use Illuminate\Http\Request;
+use App\Services\FilterService;
 use App\Helpers\SocialLinksHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -80,39 +81,13 @@ class VenueController extends Controller
             ]);
         }
 
-        // Process each venue
+        $overallReviews = [];
         foreach ($venues as $venue) {
-            // Split the field containing multiple URLs into an array
-            $urls = explode(',', $venue->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                // Store the platform information for each URL
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
-                ];
-            }
-
-            // Add the processed data to the venue
-            $venue->platforms = $platforms;
-        }
-
-        $overallReviews = []; // Array to store overall reviews for each venue
-
-        foreach ($venues as $venue) {
+            $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
             $overallScore = VenueReview::calculateOverallScore($venue->id);
             $overallReviews[$venue->id] = $this->renderRatingIcons($overallScore);
         }
+
 
         $venuePromoterCount = isset($venue['promoters']) ? count($venue['promoters']) : 0;
         return view('venues', [
@@ -151,11 +126,12 @@ class VenueController extends Controller
         $reviewCount = VenueReview::getReviewCount($id);
 
         $genres = json_decode($venue->genre);
+        $genreNames = collect($genres)->keys()->toArray();
 
         return view('venue', compact(
             'venue',
             'venueId',
-            'genres',
+            'genreNames',
             'overallScore',
             'overallReviews',
             'averageCommunicationRating',
@@ -191,187 +167,64 @@ class VenueController extends Controller
         $longitude = $request->input('longitude');
         $searchQuery = $request->input('search_query');
 
-        // Filter venues by latitude and longitude
-        $venuesByCoordinatesQuery = Venue::where('latitude', $latitude)
-            ->where('longitude', $longitude);
-
-        // Initialize an empty query for venues by address
-        $venuesByAddressQuery = Venue::query();
-
-        // Check if the search query contains a comma (indicating both town and specific address)
-        if (strpos($searchQuery, ',') !== false) {
-            // If the search query contains a comma, split it into town and address
-            list($town, $address) = explode(',', $searchQuery);
-
-            // Perform search for venues matching the town or the address
-            $venuesByAddressQuery->where(function ($query) use ($town, $address) {
-                $query->where('postal_town', 'LIKE', "%$address%")
-                    ->orWhere('postal_town', 'LIKE', "%$town%");
-            });
-        } else {
-            // If the search query does not contain a comma, search for venues matching the town only
-            $venuesByAddressQuery->where('postal_town', 'LIKE', "%$searchQuery%");
-        }
-
-        // Get the paginated results
-        $venuesByCoordinates = $venuesByCoordinatesQuery->paginate(10, ['*'], 'coordinates_page');
-        $venuesByAddress = $venuesByAddressQuery->paginate(10, ['*'], 'address_page');
-
-        // Merge the paginated results, ensure to avoid duplicates
-        $mergedVenues = $venuesByCoordinates->merge($venuesByAddress)->unique('id');
-
-        // Paginate the merged results manually if needed (assuming 10 per page)
-        $perPage = 10;
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $currentPageResults = $mergedVenues->slice(($currentPage - 1) * $perPage, $perPage)->all();
-        $paginatedResults = new LengthAwarePaginator($currentPageResults, $mergedVenues->count(), $perPage, $currentPage, [
-            'path' => LengthAwarePaginator::resolveCurrentPath(),
-            'pageName' => 'page',
-        ]);
-
-        // Process contact links for each venue to identify platforms
-        foreach ($paginatedResults as $venue) {
-            if ($venue->contact_link) {
-                $urls = explode(',', $venue->contact_link);
-                $platforms = [];
-
-                // Check each URL against the platforms
-                foreach ($urls as $url) {
-                    // Initialize the platform as unknown
-                    $matchedPlatform = 'Unknown';
-
-                    // Check if the URL contains platform names
-                    $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                    foreach ($platformsToCheck as $platform) {
-                        if (stripos($url, $platform) !== false) {
-                            $matchedPlatform = $platform;
-                            break;
-                        }
-                    }
-
-                    // Store the platform information for each URL
-                    $platforms[] = [
-                        'url' => $url,
-                        'platform' => $matchedPlatform
-                    ];
-                }
-
-                // Add the processed data to the venue
-                $venue->platforms = $platforms;
-            }
-        }
-
-        // Fetch genres for initial page load
         $genreList = file_get_contents(public_path('text/genre_list.json'));
         $data = json_decode($genreList, true);
         $genres = $data['genres'];
 
+        $query = Venue::query();
+
+        // If we have a search query with comma (town, address format)
+        if (strpos($searchQuery, ',') !== false) {
+            list($town, $address) = explode(',', $searchQuery);
+            $query->where(function ($q) use ($town, $latitude, $longitude) {
+                $q->where('postal_town', 'LIKE', "%$town%");
+                // ->where('latitude', $latitude)
+                // ->where('longitude', $longitude);
+            });
+        } else {
+            // Search by town name only
+            $query->where('postal_town', 'LIKE', "%$searchQuery%");
+            // ->where('latitude', $latitude)
+            // ->where('longitude', $longitude);
+        }
+
+        // Get paginated results
+        $venues = $query->paginate(10);
+
         $overallReviews = [];
 
-        foreach ($paginatedResults as $venue) {
+        // Process social links
+        foreach ($venues as $venue) {
+            $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
             $overallScore = VenueReview::calculateOverallScore($venue->id);
             $overallReviews[$venue->id] = $this->renderRatingIcons($overallScore);
         }
 
         $venuePromoterCount = isset($venue['promoters']) ? count($venue['promoters']) : 0;
 
-        return view('venues', [
-            'venues' => $paginatedResults,
-            'genres' => $genres,
-            'searchQuery' => $searchQuery,
-            'overallReviews' => $overallReviews,
-            'venuePromoterCount' => $venuePromoterCount,
-        ]);
+        return view('venues', compact('venues', 'genres', 'venuePromoterCount', 'overallReviews'));
     }
 
     public function filterCheckboxesSearch(Request $request)
     {
-        $query = Venue::query();
-
-        // Search Results
-        $searchQuery = $request->input('search_query');
-        if ($searchQuery) {
-            $query->where(function ($query) use ($searchQuery) {
-                $query->where('postal_town', 'LIKE', "%$searchQuery%")
-                    ->orWhere('name', 'LIKE', "%$searchQuery%");
-            });
-        }
-
-        // Band Type Filter
-        if ($request->has('band_type')) {
-            $bandType = $request->input('band_type');
-            if (!empty($bandType)) {
-                $bandType = array_map('trim', $bandType);
-                $query->where(function ($query) use ($bandType) {
-                    foreach ($bandType as $type) {
-                        $query->orWhereRaw('JSON_CONTAINS(band_type, ?)', [json_encode($type)]);
-                    }
-                });
-            }
-        }
-
-        // Genre Filter
-        if ($request->has('genres')) {
-            $genres = $request->input('genres');
-            if (!empty($genres)) {
-                $genres = array_map('trim', $genres);
-                $query->where(function ($query) use ($genres) {
-                    foreach ($genres as $genre) {
-                        $query->orWhereRaw('JSON_CONTAINS(genre, ?)', [json_encode($genre)]);
-                    }
-                });
-            }
-        }
-
-        // Get the venues with pagination
-        $venues = $query->with('promoters')->paginate(10);
-
-        // Process each venue
-        $transformedData = $venues->getCollection()->map(function ($venue) {
-            $urls = explode(',', $venue->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
+        $filters = [
+            'search_fields' => ['postal_town', 'name'], // Fields to search
+            'transform' => function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'postal_town' => $item->postal_town,
+                    'contact_number' => $item->contact_number,
+                    'contact_email' => $item->contact_email,
+                    'platforms' => explode(',', $item->contact_link),
+                    'average_rating' => \App\Models\VenueReview::calculateOverallScore($item->id),
                 ];
-            }
+            },
+        ];
 
-            $overallScore = \App\Models\VenueReview::calculateOverallScore($venue->id);
+        $data = FilterService::filterEntities($request, Venue::class, $filters);
 
-            return [
-                'id' => $venue->id,
-                'name' => $venue->name,
-                'postal_town' => $venue->postal_town,
-                'contact_number' => $venue->contact_number,
-                'contact_email' => $venue->contact_email,
-                'platforms' => $platforms,
-                'promoters' => $venue->promoters,
-                'average_rating' => $overallScore,
-            ];
-        })->toArray();
-
-        // Return the transformed data with pagination info
-        return response()->json([
-            'venues' => $transformedData,
-            'pagination' => [
-                'current_page' => $venues->currentPage(),
-                'last_page' => $venues->lastPage(),
-                'total' => $venues->total(),
-                'per_page' => $venues->perPage(),
-            ]
-        ]);
+        return response()->json($data);
     }
 
     public function submitVenueReview(Request $request, Venue $id)

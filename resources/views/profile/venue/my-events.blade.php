@@ -4,7 +4,6 @@
   </h2>
 </header>
 <div class="group mb-6">
-  <x-input-label-dark>Your recent events</x-input-label-dark>
   <table class="mt-4 w-full border border-white text-left font-sans text-xl rtl:text-right">
     <thead class="border-b border-b-white text-xl text-white underline dark:bg-black">
       <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
@@ -12,8 +11,7 @@
         <th class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">Location</th>
         <th class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">Date</th>
         <th class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">Actions</th>
-      </tr>
-    </thead>
+      </tr </thead>
     <tbody>
       @foreach ($myEvents as $event)
         <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">

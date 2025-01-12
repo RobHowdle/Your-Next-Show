@@ -26,20 +26,20 @@
     </div>
 
     <div class="group mb-6">
-      <x-google-address-picker data-id="2" id="location" name="location" label="Location"
-        placeholder="Enter an address" :value="old('location', $venueData['location'] ?? '')" :latitude="old('latitude', $venueData['latitude'] ?? '')" :longitude="old('longitude', $venueData['longitude'] ?? '')" />
+      <x-google-address-picker :postalTown="old('venuePostalTown', $venueUserData['venuePostalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
+        placeholder="Enter an address" :value="old('venueLocation', $venueUserData['venueLocation'] ?? '')" :latitude="old('venueLat', $venueUserData['venueLat'] ?? '')" :longitude="old('venueLong', $venueUserData['venueLong'] ?? '')" />
     </div>
 
     <div class="group mb-6">
       <x-input-label-dark for="w3w">What3Words:</x-input-label-dark>
-      <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $venueData['w3w'] ?? '') }}"></x-text-input>
+      <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $venueUserData['w3w'] ?? '') }}"></x-text-input>
       <div id="suggestions"></div>
     </div>
 
     <div class="group mb-6">
       <x-input-label-dark for="email">Email:</x-input-label-dark>
       <x-text-input id="contact_email" name="contact_email"
-        value="{{ old('contact_email', $venueData['contact_email']) }}"></x-text-input>
+        value="{{ old('contact_email', $venueUserData['contact_email']) }}"></x-text-input>
       @error('contact_email')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -48,7 +48,7 @@
     <div class="group mb-6">
       <x-input-label-dark for="contact_number">Contact Phone:</x-input-label-dark>
       <x-text-input id="contact_number" name="contact_number"
-        value="{{ old('contact_number', $venueData['contact_number']) }}"></x-text-input>
+        value="{{ old('contact_number', $venueUserData['contact_number']) }}"></x-text-input>
       @error('contact_number')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -90,7 +90,6 @@
           @enderror
         </div>
       @endforeach
-
     </div>
   @endif
 

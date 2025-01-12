@@ -2,16 +2,17 @@
   <div class="w-full">
     <p class="text-xl font-bold">Your Details</p>
     @include('profile.photographer.basic-information-form', [
-        'firstName' => $firstName,
-        'lastName' => $lastName,
-        'location' => $location,
-        'name' => $photographerData['name'],
-        'contact_name' => $photographerData['contact_name'],
-        'contact_email' => $photographerData['contact_email'],
-        'contact_number' => $photographerData['contact_number'],
-        'platformsToCheck' => $photographerData['platformsToCheck'],
-        'platforms' => $photographerData['platforms'],
-        'logo' => $photographerData['logo'],
+        'name' => $photographerUserData['photographerName'],
+        'photographerLocation' => $photographerUserData['photographerLocation'],
+        'photographerPostalTown' => $photographerUserData['photographerPostalTown'],
+        'photographerLat' => $photographerUserData['photographerLat'],
+        'photographerLong' => $photographerUserData['photographerLong'],
+        'contact_name' => $photographerUserData['contact_name'],
+        'contact_email' => $photographerUserData['contact_email'],
+        'contact_number' => $photographerUserData['contact_number'],
+        'platforms' => $photographerUserData['platforms'],
+        'platformsToCheck' => $photographerUserData['platformsToCheck'],
+        'logo' => $photographerUserData['logo'],
     ])
   </div>
 </div>
@@ -19,15 +20,18 @@
   <div class="w-full">
     <p class="text-xl font-bold">About You</p>
     @include('profile.photographer.about', [
-        'about' => $photographerData['about'],
+        'description' => $photographerUserData['description'],
     ])
   </div>
 </div>
+@php
+  $dashboardData = $photographerUserData ?? ($designerUserData ?? ($videographerUserData ?? []));
+@endphp
 <div x-show="selectedTab === 4" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     <p class="text-xl font-bold">Portfolio</p>
     @include('profile.photographer.portfolio', [
-        'portfolioImages' => $photographerData['portfolioImages'],
+        'waterMarkedPortfolioImages' => $dashboardData['waterMarkedPortfolioImages'],
     ])
   </div>
 </div>
@@ -37,16 +41,12 @@
     @include('profile.photographer.my-genres', [
         'dashboardType' => $dashboardType,
         'userRole' => $userRole,
-        'firstName' => $firstName,
-        'lastName' => $lastName,
-        'email' => $email,
-        'location' => $location,
-        'genres' => $photographerData['genres'],
-        'photographerGenres' => $photographerData['photographerGenres'],
+        'genres' => $photographerUserData['genres'],
+        'photographerGenres' => $photographerUserData['photographerGenres'],
         'userId' => $userId,
-        'photographer' => $photographerData['photographer'],
-        'isAllGenres' => $photographerData['isAllGenres'],
-        'bandTypes' => $photographerData['bandTypes'],
+        'photographer' => $photographerUserData['photographer'],
+        'isAllGenres' => $photographerUserData['isAllGenres'],
+        'bandTypes' => $photographerUserData['bandTypes'],
     ])
   </div>
 </div>
@@ -57,10 +57,10 @@
         'dashboardType' => $dashboardType,
         'userRole' => $userRole,
         'userId' => $userId,
-        'photographer' => $photographerData['photographer'],
-        'environmentTypes' => $photographerData['environmentTypes'],
-        'groups' => $photographerData['groups'],
-        'workingTimes' => $photographerData['workingTimes'],
+        'photographer' => $photographerUserData['photographer'],
+        'environmentTypes' => $photographerUserData['environmentTypes'],
+        'groups' => $photographerUserData['groups'],
+        'workingTimes' => $photographerUserData['workingTimes'],
     ])
   </div>
 </div>

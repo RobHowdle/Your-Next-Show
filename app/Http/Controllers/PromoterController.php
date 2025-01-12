@@ -85,38 +85,13 @@ class PromoterController extends Controller
         }
 
         // Process each promoter
-        foreach ($promoters as $promoter) {
-            // Split the field containing multiple URLs into an array
-            $urls = explode(',', $promoter->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                // Store the platform information for each URL
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
-                ];
-            }
-
-            // Add the processed data to the venue
-            $promoter->platforms = $platforms;
-        }
-
         $overallReviews = []; // Array to store overall reviews for each venue
-
         foreach ($promoters as $promoter) {
+            $promoter->platforms = SocialLinksHelper::processSocialLinks($promoter->contact_link);
             $overallScore = PromoterReview::calculateOverallScore($promoter->id);
             $overallReviews[$promoter->id] = $this->renderRatingIcons($overallScore);
         }
+
 
         $promoterVenueCount = isset($promoter['venues']) ? count($promoter['venues']) : 0;
         return view('promoters', [

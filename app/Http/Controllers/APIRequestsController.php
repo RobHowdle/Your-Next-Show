@@ -5,18 +5,19 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Event;
+use App\Models\Venue;
+use App\Models\Promoter;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class APIRequestsController extends Controller
 {
+    /**
+     * Events - Searching for bands
+     */
     public function searchBands(Request $request)
     {
         $query = $request->input('q');
-
-        // Clean the query (assuming cleanQuery is a helper function)
-        // $cleanedQuery = cleanQuery($query);
 
         if (empty($query)) {
             return response()->json(['error' => 'Query is required'], 400);
@@ -47,7 +48,9 @@ class APIRequestsController extends Controller
         return response()->json($bands);
     }
 
-
+    /**
+     * Events - Create a new band from search input
+     */
     public function createBand(Request $request)
     {
         $this->validate($request, [
@@ -80,9 +83,148 @@ class APIRequestsController extends Controller
     }
 
     /**
+     * Events - Searching for promoters
+     */
+    public function searchPromoters(Request $request)
+    {
+        $query = $request->input('q');
+
+        if (empty($query)) {
+            return response()->json(['error' => 'Query is required'], 400);
+        }
+
+        // Fetch bands with the specified other_service_id
+        $promoters = Promoter::where('name', 'LIKE', '%' . $query . '%')
+            ->get(['id', 'name']);
+
+        // Prepare response
+        if ($promoters->isEmpty()) {
+            $promoters = [
+                'promoters' => [],
+                'createNewBandOption' => [
+                    'name' => $query,
+                    'message' => "No results found. Click to create a new promoter: $query",
+                ],
+            ];
+        } else {
+            $promoters = [
+                'promoters' => $promoters,
+                'createNewPromoterOption' => null,
+            ];
+        }
+
+        // Return the response as JSON
+        return response()->json($promoters);
+    }
+
+    /**
+     * Events - Searching for promoters
+     */
+    public function createPromoter(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+            ]);
+
+            $query = $request->input('name');
+            $cleanedQuery = cleanQuery($query);
+
+            $newPromoter = Promoter::create([
+                'name' => $cleanedQuery,
+                'location' => 'Unknown',
+                'postal_town' => 'Unknown',
+                'longitude' => 0,
+                'latitude' => 0,
+                'description' => 'Nothing here yet!',
+                'contact_name' => 'Unknown',
+                'contact_number' => '00000000000',
+                'contact_email' => 'blank@yournextshow.co.uk',
+                'contact_link' => json_encode(['website' => 'https://yournextshow.co.uk']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'promoter' => [
+                    'id' => $newPromoter->id,
+                    'name' => $newPromoter->name
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create promoter'
+            ], 500);
+        }
+    }
+
+    /**
+     * Events - Searching for venues
+     */
+    public function searchVenues(Request $request)
+    {
+        try {
+            $query = $request->get('q');
+
+            if (strlen($query) < 3) {
+                return response()->json(['venues' => []], 200);
+            }
+
+            $venues = Venue::where('name', 'like', '%' . $query . '%')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json(['venues' => $venues]);
+        } catch (\Exception $e) {
+            \Log::error('Venue search failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Search failed'], 500);
+        }
+    }
+
+    /**
+     * Events - Searching for venue
+     */
+    public function createVenue(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+            ]);
+
+            $query = $request->input('name');
+            $cleanedQuery = cleanQuery($query);
+
+            $newPromoter = Promoter::create([
+                'name' => $cleanedQuery,
+                'location' => 'Unknown',
+                'postal_town' => 'Unknown',
+                'longitude' => 0,
+                'latitude' => 0,
+                'description' => 'Nothing here yet!',
+                'contact_name' => 'Unknown',
+                'contact_number' => '00000000000',
+                'contact_email' => 'blank@yournextshow.co.uk',
+                'contact_link' => json_encode(['website' => 'https://yournextshow.co.uk']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'promoter' => [
+                    'id' => $newPromoter->id,
+                    'name' => $newPromoter->name
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create promoter'
+            ], 500);
+        }
+    }
+
+    /**
      * Get Users Calendar Events
      */
-
     public function getUserCalendarEvents($dashboardType, Request $request, $userId)
     {
         // Fetch the current user along with relationships
@@ -121,7 +263,7 @@ class APIRequestsController extends Controller
             $end = $request->query('end');
 
             // Fetch events based on the service type
-            $events = Event::with(['artist', 'services', 'venues'])
+            $events = Event::with(['promoters', 'services', 'venues'])
                 ->where(function ($query) use ($dashboardType, $service) {
                     switch ($dashboardType) {
                         case 'promoter':

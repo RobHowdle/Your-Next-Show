@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Note;
 use App\Models\User;
 use App\Models\Venue;
+use App\Models\Promoter;
 use App\Models\UserService;
 use App\Models\VenueReview;
 use App\Models\OtherService;
@@ -31,13 +32,14 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
-        $user = Auth::user()->load(['roles', 'promoters']);
+        $user = Auth::user()->load(['roles']);
         $roles = $user->roles->pluck('name');
         $roleName = $roles->first();
         $venues = Venue::all();
         $photographers = OtherService::photographers()->get();
         $videographers = OtherService::videographers()->get();
         $designers = OtherService::designers()->get();
+        $promoters = Promoter::all();
 
         // Get existing services
         $promoter = $user->promoters()->first();
@@ -63,14 +65,15 @@ class DashboardController extends Controller
         switch ($roleName) {
             case 'promoter':
                 if (!$promoter) {
-                    return view('admin.dashboards.promoter.promoter-new-service', compact('venues', 'genres', 'dashboardType', 'modules'));
+                    return
+                        redirect("/{$dashboardType}/promoter-journey")->with(['genres', $genres, 'dashboardType', $dashboardType, 'modules', $modules]);
                 }
                 return redirect("/dashboard/{$dashboardType}")->with(['dashboardType', $dashboardType, 'modules', $modules]);
                 break;
             case 'artist':
                 if (!$artist) {
                     return
-                        redirect("/{$dashboardType}/band-journey")->with(['venues', $venues, 'genres', $genres, 'dashboardType', $dashboardType, 'modules', $modules]);
+                        redirect("/{$dashboardType}/band-journey")->with(['genres', $genres, 'dashboardType', $dashboardType, 'modules', $modules]);
                 }
                 return redirect("/dashboard/{$dashboardType}")->with(['dashboardType', $dashboardType, 'modules', $modules]);
                 break;

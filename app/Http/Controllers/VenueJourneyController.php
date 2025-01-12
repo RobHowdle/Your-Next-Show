@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Venue;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class VenueJourneyController extends Controller
@@ -18,7 +18,6 @@ class VenueJourneyController extends Controller
     {
         $modules = collect(session('modules', []));
         $venues = Venue::get();
-        $genres = $data['genres'] ?? [];
 
 
         return view('admin.dashboards.venue.venue-journey', [
@@ -26,7 +25,6 @@ class VenueJourneyController extends Controller
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'venues' => $venues,
-            'genres' => $genres
         ]);
     }
 
@@ -51,44 +49,101 @@ class VenueJourneyController extends Controller
         return response()->json(['html' => $html]);
     }
 
-    public function linkVenue(Request $request)
+    public function joinVenue($dashboardType, Request $request)
     {
         $serviceableId = $request->input('serviceable_id');
-        $serviceableType = 'App\Models\Venue';
 
         $user = auth()->user();
         $venue = Venue::find($serviceableId);
 
         if (!$venue) {
-            return response()->json(['error' => 'Venue not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Venue not found'
+            ], 404);
         }
 
-        $existingUsersCount = DB::table('service_user')
-            ->where('serviceable_id', $serviceableId)
-            ->where('serviceable_type', $serviceableType)
-            ->count();
+        if ($user->venues()->where('venues.id', $serviceableId)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are already linked to this venue'
+            ], 400);
+        }
 
-        DB::table('service_user')->insert([
-            'user_id' => $user->id,
-            'serviceable_id' => $serviceableId,
-            'serviceable_type' => $serviceableType,
-            'role' => ($existingUsersCount == 0) ? 'Owner' : 'Standard',
-            'created_at' => now(),
-            'updated_at' => now(),
+        $user->venues()->attach($serviceableId, [
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
         ]);
-
-        $user->load('roles');
-        $userRole = $user->roles->first();
-
-
-        if (!$userRole) {
-            return response()->json(['error' => 'User role not found'], 404);
-        }
 
 
         return response()->json([
-            'redirect_url' => route('dashboard', ['dashboardType' => $userRole->name]),
-            'message' => 'Successfully linked! Hold tight whilst we redirect you'
+            'success' => true,
+            'message' => 'Successfully linked!',
+            'redirect' => route('dashboard', ['dashboardType' => $dashboardType])
+        ], 200);
+    }
+
+    public function createVenue(Request $request)
+    {
+        $dashboardType = 'Venue';
+        $platformsJson = determinePlatform($request->input('contact_link'));
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'postal_town' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
+            'description' => 'required|string|max:255',
+            'capacity' => 'required',
+            'in_house_gear' => 'required',
+            'contact_name' => 'required',
+            'contact_number' => 'required',
+            'contact_email' => 'required',
+            'contact_link' => 'required',
         ]);
+
+        try {
+            $venue = Venue::create([
+                'name' => $request->name,
+                'location' => $request->location,
+                'postal_town' => $request->postal_town,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'capacity' => $request->capacity,
+                'in_house_gear' => $request->in_house_gear,
+                'description' => $request->description,
+                'contact_name' => $request->contact_name,
+                'contact_number' => $request->contact_number,
+                'contact_email' => $request->contact_email,
+                'contact_link' => $platformsJson,
+                'band_type'  =>  json_encode([]),
+                'genre' => json_encode([]),
+            ]);
+
+            if (!$venue) {
+                logger()->error('Failed to create venue');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create venue'
+                ], 400);
+            }
+
+            $user = auth()->user();
+            if (!$user) {
+                logger()->error('No authenticated user found');
+                return back()->withErrors(['error' => 'No authenticated user']);
+            }
+
+            $user->venues()->attach($venue->id, [
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ]);
+
+            return redirect()->route('dashboard', ['dashboardType' => $dashboardType])->with('success', 'Venue created successfully and joined!');
+        } catch (\Exception $e) {
+            logger()->error('Failed to create venue', ['error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'Something went wrong. We\'ve logged the error and will fix it soon.']);
+        }
     }
 }

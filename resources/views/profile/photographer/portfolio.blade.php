@@ -4,28 +4,28 @@
 </header>
 
 <div class="mb-8 grid grid-cols-3 items-center gap-4 space-y-6">
-  @foreach ($portfolioImages as $image)
+  @foreach ($waterMarkedPortfolioImages as $image)
     <div class="overflow-hidden rounded shadow-md">
-      <img src="{{ asset('storage/' . $image) }}" alt="Portfolio Image" class="h-auto w-full">
+      <img src="{{ asset($image) }}" alt="Portfolio Image" class="h-auto w-full">
     </div>
   @endforeach
 </div>
 
-<!-- Main form where portfolio link and uploaded file path are saved -->
 @include('admin.dashboards.forms.portfolio-images-form', [
     'dashboardType' => $dashboardType,
+    'waterMarkedPortfolioImages' => $dashboardData['waterMarkedPortfolioImages'],
 ])
 
 <!-- Dropzone form for file upload -->
-<form action="{{ route('photographer.upload', ['dashboardType' => $dashboardType]) }}"
-  class="dropzone mt-8 bg-transparent" id="my-dropzone">
+<form action="{{ route('portfolio.upload', ['dashboardType' => $dashboardType]) }}"
+  class="dropzone mt-8 border border-white bg-transparent" id="my-dropzone">
   @csrf
   <div class="dz-message" data-dz-message>
     <span>Drag and drop files here or click to upload</span>
   </div>
   <input type="hidden" id="portfolio_image_path" name="portfolio_image_path">
-  <input type="hidden" name="serviceable_id" value="{{ $photographerData['serviceableId'] }}">
-  <input type="hidden" name="serviceable_type" value="{{ $photographerData['serviceableType'] }}">
+  <input type="hidden" name="serviceable_id" value="{{ $dashboardData['serviceableId'] }}">
+  <input type="hidden" name="serviceable_type" value="{{ $dashboardData['serviceableType'] }}">
 </form>
 
 <script>
@@ -39,25 +39,26 @@
       acceptedFiles: ".jpeg,.png,.jpg,.gif",
       addRemoveLinks: true, // Allows files to be removed
       init: function() {
-        let uploadedFilePaths = []; // Initialize an array to hold the file paths
+        let uploadedFilePaths = []; // Array to hold the file paths
 
-        // This event fires when a file has been successfully uploaded
+        // Handle successful uploads
         this.on("success", function(file, response) {
-          // After a successful upload, add the file path to the array
-          uploadedFilePaths.push(response.path);
-          // Update the hidden input field with the JSON-encoded array of paths
-          document.getElementById("portfolio_image_path").value = JSON.stringify(uploadedFilePaths);
+          uploadedFilePaths.push(response.path); // Add path to array
+          document.getElementById("portfolio_image_path").value = JSON.stringify(
+            uploadedFilePaths); // Update hidden field
         });
 
-        // Optional: Handle removing files and update the hidden input accordingly
+        // Handle file removal
         this.on("removedfile", function(file) {
-          let index = uploadedFilePaths.indexOf(file.previewElement.dataset.path);
+          const path = file.previewElement.dataset.path; // Store file path in dataset when uploading
+          const index = uploadedFilePaths.indexOf(path);
           if (index >= 0) {
-            uploadedFilePaths.splice(index, 1);
+            uploadedFilePaths.splice(index, 1); // Remove path
             document.getElementById("portfolio_image_path").value = JSON.stringify(uploadedFilePaths);
           }
         });
-      },
+      }
+
     });
   });
 </script>

@@ -13,32 +13,25 @@ class UpdateOtherServicesFromCSV extends Command
 
     public function handle()
     {
-        // Get the CSV file path from the command argument
         $filePath = base_path('database/data/' . $this->argument('file'));
 
-        // Check if the file exists
         if (!file_exists($filePath)) {
             $this->error("File not found: {$filePath}");
             return 1;
         }
 
-        // Open the CSV file
         $file = fopen($filePath, 'r');
-
-        // Read the CSV header row
         $headers = fgetcsv($file);
+        $updated = 0;
+        $created = 0;
 
-        // Loop through the CSV rows
         while (($row = fgetcsv($file)) !== false) {
-            // Map the CSV row to an associative array
             $data = array_combine($headers, $row);
 
-            // Find the existing record in the database
-            $service = OtherService::where('name', $data['name'])->first();
-
-            if ($service) {
-                // Update the record with new data
-                $service->update([
+            // Use updateOrCreate to either update existing or create new
+            $service = OtherService::updateOrCreate(
+                ['name' => $data['name']], // Search criteria
+                [
                     'logo_url' => $data['logo_url'],
                     'location' => $data['location'],
                     'postal_town' => $data['postal_town'],
@@ -46,11 +39,11 @@ class UpdateOtherServicesFromCSV extends Command
                     'latitude' => $data['latitude'],
                     'other_service_id' => $data['other_service_id'],
                     'description' => $data['description'],
-                    'packages' => $data['packages'], // Make sure this is valid JSON
-                    'environment_type' => $data['environment_type'], // Valid JSON
-                    'working_times' => $data['working_times'], // Valid JSON
-                    'members' => $data['members'], // Valid JSON
-                    'stream_urls' => $data['stream_urls'], // Valid JSON
+                    'packages' => $data['packages'],
+                    'environment_type' => $data['environment_type'],
+                    'working_times' => $data['working_times'],
+                    'members' => $data['members'],
+                    'stream_urls' => $data['stream_urls'],
                     'band_type' => $data['band_type'],
                     'genre' => $data['genre'],
                     'contact_name' => $data['contact_name'],
@@ -60,18 +53,21 @@ class UpdateOtherServicesFromCSV extends Command
                     'portfolio_link' => $data['portfolio_link'],
                     'portfolio_images' => $data['portfolio_images'], // Valid JSON
                     'services' => $data['services'], // Valid JSON
-                ]);
+                ]
+            );
 
-                $this->info("Updated: {$data['name']}");
+            if ($service->wasRecentlyCreated) {
+                $created++;
+                $this->info("Created: {$data['name']}");
             } else {
-                $this->warn("Service not found: {$data['name']}");
+                $updated++;
+                $this->info("Updated: {$data['name']}");
             }
         }
 
-        // Close the file
         fclose($file);
 
-        $this->info('Update completed!');
+        $this->info("Completed: Created $created records, Updated $updated records");
         return 0;
     }
 }

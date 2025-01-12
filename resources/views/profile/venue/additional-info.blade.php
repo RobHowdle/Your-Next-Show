@@ -7,10 +7,13 @@
   @csrf
   @method('PUT')
   <div class="group mb-6">
-    <x-input-label-dark for="additional_info">Any additional information? Parking, Deals, Special Events
+    <x-input-label-dark for="additionalInfo">Any additional information? Parking, Deals, Special Events
       etc</x-input-label-dark>
-    <x-textarea-input class="summernote" id="additional_info" name="additional_info"></x-textarea-input>
-    @error('about')
+    <x-textarea-input id="additionalInfo"
+      name="additionalInfo">{{ old('additionalInfo', $additionalInfo ?? '') }}</x-textarea-input>
+
+    {{-- <x-textarea-input class="summernote" id="additional_info" name="additional_info"></x-textarea-input> --}}
+    @error('additional_info')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror
   </div>
@@ -24,9 +27,9 @@
     @endif
   </div>
 </form>
-<script>
+{{-- <script>
   var additionalInfoContent = @json(old('additional_info', $additionalInfo));
   jQuery(document).ready(function() {
     initialiseSummernote("#additional_info", additionalInfoContent);
   });
-</script>
+</script> --}}

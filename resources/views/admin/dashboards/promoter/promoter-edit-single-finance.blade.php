@@ -38,7 +38,8 @@
 
                 <div class="group">
                   <x-input-label-dark>Date From</x-input-label-dark>
-                  <x-date-input id="date_from" name="date_from" value="{{ $finance->date_from }}"></x-date-input>
+                  <x-date-time-input id="date_from" name="date_from"
+                    value="{{ $finance->date_from }}"></x-date-time-input>
                   @error('date_from')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -46,7 +47,7 @@
 
                 <div class="group">
                   <x-input-label-dark>Date To</x-input-label-dark>
-                  <x-date-input id="date_to" name="date_to" value="{{ $finance->date_to }}"></x-date-input>
+                  <x-date-time-input id="date_to" name="date_to" value="{{ $finance->date_to }}"></x-date-time-input>
                   @error('date_to')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -215,12 +216,12 @@
         .val()) || 0), 0);
 
       let outgoingVenue = parseFloat(jQuery('#outgoing\\[outgoing_venue\\]').val()) ||
-      0; // Corrected the ID selector
+        0; // Corrected the ID selector
       let outgoingBand = parseFloat(jQuery('#outgoing\\[outgoing_band\\]').val()) || 0; // Corrected the ID selector
       let outgoingPromotion = parseFloat(jQuery('#outgoing\\[outgoing_promotion\\]').val()) ||
         0; // Corrected the ID selector
       let outgoingRider = parseFloat(jQuery('#outgoing\\[outgoing_rider\\]').val()) ||
-      0; // Corrected the ID selector
+        0; // Corrected the ID selector
       let outgoingOther = Array.from(jQuery('input[name^="other["]')).reduce((sum, input) => sum + (parseFloat(
         jQuery(input)
         .val()) || 0), 0);

@@ -34,8 +34,7 @@ class Promoter extends Model
     ];
 
     protected $casts = [
-        'contact_links' => 'array',
-        'genre' => 'array',
+        'contact_link' => 'array',
     ];
 
     public function venues()
@@ -67,6 +66,6 @@ class Promoter extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id');
     }
 }

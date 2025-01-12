@@ -13,7 +13,8 @@
         fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
       </svg>
-    </span> </button>
+    </span>
+  </button>
 
   <div x-show="open" x-transition class="mt-4">
     <div class="flex flex-col items-start gap-4">

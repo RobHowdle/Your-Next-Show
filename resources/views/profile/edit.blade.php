@@ -28,11 +28,11 @@
             ])
           @elseif($dashboardType == 'venue')
             @include('profile.partials.venue-profile', [
-                'venueData' => $venueData,
+                'venueUserData' => $venueUserData,
             ])
           @elseif($dashboardType == 'photographer')
             @include('profile.partials.photographer-profile', [
-                'photographerData' => $photographerData,
+                'photographerUserData' => $photographerUserData ?? [],
             ])
           @elseif($dashboardType == 'standard')
             @include('profile.partials.standard-profile', [
@@ -85,12 +85,14 @@
             <p class="text-xl font-bold">User Settings</p>
             @include('profile.partials.edit-user-details', [
                 'userRole' => $userRole,
-                'firstName' => $firstName,
-                'lastName' => $lastName,
-                'email' => $email,
-                'location' => $location,
-                'latitude' => $latitude,
-                'longitude' => $longitude,
+                'userFirstName' => $userFirstName,
+                'userLastName' => $userLastName,
+                'userEmail' => $userEmail,
+                'userDob' => $userDob,
+                'userLocation' => $userLocation,
+                'userPostalTown' => $userPostalTown,
+                'userLat' => $userLat,
+                'userLong' => $userLong,
             ])
           </div>
         </div>
@@ -104,11 +106,11 @@
           ])
         @elseif($dashboardType == 'venue')
           @include('profile.partials.venue-profile-tabs', [
-              'venueData' => $venueData,
+              'venueUserData' => $venueUserData,
           ])
         @elseif($dashboardType == 'photographer')
           @include('profile.partials.photographer-profile-tabs', [
-              'photographerData' => $photographerData,
+              'photographerUserData' => $photographerUserData,
           ])
         @elseif($dashboardType == 'standard')
           @include('profile.partials.standard-profile-tabs', [
@@ -124,39 +126,15 @@
           ]) --}}
         @endif
 
-        @if ($dashboardType !== 'designer')
-          <div x-show="selectedTab === 10" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
-            <div class="w-full">
-              <div class="flex items-center justify-center">
-                <div class="group">
-                  @if (Auth::user()->google_access_token)
-                    <form action="{{ route('google.unlink') }}" method="POST">
-                      @csrf
-                      <x-button type="submit" label="Unlink Google Calendar"></x-button>
-                    </form>
-                  @else
-                    <a href="{{ route('google.redirect') }}" class="btn btn-primary">Link Google Calendar</a>
-                  @endif
-                </div>
-                <div class="group">
-                  <form action="{{ route('google.sync') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-success">Manual Google Sync</button>
-                  </form>
-                </div>
-                {{-- <div class="group">
-                <button id="sync-all-events-apple"
-                  class="rounded bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
-                  title="Sync All Events to Apple Calendar">
-                  Sync All Events to Apple Calendar
-                </button>
-              </div> --}}
-              </div>
-              <div id="calendar" data-user-id="{{ Auth::check() ? Auth::user()->id : '' }}"
-                data-dashboard-type="{{ $dashboardType }}"></div>
-            </div>
+
+        <div x-show="selectedTab === 10" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
+          <div class="w-full">
+            @include('profile.partials.calendar', [
+                'dashboardType' => $dashboardType,
+            ])
           </div>
-        @endif
+        </div>
+
         <div x-show="selectedTab === 11" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
           <div class="w-full">
             <div class="group">
@@ -185,40 +163,40 @@
   }
 </style>
 <script>
-  document.getElementById('sync-all-events-apple').addEventListener('click', function() {
-    var calendarEl = document.getElementById("calendar");
-    var userId = calendarEl.getAttribute("data-user-id");
-    const url = `/profile/events/${userId}/apple/sync`; // Define your route for syncing
+  // document.getElementById('sync-all-events-apple').addEventListener('click', function() {
+  //   var calendarEl = document.getElementById("calendar");
+  //   var userId = calendarEl.getAttribute("data-user-id");
+  //   const url = `/profile/events/${userId}/apple/sync`; // Define your route for syncing
 
-    // Show loading state if needed
-    this.textContent = 'Syncing...';
+  //   // Show loading state if needed
+  //   this.textContent = 'Syncing...';
 
-    // Make an AJAX request to trigger the download
-    fetch(url)
-      .then(response => {
-        if (response.ok) {
-          return response.blob(); // Return blob data for the .ics file
-        }
-        throw new Error('Network response was not ok.');
-      })
-      .then(blob => {
-        // Create a link element to download the file
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'events.ics'; // Set a name for the file
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
+  //   // Make an AJAX request to trigger the download
+  //   fetch(url)
+  //     .then(response => {
+  //       if (response.ok) {
+  //         return response.blob(); // Return blob data for the .ics file
+  //       }
+  //       throw new Error('Network response was not ok.');
+  //     })
+  //     .then(blob => {
+  //       // Create a link element to download the file
+  //       const url = window.URL.createObjectURL(blob);
+  //       const a = document.createElement('a');
+  //       a.href = url;
+  //       a.download = 'events.ics'; // Set a name for the file
+  //       document.body.appendChild(a);
+  //       a.click();
+  //       a.remove();
+  //       window.URL.revokeObjectURL(url);
 
-        // Reset button text
-        this.textContent = 'Sync All Events to Apple Calendar';
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to sync events. Please try again.');
-        this.textContent = 'Sync All Events to Apple Calendar';
-      });
-  });
+  //       // Reset button text
+  //       this.textContent = 'Sync All Events to Apple Calendar';
+  //     })
+  //     .catch(error => {
+  //       console.error('Error:', error);
+  //       alert('Failed to sync events. Please try again.');
+  //       this.textContent = 'Sync All Events to Apple Calendar';
+  //     });
+  // });
 </script>

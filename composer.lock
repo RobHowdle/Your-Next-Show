@@ -3010,7 +3010,7 @@
             "version": "3.8.4",
             "source": {
                 "type": "git",
-                "url": "https://github.com/CarbonPHP/carbon.git",
+                "url": "https://github.com/briannesbitt/Carbon.git",
                 "reference": "129700ed449b1f02d70272d2ac802357c8c30c58"
             },
             "dist": {

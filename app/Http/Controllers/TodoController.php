@@ -6,131 +6,115 @@ use App\Models\Todo;
 use App\Models\Promoter;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
+use App\Services\TodoService;
 use Illuminate\Support\Facades\Auth;
 
 class TodoController extends Controller
 {
+    protected $todoService;
+
     protected function getUserId()
     {
         return Auth::id();
     }
 
-    public function showTodos($dashboardType, Request $request)
+    public function __construct(TodoService $todoService)
     {
+        $this->todoService = $todoService;
+    }
+
+    public function showTodos($dashboardType)
+    {
+        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
         $modules = collect(session('modules', []));
 
-        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
-
-        $perPage = 6;
-        $page = $request->input('page', 1);
-
-        $todoItems = collect();
-
-        if ($dashboardType === 'promoter') {
-            $todoItems = Todo::where('serviceable_type', Promoter::class)
-                ->whereIn('serviceable_id', $user->promoters->pluck('id'))
-                ->where('completed', false)
-                ->orderBy('created_at', 'DESC')
-                ->paginate($perPage, ['*'], 'page', $page);
-        } elseif ($dashboardType === 'artist') {
-            $todoItems = Todo::where('serviceable_type', OtherService::class)
-                ->whereIn('serviceable_id', $user->otherService("Artist")->pluck('other_services.id'))
-                ->where('completed', false)
-                ->orderBy('created_at', 'DESC')
-                ->paginate($perPage, ['*'], 'page', $page);
-        } elseif ($dashboardType === 'designer') {
-            $todoItems = Todo::where('serviceable_type', OtherService::class)
-                ->whereIn('serviceable_id', $user->otherService("Designer")->pluck('other_services.id'))
-                ->where('completed', false)
-                ->orderBy('created_at', 'DESC')
-                ->paginate($perPage, ['*'], 'page', $page);
-        }
+        $todoItems = $this->todoService->getUncompletedTodos($user, $dashboardType);
 
         return view('admin.dashboards.todo-list', [
-            'userId' => $this->getUserId(),
-            'dashboardType' => $dashboardType,
-            'modules' => $modules,
             'todoItems' => $todoItems,
+            'modules' => $modules,
+            'dashboardType' => $dashboardType,
+            'userId' => Auth::id()
         ]);
     }
 
-    public function getTodos($dashboardType, Request $request)
-    {
-        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
-        $perPage = 6;
-        $page = $request->input('page', 1);
-        $todoItems = collect();
+    // public function getTodos($dashboardType, Request $request)
+    // {
+    //     $user = Auth::user()->load(['promoters', 'venues', 'todos', 'otherService']);
+    //     $perPage = 6;
+    //     $page = $request->input('page', 1);
+    //     $todoItems = collect();
 
-        switch ($dashboardType) {
-            case 'promoter':
-                $promoterCompany = $user->promoters;
-                $serviceableId = $promoterCompany->pluck('id');
+    //     switch ($dashboardType) {
+    //         case 'promoter':
+    //             $promoterCompany = $user->promoters;
+    //             $serviceableId = $promoterCompany->pluck('id');
 
-                if ($promoterCompany->isEmpty()) {
-                    return response()->json([
-                        'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
-                        'hasMore' => false,
-                    ]);
-                }
+    //             if ($promoterCompany->isEmpty()) {
+    //                 return response()->json([
+    //                     'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
+    //                     'hasMore' => false,
+    //                 ]);
+    //             }
 
-                $todoItems = Todo::where('serviceable_type', Promoter::class)
-                    ->whereIn('serviceable_id', $serviceableId)
-                    ->where('completed', false)
-                    ->orderBy('created_at', 'DESC')
-                    ->paginate($perPage);
+    //             $todoItems = Todo::where('serviceable_type', Promoter::class)
+    //                 ->whereIn('serviceable_id', $serviceableId)
+    //                 ->where('completed', false)
+    //                 ->orderBy('created_at', 'DESC')
+    //                 ->paginate($perPage);
 
-                break;
+    //             break;
 
-            case 'artist':
-                $bandServices = $user->otherService("Artist");
-                $serviceableId = $bandServices->pluck('other_services.id');
+    //         case 'artist':
+    //             $bandServices = $user->otherService("Artist");
+    //             $serviceableId = $bandServices->pluck('other_services.id');
 
-                if (!$bandServices) {
-                    return response()->json([
-                        'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
-                        'hasMore' => false,
-                    ]);
-                }
+    //             if (!$bandServices) {
+    //                 return response()->json([
+    //                     'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
+    //                     'hasMore' => false,
+    //                 ]);
+    //             }
 
-                $todoItems = Todo::where('serviceable_type', OtherService::class)
-                    ->whereIn('serviceable_id', $serviceableId)
-                    ->where('completed', false)
-                    ->orderBy('created_at', 'DESC')
-                    ->paginate($perPage);
+    //             $todoItems = Todo::where('serviceable_type', OtherService::class)
+    //                 ->whereIn('serviceable_id', $serviceableId)
+    //                 ->where('completed', false)
+    //                 ->orderBy('created_at', 'DESC')
+    //                 ->paginate($perPage);
 
-                break;
+    //             break;
 
-                // case 'designer':
-                //     $designerCompanies = $user->designers;
-                //     $serviceableId = $designerCompanies->pluck('id');
+    //             // case 'designer':
+    //             //     $designerCompanies = $user->designers;
+    //             //     $serviceableId = $designerCompanies->pluck('id');
 
-                //     if ($designerCompanies->isEmpty()) {
-                //         return response()->json([
-                //             'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
-                //             'hasMore' => false,
-                //         ]);
-                //     }
+    //             //     if ($designerCompanies->isEmpty()) {
+    //             //         return response()->json([
+    //             //             'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
+    //             //             'hasMore' => false,
+    //             //         ]);
+    //             //     }
 
-                //     $todoItems = Todo::where('serviceable_type', Designer::class)
-                //         ->whereIn('serviceable_id', $serviceableId)
-                //         ->where('completed', false)
-                //         ->orderBy('created_at', 'DESC')
-                //         ->paginate($perPage);
+    //             //     $todoItems = Todo::where('serviceable_type', Designer::class)
+    //             //         ->whereIn('serviceable_id', $serviceableId)
+    //             //         ->where('completed', false)
+    //             //         ->orderBy('created_at', 'DESC')
+    //             //         ->paginate($perPage);
 
-                //     break;
+    //             //     break;
 
-            default:
-                return response()->json([
-                    'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
-                    'hasMore' => false,
-                ]);
-        }
+    //         default:
+    //             return response()->json([
+    //                 'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
+    //                 'hasMore' => false,
+    //             ]);
+    //     }
 
-        return response()->json([
-            'view' => view('components.todo-items', compact('todoItems'))->render(),
-            'hasMore' => $todoItems->hasMorePages(),
-        ]);
-    }
+    //     return response()->json([
+    //         'view' => view('components.todo-items', compact('todoItems'))->render(),
+    //         'hasMore' => $todoItems->hasMorePages(),
+    //     ]);
+    // }
 
     public function newTodoItem($dashboardType, Request $request)
     {
@@ -173,6 +157,7 @@ class TodoController extends Controller
         ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'Item Added Successfully',
             'todoItem' => $todoItem,
         ]);
@@ -196,71 +181,86 @@ class TodoController extends Controller
 
     public function deleteTodoItem($dashboardType, $id)
     {
-        $todoItem = Todo::findOrFail($id);
-        $todoItem->delete();
+        try {
+            $todoItem = Todo::findOrFail($id);
+            $todoItem->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todo item deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete todo item'
+            ], 500);
+        }
+    }
+
+    public function hasCompletedTodos($dashboardType)
+    {
+        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
+        $hasCompleted = $this->todoService->hasCompletedTodos($user, $dashboardType);
 
         return response()->json([
-            'message' => 'Todo item deleted successfully!',
+            'hasCompleted' => $hasCompleted
         ]);
     }
 
     public function showCompletedTodoItems($dashboardType)
     {
         $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
-        $perPage = 6;
-        $todoItems = collect();
-        $serviceableId = collect();
 
-        switch ($dashboardType) {
-            case 'promoter':
-                $promoterCompany = $user->promoters;
-                $serviceableId = $promoterCompany->pluck('id');
+        try {
+            $todoItems = $this->todoService->getTodosByType(
+                $user,
+                $dashboardType,
+                6,  // perPage
+                1,  // first page
+                true // completed flag
+            );
 
-                if ($promoterCompany->isEmpty()) {
-                    return response()->json([
-                        'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
-                        'hasMore' => false,
-                    ]);
-                }
-
-                // Retrieve completed todo items for the promoter
-                $todoItems = Todo::where('serviceable_type', Promoter::class)
-                    ->whereIn('serviceable_id', $serviceableId)
-                    ->where('completed', true) // Change to true
-                    ->orderBy('created_at', 'DESC')
-                    ->paginate($perPage);
-                break;
-
-            case 'artist':
-                $bandServices = $user->otherService("Artist");
-                $serviceableId = $bandServices->pluck('other_services.id');
-
-                if (!$bandServices) {
-                    return response()->json([
-                        'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
-                        'hasMore' => false,
-                    ]);
-                }
-
-                // Retrieve completed todo items for the band
-                $todoItems = Todo::where('serviceable_type', OtherService::class)
-                    ->whereIn('serviceable_id', $serviceableId)
-                    ->where('completed', true)
-                    ->orderBy('created_at', 'DESC')
-                    ->paginate($perPage);
-                break;
-
-            default:
-                return response()->json([
-                    'view' => view('components.todo-items', ['todoItems' => collect()])->render(),
-                    'hasMore' => false,
-                ]);
+            return response()->json([
+                'success' => true,
+                'html' => view('components.todo-items', ['todoItems' => $todoItems])->render(),
+                'hasMorePages' => $todoItems->hasMorePages(),
+                'hasCompleted' => $todoItems->isNotEmpty()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load completed items',
+                'html' => view('components.todo-items', ['todoItems' => collect()])->render()
+            ], 500);
         }
+    }
 
-        return response()->json([
-            'view' => view('components.todo-items', ['todoItems' => $todoItems])->render(),
-            'hasMore' => $todoItems->hasMorePages(),
-        ]);
+    public function showUncompletedTodoItems($dashboardType)
+    {
+        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
+
+        try {
+            $todoItems = $this->todoService->getTodosByType(
+                $user,
+                $dashboardType,
+                6,  // perPage
+                1,  // first page
+                false // uncompleted flag
+            );
+
+            return response()->json([
+                'success' => true,
+                'html' => view('components.todo-items', ['todoItems' => $todoItems])->render(),
+                'hasMorePages' => $todoItems->hasMorePages(),
+                'hasCompleted' => $todoItems->isNotEmpty()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load completed items',
+                'html' => view('components.todo-items', ['todoItems' => collect()])->render()
+            ], 500);
+        }
     }
 
     public function uncompleteTodoItem($dashboardType, $id)
@@ -277,6 +277,32 @@ class TodoController extends Controller
         return response()->json([
             'message' => 'Todo item marked as uncompleted!',
             'todoItem' => $todoItem,
+        ]);
+    }
+
+    public function loadMoreTodos($dashboardType, Request $request)
+    {
+        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
+        $todoItems = $this->todoService->getTodosByType(
+            $user,
+            $dashboardType,
+            6,
+            $request->input('page', 1)
+        );
+
+        return response()->json([
+            'html' => view('components.todo-items', ['todoItems' => $todoItems])->render(),
+            'hasMorePages' => $todoItems->hasMorePages()
+        ]);
+    }
+
+    public function hasUncompletedTodos($dashboardType)
+    {
+        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
+        $hasUncompleted = $this->todoService->hasUncompletedTodos($user, $dashboardType);
+
+        return response()->json([
+            'hasUncompleted' => $hasUncompleted
         ]);
     }
 }

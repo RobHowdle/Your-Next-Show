@@ -9,7 +9,7 @@
   @method('PUT')
 
   <div class="grid grid-cols-1 gap-4 md:grid-cols-1">
-    <x-input-label class="">When are you available to work?</x-input-label>
+    <x-input-label-dark class="">When are you available to work?</x-input-label-dark>
 
     {{-- Loop through days of the week --}}
     @foreach (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)

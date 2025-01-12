@@ -44,8 +44,6 @@ class OtherService extends Model
         'environment_type' => 'array',
         'working_times' => 'array',
         'members' => 'array',
-        // 'stream_urls' => 'array',
-        'genre' => 'array',
         'contact_links' => 'array',
         'portfolio_images' => 'array',
     ];
@@ -85,11 +83,10 @@ class OtherService extends Model
     /**
      * Retrieve all bands (other services with `other_service_id` as 4).
      */
-    public static function bands()
+    public function bands()
     {
-        return self::where('other_service_id', 4);
+        return $this->hasMany(OtherService::class, 'other_service_id')->where('other_service_id', 4);
     }
-
     /**
      * Belongs to OtherServiceList relation.
      */

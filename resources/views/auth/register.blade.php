@@ -11,37 +11,49 @@
       <form id="registration-form" method="POST" action="{{ route('register') }}">
         @csrf
         <div>
-          <x-input-label for="first_name" :value="__('First Name')" />
-          <x-text-input id="first_name" class="mt-1 block w-full" name="first_name" :value="old('first_name')" required autofocus
-            autocomplete="first_name" />
+          <x-input-label-dark for="first_name" :value="__('First Name')" :required="true" />
+          <x-text-input id="first_name" class="mt-1 block w-full" name="first_name" :value="old('first_name')" :required="true"
+            autofocus autocomplete="first_name" />
           <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
         </div>
 
         <div class="mt-4">
-          <x-input-label for="last_name" :value="__('Last Name')" />
-          <x-text-input id="last_name" class="mt-1 block w-full" name="last_name" :value="old('last_name')" required autofocus
-            autocomplete="last_name" />
+          <x-input-label-dark for="last_name" :value="__('Last Name')" :required="true" />
+          <x-text-input id="last_name" class="mt-1 block w-full" name="last_name" :value="old('last_name')" :required="true"
+            autofocus autocomplete="last_name" />
           <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
         </div>
 
         <div class="mt-4">
-          <x-input-label for="date_of_birth" :value="__('Date of Birth')" />
-          <x-date-input id="date_of_birth" class="mt-1 block w-full" name="date_of_birth" :value="old('date_of_birth')" required
-            autofocus autocomplete="date_of_birth" />
+          <x-input-label-dark for="date_of_birth" :value="__('Date of Birth')" :required="true" />
+          <x-date-input id="date_of_birth" class="mt-1 block w-full" name="date_of_birth" :value="old('date_of_birth')"
+            :required="true" autofocus autocomplete="date_of_birth" />
           <x-input-error :messages="$errors->get('date_of_birth')" class="mt-2" />
         </div>
 
         <div class="mt-4">
-          <x-input-label for="email" :value="__('Email')" />
+          <x-input-label-dark for="email" :value="__('Email')" :required="true" />
           <x-text-input id="email" class="mt-1 block w-full" type="email" name="email" :value="old('email')"
-            required autocomplete="email" oninput="this.value = this.value.toLowerCase();" />
+            :required="true" autocomplete="email" oninput="this.value = this.value.toLowerCase();" />
           <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div class="mt-4">
-          <x-input-label for="password" :value="__('Password')" />
-          <x-text-input id="password" class="mt-1 block w-full" type="password" name="password" required
-            autocomplete="new-password" />
+          <x-input-label-dark for="password" :value="__('Password')" :required="true" />
+          <div class="relative">
+            <x-text-input id="password" class="mt-1 block w-full" type="password" name="password" :required="true"
+              autocomplete="new-password" />
+            <button type="button" onclick="togglePasswordVisibility()"
+              class="password-toggle-icon absolute inset-y-0 right-0 flex items-center px-3">
+              <svg class="h-5 w-5 text-gray-400" id="password-eye" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
           <div id="password-strength-container"
             style="width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; margin-top: 5px;">
             <div id="password-strength-meter" style="height: 100%; width: 0%; border-radius: 5px;"></div>
@@ -107,21 +119,30 @@
                 Must not be compromised
               </span>
             </li>
+            <li class="flex items-center">
+              <span id="password-match-requirement" class="requirement flex items-center">
+                <svg id="password-match-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor"
+                  viewBox="0 0 20 20">
+                  <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+                </svg>
+                Passwords match
+              </span>
+            </li>
           </ul>
         </div>
 
         <div class="mt-4">
-          <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+          <x-input-label-dark for="password_confirmation" :value="__('Confirm Password')" :required="true" />
           <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password"
-            name="password_confirmation" required autocomplete="new-password" />
+            name="password_confirmation" :required="true" autocomplete="new-password" />
           <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
         <div class="mt-4">
-          <x-input-label for="role" :value="__('Select User Role')" />
+          <x-input-label-dark for="role" :value="__('Select User Role')" :required="true" />
           <select id="role" name="role"
-            class="mt-1 block w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600"
-            required autofocus autocomplete="role">
+            class="mt-1 block w-full rounded-md border-yns_red bg-gray-900 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            :required="true" autofocus autocomplete="role">
             @foreach ($roles as $role)
               <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
             @endforeach
@@ -129,14 +150,13 @@
           <x-input-error :messages="$errors->get('role')" class="mt-2" />
         </div>
 
-        <div class="mt-4 flex items-center justify-end">
-          <a class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
+        <div class="mt-4 flex items-center justify-end gap-4">
+          <a class="rounded-md text-sm text-white underline transition duration-150 ease-in-out hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
             href="{{ route('login') }}">
             {{ __('Already registered?') }}
           </a>
 
-          <x-primary-button id="register-button"
-            class="ms-4 bg-gradient-to-t from-yns_dark_orange to-yns_yellow text-white">
+          <x-primary-button id="register-button">
             {{ __('Register') }}
           </x-primary-button>
         </div>
@@ -144,230 +164,142 @@
     </div>
   </div>
 </x-guest-layout>
-
 <script>
-  // Force the Date Picker to only use the date for DOB
-  document.addEventListener('DOMContentLoaded', function() {
-    const datetimeInput = document.getElementById('date_of_birth');
-    const dateValue = datetimeInput.value.split('T')[0];
-    datetimeInput.type = 'date';
-    datetimeInput.value = dateValue;
-  });
+  // Utility Functions
+  const checkRequirement = (value, test) => {
+    const requirement = document.getElementById(`${test}-requirement`);
+    const icon = document.getElementById(`${test}-icon`);
+    const isValid = {
+      length: pwd => pwd.length >= 8,
+      uppercase: pwd => /[A-Z]/.test(pwd),
+      lowercase: pwd => /[a-z]/.test(pwd),
+      number: pwd => /[0-9]/.test(pwd),
+      special: pwd => /[@$!%*?&]/.test(pwd)
+    } [test](value);
 
-  jQuery(document).ready(function() {
-    jQuery('#registration-form').on('submit', function(event) {
-      event.preventDefault(); // Prevent the default form submission
+    requirement?.classList.toggle('valid', isValid);
+    icon?.classList.toggle('hidden', !isValid);
+    return isValid;
+  };
 
-      const formData = jQuery(this).serialize(); // Serialize the form data
-      $.ajax({
-        url: jQuery(this).attr('action'), // Use the form's action attribute
-        type: 'POST',
-        dataType: 'json', // Ensure that the response is expected as JSON
-        headers: {
-          'Accept': 'application/json', // Tell the server to send a JSON response
-        },
-        data: formData,
-        success: function(response) {
-          console.log(response); // Log the entire response for debugging
-          if (response.success) {
-            showSuccessNotification(response.message); // Ensure message is defined
-            setTimeout(() => {
-              window.location.href = response.redirect;
-            }, 3000);
-          } else {
-            showSuccessNotification('Registration successful!'); // Fallback message
-            setTimeout(() => {
-              window.location.href = response.redirect;
-            }, 3000);
-          }
-        },
-        error: function(xhr) {
-          if (xhr.responseJSON && xhr.responseJSON.errors) {
-            const errors = xhr.responseJSON.errors;
-            console.log(errors); // Log errors for debugging
+  const updatePasswordStrength = (password) => {
+    const meter = document.getElementById('password-strength-meter');
+    const text = document.getElementById('password-strength-text');
+    const requirements = ['length', 'uppercase', 'lowercase', 'number', 'special'];
+    const strength = requirements.filter(req => checkRequirement(password, req)).length;
 
-            if (errors.password && errors.password.includes(
-                'This password has been compromised in a data breach. Please choose a different password.'
-              )) {
-              showWarningNotification(errors.password[0]);
-            } else if (xhr.status === 422) {
-              // Handle validation errors
-              for (const error in errors) {
-                if (errors.hasOwnProperty(error)) {
-                  showFailureNotification(errors[error][0]); // Show the first error message
-                }
-              }
-            } else {
-              showFailureNotification('Registration failed. Please try again.');
-            }
-          } else {
-            showFailureNotification('An unknown error occurred.');
-          }
+    const levels = {
+      0: {
+        width: '0%',
+        class: '',
+        text: ''
+      },
+      1: {
+        width: '25%',
+        class: 'weak',
+        text: 'Weak'
+      },
+      2: {
+        width: '50%',
+        class: 'medium',
+        text: 'Medium'
+      },
+      3: {
+        width: '75%',
+        class: 'strong',
+        text: 'Strong'
+      },
+      4: {
+        width: '100%',
+        class: 'strong',
+        text: 'Very Strong'
+      }
+    };
+
+    const {
+      width,
+      class: className,
+      text: strengthText
+    } = levels[strength];
+    meter.style.width = width;
+    meter.className = className;
+    text.textContent = strengthText;
+  };
+
+  function checkPasswordMatch() {
+    const password = document.getElementById('password').value;
+    const confirmation = document.getElementById('password_confirmation').value;
+    const matchRequirement = document.getElementById('password-match-requirement');
+    const matchIcon = document.getElementById('password-match-icon');
+
+    if (password && confirmation) {
+      const matches = password === confirmation;
+      matchRequirement?.classList.toggle('valid', matches);
+      matchIcon?.classList.toggle('hidden', !matches);
+    }
+  }
+
+  function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('password-eye');
+
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            `;
+    } else {
+      passwordInput.type = 'password';
+      eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            `;
+    }
+  }
+
+  // Event Listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('registration-form');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('password_confirmation');
+
+    passwordInput?.addEventListener('input', (e) => {
+      updatePasswordStrength(e.target.value);
+      checkPasswordMatch();
+    });
+
+    confirmInput?.addEventListener('input', checkPasswordMatch);
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+
+      try {
+        const response = await fetch(e.target.action, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json'
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showSuccessNotification(data.message);
+          setTimeout(() => window.location.href = data.redirect, 3000);
+        } else {
+          throw new Error(data.message || 'Registration failed');
         }
-      });
-    });
-
-    // window.showSuccessNotification = function(message) {
-    //   Swal.fire({
-    //     showConfirmButton: false,
-    //     toast: true,
-    //     position: "top-end",
-    //     timer: 3000,
-    //     timerProgressBar: true,
-    //     customClass: {
-    //       popup: "bg-yns_dark_gray !important rounded-lg font-heading",
-    //       title: "text-black",
-    //       html: "text-black",
-    //     },
-    //     icon: "success",
-    //     title: "Success!",
-    //     text: message,
-    //   });
-    // };
-
-    // window.showFailureNotification = function(message) {
-    //   Swal.fire({
-    //     showConfirmButton: false,
-    //     toast: true,
-    //     position: "top-end",
-    //     timer: 3000,
-    //     timerProgressBar: true,
-    //     customClass: {
-    //       popup: "bg-yns_dark_gray !important rounded-lg font-heading",
-    //       title: "text-black",
-    //       html: "text-black",
-    //     },
-    //     icon: "error",
-    //     title: "Oops!",
-    //     text: message,
-    //   });
-    // };
-
-    // window.showWarningNotification = function(message) {
-    //   Swal.fire({
-    //     showConfirmButton: true,
-    //     toast: false,
-    //     customClass: {
-    //       popup: "bg-yns_dark_gray !important rounded-lg font-heading",
-    //       title: "text-yns_red",
-    //       html: "text-white",
-    //     },
-    //     icon: "warning",
-    //     title: "Warning!",
-    //     text: message,
-    //   });
-    // };
-
-    // window.showConfirmationNotification = function(options) {
-    //   return Swal.fire({
-    //     showConfirmButton: true,
-    //     confirmButtonText: "I understand",
-    //     showCancelButton: true,
-    //     toast: false,
-    //     customClass: {
-    //       popup: "bg-yns_dark_gray !important rounded-lg font-heading",
-    //       title: "text-white",
-    //       text: "text-white !important",
-    //     },
-    //     icon: "warning",
-    //     title: "Are you sure?",
-    //     text: options.text,
-    //   });
-    // };
-
-    // Other JavaScript code for password strength and requirements can stay the same
-    document.addEventListener('DOMContentLoaded', function() {
-      const datetimeInput = document.getElementById('date_of_birth');
-      const dateValue = datetimeInput.value.split('T')[0];
-      datetimeInput.type = 'date';
-      datetimeInput.value = dateValue;
-    });
-
-    document.getElementById('password').addEventListener('input', function() {
-      const password = this.value;
-      const strengthMeter = document.getElementById('password-strength-meter');
-      const strengthText = document.getElementById('password-strength-text');
-      let strength = 0;
-
-      // Check password strength
-      if (password.length >= 8) {
-        strength++;
+      } catch (error) {
+        if (error.response?.status === 422) {
+          Object.values(error.response.data.errors)
+            .flat()
+            .forEach(showFailureNotification);
+        } else {
+          showFailureNotification(error.message);
+        }
       }
-      if (/[A-Z]/.test(password)) {
-        strength++;
-      }
-      if (/[0-9]/.test(password)) {
-        strength++;
-      }
-      if (/[@$!%*?&]/.test(password)) {
-        strength++;
-      }
-
-      // Update meter and text based on strength
-      switch (strength) {
-        case 0:
-          strengthMeter.style.width = '0%';
-          strengthMeter.className = ''; // No class
-          strengthText.textContent = '';
-          break;
-        case 1:
-          strengthMeter.style.width = '25%';
-          strengthMeter.className = 'weak';
-          strengthText.textContent = 'Weak';
-          break;
-        case 2:
-          strengthMeter.style.width = '50%';
-          strengthMeter.className = 'medium';
-          strengthText.textContent = 'Medium';
-          break;
-        case 3:
-          strengthMeter.style.width = '75%';
-          strengthMeter.className = 'strong';
-          strengthText.textContent = 'Strong';
-          break;
-        case 4:
-          strengthMeter.style.width = '100%';
-          strengthMeter.className = 'strong';
-          strengthText.textContent = 'Very Strong';
-          break;
-        default:
-          strengthMeter.style.width = '0%';
-          strengthText.textContent = '';
-          break;
-      }
-    });
-
-    document.getElementById('password').addEventListener('input', function() {
-      const password = this.value;
-
-      // Requirement elements
-      const lengthRequirement = document.getElementById('length-requirement');
-      const uppercaseRequirement = document.getElementById('uppercase-requirement');
-      const lowercaseRequirement = document.getElementById('lowercase-requirement');
-      const numberRequirement = document.getElementById('number-requirement');
-      const specialRequirement = document.getElementById('special-requirement');
-      const notCompromisedRequirement = document.getElementById('not-compromised-requirement');
-
-      // Check password requirements
-      lengthRequirement.classList.toggle('valid', password.length >= 8);
-      document.getElementById('length-icon').classList.toggle('hidden', password.length < 8);
-
-      uppercaseRequirement.classList.toggle('valid', /[A-Z]/.test(password));
-      document.getElementById('uppercase-icon').classList.toggle('hidden', !/[A-Z]/.test(password));
-
-      lowercaseRequirement.classList.toggle('valid', /[a-z]/.test(password));
-      document.getElementById('lowercase-icon').classList.toggle('hidden', !/[a-z]/.test(password));
-
-      numberRequirement.classList.toggle('valid', /[0-9]/.test(password));
-      document.getElementById('number-icon').classList.toggle('hidden', !/[0-9]/.test(password));
-
-      specialRequirement.classList.toggle('valid', /[@$!%*?&]/.test(password));
-      document.getElementById('special-icon').classList.toggle('hidden', !/[@$!%*?&]/.test(password));
-
-      // Assuming you have a function to check if the password is compromised
-      const isCompromised = false; // Replace with actual compromised password check logic
-      notCompromisedRequirement.classList.toggle('valid', !isCompromised);
-      document.getElementById('not-compromised-icon').classList.toggle('hidden', isCompromised);
     });
   });
 </script>
