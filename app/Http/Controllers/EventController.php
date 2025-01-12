@@ -531,6 +531,7 @@ class EventController extends Controller
 
             // Get promoters with null check
             $promoters = $event->promoters ?? collect();
+            $promoterData = [];
 
             // Format dates and times
             $eventDate = Carbon::parse($event->event_date)->toDateString();
