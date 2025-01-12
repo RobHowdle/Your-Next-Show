@@ -2,7 +2,7 @@
   <x-slot name="header">
     <x-sub-nav :userId="$userId" />
   </x-slot>
-
+  {{-- @dd($promoter) --}}
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
@@ -51,34 +51,22 @@
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
-              @if ($dashboardType === 'promoter')
-                <div class="group mb-4 hidden">
-                  <x-input-label-dark :required="true">Promoter</x-input-label-dark>
-                  <span>This is supposed to be hidden...naughty naughty</span>
-                  <x-text-input class="w-auto" id="promoter_id" name="promoter_id" value="{{ $role->id }}"
-                    :required="true"></x-text-input>
-                  @error('promoter_id')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-              @else
-                <div class="group mb-4">
-                  <x-input-label-dark>Promoter</x-input-label-dark>
-                  <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
-                    :value="old('')"></x-text-input>
-                  <ul id="promoter-suggestions"
-                    class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
-                  </ul>
-                  <x-input-label-dark>Promoter ID</x-input-label-dark>
-                  <x-text-input id="promoter_ids" name="promoter_ids" :value="old('')"></x-text-input>
-                  <ul id="promoter-suggestions"
-                    class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
-                  </ul>
-                  @error('promoter_name')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-              @endif
+              <div class="group mb-4">
+                <x-input-label-dark>Promoter</x-input-label-dark>
+                <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
+                  :value="old('promoter_name', $promoterData ? $promoterData['name'] : '')"></x-text-input>
+                <ul id="promoter-suggestions"
+                  class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
+                </ul>
+                <x-input-label-dark>Promoter ID</x-input-label-dark>
+                <x-text-input id="promoter_ids" name="promoter_ids" :value="old('')"></x-text-input>
+                <ul id="promoter-suggestions"
+                  class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
+                </ul>
+                @error('promoter_name')
+                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                @enderror
+              </div>
 
               <div class="group mb-4">
                 <x-input-label-dark :required="true">Description</x-input-label-dark>

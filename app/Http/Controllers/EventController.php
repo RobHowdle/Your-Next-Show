@@ -203,11 +203,19 @@ class EventController extends Controller
     public function createNewEvent($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $promoterData = [];
 
         $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
         switch ($dashboardType) {
             case 'promoter':
                 $role = $user->promoters()->first();
+
+                if ($role) {
+                    $promoterData = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                };
                 break;
             case 'artist':
                 $role = $user->otherService('service')->first();
@@ -231,6 +239,7 @@ class EventController extends Controller
 
         return view('admin.dashboards.new-event', [
             'role' => $role,
+            'promoterData' => $promoterData,
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'modules' => $modules,
@@ -563,6 +572,38 @@ class EventController extends Controller
                 }
             }
 
+            $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
+            switch ($dashboardType) {
+                case 'promoter':
+                    $role = $user->promoters()->first();
+
+                    if ($role) {
+                        $promoterData = [
+                            'id' => $role->id,
+                            'name' => $role->name,
+                        ];
+                    };
+                    break;
+                case 'artist':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'designer':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'videographer':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'photographer':
+                    $role = $user->otherService('service')->first();
+                    break;
+                case 'venue':
+                    $role = $user->venues()->first();
+                    break;
+                default:
+                    $role = 'guest';
+                    break;
+            }
+
             // Get existing poster URL
             $posterUrl = $event->poster_url;
             $hasPoster = !empty($posterUrl);
@@ -584,7 +625,9 @@ class EventController extends Controller
                     'bandObjects' => $bandObjects,
                     'opener' => $opener,
                     'posterUrl' => $posterUrl,
-                    'hasPoster' => $hasPoster
+                    'hasPoster' => $hasPoster,
+                    'promoterData' => $promoterData,
+                    'role' => $role,
                 ]
             );
         } catch (\Exception $e) {
