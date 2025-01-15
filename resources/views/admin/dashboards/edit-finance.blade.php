@@ -31,8 +31,7 @@
 
               <div class="group">
                 <x-input-label-dark :required="true">Date From</x-input-label-dark>
-                <x-date-time-input id="date_from" name="date_from" :required="true"
-                  :value="old('date_from', $finance->date_from)"></x-date-time-input>
+                <x-date-input id="date_from" name="date_from" :required="true" :value="old('date_from', $finance->date_from)"></x-date-input>
                 @error('date_from')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -40,8 +39,7 @@
 
               <div class="group">
                 <x-input-label-dark :required="true">Date To</x-input-label-dark>
-                <x-date-time-input id="date_to" name="date_to" :required="true"
-                  :value="old('date_to', $finance->date_to)"></x-date-time-input>
+                <x-date-input id="date_to" name="date_to" :required="true" :value="old('date_to', $finance->date_to)"></x-date-input>
                 @error('date_to')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -49,54 +47,79 @@
 
               <div class="group">
                 <x-input-label-dark>Link To Event</x-input-label-dark>
-                <x-text-input id="link_to_event" name="link_to_event" :value="old('link_to_event', $finance->link_to_event)"></x-text-input>
-                @error('link_to_event')
+                <x-text-input id="external_link" name="external_link" :value="old('external_link', $finance->external_link)"></x-text-input>
+                @error('external_link')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
             </div>
 
             @php
-              $incomes = json_decode($finance->incoming, true);
-              $presale = collect($incomes)->where('field', 'income_presale')->first()['value'] ?? 0;
-              $otd = collect($incomes)->where('field', 'income_otd')->first()['value'] ?? 0;
+              $incoming = json_decode($finance->incoming, true) ?? [];
+              $otherIncoming = json_decode($finance->other_incoming, true) ?? [];
+
+              // Get standard income values
+              $presale = collect($incoming)->where('field', 'income_presale')->first()['value'] ?? 0;
+              $otd = collect($incoming)->where('field', 'income_otd')->first()['value'] ?? 0;
             @endphp
 
             <p class="my-4 text-xl font-bold">Incoming</p>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+              {{-- Presale Income --}}
               <div class="income group">
                 <x-input-label-dark>Presale Tickets</x-input-label-dark>
-                <x-number-input-pound id="income_presale" name="income_presale" :value="old('income_presale', $presale)">
-                </x-number-input-pound>
+                <x-number-input-pound id="income_presale" name="income_presale"
+                  :value="old('income_presale', $presale)"></x-number-input-pound>
                 @error('income_presale')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
+              {{-- On The Door Income --}}
               <div class="income group">
                 <x-input-label-dark>On The Door Tickets</x-input-label-dark>
-                <x-number-input-pound id="income_otd" name="income_otd" :value="old('income_otd', $otd)">
-                </x-number-input-pound>
+                <x-number-input-pound id="income_otd" name="income_otd" :value="old('income_otd', $otd)"></x-number-input-pound>
                 @error('income_otd')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
+              {{-- Other Income Items --}}
+              @foreach ($otherIncoming as $income)
+                <div class="income custom-row group grid grid-cols-[1fr,auto] gap-4">
+                  <div>
+                    <x-input-label-dark>{{ $income['label'] }}</x-input-label-dark>
+                    <x-number-input-pound id="income_other_{{ $loop->index }}" name="income_other[]"
+                      :value="old('income_other.' . $loop->index, $income['value'])"></x-number-input-pound>
+                    <input type="hidden" name="income_label[]" value="{{ $income['label'] }}">
+                  </div>
+                  <button type="button"
+                    class="remove-income-row mt-6 h-10 rounded-lg border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700"
+                    onclick="this.closest('.custom-row').remove(); calculateTotals();">
+                    <span class="fas fa-times"></span>
+                  </button>
+                </div>
+              @endforeach
             </div>
 
             <button id="add-income-row"
-              class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Add
-              Row <span class="fas fa-plus"></span></button>
+              class="mt-8 rounded-lg border border-green-500 bg-green-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-green-700 hover:bg-green-700">
+              <span class="fas fa-plus-circle mr-2"></span>Add Income
+            </button>
 
             @php
-              $outgoings = json_decode($finance->outgoing, true);
-              $venue = collect($outgoings)->where('field', 'outgoing_venue')->first()['value'] ?? 0;
-              $band = collect($outgoings)->where('field', 'outgoing_band')->first()['value'] ?? 0;
-              $promotion = collect($outgoings)->where('field', 'outgoing_promotion')->first()['value'] ?? 0;
-              $rider = collect($outgoings)->where('field', 'outgoing_rider')->first()['value'] ?? 0;
+              $outgoing = json_decode($finance->outgoing, true) ?? [];
+              $otherOutgoing = json_decode($finance->other_outgoing, true) ?? [];
+
+              // Get standard outgoing values
+              $venue = collect($outgoing)->where('field', 'outgoing_venue')->first()['value'] ?? 0;
+              $band = collect($outgoing)->where('field', 'outgoing_band')->first()['value'] ?? 0;
+              $promotion = collect($outgoing)->where('field', 'outgoing_promotion')->first()['value'] ?? 0;
+              $rider = collect($outgoing)->where('field', 'outgoing_rider')->first()['value'] ?? 0;
             @endphp
 
             <p class="my-4 text-xl font-bold">Outgoings</p>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+              {{-- Standard Outgoings --}}
               <div class="outgoing group">
                 <x-input-label-dark>Venue</x-input-label-dark>
                 <x-number-input-pound id="outgoing_venue" name="outgoing_venue"
@@ -131,12 +154,29 @@
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
+
+              {{-- Other Outgoing Items --}}
+              @foreach ($otherOutgoing as $outgoing)
+                <div class="outgoing custom-row group grid grid-cols-[1fr,auto] gap-4">
+                  <div>
+                    <x-input-label-dark>{{ $outgoing['label'] }}</x-input-label-dark>
+                    <x-number-input-pound id="outgoing_other_{{ $loop->index }}" name="outgoing_other[]"
+                      :value="old('outgoing_other.' . $loop->index, $outgoing['value'])"></x-number-input-pound>
+                    <input type="hidden" name="outgoing_label[]" value="{{ $outgoing['label'] }}">
+                  </div>
+                  <button type="button"
+                    class="remove-outgoing-row mt-6 h-10 rounded-lg border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700"
+                    onclick="this.closest('.custom-row').remove(); calculateTotals();">
+                    <span class="fas fa-times"></span>
+                  </button>
+                </div>
+              @endforeach
             </div>
 
             <button id="add-outgoing-row"
-              class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Add
-              Row
-              <span class="fas fa-plus"></span></button>
+              class="mt-8 rounded-lg border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
+              <span class="fas fa-minus-circle mr-2"></span>Add Outgoing
+            </button>
             <div class="group mt-4">
               <x-button type="submit" label="Save"></x-button>
             </div>
@@ -160,7 +200,8 @@
           <p class="mt-8">Total Incoming: <span id="income_total" name="income_total"></span></p>
           <p>Total Outgoings: <span id="outgoing_total" name="outgoing_total"></span></p>
           <p class="mt-4 text-lg font-bold">Total Profit: <span id="profit_total" name="profit_total"></span></p>
-          <p class="mt-4 text-lg"><span id="desired_profit_remaining" name="desired_profit_remaining"></span></p>
+          <p class="mt-4 text-lg"><span id="desired_profit_remaining" name="desired_profit_remaining"></span>
+          </p>
 
           <button
             class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Export
@@ -171,18 +212,33 @@
   </div>
 </x-app-layout>
 
-
 <script>
+  let desiredProfit, incomePresale, incomeOtd, incomeOther = 0,
+    outgoingVenue, outgoingBand, outgoingPromotion,
+    outgoingRider, outgoingOther = 0,
+    incomeTotal = 0,
+    outgoingTotal = 0,
+    profitTotal = 0,
+    remainingDesiredProfit = 0;
+
+  // Single document ready with all handlers
   jQuery(document).ready(function() {
-    let desiredProfit, incomePresale, incomeOtd, incomeOther = 0,
-      outgoingVenue, outgoingBand, outgoingPromotion,
-      outgoingRider, outgoingOther = 0,
-      incomeTotal = 0,
-      outgoingTotal = 0,
-      profitTotal = 0;
+    // Initialize date pickers
+    flatpickr('#date_from', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      dateFormat: "d-m-Y",
+    });
+
+    flatpickr('#date_to', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      dateFormat: "d-m-Y",
+    });
+
     const dashboardType = "{{ $dashboardType }}";
 
-
+    // Global calculate function
     function calculateTotals() {
       desiredProfit = parseFloat(jQuery('#desired_profit').val()) || 0;
       incomePresale = parseFloat(jQuery('#income_presale').val()) || 0;
@@ -203,21 +259,22 @@
       outgoingTotal = outgoingVenue + outgoingBand + outgoingPromotion + outgoingRider + outgoingOther;
       profitTotal = incomeTotal - outgoingTotal;
 
-      let remainingDesiredProfit = 0;
-      let numericValue = '';
+      let profitMessage = '';
 
       // Check if the profits are valid numbers
       if (isNaN(profitTotal) || isNaN(desiredProfit)) {
-        remainingDesiredProfit = 'Total profit or desired profit is not a number.';
+        profitMessage = 'Total profit or desired profit is not a number.';
+        remainingDesiredProfit = 0;
       } else {
-        if (profitTotal === desiredProfit) {
-          remainingDesiredProfit = 'You have made your desired profit! Well Done!';
-        } else if (profitTotal > desiredProfit) {
-          numericValue = profitTotal - desiredProfit; // Isolate the numeric difference
-          remainingDesiredProfit = 'You have exceeded your desired profit by ' + formatCurrency(numericValue) + '!';
+        remainingDesiredProfit = desiredProfit - profitTotal;
+
+        if (remainingDesiredProfit === 0) {
+          profitMessage = 'You have made your desired profit! Well Done!';
+        } else if (remainingDesiredProfit < 0) {
+          profitMessage = 'You have ceeded your desired profit by ' + formatCurrency(Math.abs(
+            remainingDesiredProfit)) + '!';
         } else {
-          numericValue = desiredProfit - profitTotal; // Isolate the numeric difference
-          remainingDesiredProfit = 'You need ' + formatCurrency(numericValue) + ' to achieve your desired profit.';
+          profitMessage = 'You need ' + formatCurrency(remainingDesiredProfit) + ' to achieve your desired profit.';
         }
       }
 
@@ -233,90 +290,90 @@
       jQuery('#income_total').text(formatCurrency(incomeTotal));
       jQuery('#outgoing_total').text(formatCurrency(outgoingTotal));
       jQuery('#profit_total').text(formatCurrency(profitTotal));
-      jQuery('#desired_profit_remaining').text(remainingDesiredProfit);
-
-      // Prepare for form submission
-      jQuery('#finances-form').data('numericValue', numericValue);
+      jQuery('#desired_profit_remaining').data('value', remainingDesiredProfit);
+      jQuery('#desired_profit_remaining').text(profitMessage);
     }
 
-    // Recalculate on input changes
-    jQuery('#finances-form').on('input', 'input', function() {
+    jQuery(document).ready(function() {
+      const dashboardType = "{{ $dashboardType }}";
       calculateTotals();
-    });
 
-    // Add income row functionality
-    document.getElementById('add-income-row').addEventListener('click', function(event) {
-      event.preventDefault();
-      const newRow = document.createElement('div');
-      newRow.classList.add('grid', 'grid-cols-2', 'gap-x-8', 'gap-y-4', 'items-end');
-      newRow.innerHTML = `
-        <div class="income group mt-4">
-            <x-input-label-dark>Other Income</x-input-label-dark>
-            <x-number-input-pound class="income_other" name="income_other"></x-number-input-pound>
-        </div>
-        <button class="remove-other-income-row rounded-lg h-10 bg-yns_dark_orange px-4 py-2 font-heading text-black border border-yns_dark_orange hover:text-white hover:border-white transition duration-150 ease-in-out">Remove <span class="fas fa-minus"></span></button>
-      `;
-      this.parentNode.insertBefore(newRow, this);
-      newRow.querySelector('.remove-other-income-row').addEventListener('click', function() {
-        newRow.remove();
+      // Watch for changes
+      jQuery('#finances-form').on('input', function() {
         calculateTotals();
       });
     });
 
-    // Add outgoing row functionality
-    document.getElementById('add-outgoing-row').addEventListener('click', function(event) {
-      event.preventDefault();
-      const newRow = document.createElement('div');
-      newRow.classList.add('grid', 'grid-cols-2', 'gap-x-8', 'gap-y-4', 'items-end');
-      newRow.innerHTML = `
-          <div class="outgoing group mt-4">
-              <x-input-label-dark>Other Outgoing</x-input-label-dark>
-              <x-number-input-pound class="outgoing_other" name="outgoing_other"></x-number-input-pound>
-          </div>
-          <button class="remove-other-outgoing-row rounded-lg h-10 bg-yns_dark_orange px-4 py-2 font-heading text-black border border-yns_dark_orange hover:text-white hover:border-white transition duration-150 ease-in-out">Remove <span class="fas fa-minus"></span></button>
-      `;
-      this.parentNode.insertBefore(newRow, this);
-      newRow.querySelector('.remove-other-outgoing-row').addEventListener('click', function() {
-        newRow.remove();
-        calculateTotals();
-      });
-    });
-
-    // Handle form submission
     jQuery('#finances-form').on('submit', function(event) {
       event.preventDefault();
       const formData = new FormData(this);
 
-      // Clear previous values for income_other
+      // Add budget name and other required fields
+      formData.append('budget_name', jQuery('#budget_name').val());
+      formData.append('date_from', jQuery('#date_from').val());
+      formData.append('date_to', jQuery('#date_to').val());
+      formData.append('external_link', jQuery('#external_link').val());
+      formData.append('desired_profit', jQuery('#desired_profit').val());
+
+      // Standard income fields
+      formData.append('income_presale', jQuery('#income_presale').val() || 0);
+      formData.append('income_otd', jQuery('#income_otd').val() || 0);
+
+      // Standard outgoing fields
+      formData.append('outgoing_venue', jQuery('#outgoing_venue').val() || 0);
+      formData.append('outgoing_band', jQuery('#outgoing_band').val() || 0);
+      formData.append('outgoing_promotion', jQuery('#outgoing_promotion').val() || 0);
+      formData.append('outgoing_rider', jQuery('#outgoing_rider').val() || 0);
+
+      // Clear and re-add arrays
       formData.delete('income_other[]');
-      // Add individual income_other values
-      jQuery('.income_other').each(function() {
-        const value = parseFloat(jQuery(this).val()) || 0; // Get the value, default to 0 if NaN
-        formData.append('income_other[]', value); // Append as an array
+      formData.delete('income_label[]');
+      jQuery('.income_other').each(function(index) {
+        const value = parseFloat(jQuery(this).val()) || 0;
+        const label = jQuery(this).closest('.income.group').prev().find('input.income_label').val();
+        formData.append('income_other[]', value);
+        formData.append('income_label[]', label || '');
       });
 
-      // Clear previous values for outgoing_other
       formData.delete('outgoing_other[]');
-      // Add individual outgoing_other values
-      jQuery('.outgoing_other').each(function() {
-        const value = parseFloat(jQuery(this).val()) || 0; // Get the value, default to 0 if NaN
-        formData.append('outgoing_other[]', value); // Append as an array
+      formData.delete('outgoing_label[]');
+      jQuery('.outgoing_other').each(function(index) {
+        const value = parseFloat(jQuery(this).val()) || 0;
+        const label = jQuery(this).closest('.outgoing.group').prev().find('input.outgoing_label').val();
+        formData.append('outgoing_other[]', value);
+        formData.append('outgoing_label[]', label || '');
       });
 
-      // Append isolated numeric values
-      const numericValue = jQuery('#finances-form').data('numericValue'); // Retrieve the stored numeric value
-      formData.append('desired_profit_remaining', numericValue);
-
-      // Other values
+      // Add totals
       formData.append('income_total', jQuery('#income_total').text().replace(/[^0-9.-]+/g, ""));
       formData.append('outgoing_total', jQuery('#outgoing_total').text().replace(/[^0-9.-]+/g, ""));
       formData.append('profit_total', jQuery('#profit_total').text().replace(/[^0-9.-]+/g, ""));
+      formData.append('desired_profit_remaining', remainingDesiredProfit);
+
+      jQuery('.income.custom-row:not(.deleted)').each(function() {
+        const value = jQuery(this).find('input[name="income_other[]"]').val();
+        const label = jQuery(this).find('input[name="income_label[]"]').val();
+        formData.append('income_other[]', value);
+        formData.append('income_label[]', label);
+      });
+
+      // Collect all outgoing rows (existing + new)
+      jQuery('.outgoing.custom-row:not(.deleted)').each(function() {
+        const value = jQuery(this).find('input[name="outgoing_other[]"]').val();
+        const label = jQuery(this).find('input[name="outgoing_label[]"]').val();
+        formData.append('outgoing_other[]', value);
+        formData.append('outgoing_label[]', label);
+      });
 
       // AJAX request
-      $.ajax({
-        url: "{{ route('admin.dashboard.store-new-finance', ['dashboardType' => ':dashboardType']) }}"
+      jQuery.ajax({
+        url: "{{ route('admin.dashboard.update-finance', ['dashboardType' => ':dashboardType', 'id' => $finance->id]) }}"
           .replace(':dashboardType', dashboardType),
         type: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content'),
+          'X-HTTP-Method-Override': 'PUT'
+        },
         data: formData,
         contentType: false,
         processData: false,
@@ -326,31 +383,61 @@
             setTimeout(() => {
               window.location.href = response.redirect_url;
             }, 2000);
-          } else {
-            if (Array.isArray(response.message)) {
-              response.message.forEach(function(error) {
-                showFailureNotification(error);
-              });
-            } else {
-              showFailureNotification(response.message ||
-                'Something went wrong, please try again later!');
-            }
           }
         },
-        error: function(response) {
-          showFailureNotification(response.responseJSON.message);
-          // Clear existing error messages
-          $('.error-message').remove();
-
-          // Show individual field errors
-          const errors = response.responseJSON.errors;
-          Object.keys(errors).forEach(field => {
-            const errorMessage = errors[field][0];
-            $(`#${field}`).after(`
-                    <p class="error-message text-yns_red mt-1 text-sm">${errorMessage}</p>
-                `);
-          });
+        error: function(xhr, status, error) {
+          showFailureNotification('Error updating budget');
         }
+      });
+    });
+
+    // Add income row functionality
+    document.getElementById('add-income-row').addEventListener('click', function(event) {
+      event.preventDefault();
+      const newRow = document.createElement('div');
+      newRow.classList.add('grid', 'grid-cols-3', 'gap-x-8', 'gap-y-4', 'items-end');
+      newRow.innerHTML = `
+        <div class="income group mt-4">
+            <x-input-label-dark>Label</x-input-label-dark>
+            <x-text-input class="income_label" name="income_label[]" placeholder="e.g. Donation"></x-text-input>
+        </div>
+        <div class="income group mt-4">
+            <x-input-label-dark>Amount</x-input-label-dark>
+            <x-number-input-pound class="income_other" name="income_other[]"></x-number-input-pound>
+        </div>
+        <button class="remove-row remove-income-row h-10 rounded-lg border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
+            <span class="fas fa-trash mr-2"></span>Remove
+        </button>
+      `;
+      this.parentNode.insertBefore(newRow, this);
+      newRow.querySelector('.remove-row').addEventListener('click', function() {
+        newRow.remove();
+        calculateTotals();
+      });
+    });
+
+    // Add outgoing row functionality
+    document.getElementById('add-outgoing-row').addEventListener('click', function(event) {
+      event.preventDefault();
+      const newRow = document.createElement('div');
+      newRow.classList.add('grid', 'grid-cols-3', 'gap-x-8', 'gap-y-4', 'items-end');
+      newRow.innerHTML = `
+        <div class="outgoing group mt-4">
+            <x-input-label-dark>Label</x-input-label-dark>
+            <x-text-input class="outgoing_label" name="outgoing_label[]" placeholder="e.g. Security"></x-text-input>
+        </div>
+        <div class="outgoing group mt-4">
+            <x-input-label-dark>Amount</x-input-label-dark>
+            <x-number-input-pound class="outgoing_other" name="outgoing_other[]"></x-number-input-pound>
+        </div>
+        <button class="remove-row h-10 rounded-lg remove-outgoing-row border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
+            <span class="fas fa-trash mr-2"></span>Remove
+        </button>
+      `;
+      this.parentNode.insertBefore(newRow, this);
+      newRow.querySelector('.remove-row').addEventListener('click', function() {
+        newRow.remove();
+        calculateTotals();
       });
     });
   });

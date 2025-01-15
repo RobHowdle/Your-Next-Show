@@ -293,10 +293,10 @@ class SubNav extends Component
                 $endOfYear = Carbon::now()->endOfYear();
 
                 $jobsCountYTD = DB::table('job_service')
-                    ->join('jobs', 'job_service.job_id', '=', 'jobs.id')
+                    ->join('module_jobs', 'job_service.job_id', '=', 'module_jobs.id')
                     ->where('serviceable_id', $photographerCompany->id)
                     ->where('serviceable_type', 'App\Models\OtherService')
-                    ->whereBetween('jobs.job_start_date', [$startOfYear, $endOfYear])
+                    ->whereBetween('module_jobs.job_start_date', [$startOfYear, $endOfYear])
                     ->count();
 
                 return $jobsCountYTD;
@@ -459,10 +459,10 @@ class SubNav extends Component
                 $endOfYear = Carbon::now()->endOfYear();
 
                 $jobsCountDesignerYTD = DB::table('job_service')
-                    ->join('jobs', 'job_service.job_id', '=', 'jobs.id')
+                    ->join('module_jobs', 'job_service.job_id', '=', 'module_jobs.id')
                     ->where('serviceable_id', $designerCompany->id)
                     ->where('serviceable_type', 'App\Models\OtherService')
-                    ->whereBetween('jobs.job_start_date', [$startOfYear, $endOfYear])
+                    ->whereBetween('module_jobs.job_start_date', [$startOfYear, $endOfYear])
                     ->count();
 
                 return $jobsCountDesignerYTD;
@@ -510,10 +510,10 @@ class SubNav extends Component
                 $endOfYear = Carbon::now()->endOfYear();
 
                 $jobsCountDesignerYTD = DB::table('job_service')
-                    ->join('jobs', 'job_service.job_id', '=', 'jobs.id')
+                    ->join('module_jobs', 'job_service.job_id', '=', 'module_jobs.id')
                     ->where('serviceable_id', $videographerCompany->id)
                     ->where('serviceable_type', 'App\Models\OtherService')
-                    ->whereBetween('jobs.job_start_date', [$startOfYear, $endOfYear])
+                    ->whereBetween('module_jobs.job_start_date', [$startOfYear, $endOfYear])
                     ->count();
 
                 return $jobsCountDesignerYTD;
