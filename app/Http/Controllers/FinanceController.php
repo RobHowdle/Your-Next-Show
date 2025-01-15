@@ -161,6 +161,7 @@ class FinanceController extends Controller
     public function storeFinance($dashboardType, StoreUpdateFinanceRequest $request)
     {
         $modules = collect(session('modules', []));
+        $validated = $request->validated();
         $user = Auth::user();
         $service = null;
         $serviceType = null;
@@ -185,79 +186,32 @@ class FinanceController extends Controller
             $serviceType = 'App\Models\Venue';
         }
 
+        $dateFrom = Carbon::createFromFormat('d-m-Y', $validated['date_from'])->format('Y-m-d');
+        $dateTo = Carbon::createFromFormat('d-m-Y', $validated['date_to'])->format('Y-m-d');
+
         try {
-            $desiredProfit = $request->validated()['desired_profit'];
-            $budgetName = $request->validated()['budget_name'];
-            $dateFrom = $request->validated()['date_from'];
-            $dateTo = $request->validated()['date_to'];
-            $linkToEvent = $request->validated()['link_to_event'];
-            $incomePresale = $request->validated()['income_presale'];
-            $incomeOtd = $request->validated()['income_otd'];
-            $incomeOthers = $request->input('income_other', []);
-            $outgoingVenue = $request->validated()['outgoing_venue'];
-            $outgoingBand = $request->validated()['outgoing_band'];
-            $outgoingPromotion = $request->validated()['outgoing_promotion'];
-            $outgoingRider = $request->validated()['outgoing_rider'];
-            $outgoingOthers = $request->input('outgoing_other', []);
-            $incomeTotal = $request->validated()['income_total'];
-            $outgoingTotal = $request->validated()['outgoing_total'];
-            $profitTotal = $request->validated()['profit_total'];
-            $desiredProfitRemaining = $request->validated()['desired_profit_remaining'];
-
-            $incoming = json_encode([
-                [
-                    'field' => 'income_presale',
-                    'value' => $incomePresale,
-                ],
-                [
-                    'field' => 'income_otd',
-                    'value' => $incomeOtd,
-                ]
-            ]);
-
-            $outgoing = json_encode([
-                [
-                    'field' => 'outgoing_venue',
-                    'value' => $outgoingVenue,
-                ],
-                [
-                    'field' => 'outgoing_band',
-                    'value' => $outgoingBand,
-                ],
-                [
-                    'field' => 'outgoing_promotion',
-                    'value' => $outgoingPromotion,
-                ],
-                [
-                    'field' => 'outgoing_rider',
-                    'value' => $outgoingRider,
-                ],
-            ]);
-
-            $totalIncomeOther = array_sum($incomeOthers);
-            $totalOutgoingOther = array_sum($outgoingOthers);
-            $incomeOthersJson = json_encode($incomeOthers);
-            $outgoingOthersJson = json_encode($outgoingOthers);
-
+            // Income calculations
+            $incomeData = $this->formatAndCalculateIncome($validated);
+            $outgoingData = $this->formatAndCalculateOutgoing($validated);
 
             $newPromoterBudget = Finance::create([
                 'user_id' => $user->id,
                 'serviceable_id' => $service->id,
                 'serviceable_type' => $serviceType,
                 'finance_type' => 'Budget',
-                'name' => $budgetName,
+                'name' => $validated['budget_name'],
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
-                'external_link' => $linkToEvent,
-                'incoming' => $incoming,
-                'other_incoming' => $incomeOthersJson,
-                'outgoing' => $outgoing,
-                'other_outgoing' => $outgoingOthersJson,
-                'desired_profit' => $desiredProfit,
-                'total_incoming' => $incomeTotal,
-                'total_outgoing' => $outgoingTotal,
-                'total_profit' => $profitTotal,
-                'total_remaining_to_desired_profit' => $desiredProfitRemaining,
+                'external_link' => $validated['external_link'],
+                'incoming' => $incomeData['incoming'],
+                'other_incoming' => $incomeData['other_incoming'],
+                'outgoing' => $outgoingData['outgoing'],
+                'other_outgoing' => $outgoingData['other_outgoing'],
+                'desired_profit' => $validated['desired_profit'],
+                'total_incoming' => $validated['income_total'],
+                'total_outgoing' => $validated['outgoing_total'],
+                'total_profit' => $validated['profit_total'],
+                'total_remaining_to_desired_profit' => $validated['desired_profit_remaining'],
             ]);
 
             return response()->json([
@@ -265,12 +219,7 @@ class FinanceController extends Controller
                 'message' => 'Your Budget Saved!',
                 'redirect_url' => route(
                     'admin.dashboard.show-finance',
-                    [
-                        'userId' => $this->getUserId(),
-                        'dashboardType' => $dashboardType,
-                        'modules' => $modules,
-                        'id' => $newPromoterBudget->id,
-                    ]
+                    ['dashboardType' => $dashboardType, 'id' => $newPromoterBudget->id,]
                 )
             ]);
         } catch (\Exception $e) {
@@ -318,6 +267,82 @@ class FinanceController extends Controller
             'modules' => $modules,
             'finance' => $finance,
         ]);
+    }
+
+    public function updateFinance($dashboardType, StoreUpdateFinanceRequest $request, $id)
+    {
+        $finance = Finance::findOrFail($id);
+        $modules = collect(session('modules', []));
+        $validated = $request->validated();
+        $user = Auth::user();
+        $service = null;
+        $serviceType = null;
+
+        if ($dashboardType == 'promoter') {
+            $service = $user->promoters()->first();
+            $serviceType = 'App\Models\Promoter';
+        } elseif ($dashboardType == 'artist') {
+            $service = $user->otherService("Artist")->first();
+            $serviceType = 'App\Models\OtherService';
+        } elseif ($dashboardType == 'designer') {
+            $service = $user->otherService("Designer")->first();
+            $serviceType = 'App\Models\OtherService';
+        } elseif ($dashboardType == 'photographer') {
+            $service = $user->otherService("Photographer")->first();
+            $serviceType = 'App\Models\OtherService';
+        } elseif ($dashboardType == 'videographer') {
+            $service = $user->otherService("Videographer")->first();
+            $serviceType = 'App\Models\OtherService';
+        } elseif ($dashboardType == 'venue') {
+            $service = $user->venues()->first();
+            $serviceType = 'App\Models\Venue';
+        }
+
+        try {
+            // Format dates
+            $dateFrom = Carbon::createFromFormat('d-m-Y', $validated['date_from'])->format('Y-m-d');
+            $dateTo = Carbon::createFromFormat('d-m-Y', $validated['date_to'])->format('Y-m-d');
+
+            // Calculate and format income/outgoing data
+            $incomeData = $this->formatAndCalculateIncome($validated);
+            $outgoingData = $this->formatAndCalculateOutgoing($validated);
+
+            // dd($validated, $incomeData, $outgoingData);
+
+            // Update finance record
+            $finance->update([
+                'name' => $validated['budget_name'],
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'external_link' => $validated['external_link'],
+                'incoming' => json_decode($incomeData['incoming'], true),
+                'other_incoming' => $incomeData['other_incoming'],
+                'outgoing' => json_decode($outgoingData['outgoing'], true),
+                'other_outgoing' => json_decode($outgoingData['other_outgoing'], true),
+                'desired_profit' => $validated['desired_profit'],
+                'total_incoming' => $validated['income_total'],
+                'total_outgoing' => $validated['outgoing_total'],
+                'total_profit' => $validated['profit_total'],
+                'total_remaining_to_desired_profit' => $validated['desired_profit_remaining'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Budget Updated Successfully!',
+                'redirect_url' => route('admin.dashboard.show-finance', [
+                    'dashboardType' => $dashboardType,
+                    'id' => $finance->id
+                ])
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating budget:', ['message' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating budget. Please check the form for errors.',
+                'errors' => session('errors') ? session('errors')->getBag('default')->getMessages() : []
+            ], 422);
+        }
     }
 
     public function exportFinances(Request $request)
@@ -442,5 +467,80 @@ class FinanceController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="finances_graph_data.pdf"',
         ]);
+    }
+
+    public function exportSingleFinance($dashboardType, $id)
+    {
+        $finance = Finance::findOrFail($id);
+
+        // Generate the PDF
+        $pdf = Pdf::loadView('pdf.single_finance', compact('finance'));
+        $pdfContent = $pdf->output();
+
+        // Return the PDF to the browser
+        return response()->stream(function () use ($pdfContent) {
+            echo $pdfContent;
+        }, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="finance_data.pdf"',
+        ]);
+    }
+
+    private function formatAndCalculateIncome($data)
+    {
+        // Format standard income
+        $incoming = json_encode([
+            ['field' => 'income_presale', 'value' => floatval($data['income_presale'])],
+            ['field' => 'income_otd', 'value' => floatval($data['income_otd'])]
+        ]);
+
+        // Format other income
+        $otherIncoming = [];
+        if (isset($data['income_other']) && is_array($data['income_other'])) {
+            foreach ($data['income_other'] as $key => $value) {
+                $label = $data['income_label'][$key] ?? 'undefined';
+                $otherIncoming[] = [
+                    'field' => 'income_other_' . ($key + 1),
+                    'label' => $label,
+                    'value' => floatval($value)
+                ];
+            }
+        }
+
+        return [
+            'incoming' => $incoming,
+            'other_incoming' => json_encode($otherIncoming),
+            'total_incoming' => floatval($data['income_total'])
+        ];
+    }
+
+    private function formatAndCalculateOutgoing($data)
+    {
+        // Format standard outgoing
+        $outgoing = json_encode([
+            ['field' => 'outgoing_venue', 'value' => floatval($data['outgoing_venue'])],
+            ['field' => 'outgoing_band', 'value' => floatval($data['outgoing_band'])],
+            ['field' => 'outgoing_promotion', 'value' => floatval($data['outgoing_promotion'])],
+            ['field' => 'outgoing_rider', 'value' => floatval($data['outgoing_rider'])]
+        ]);
+
+        // Format other outgoing
+        $otherOutgoing = [];
+        if (isset($data['outgoing_other']) && is_array($data['outgoing_other'])) {
+            foreach ($data['outgoing_other'] as $key => $value) {
+                $label = $data['outgoing_label'][$key] ?? 'undefined';
+                $otherOutgoing[] = [
+                    'field' => 'outgoing_other_' . ($key + 1),
+                    'label' => $label,
+                    'value' => floatval($value)
+                ];
+            }
+        }
+
+        return [
+            'outgoing' => $outgoing,
+            'other_outgoing' => json_encode($otherOutgoing),
+            'total_outgoing' => floatval($data['outgoing_total'])
+        ];
     }
 }

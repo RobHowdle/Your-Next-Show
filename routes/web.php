@@ -149,8 +149,8 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::post('/finances/export', [FinanceController::class, 'exportFinances'])->name('admin.dashboard.finances.export');
         Route::get('/finances/{id}', [FinanceController::class, 'showSingleFinance'])->name('admin.dashboard.show-finance');
         Route::get('/finances/{id}/edit', [FinanceController::class, 'editFinance'])->name('admin.dashboard.edit-finance');
-        Route::put('/finances/{id}', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finance');
-        Route::post('/finances/{finance}', [FinanceController::class, 'exportSingleFinance'])->name('admin.dashboard.export-finance');
+        Route::put('/finances/{id}/update', [FinanceController::class, 'updateFinance'])->name('admin.dashboard.update-finance');
+        Route::post('/finances/{finance}/export', [FinanceController::class, 'exportSingleFinance'])->name('admin.dashboard.export-finance');
     });
 
     // Users
