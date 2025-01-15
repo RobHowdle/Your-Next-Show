@@ -194,13 +194,15 @@ class APIRequestsController extends Controller
             $query = $request->input('name');
             $cleanedQuery = cleanQuery($query);
 
-            $newPromoter = Promoter::create([
+            $newVenue = Venue::create([
                 'name' => $cleanedQuery,
                 'location' => 'Unknown',
                 'postal_town' => 'Unknown',
                 'longitude' => 0,
                 'latitude' => 0,
                 'description' => 'Nothing here yet!',
+                'in_house_gear' => 'Nothing here yet!',
+                'capacity' => 0,
                 'contact_name' => 'Unknown',
                 'contact_number' => '00000000000',
                 'contact_email' => 'blank@yournextshow.co.uk',
@@ -209,15 +211,16 @@ class APIRequestsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'promoter' => [
-                    'id' => $newPromoter->id,
-                    'name' => $newPromoter->name
+                'venue' => [
+                    'id' => $newVenue->id,
+                    'name' => $newVenue->name
                 ]
             ]);
         } catch (\Exception $e) {
+            \Log::error('Venue creation failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create promoter'
+                'message' => 'Failed to create venue'
             ], 500);
         }
     }

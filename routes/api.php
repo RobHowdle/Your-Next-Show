@@ -27,4 +27,4 @@ Route::post('/bands/create', [APIRequestsController::class, 'createBand']);
 Route::get('/promoters/search', [APIRequestsController::class, 'searchPromoters']);
 Route::post('/promoters/create', [APIRequestsController::class, 'createPromoter']);
 Route::get('/venues/search', [APIRequestsController::class, 'searchVenues']);
-Route::post('/venues/create', [APIRequestsController::class, 'createVenues']);
+Route::post('/venues/create', [APIRequestsController::class, 'createVenue']);
