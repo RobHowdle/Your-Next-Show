@@ -378,7 +378,6 @@
         contentType: false,
         processData: false,
         success: function(response) {
-          console.log('Success:', response);
           if (response.success === true) {
             showSuccessNotification(response.message);
             setTimeout(() => {
@@ -387,7 +386,6 @@
           }
         },
         error: function(xhr, status, error) {
-          console.error('Error:', xhr.responseJSON);
           showFailureNotification('Error updating budget');
         }
       });

@@ -182,7 +182,6 @@
 
     function calculateTotals() {
       desiredProfit = parseFloat(jQuery('#desired_profit').val()) || 0;
-      console.log(typeof(desiredProfit));
       incomePresale = parseFloat(jQuery('#income_presale').val()) || 0;
       incomeOtd = parseFloat(jQuery('#income_otd').val()) || 0;
       incomeOther = Array.from(jQuery('.income_other')).reduce((sum, input) => sum + (parseFloat(jQuery(input)
