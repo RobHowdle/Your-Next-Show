@@ -271,15 +271,12 @@
         if (remainingDesiredProfit === 0) {
           profitMessage = 'You have made your desired profit! Well Done!';
         } else if (remainingDesiredProfit < 0) {
-          profitMessage = 'You have exceeded your desired profit by ' + formatCurrency(Math.abs(
+          profitMessage = 'You have ceeded your desired profit by ' + formatCurrency(Math.abs(
             remainingDesiredProfit)) + '!';
         } else {
           profitMessage = 'You need ' + formatCurrency(remainingDesiredProfit) + ' to achieve your desired profit.';
         }
       }
-
-      console.log('Remaining Desired Profit:', remainingDesiredProfit);
-
 
       // Update displayed values
       jQuery('#preview_income_presale').text(formatCurrency(incomePresale));
@@ -310,7 +307,6 @@
     jQuery('#finances-form').on('submit', function(event) {
       event.preventDefault();
       const formData = new FormData(this);
-      console.log(remainingDesiredProfit);
 
       // Add budget name and other required fields
       formData.append('budget_name', jQuery('#budget_name').val());
@@ -334,7 +330,6 @@
       formData.delete('income_label[]');
       jQuery('.income_other').each(function(index) {
         const value = parseFloat(jQuery(this).val()) || 0;
-        // Fix label selector to target input directly
         const label = jQuery(this).closest('.income.group').prev().find('input.income_label').val();
         formData.append('income_other[]', value);
         formData.append('income_label[]', label || '');
@@ -344,7 +339,6 @@
       formData.delete('outgoing_label[]');
       jQuery('.outgoing_other').each(function(index) {
         const value = parseFloat(jQuery(this).val()) || 0;
-        // Fix label selector to target input directly
         const label = jQuery(this).closest('.outgoing.group').prev().find('input.outgoing_label').val();
         formData.append('outgoing_other[]', value);
         formData.append('outgoing_label[]', label || '');
@@ -355,6 +349,21 @@
       formData.append('outgoing_total', jQuery('#outgoing_total').text().replace(/[^0-9.-]+/g, ""));
       formData.append('profit_total', jQuery('#profit_total').text().replace(/[^0-9.-]+/g, ""));
       formData.append('desired_profit_remaining', remainingDesiredProfit);
+
+      jQuery('.income.custom-row:not(.deleted)').each(function() {
+        const value = jQuery(this).find('input[name="income_other[]"]').val();
+        const label = jQuery(this).find('input[name="income_label[]"]').val();
+        formData.append('income_other[]', value);
+        formData.append('income_label[]', label);
+      });
+
+      // Collect all outgoing rows (existing + new)
+      jQuery('.outgoing.custom-row:not(.deleted)').each(function() {
+        const value = jQuery(this).find('input[name="outgoing_other[]"]').val();
+        const label = jQuery(this).find('input[name="outgoing_label[]"]').val();
+        formData.append('outgoing_other[]', value);
+        formData.append('outgoing_label[]', label);
+      });
 
       // AJAX request
       jQuery.ajax({
@@ -401,7 +410,7 @@
         <button class="remove-row remove-income-row h-10 rounded-lg border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
             <span class="fas fa-trash mr-2"></span>Remove
         </button>
-    `;
+      `;
       this.parentNode.insertBefore(newRow, this);
       newRow.querySelector('.remove-row').addEventListener('click', function() {
         newRow.remove();
@@ -426,13 +435,12 @@
         <button class="remove-row h-10 rounded-lg remove-outgoing-row border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
             <span class="fas fa-trash mr-2"></span>Remove
         </button>
-    `;
+      `;
       this.parentNode.insertBefore(newRow, this);
       newRow.querySelector('.remove-row').addEventListener('click', function() {
         newRow.remove();
         calculateTotals();
       });
     });
-
   });
 </script>

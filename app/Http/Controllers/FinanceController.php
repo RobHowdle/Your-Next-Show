@@ -258,6 +258,8 @@ class FinanceController extends Controller
         $role = $user->roles->first()->name;
 
         $finance = Finance::findOrFail($id);
+        $otherIncoming = json_decode($finance->other_incoming, true) ?? [];
+        $otherOutgoing = json_decode($finance->other_outgoing, true) ?? [];
 
         return view('admin.dashboards.edit-finance', [
             'userId' => $this->getUserId(),
@@ -266,6 +268,8 @@ class FinanceController extends Controller
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'finance' => $finance,
+            'otherIncoming' => $otherIncoming,
+            'otherOutgoing' => $otherOutgoing,
         ]);
     }
 
