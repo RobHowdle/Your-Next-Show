@@ -265,8 +265,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/{dashboardType}/portfolio-image-upload', [ProfileController::class, 'uploadPortfolioImages'])->name('portfolio.upload');
     Route::get('/profile/{dashboardType}/settings', [ProfileController::class, 'settings'])->name('settings.index');
     Route::post('/profile/{dashboardType}/photographer-environment-types', [ProfileController::class, 'updateEnvironmentTypes'])->name('photographer.environment-types');
-    Route::get('/profile/{dashboardType}/communications', [ProfileController::class, 'communications'])->name('communications.index');
-    Route::post('/profile/{dashboardType}/communications/update', [ProfileController::class, 'updatePreferences'])->name('communications.updatePreferences');
+    // Route::get('/profile/{dashboardType}/communications', [ProfileController::class, 'communications'])->name('communications.index');
     Route::post('/profile/{dashboardType}/save-genres', [ProfileController::class, 'saveGenres'])->name('save-genres');
     Route::post('/profile/{dashboardType}/save-band-types', [ProfileController::class, 'saveBandTypes'])->name('save-band-types');
 

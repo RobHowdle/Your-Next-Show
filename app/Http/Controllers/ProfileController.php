@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\Promoter;
 use App\Models\ApiKeys;
+use App\Models\Promoter;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use App\Models\OtherService;
@@ -18,11 +18,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\StoreUpdateBandTypes;
 use App\Http\Requests\BandProfileUpdateRequest;
 use App\Http\Requests\VenueProfileUpdateRequest;
 use App\Http\Requests\PromoterProfileUpdateRequest;
 use App\Http\Requests\PhotographerProfileUpdateRequest;
-
+use App\Http\Requests\StoreUpdateBandGenres;
 
 class ProfileController extends Controller
 {
@@ -51,7 +52,7 @@ class ProfileController extends Controller
         // Initialize promoter variables
         $promoterData = [];
         $bandData = [];
-        $venueUserData = [];
+        $venueData = [];
         $photographerUserData = [];
         $standardUserData = [];
         $designerData = [];
@@ -62,7 +63,7 @@ class ProfileController extends Controller
         } elseif ($dashboardType === 'artist') {
             $bandData = $this->getBandData($user);
         } elseif ($dashboardType === 'venue') {
-            $venueUserData = $this->getVenueUserData($user);
+            $venueData = $this->getvenueData($user);
         } elseif ($dashboardType === 'photographer') {
             $photographerUserData = $this->getPhotographerData($user);
         } elseif ($dashboardType === 'standard') {
@@ -80,7 +81,7 @@ class ProfileController extends Controller
             'modules' => $userModules,
             'promoterData' => $promoterData,
             'bandData' => $bandData,
-            'venueUserData' => $venueUserData,
+            'venueData' => $venueData,
             'photographerUserData' => $photographerUserData,
             'standardUserData' => $standardUserData,
             'designerData' => $designerData,
@@ -250,7 +251,6 @@ class ProfileController extends Controller
 
     public function updateVenue($dashboardType, VenueProfileUpdateRequest $request, $user)
     {
-        dd('update venue');
         $user = User::findOrFail($user);
         $userId = $user->id;
         $userData = $request->validated();
@@ -663,6 +663,37 @@ class ProfileController extends Controller
         return Redirect::to('/');
     }
 
+    protected function getCommunicationSettings($user, $dashboardType)
+    {
+        // Get default preferences from config
+        $defaultPreferences = config('mailing_preferences.communication_preferences');
+        if (!$defaultPreferences) {
+            \Log::error('Mailing preferences config not loaded');
+            return [];
+        }
+
+        // Get user preferences from JSON field and ensure it's an array
+        $userPreferences = is_array($user->mailing_preferences)
+            ? $user->mailing_preferences
+            : json_decode($user->mailing_preferences, true) ?? [];
+
+        $communicationSettings = [];
+
+        // Map each preference to include name, description and enabled status
+        foreach ($defaultPreferences as $key => $preference) {
+            $communicationSettings[$key] = [
+                'name' => $preference['name'],
+                'description' => $preference['description'],
+                'is_enabled' => isset($userPreferences[$key])
+                    ? ($userPreferences[$key] === true ? 1 : 0)
+                    : ($preference['enabled'] ? 1 : 0)
+            ];
+        }
+
+        return $communicationSettings;
+    }
+
+
     protected function getModulesWithSettings($user, $dashboardType)
     {
         // Load all modules from config
@@ -692,11 +723,11 @@ class ProfileController extends Controller
         $promoter = $user->promoters()->first();
 
         // Basic Information
-        $promoterName = $promoter ? $promoter->name : '';
-        $promoterLocation = $promoter ? $promoter->location : '';
-        $promoterPostalTown = $promoter ? $promoter->postal_town : '';
-        $promoterLat = $promoter ? $promoter->latitude : '';
-        $promoterLong = $promoter ? $promoter->longitude : '';
+        $name = $promoter ? $promoter->name : '';
+        $location = $promoter ? $promoter->location : '';
+        $postalTown = $promoter ? $promoter->postal_town : '';
+        $lat = $promoter ? $promoter->latitude : '';
+        $long = $promoter ? $promoter->longitude : '';
         $logo = $promoter && $promoter->logo_url
             ? (filter_var($promoter->logo_url, FILTER_VALIDATE_URL) ? $promoter->logo_url : Storage::url($promoter->logo_url))
             : asset('images/system/yns_no_image_found.png');
@@ -739,11 +770,11 @@ class ProfileController extends Controller
         $data = json_decode($genreList, true) ?? [];
         $isAllGenres = in_array('All', $data);
         $genres = $data['genres'];
-        $promoterGenres = is_array($promoter->genre) ? $promoter->genre : json_decode($promoter->genre, true);
-        $normalizedPromoterGenres = [];
-        if ($promoterGenres) {
-            foreach ($promoterGenres as $genreName => $genreData) {
-                $normalizedPromoterGenres[$genreName] = [
+        $profileGenres = is_array($promoter->genre) ? $promoter->genre : json_decode($promoter->genre, true);
+        $normalizedProfileGenres = [];
+        if ($profileGenres) {
+            foreach ($profileGenres as $genreName => $genreData) {
+                $normalizedProfileGenres[$genreName] = [
                     'all' => $genreData['all'] ?? 'false',
                     'subgenres' => isset($genreData['subgenres'][0])
                         ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
@@ -772,11 +803,11 @@ class ProfileController extends Controller
         return [
             'promoter' => $promoter,
             'promoterId' => $promoter->id,
-            'promoterName' => $promoterName,
-            'promoterLocation' => $promoterLocation,
-            'promoterPostalTown' => $promoterPostalTown,
-            'promoterLat' => $promoterLat,
-            'promoterLong' => $promoterLong,
+            'name' => $name,
+            'location' => $location,
+            'postalTown' => $postalTown,
+            'lat' => $lat,
+            'long' => $long,
             'logo' => $logo,
             'description' => $description,
             'contact_name' => $contact_name,
@@ -788,25 +819,25 @@ class ProfileController extends Controller
             'myEvents' => $myEvents,
             'uniqueBands' => $uniqueBands,
             'genres' => $genres,
-            'promoterGenres' => $promoterGenres,
+            'profileGenres' => $profileGenres,
             'isAllGenres' => $isAllGenres,
-            'promoterGenres' => $normalizedPromoterGenres,
+            'normalizedProfileGenres' => $normalizedProfileGenres,
             'bandTypes' => $bandTypes,
             'apiProviders' => $apiProviders,
             'apiKeys' => $apiKeys,
         ];
     }
 
-    private function getVenueUserData(User $user)
+    private function getVenueData(User $user)
     {
         $venue = $user->venues()->first();
 
         // Basic Information
-        $venueName = $venue ? $venue->name : '';
-        $venueLocation = $venue ? $venue->location : '';
-        $venuePostalTown = $venue ? $venue->postal_town : '';
-        $venueLat = $venue ? $venue->latitude : '';
-        $venueLong = $venue ? $venue->longitude : '';
+        $name = $venue ? $venue->name : '';
+        $location = $venue ? $venue->location : '';
+        $postalTown = $venue ? $venue->postal_town : '';
+        $lat = $venue ? $venue->latitude : '';
+        $long = $venue ? $venue->longitude : '';
         $w3w = $venue ? $venue->w3w : '';
         $logo = $venue && $venue->logo_url
             ? (filter_var($venue->logo_url, FILTER_VALIDATE_URL) ? $venue->logo_url : Storage::url($venue->logo_url))
@@ -851,11 +882,11 @@ class ProfileController extends Controller
         $data = json_decode($genreList, true) ?? [];
         $isAllGenres = in_array('All', $data);
         $genres = $data['genres'];
-        $venueGenres = is_array($venue->genre) ? $venue->genre : json_decode($venue->genre, true);
-        $normalizedVenueGenres = [];
-        if ($venueGenres) {
-            foreach ($venueGenres as $genreName => $genreData) {
-                $normalizedVenueGenres[$genreName] = [
+        $profileGenres = is_array($venue->genre) ? $venue->genre : json_decode($venue->genre, true);
+        $normalizedProfileGenres = [];
+        if ($profileGenres) {
+            foreach ($profileGenres as $genreName => $genreData) {
+                $normalizedProfileGenres[$genreName] = [
                     'all' => $genreData['all'] ?? 'false',
                     'subgenres' => isset($genreData['subgenres'][0])
                         ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
@@ -869,11 +900,11 @@ class ProfileController extends Controller
 
         return [
             'venue' => $venue,
-            'venueName' => $venueName,
-            'venueLocation' => $venueLocation,
-            'venuePostalTown' => $venuePostalTown,
-            'venueLat' => $venueLat,
-            'venueLong' => $venueLong,
+            'name' => $name,
+            'location' => $location,
+            'postalTown' => $postalTown,
+            'lat' => $lat,
+            'long' => $long,
             'w3w' => $w3w,
             'logo' => $logo,
             'contact_number' => $contact_number,
@@ -882,13 +913,13 @@ class ProfileController extends Controller
             'description' => $description,
             'inHouseGear' => $inHouseGear,
             'myEvents' => $myEvents,
-            'contact_email' => $contact_email,
             'contact_name' => $contact_name,
+            'contact_email' => $contact_email,
             'uniqueBands' => $uniqueBands,
             'genres' => $genres,
-            'venueGenres' => $venueGenres,
+            'profileGenres' => $profileGenres,
             'isAllGenres' => $isAllGenres,
-            'venueGenres' => $normalizedVenueGenres,
+            'normalizedProfileGenres' => $normalizedProfileGenres,
             'bandTypes' => $bandTypes,
             'capacity' => $capacity,
             'additionalInfo' => $additionalInfo,
@@ -1337,53 +1368,6 @@ class ProfileController extends Controller
         }
     }
 
-    // Communication Prefs
-    protected function getCommunicationSettings($user, $dashboardType)
-    {
-        // Retrieve the user's mailing preferences (already decoded as array due to 'casts')
-        $mailingPreferences = $user->mailing_preferences;
-
-        // Define default preferences from config file
-        $defaultPreferences = config('mailing_preferences.communication_preferences');
-
-        // Merge the default preferences with the user's preferences (user preferences will override defaults)
-        return array_merge($defaultPreferences, $mailingPreferences);
-    }
-
-    public function updatePreferences(Request $request)
-    {
-        $user = auth()->user();
-
-        // Get the current mailing preferences, or set them to default if null
-        $preferences = $user->mailing_preferences ?? [
-            'system_announcements' => true,
-            'legal_or_policy_updates' => true,
-            'account_notifications' => true,
-            'event_invitations' => true,
-            'surveys_and_feedback' => true,
-            'birthday_anniversary_holiday' => true,
-        ];
-
-        // Ensure the preferences are an array, even if the stored value is a string
-        if (!is_array($preferences)) {
-            $preferences = json_decode($preferences, true) ?? [];
-        }
-
-        // Update the specific preference sent in the request
-        foreach ($request->all() as $key => $value) {
-            if (array_key_exists($key, $preferences)) {
-                $preferences[$key] = $value; // Update the preference with the new value (true or false)
-            }
-        }
-
-        // Save the updated preferences (this will store the array as JSON due to the model's cast)
-        $user->mailing_preferences = $preferences;
-        $user->save();
-
-        // Return a success message
-        return response()->json(['message' => 'Preferences updated successfully.']);
-    }
-
     /**
      * Get a unique list of bands linked to events associated with the given promoter.
      *
@@ -1604,120 +1588,119 @@ class ProfileController extends Controller
     /**
      * Save Genres
      */
-    public function saveGenres($dashboardType, Request $request)
+    public function saveGenres($dashboardType, StoreUpdateBandGenres $request)
     {
+        $validated = $request->validated();
         $user = User::where('id', Auth::user()->id)->first();
 
-        // Ensure the correct user is selected based on dashboard type
+        // Get correct user type
         switch ($dashboardType) {
             case 'promoter':
-                $promoter = $user->promoters()->first();
-                $userType = $promoter;
+                $userType = $user->promoters()->first();
                 break;
             case 'artist':
-                $band = $user->otherService('Artist')->first();
-                $userType = $band;
+                $userType = $user->otherService('Artist')->first();
                 break;
             case 'venue':
-                $venue = $user->venues()->first();
-                $userType = $venue;
+                $userType = $user->venues()->first();
                 break;
             case 'photography':
-                $photographer = $user->otherService('Photography')->first();
-                $userType = $photographer;
+                $userType = $user->otherService('Photography')->first();
                 break;
             default:
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid dashboard type',
+                    'message' => 'Invalid dashboard type'
                 ]);
         }
 
-        // Now continue with updating genres for the selected userType
-        if (isset($request['genres']) && !empty($request['genres'])) {
-            // Ensure stored genres are an array before merging
-            $storedGenres = is_array($userType->genre) ? $userType->genre : json_decode($userType->genre, true);
-            $newGenres = $request->input('genres');
-
-            $mergedGenres = array_merge($storedGenres, $newGenres);
-
-            // Only update if the genres have actually changed
-            if ($storedGenres !== $mergedGenres) {
-                // Save the merged genres as a JSON string
-                $userType->update(['genre' => $mergedGenres]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Genres successfully updated',
-                ]);
-            }
-        } else {
-            // Handle case where no genres are provided (set to empty array)
-            $userType->update(['genre' => []]);
-
+        if (!$userType) {
             return response()->json([
-                'success' => true,
-                'message' => 'Genres successfully reset',
+                'success' => false,
+                'message' => 'User type not found'
             ]);
         }
 
+        // Get existing genres from DB
+        $existingGenres = is_array($userType->genre)
+            ? $userType->genre
+            : json_decode($userType->genre, true) ?? [];
+
+        // Get new genres from request
+        $newGenres = $validated['genres'];
+
+        // Merge genres, preserving existing ones unless explicitly changed
+        $updatedGenres = array_replace_recursive($existingGenres, $newGenres);
+
+        // Save merged genres
+        $userType->update(['genre' => $updatedGenres]);
+
         return response()->json([
-            'success' => false,
-            'message' => 'No changes to genres',
+            'success' => true,
+            'message' => 'Genres successfully updated'
         ]);
     }
 
-    public function saveBandTypes($dashboardType, Request $request)
+    public function saveBandTypes($dashboardType, StoreUpdateBandTypes $request)
     {
-        $bandTypes = $request->input('band_types');
+        $validated = $request->validated();
 
+        $bandTypesData = $validated['band_types'];
         $user = User::where('id', Auth::user()->id)->first();
+
+        if (!$bandTypesData['allTypes'] && empty($bandTypesData['bandTypes'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'At least one artist type is required'
+            ], 422);
+        }
 
         // Ensure the correct user is selected based on dashboard type
         switch ($dashboardType) {
             case 'promoter':
-                $promoter = $user->promoters()->first();
-                $userType = $promoter;
+                $userType = $user->promoters()->first();
                 break;
             case 'artist':
-                $band = $user->otherService('Artist')->first();
-                $userType = $band;
+                $userType = $user->otherService('Artist')->first();
                 break;
             case 'venue':
-                $venue = Venue::where('user_id', $user->id)->first();
-                $userType = $venue;
+                $userType = $user->venues()->first();
                 break;
             case 'photographer':
-                $photographer = $user->otherService('Photography')->first();
-                $userType = $photographer;
+                $userType = $user->otherService('Photography')->first();
+                break;
+            case 'designer':
+                $userType = $user->otherService('Designer')->first();
+                break;
+            case 'videographer':
+                $userType = $user->otherService('Videography')->first();
                 break;
             default:
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid dashboard type',
+                    'message' => 'Invalid dashboard type'
                 ]);
         }
 
-        if (isset($bandTypes) && !empty($bandTypes)) {
-            $userType->update(['band_type' => json_encode($bandTypes)]);
-
+        if (!$userType) {
             return response()->json([
-                'success' => true,
-                'message' => 'Band Types successfully updated',
-            ]);
-        } else {
-            // Handle case where no genres are provided (set to empty array)
-            $userType->update(['band_type' => []]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Band Types successfully reset',
+                'success' => false,
+                'message' => 'User type not found'
             ]);
         }
 
+        // Structure the data for storage
+        if ($bandTypesData['allTypes']) {
+            $dataToStore = ['all'];
+        } else {
+            $dataToStore = array_values($bandTypesData['bandTypes']);
+        }
+
+        $userType->update(['band_type' => json_encode($dataToStore)]);
+
         return response()->json([
-            'success' => false,
-            'message' => 'No changes to band types',
+            'success' => true,
+            'message' => 'Band Types successfully updated'
         ]);
     }
 }

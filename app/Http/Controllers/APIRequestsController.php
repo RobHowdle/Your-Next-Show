@@ -384,7 +384,7 @@ class APIRequestsController extends Controller
             'userId' => 'required|integer|exists:users,id',
         ]);
 
-        $user = User::where('id', $request->userId)->first();
+        $user = User::findOrFail($request->userId);
 
         // Update the module settings in the database
         $module = UserModuleSetting::where('user_id', $user->id)->where('module_name', $request->module)->first();
@@ -397,5 +397,58 @@ class APIRequestsController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Module not found.'], 404);
+    }
+
+    public function updateCommunications(Request $request)
+    {
+        // Validate with proper structure
+        $request->validate([
+            'userId' => 'required|integer|exists:users,id',
+            'settings' => 'required|array',
+            'settings.*' => 'array',
+            'settings.*.is_enabled' => 'required|boolean',
+        ]);
+
+        try {
+            $user = User::findOrFail($request->userId);
+
+            // Get current preferences or set defaults
+            $preferences = $user->mailing_preferences ?? [
+                'system_announcements' => ['is_enabled' => true],
+                'legal_or_policy_updates' => ['is_enabled' => true],
+                'account_notifications' => ['is_enabled' => true],
+                'event_invitations' => ['is_enabled' => true],
+                'surveys_and_feedback' => ['is_enabled' => true],
+                'birthday_anniversary_holiday' => ['is_enabled' => true],
+            ];
+
+            // Ensure we have an array
+            if (!is_array($preferences)) {
+                $preferences = json_decode($preferences, true) ?? [];
+            }
+
+            // Update only the settings provided
+            foreach ($request->settings as $key => $setting) {
+                if (array_key_exists($key, $preferences)) {
+                    $preferences[$key]['is_enabled'] = $setting['is_enabled'];
+                }
+            }
+
+            // Save updates
+            $user->mailing_preferences = $preferences;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Communication preferences updated successfully',
+                'preferences' => $preferences
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update communication preferences',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

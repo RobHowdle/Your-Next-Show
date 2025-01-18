@@ -29,17 +29,17 @@
 
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
+  <!-- Include the Dropzone CSS and JS -->
   <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
   <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
 
+  <!-- Include PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
+  <!-- Include Select2 -->
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-  <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
 
   <!-- Include Flatpickr -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -63,6 +63,8 @@
   </script>
 
   @vite(['resources/css/app.css', 'resources/js/app.js'])
+  <!-- Include Summernote -->
+  <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
 </head>
 
 <body class="relative font-sans antialiased">
@@ -104,6 +106,8 @@
 
 </html>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+
 <!-- Google Maps API -->
 <script
   src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initializeMaps"

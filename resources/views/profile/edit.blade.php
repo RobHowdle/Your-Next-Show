@@ -3,6 +3,7 @@
       sidebarOpen: localStorage.getItem('sidebarOpen') === 'true',
       activeTab: 'profile',
       settingsOpen: false,
+      publicProfileOpen: false,
       init() {
           this.$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))
       }
@@ -31,6 +32,52 @@
               <i class="fa-solid fa-user h-5 w-5"></i>
               <span x-show="sidebarOpen" class="ml-3 transition-opacity duration-300">Profile</span>
             </button>
+
+            {{-- Public Profiles --}}
+            <div>
+              <button @click="publicProfileOpen = !publicProfileOpen"
+                class="hover:text-yns_pink flex w-full items-center justify-between px-8 py-2 text-white transition">
+                <div class="flex items-center">
+                  <i class="fa-solid fa-circle-user h-5 w-5"></i>
+                  <span x-show="sidebarOpen" class="ml-3">Public Profile</span>
+                </div>
+                <i x-show="sidebarOpen" class="fa-solid fa-chevron-down transition-transform duration-300"
+                  :class="{ 'rotate-180': publicProfileOpen }"></i>
+              </button>
+
+              <div x-show="publicProfileOpen && sidebarOpen" class="space-y-1 pl-12">
+                {{-- Role Specific Navigation --}}
+                @if ($dashboardType == 'promoter')
+                  @include('profile.partials.promoter-profile', [
+                      'promoterData' => $promoterData,
+                  ])
+                @elseif($dashboardType == 'artist')
+                  @include('profile.partials.band-profile', [
+                      'bandData' => $bandData,
+                  ])
+                @elseif($dashboardType == 'venue')
+                  @include('profile.partials.venue-profile', [
+                      'venueData' => $venueData,
+                  ])
+                @elseif($dashboardType == 'photographer')
+                  @include('profile.partials.photographer-profile', [
+                      'photographerUserData' => $photographerUserData ?? [],
+                  ])
+                @elseif($dashboardType == 'standard')
+                  @include('profile.partials.standard-profile', [
+                      'standardUserData' => $standardUserData,
+                  ])
+                @elseif($dashboardType == 'designer')
+                  @include('profile.partials.designer-profile', [
+                      'designerData' => $designerData,
+                  ])
+                @elseif($dashboardType == 'videographer')
+                  @include('profile.partials.videographer-profile', [
+                      'standardUserData' => $standardUserData,
+                  ])
+                @endif
+              </div>
+            </div>
 
             {{-- Settings --}}
             <div>
@@ -75,6 +122,46 @@
             <div x-show="activeTab === 'profile'">
               @include('profile.partials.edit-user-details')
             </div>
+            <div x-show="activeTab === 'basicInfo'">
+              @include('profile.basic-information-form', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'description'">
+              @include('profile.about', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'genresAndTypes'">
+              @include('profile.genres-and-types', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+
             <div x-show="activeTab === 'modules'">
               @include('profile.settings.modules', [
                   'modules' => $modules,

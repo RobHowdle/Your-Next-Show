@@ -1,16 +1,17 @@
 <header>
-  <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Venue Details') }}
+  <h2 class="text-md mb-4 font-heading font-medium text-white">
+    {{ __(ucfirst($dashboardType) . ' Details') }}
   </h2>
 </header>
-<form method="POST" action="{{ route('venue.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}"
+<form method="POST"
+  action="{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}"
   class="grid grid-cols-3 gap-x-8 gap-y-8" enctype="multipart/form-data">
   @csrf
   @method('PUT')
   <div class="col-start-1 col-end-2">
     <div class="group mb-6">
-      <x-input-label-dark for="name">Venue Name:</x-input-label-dark>
-      <x-text-input id="name" name="name" value="{{ old('name', $name) }}"></x-text-input>
+      <x-input-label-dark for="name">{{ ucfirst($dashboardType) }} Name:</x-input-label-dark>
+      <x-text-input id="name" name="name" value="{{ old('name', $profileData['name']) }}"></x-text-input>
       @error('name')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -19,27 +20,27 @@
     <div class="group mb-6">
       <x-input-label-dark for="contact_name">Contact Name:</x-input-label-dark>
       <x-text-input id="contact_name" name="contact_name"
-        value="{{ old('contact_name', $contact_name) }}"></x-text-input>
+        value="{{ old('contact_name', $profileData['contact_name']) }}"></x-text-input>
       @error('contact_name')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
     </div>
 
     <div class="group mb-6">
-      <x-google-address-picker :postalTown="old('venuePostalTown', $venueUserData['venuePostalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
-        placeholder="Enter an address" :value="old('venueLocation', $venueUserData['venueLocation'] ?? '')" :latitude="old('venueLat', $venueUserData['venueLat'] ?? '')" :longitude="old('venueLong', $venueUserData['venueLong'] ?? '')" />
+      <x-google-address-picker :postalTown="old('postalTown', $profileData['postalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
+        placeholder="Enter an address" :value="old('location', $profileData['location'] ?? '')" :latitude="old('lat', $profileData['lat'] ?? '')" :longitude="old('long', $profileData['long'] ?? '')" />
     </div>
 
     <div class="group mb-6">
       <x-input-label-dark for="w3w">What3Words:</x-input-label-dark>
-      <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $venueUserData['w3w'] ?? '') }}"></x-text-input>
+      <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $profileData['w3w'] ?? '') }}"></x-text-input>
       <div id="suggestions"></div>
     </div>
 
     <div class="group mb-6">
       <x-input-label-dark for="email">Email:</x-input-label-dark>
       <x-text-input id="contact_email" name="contact_email"
-        value="{{ old('contact_email', $venueUserData['contact_email']) }}"></x-text-input>
+        value="{{ old('contact_email', $profileData['contact_email']) }}"></x-text-input>
       @error('contact_email')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -48,26 +49,25 @@
     <div class="group mb-6">
       <x-input-label-dark for="contact_number">Contact Phone:</x-input-label-dark>
       <x-text-input id="contact_number" name="contact_number"
-        value="{{ old('contact_number', $venueUserData['contact_number']) }}"></x-text-input>
+        value="{{ old('contact_number', $profileData['contact_number']) }}"></x-text-input>
       @error('contact_number')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
     </div>
   </div>
 
-  @if (is_array($platformsToCheck))
+  @if (isset($profileData['platformsToCheck']) && is_array($profileData['platformsToCheck']))
     <div class="col-start-2 col-end-3">
-      @foreach ($platformsToCheck as $platform)
+      @foreach ($profileData['platformsToCheck'] as $platform)
         <div class="group mb-6">
           <x-input-label-dark for="{{ $platform }}">{{ ucfirst($platform) }}:</x-input-label-dark>
 
           @php
-            // Ensure the links for the platform are correctly handled as an array
             $links =
-                isset($platforms[$platform]) && is_array($platforms[$platform])
-                    ? $platforms[$platform]
-                    : ($platforms[$platform]
-                        ? [$platforms[$platform]]
+                isset($profileData['platforms'][$platform]) && is_array($profileData['platforms'][$platform])
+                    ? $profileData['platforms'][$platform]
+                    : (isset($profileData['platforms'][$platform])
+                        ? [$profileData['platforms'][$platform]]
                         : []);
           @endphp
 
@@ -77,7 +77,6 @@
             </x-text-input>
           @endforeach
 
-          <!-- If no links exist, provide a way to add one -->
           @if (empty($links))
             <x-text-input id="{{ $platform }}-new" name="contact_links[{{ $platform }}][]"
               value="{{ old('contact_links.' . $platform . '.new', '') }}"
@@ -98,9 +97,10 @@
       <x-input-label-dark for="logo" class="text-left">Logo:</x-input-label-dark>
       <x-input-file id="logo" name="logo" onchange="previewLogo(event)"></x-input-file>
 
-      <!-- Preview Image -->
-      <img id="logo-preview" src="{{ $logo }}" alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
-        style="display: {{ $logo ? 'block' : 'none' }};">
+      <!-- Preview Image with onerror fallback -->
+      <img id="logo-preview" src="{{ $profileData['logo_url'] ?? asset('images/system/yns_no_image_found.png') }}"
+        alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
+        onerror="this.onerror=null; this.src='{{ asset('images/system/yns_no_image_found.png') }}';">
 
       @error('logo')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
