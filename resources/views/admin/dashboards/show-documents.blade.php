@@ -10,9 +10,8 @@
         <div class="header mb-8">
           <div class="flex flex-row justify-between">
             <h1 class="font-heading text-4xl font-bold">Documents</h1>
-            <a href="{{ route('admin.dashboard.document.create', ['dashboardType' => $dashboardType]) }}"
-              class="inline-flex items-center rounded-md border border-white bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">New
-              Job</a>
+            <x-button href="{{ route('admin.dashboard.document.create', ['dashboardType' => $dashboardType]) }}"
+              label="New Document"></x-button>
           </div>
         </div>
         <table class="w-full border border-white text-left font-sans" id="documents">

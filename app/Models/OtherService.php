@@ -160,4 +160,9 @@ class OtherService extends Model
     {
         return $this->hasMany(OtherServicesReview::class);
     }
+
+    public function apiKeys()
+    {
+        return $this->morphMany(ApiKey::class, 'serviceable');
+    }
 }

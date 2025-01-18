@@ -30,7 +30,7 @@ class EventController extends Controller
         $role = $user->roles->first()->name;
 
         // Determine the service based on the user's role
-        if ($role === "artist") {
+        if (in_array($role, ["artist", "photographer", "videographer", "designer"])) {
             $service = $user->otherService(ucfirst($role))->first();
             if (is_null($service)) {
                 return view('admin.dashboards.show-events', [
@@ -43,7 +43,7 @@ class EventController extends Controller
                     'showLoadMoreUpcoming' => false,
                     'hasMorePast' => false,
                     'totalUpcomingCount' => 0,
-                    'message' => 'No events found for this band.',
+                    'message' => "No events found for this {$role}.",
                 ]);
             }
         } elseif ($role === "promoter") {
@@ -219,18 +219,49 @@ class EventController extends Controller
                 break;
             case 'artist':
                 $role = $user->otherService('service')->first();
+                if ($role) {
+                    $bandData = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                };
                 break;
             case 'designer':
                 $role = $user->otherService('service')->first();
+                if ($role) {
+                    $designerData = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                };
                 break;
             case 'videographer':
                 $role = $user->otherService('service')->first();
+                if ($role) {
+                    $videographerData = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                };
                 break;
             case 'photographer':
                 $role = $user->otherService('service')->first();
+                if ($role) {
+                    $photographerData = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                };
                 break;
             case 'venue':
                 $role = $user->venues()->first();
+
+                if ($role) {
+                    $venueData = [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                    ];
+                };
                 break;
             default:
                 $role = 'guest';
@@ -240,6 +271,10 @@ class EventController extends Controller
         return view('admin.dashboards.new-event', [
             'role' => $role,
             'promoterData' => $promoterData,
+            'venueData' => $venueData,
+            'photographerData' => $photographerData,
+            'videographerData' => $videographerData,
+            'designerData' => $designerData,
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'modules' => $modules,

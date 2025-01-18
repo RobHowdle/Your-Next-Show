@@ -82,4 +82,9 @@ class Venue extends Model
             ->withPivot('created_at', 'updated_at', 'role')
             ->whereNull('service_user.deleted_at');
     }
+
+    public function apiKeys()
+    {
+        return $this->morphMany(ApiKey::class, 'serviceable');
+    }
 }

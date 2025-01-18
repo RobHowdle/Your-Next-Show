@@ -25,7 +25,7 @@
   </div>
 </div>
 @php
-  $dashboardData = $photographerUserData ?? ($designerUserData ?? ($videographerUserData ?? []));
+  $dashboardData = $photographerUserData ?? ($designerData ?? ($videographerUserData ?? []));
 @endphp
 <div x-show="selectedTab === 4" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">

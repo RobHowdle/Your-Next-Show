@@ -59,3 +59,14 @@
     ])
   </div>
 </div>
+<div x-show="selectedTab === 8" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
+  <div class="w-full">
+    <p class="text-xl font-bold">Ticket API Keys</p>
+    @include('profile.promoter.api-keys', [
+        'dashboardType' => $dashboardType,
+        'promoterId' => $promoterData['promoterId'],
+        'apiProviders' => $promoterData['apiProviders'],
+        'apiKeys' => $promoterData['apiKeys'],
+    ])
+  </div>
+</div>

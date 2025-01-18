@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Venue;
 use App\Models\Promoter;
+use App\Models\ApiKeys;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use App\Models\OtherService;
@@ -35,7 +36,14 @@ class ProfileController extends Controller
      */
     public function edit($dashboardType, $userId): View
     {
-        $modules = collect(session('modules', []));
+        $userModules = UserModuleSetting::where('user_id', $userId)
+            ->get()
+            ->mapWithKeys(function ($module) {
+                return [$module->module_name => [
+                    'is_enabled' => $module->is_enabled,
+                    'description' => $module->description
+                ]];
+            })->toArray();
         $user = User::where('id', $userId)->first();
         $roles = Role::where('name', '!=', 'administrator')->get();
         $userRole = $user->roles;
@@ -46,9 +54,9 @@ class ProfileController extends Controller
         $venueUserData = [];
         $photographerUserData = [];
         $standardUserData = [];
-        $designerUserData = [];
+        $designerData = [];
 
-        // Check if the dashboardType is 'promoter' and get promoter data
+        // check dashboard type and get the data
         if ($dashboardType === 'promoter') {
             $promoterData = $this->getPromoterData($user);
         } elseif ($dashboardType === 'artist') {
@@ -60,25 +68,7 @@ class ProfileController extends Controller
         } elseif ($dashboardType === 'standard') {
             $standardUserData = $this->getStandardUserData($user);
         } elseif ($dashboardType === 'designer') {
-            $designerUserData = $this->getDesignerData($user);
-        }
-
-        // Load the modules configuration
-        $modules = collect(config('modules.modules'))->map(function ($module) {
-            $module['is_enabled'] = $module['enabled'] ?? false;
-            return $module;
-        })->toArray();
-
-        // Prepare an array to store the modules with their settings
-        $modulesWithSettings = [];
-
-        foreach ($modules as $key => $module) {
-            // Include only the enabled modules
-            $modulesWithSettings[$key] = [
-                'name' => $module['name'],
-                'description' => $module['description'],
-                'is_enabled' => $module['is_enabled'],
-            ];
+            $designerData = $this->getDesignerData($user);
         }
 
         $modulesWithSettings = $this->getModulesWithSettings($user, $dashboardType);
@@ -87,13 +77,13 @@ class ProfileController extends Controller
         return view('profile.edit', [
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
-            'modules' => $modules,
+            'modules' => $userModules,
             'promoterData' => $promoterData,
             'bandData' => $bandData,
             'venueUserData' => $venueUserData,
             'photographerUserData' => $photographerUserData,
             'standardUserData' => $standardUserData,
-            'designerUserData' => $designerUserData,
+            'designerData' => $designerData,
             'user' => $user,
             'roles' => $roles,
             'userRole' => $userRole,
@@ -105,7 +95,7 @@ class ProfileController extends Controller
             'userPostalTown' => $user->postal_town,
             'userLat' => $user->latitude,
             'userLong' => $user->longitude,
-            'modules' => $modulesWithSettings,
+            'modulesWithSettings' => $modulesWithSettings,
             'communications' => $communicationSettings,
         ]);
     }
@@ -696,29 +686,6 @@ class ProfileController extends Controller
         return $modulesWithSettings;
     }
 
-    public function updateModule(Request $request)
-    {
-        // Validate the incoming request
-        $request->validate([
-            'module' => 'required|string',
-            'is_enabled' => 'required|boolean',
-        ]);
-
-        $user = Auth::user();
-
-        // Update the module settings in the database
-        $module = UserModuleSetting::where('user_id', $user->id)->where('module_name', $request->module)->first();
-
-        if ($module) {
-            $module->is_enabled = $request->is_enabled;
-            $module->save();
-
-            return response()->json(['success' => true, 'message' => 'Module updated successfully.']);
-        }
-
-        return response()->json(['success' => false, 'message' => 'Module not found.'], 404);
-    }
-
     // Get Data for Dashboard Type User
     private function getPromoterData(User $user)
     {
@@ -734,10 +701,10 @@ class ProfileController extends Controller
             ? (filter_var($promoter->logo_url, FILTER_VALIDATE_URL) ? $promoter->logo_url : Storage::url($promoter->logo_url))
             : asset('images/system/yns_no_image_found.png');
 
-        $contact_number = $promoter ? $promoter->contact_number : '';
-        $contact_email = $promoter ? $promoter->contact_email : '';
-        $contactLinks = $promoter ? json_decode($promoter->contact_link, true) : [];
         $contact_name = $promoter ? $promoter->contact_name : '';
+        $contact_email = $promoter ? $promoter->contact_email : '';
+        $contact_number = $promoter ? $promoter->contact_number : '';
+        $contactLinks = $promoter ? json_decode($promoter->contact_link, true) : [];
 
         $platforms = [];
         $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
@@ -786,29 +753,47 @@ class ProfileController extends Controller
         }
 
         $bandTypes = json_decode($promoter->band_type) ?? [];
+        $apiProviders = config('api_providers.providers');
+        $apiKeys = ApiKeys::where('serviceable_id', $promoter->id)->where('serviceable_type', get_class($promoter))->get();
+
+        if ($apiKeys) {
+            $apiKeys = $apiKeys->map(function ($apiKey) {
+                if ($apiKey->is_active) {
+                    return [
+                        'id' => $apiKey->id,
+                        'type' => $apiKey->key_type,
+                        'key' => $apiKey->api_key,
+                        'secret' => $apiKey->api_secret,
+                    ];
+                }
+            });
+        }
 
         return [
             'promoter' => $promoter,
+            'promoterId' => $promoter->id,
             'promoterName' => $promoterName,
             'promoterLocation' => $promoterLocation,
             'promoterPostalTown' => $promoterPostalTown,
             'promoterLat' => $promoterLat,
             'promoterLong' => $promoterLong,
             'logo' => $logo,
+            'description' => $description,
+            'contact_name' => $contact_name,
+            'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'platformsToCheck' => $platformsToCheck,
-            'description' => $description,
             'myVenues' => $myVenues,
             'myEvents' => $myEvents,
-            'contact_email' => $contact_email,
-            'contact_name' => $contact_name,
             'uniqueBands' => $uniqueBands,
             'genres' => $genres,
             'promoterGenres' => $promoterGenres,
             'isAllGenres' => $isAllGenres,
             'promoterGenres' => $normalizedPromoterGenres,
             'bandTypes' => $bandTypes,
+            'apiProviders' => $apiProviders,
+            'apiKeys' => $apiKeys,
         ];
     }
 
@@ -963,27 +948,9 @@ class ProfileController extends Controller
 
         $bandTypes = json_decode($band->band_type) ?? [];
         $streamLinks = json_decode($band->stream_urls, true);
-        // dd(gettype($streamLinks));
-        // $explodedStreamLinks = explode(',', $streamLinks);
-        // dd($streamLinks);
 
         $streamPlatforms = [];
         $streamPlatformsToCheck = ['spotify', 'apple-music', 'youtube-music', 'amazon-music', 'bandcamp', 'soundcloud'];
-
-        // if (is_array($streamLinks)) {
-        //     foreach ($streamLinks as $link) {
-        //         // Loop through each platform in $streamPlatformsToCheck and check if it exists in the link
-        //         foreach ($streamPlatformsToCheck as $platform) {
-        //             // Check if the platform key exists in the link
-        //             if (isset($link[$platform])) {
-        //                 // Add the platform and URL to the $streamPlatforms array
-        //                 $streamPlatforms[$platform] = $link[$platform];
-        //             }
-        //         }
-        //     }
-        // }
-
-        // dd($streamLinks);
 
         $members = is_array($band->members) ? $band->members : json_decode($band->members, true);
 
@@ -1168,15 +1135,20 @@ class ProfileController extends Controller
     private function getDesignerData(User $user)
     {
         $designer = $user->otherService("Designer")->first();
+
         $serviceableId = $designer->id;
         $serviceableType = 'App\Models\OtherService';
 
-        $name = $designer ? $designer->name : '';
-        $location = $designer ? $designer->location : '';
+        // Basic Information
+        $designerName = $designer ? $designer->name : '';
+        $designerLocation = $designer ? $designer->location : '';
+        $designerPostalTown = $designer ? $designer->postal_town : '';
+        $designerLat = $designer ? $designer->latitude : '';
+        $designerLong = $designer ? $designer->longitude : '';
         $logo = $designer && $designer->logo_url
             ? (filter_var($designer->logo_url, FILTER_VALIDATE_URL) ? $designer->logo_url : Storage::url($designer->logo_url))
             : asset('images/system/yns_no_image_found.png');
-        $phone = $designer ? $designer->contact_number : '';
+
         $contact_name = $designer ? $designer->contact_name : '';
         $contact_email = $designer ? $designer->contact_email : '';
         $contact_number = $designer ? $designer->contact_number : '';
@@ -1200,10 +1172,27 @@ class ProfileController extends Controller
             }
         }
 
-        $about = $designer ? $designer->description : '';
+        $description = $designer ? $designer->description : '';
+
         $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true);
+        $data = json_decode($genreList, true) ?? [];
+        $isAllGenres = in_array('All', $data);
         $genres = $data['genres'];
+        $designerGenres = is_array($designer->genre) ? $designer->genre : json_decode($designer->genre, true);
+        $normalizedDesignerGenres = [];
+        if ($designerGenres) {
+            foreach ($normalizedDesignerGenres as $genreName => $genreData) {
+                $normalizedPromoterGenres[$genreName] = [
+                    'all' => $genreData['all'] ?? 'false',
+                    'subgenres' => isset($genreData['subgenres'][0])
+                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
+                        : []
+                ];
+            }
+        }
+
+        $bandTypes = json_decode($designer->band_type) ?? [];
+
         $portfolioLink = $designer ? $designer->portfolio_link : '';
         $waterMarkedPortfolioImages = $designer->portfolio_images;
 
@@ -1229,31 +1218,17 @@ class ProfileController extends Controller
         }
 
         $workingTimes = is_array($designer->working_times) ? $designer->working_times : json_decode($designer->working_times, true);
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true) ?? [];
-        $isAllGenres = in_array('All', $data);
-        $genres = $data['genres'];
-        $designerGenres = is_array($designer->genre) ? $designer->genre : json_decode($designer->genre, true);
-        $normalizedDesignerGenres = [];
-
-        foreach ($designerGenres as $genreName => $genreData) {
-            $normalizedDesignerGenres[$genreName] = [
-                'all' => $genreData['all'] ?? 'false',
-                'subgenres' => isset($genreData['subgenres'][0])
-                    ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-                    : []
-            ];
-        }
-
-        $bandTypes = json_decode($designer->band_type) ?? [];
 
         return [
             'designer' => $designer,
-            'name' => $name,
-            'location' => $location,
+            'designerId'  => $designer->id,
+            'designerName' => $designerName,
+            'designerLocation' => $designerLocation,
+            'designerPostalTown' => $designerPostalTown,
+            'designerLat' => $designerLat,
+            'designerLong' => $designerLong,
             'logo' => $logo,
-            'phone' => $phone,
-            'about' => $about,
+            'description' => $description,
             'contact_name' => $contact_name,
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,

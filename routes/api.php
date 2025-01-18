@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FinanceController;
-use App\Http\Controllers\VenueApiController;
 use App\Http\Controllers\APIRequestsController;
 
 /*
@@ -28,3 +27,5 @@ Route::get('/promoters/search', [APIRequestsController::class, 'searchPromoters'
 Route::post('/promoters/create', [APIRequestsController::class, 'createPromoter']);
 Route::get('/venues/search', [APIRequestsController::class, 'searchVenues']);
 Route::post('/venues/create', [APIRequestsController::class, 'createVenue']);
+Route::post('/profile/{dashboardType}/{id}/update-api-keys', [APIRequestsController::class, 'updateAPI']);
+Route::post('/profile/{dashboardType}/settings/update', [APIRequestsController::class, 'updateModule'])->name('settings.updateModule');
