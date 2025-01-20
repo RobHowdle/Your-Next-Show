@@ -3,9 +3,8 @@
     {{ __(ucfirst($dashboardType) . ' Details') }}
   </h2>
 </header>
-<form method="POST"
-  action="{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}"
-  class="grid grid-cols-3 gap-x-8 gap-y-8" enctype="multipart/form-data">
+
+<form id="saveBasicInformation" method="POST" class="grid grid-cols-3 gap-x-8 gap-y-8" enctype="multipart/form-data">
   @csrf
   @method('PUT')
   <div class="col-start-1 col-end-2">
@@ -92,20 +91,18 @@
     </div>
   @endif
 
-  <div class="col-start-3 col-end-4">
-    <div class="group mb-6 flex flex-col items-center">
-      <x-input-label-dark for="logo" class="text-left">Logo:</x-input-label-dark>
-      <x-input-file id="logo" name="logo" onchange="previewLogo(event)"></x-input-file>
+  <div class="group mb-6 flex flex-col items-center">
+    <x-input-label-dark for="logo_url" class="text-left">Logo:</x-input-label-dark>
+    <x-input-file id="logo_url" name="logo_url" onchange="previewLogo(event)"></x-input-file>
 
-      <!-- Preview Image with onerror fallback -->
-      <img id="logo-preview" src="{{ $profileData['logo_url'] ?? asset('images/system/yns_no_image_found.png') }}"
-        alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
-        onerror="this.onerror=null; this.src='{{ asset('images/system/yns_no_image_found.png') }}';">
+    <img id="logo-preview"
+      src="{{ !empty($profileData['logo_url']) ? Storage::url($profileData['logo_url']) : asset('images/system/yns_no_image_found.png') }}"
+      alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
+      onerror="this.src='{{ asset('images/system/yns_no_image_found.png') }}'">
 
-      @error('logo')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
+    @error('logo_url')
+      <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+    @enderror
   </div>
 
   <div class="flex items-center gap-4">
@@ -123,15 +120,7 @@
     const preview = document.getElementById('logo-preview');
 
     if (file) {
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        preview.src = e.target.result; // Set the preview to the file data
-        preview.style.display = 'block'; // Show the preview image
-        console.log('Preview URL:', e.target.result); // Log the preview URL
-      };
-
-      reader.readAsDataURL(file); // Read the file as a data URL
+      preview.src = URL.createObjectURL(file);
     }
   }
 
@@ -174,6 +163,36 @@
       } else {
         jQuery('#suggestions').empty(); // Clear suggestions if input is less than 3 characters
       }
+    });
+
+    $('#saveBasicInformation').on('submit', function(e) {
+      e.preventDefault();
+
+      const form = $(this);
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: '{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          console.log(response);
+          if (response.success) {
+            showSuccessNotification(response.message);
+            setTimeout(() => {
+              window.location.href = response.redirect;
+            }, 2000);
+          } else {
+            alert('Failed to update profile');
+          }
+        },
+        error: function(xhr, status, error) {
+          const response = xhr.responseJSON;
+          showFailureNotification(response);
+        }
+      });
     });
   });
 </script>

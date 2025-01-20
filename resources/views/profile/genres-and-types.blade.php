@@ -220,6 +220,9 @@
           throw new Error(body.message);
         }
         showSuccessNotification(body.message);
+        setTimeout(() => {
+          window.location.href = body.redirect;
+        }, 2000);
       })
       .catch(error => {
         console.error("Error:", error);
@@ -388,6 +391,9 @@
       .then(data => {
         if (data.success) {
           showSuccessNotification(data.message);
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 2000);
         } else {
           throw new Error(data.message);
         }

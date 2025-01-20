@@ -3,8 +3,7 @@
     {{ __('About You') }}
   </h2>
 </header>
-<form method="POST"
-  action="{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}">
+<form id="saveDescription" method="POST">
   @csrf
   @method('PUT')
   <div class="group mb-6">
@@ -53,5 +52,35 @@
     } else {
       console.error('jQuery is not loaded');
     }
+
+    $('#saveDescription').on('submit', function(e) {
+      e.preventDefault();
+
+      const form = $(this);
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: '{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          console.log(response);
+          if (response.success) {
+            showSuccessNotification(response.message);
+            setTimeout(() => {
+              window.location.href = response.redirect;
+            }, 2000);
+          } else {
+            alert('Failed to update profile');
+          }
+        },
+        error: function(xhr, status, error) {
+          const response = xhr.responseJSON;
+          showFailureNotification(response);
+        }
+      });
+    });
   });
 </script>

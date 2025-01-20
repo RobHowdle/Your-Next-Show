@@ -24,15 +24,15 @@
   <i class="fa-solid fa-drum h-5 w-5"></i>
   <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">In House Gear</span>
 </button>
-<button @click="activeTab = 'myEvent'" class="hover:text-yns_pink block py-2 text-white transition"
-  :class="activeTab === 'myEvent' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+<button @click="activeTab = 'myEvents'" class="hover:text-yns_pink block py-2 text-white transition"
+  :class="activeTab === 'myEvents' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
   <i class="fa-solid fa-calendar-days h-5 w-5"></i>
   <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">My Events</span>
 </button>
 <button @click="activeTab = 'myBands'" class="hover:text-yns_pink block py-2 text-white transition"
   :class="activeTab === 'myBands' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
   <i class="fa-solid fa-users-line h-5 w-5"></i>
-  <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">My Bands</span>
+  <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">My Artists</span>
 </button>
 <button @click="activeTab = 'additionalInfo'" class="hover:text-yns_pink block py-2 text-white transition"
   :class="activeTab === 'additionalInfo' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">

@@ -161,6 +161,56 @@
                   },
               ])
             </div>
+            <div x-show="activeTab === 'capacity'">
+              @include('profile.venue.capacity', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'inHouseGear'">
+              @include('profile.venue.in-house-gear', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'myEvents'">
+              @include('profile.events', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'myBands'">
+              @include('profile.artists', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'additionalInfo'">
+              @include('profile.venue.additional-info', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      default => [],
+                  },
+              ])
+            </div>
 
             <div x-show="activeTab === 'modules'">
               @include('profile.settings.modules', [

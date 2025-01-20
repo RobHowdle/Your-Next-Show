@@ -3,12 +3,13 @@
     {{ __('Capacity') }}
   </h2>
 </header>
-<form method="POST" action="{{ route('venue.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}">
+<form id="saveCapacity" method="POST"
+  action="{{ route('venue.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}">
   @csrf
   @method('PUT')
-  <div class="group mb-6">
+  <div class="group mt-6">
     <x-input-label-dark for="capacity">What capaity is your venue?</x-input-label-dark>
-    <x-text-input id="capacity" name="capacity"></x-text-input>
+    <x-text-input id="capacity" name="capacity" value="{{ old('capacity', $profileData['capacity']) }}"></x-text-input>
     @error('capacity')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror
@@ -24,8 +25,35 @@
   </div>
 </form>
 <script>
-  var capacityContent = @json(old('capacity', $capacity));
-  jQuery(document).ready(function() {
-    jQuery('#capacity').val(capacityContent);
+  $(document).ready(function() {
+    $('#saveCapacity').on('submit', function(e) {
+      e.preventDefault();
+
+      const form = $(this);
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: '{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          console.log(response);
+          if (response.success) {
+            showSuccessNotification(response.message);
+            setTimeout(() => {
+              window.location.href = response.redirect;
+            }, 2000);
+          } else {
+            alert('Failed to update profile');
+          }
+        },
+        error: function(xhr, status, error) {
+          const response = xhr.responseJSON;
+          showFailureNotification(response);
+        }
+      });
+    })
   });
 </script>

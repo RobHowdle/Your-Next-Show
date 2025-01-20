@@ -3,16 +3,14 @@
     {{ __('Additional Inforomation') }}
   </h2>
 </header>
-<form method="POST" action="{{ route('venue.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}">
+<form id="saveAdditionalInfo" method="POST">
   @csrf
   @method('PUT')
   <div class="group mb-6">
     <x-input-label-dark for="additionalInfo">Any additional information? Parking, Deals, Special Events
       etc</x-input-label-dark>
     <x-textarea-input id="additionalInfo"
-      name="additionalInfo">{{ old('additionalInfo', $additionalInfo ?? '') }}</x-textarea-input>
-
-    {{-- <x-textarea-input class="summernote" id="additional_info" name="additional_info"></x-textarea-input> --}}
+      name="additionalInfo">{{ old('additionalInfo', $profileData['additionalInfo'] ?? '') }}</x-textarea-input>
     @error('additional_info')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror
@@ -27,9 +25,62 @@
     @endif
   </div>
 </form>
-{{-- <script>
-  var additionalInfoContent = @json(old('additional_info', $additionalInfo));
-  jQuery(document).ready(function() {
-    initialiseSummernote("#additional_info", additionalInfoContent);
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof jQuery !== 'undefined') {
+      const additionalInfoContent = @json(old('additionalInfo', $profileData['additionalInfo'] ?? ''));
+      $('#additionalInfo').summernote({
+        placeholder: 'Tell us about you...',
+        tabsize: 2,
+        height: 300,
+        toolbar: [
+          ['style', ['style']],
+          ['font', ['bold', 'underline', 'clear']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['insert', ['link']],
+          ['view', ['fullscreen', 'codeview', 'help']]
+        ],
+        callbacks: {
+          onInit: function() {
+            if (additionalInfoContent) {
+              $('#additionalInfo').summernote('code', additionalInfoContent);
+            }
+          }
+        }
+      });
+    } else {
+      console.error('jQuery is not loaded');
+    }
+
+    $('#saveAdditionalInfo').on('submit', function(e) {
+      e.preventDefault();
+
+      const form = $(this);
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: '{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          console.log(response);
+          if (response.success) {
+            showSuccessNotification(response.message);
+            setTimeout(() => {
+              window.location.href = response.redirect;
+            }, 2000);
+          } else {
+            alert('Failed to update profile');
+          }
+        },
+        error: function(xhr, status, error) {
+          const response = xhr.responseJSON;
+          showFailureNotification(response);
+        }
+      });
+    })
   });
-</script> --}}
+</script>

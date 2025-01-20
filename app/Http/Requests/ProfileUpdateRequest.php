@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use Illuminate\Validation\Rules\Password;
+use App\Rules\CompromisedPassword;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,6 +27,26 @@ class ProfileUpdateRequest extends FormRequest
             'postal_town' => ['sometimes', 'string'],
             'latitude' => ['sometimes', 'numeric'],
             'longitude' => ['sometimes', 'numeric'],
+            'password' => [
+                'nullable',
+                'sometimes',
+                'confirmed',
+                function ($attribute, $value, $fail) {
+                    if (!empty($value) && empty($this->password_confirmation)) {
+                        $fail('The password confirmation field is required when password is present.');
+                    }
+                }
+            ],
+            'password_confirmation' => [
+                'nullable',
+                'sometimes',
+                'same:password',
+                function ($attribute, $value, $fail) {
+                    if (!empty($value) && empty($this->password)) {
+                        $fail('The password field is required when password confirmation is present.');
+                    }
+                }
+            ],
         ];
     }
 }

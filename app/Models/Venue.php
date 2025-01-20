@@ -26,6 +26,8 @@ class Venue extends Model
         'w3w',
         'capacity',
         'in_house_gear',
+        'deposit_required',
+        'deposit_amount',
         'band_type',
         'genre',
         'contact_name',

@@ -19,17 +19,26 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\StoreUpdateBandTypes;
+use App\Http\Requests\StoreUpdateBandGenres;
 use App\Http\Requests\BandProfileUpdateRequest;
 use App\Http\Requests\VenueProfileUpdateRequest;
+use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Requests\PromoterProfileUpdateRequest;
 use App\Http\Requests\PhotographerProfileUpdateRequest;
-use App\Http\Requests\StoreUpdateBandGenres;
+use App\Http\Requests\UpdatePasswordRequest;
 
 class ProfileController extends Controller
 {
+    protected $passwordController;
+
     protected function getUserId()
     {
         return Auth::id();
+    }
+
+    public function __construct(PasswordController $passwordController)
+    {
+        $this->passwordController = $passwordController;
     }
 
     /**
@@ -106,9 +115,40 @@ class ProfileController extends Controller
      */
     public function update($dashboardType, ProfileUpdateRequest $request, $userId)
     {
+        dd('update user');
         try {
             $user = User::findOrFail($userId);
             $userData = $request->validated();
+
+            // Handle password update separately
+            if (!empty($userData['password'])) {
+                $passwordRequest = new UpdatePasswordRequest();
+                $passwordRequest->setUserResolver(function () use ($user) {
+                    return $user;
+                });
+
+                $passwordRequest->merge([
+                    'password' => $userData['password'],
+                    'password_confirmation' => $userData['password_confirmation']
+                ]);
+
+                if (!$this->passwordController) {
+                    $this->passwordController = app(PasswordController::class);
+                }
+
+                $passwordResponse = $this->passwordController->update($passwordRequest);
+
+                if ($passwordResponse->getStatusCode() !== 302) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Password update failed'
+                    ], 422);
+                }
+            }
+
+            // Remove password fields from general update
+            unset($userData['password']);
+            unset($userData['password_confirmation']);
 
             if (isset($userData['userFirstName']) || isset($userData['userLastName'])) {
                 $user->first_name = $userData['userFirstName'];
@@ -143,6 +183,11 @@ class ProfileController extends Controller
                 'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
             ]);
         } catch (\Exception $e) {
+            \Log::error('Profile Update Failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update profile: ' . $e->getMessage()
@@ -251,6 +296,7 @@ class ProfileController extends Controller
 
     public function updateVenue($dashboardType, VenueProfileUpdateRequest $request, $user)
     {
+        // dd($request->all());
         $user = User::findOrFail($user);
         $userId = $user->id;
         $userData = $request->validated();
@@ -329,6 +375,16 @@ class ProfileController extends Controller
                     $venue->update(['in_house_gear' => $userData['inHouseGear']]);
                 }
 
+                // Deposit Required
+                if (isset($userData['deposit_required']) && $venue->deposit_required !== $userData['deposit_required']) {
+                    $venue->update(['deposit_required' => $userData['deposit_required']]);
+                }
+
+                // Deposit Amount
+                if (isset($userData['deposit_amount']) && $venue->deposit_amount !== $userData['deposit_amount']) {
+                    $venue->update(['deposit_amount' => $userData['deposit_amount']]);
+                }
+
                 // Genres
                 if (isset($userData['genres'])) {
                     $storedGenres = json_decode($venue->genre, true);
@@ -346,13 +402,13 @@ class ProfileController extends Controller
                     $venueLogoExtension = $venueLogoFile->getClientOriginalExtension() ?: $venueLogoFile->guessExtension();
                     $venueLogoFilename = Str::slug($venueName) . '.' . $venueLogoExtension;
 
-                    // Store the file
-                    $venueLogoFile->move(storage_path('app/public/images/venue_logos'), $venueLogoFilename);
+                    // Store file in public disk
+                    $path = $venueLogoFile->storeAs('public/images/venue_logos', $venueLogoFilename);
 
-                    // Get the URL to the file
-                    $logoUrl = Storage::url('images/venue_logos/' . $venueLogoFilename);
+                    // Generate proper URL for public access
+                    $logoUrl = asset(str_replace('public', 'storage', $path));
 
-                    // Update database
+                    // Update database with relative path
                     $venue->update(['logo_url' => $logoUrl]);
                 }
 
@@ -367,10 +423,20 @@ class ProfileController extends Controller
                 }
 
                 // Return success message with redirect
-                return redirect()->route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])->with('status', 'profile-updated');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile updated successfully',
+                    'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+                ]);
             } else {
                 // Handle case where no promoter is linked to the user
-                return response()->json(['error' => 'Venue not found'], 404);
+                return response()->json(
+                    [
+                        'success' => false,
+                        'error' => 'Profile Failed to update'
+                    ],
+                    404
+                );
             }
         }
     }
@@ -692,7 +758,6 @@ class ProfileController extends Controller
 
         return $communicationSettings;
     }
-
 
     protected function getModulesWithSettings($user, $dashboardType)
     {
@@ -1637,7 +1702,9 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Genres successfully updated'
+            'message' => 'Genres successfully updated',
+            'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+
         ]);
     }
 
@@ -1700,7 +1767,9 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Band Types successfully updated'
+            'message' => 'Band Types successfully updated',
+            'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+
         ]);
     }
 }

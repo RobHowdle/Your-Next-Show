@@ -251,6 +251,13 @@ window.initialiseSummernote = function (selector, content) {
             onInit: function () {
                 if (aboutContent) {
                     $("#description").summernote("code", aboutContent);
+                } else if (inHouseGearContent) {
+                    $("#inHouseGear").summernote("code", inHouseGearContent);
+                } else if (additionalInfoContent) {
+                    $("#additionalInfo").summernote(
+                        "code",
+                        additionalInfoContent
+                    );
                 }
             },
         },
