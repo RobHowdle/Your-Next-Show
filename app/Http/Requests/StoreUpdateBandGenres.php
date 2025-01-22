@@ -24,30 +24,29 @@ class StoreUpdateBandGenres extends FormRequest
     public function rules(): array
     {
         return [
-            'genres' => 'required|array',
-            'genres.*' => 'array',
-            'genres.*.all' => 'required|boolean',
-            'genres.*.subgenres' => 'required|array',
-            'genres.*.subgenres.*' => 'string'
+            'genres' => 'array|nullable',
+            'genres.*' => 'array|nullable',
+            'genres.*.all' => 'boolean|nullable',
+            'genres.*.subgenres' => 'array|nullable',
+            'genres.*.subgenres.*' => 'string|nullable'
         ];
     }
 
     public function messages()
     {
         return [
-            'genres.required' => 'Please select at least one genre',
-            'genres.*.all.required' => 'Please specify if all subgenres are selected',
-            'genres.*.subgenres.required' => 'Please select at least one subgenre',
+            'genres.array' => 'Invalid genres format',
+            'genres.*.array' => 'Invalid genre format',
+            'genres.*.subgenres.array' => 'Invalid subgenres format',
             'genres.*.subgenres.*.string' => 'Invalid subgenre format'
         ];
     }
 
     protected function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'message' => 'Validation failed',
-            'errors' => $validator->errors()
-        ], 422));
+        \Log::info('Genre Request Data:', [
+            'request' => $this->all(),
+            'genres' => $this->input('genres')
+        ]);
     }
 }

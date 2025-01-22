@@ -109,7 +109,7 @@
             {{-- Communications --}}
             <button @click="activeTab = 'communications'"
               class="hover:text-yns_pink group flex items-center px-8 py-2 text-white transition"
-              :class="{ 'text-yns_pink': activeTab === 'communications' }">
+              :class="activeTab === 'communications' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
               <i class="fa-solid fa-comments h-5 w-5"></i>
               <span x-show="sidebarOpen" class="ml-3 transition-opacity duration-300">Communications</span>
             </button>
@@ -119,6 +119,7 @@
         {{-- Content Area --}}
         <div class="p-8">
           <div class="mx-auto max-w-7xl space-y-6 rounded-lg bg-opac_8_black p-4 shadow sm:p-8">
+            {{ $user->id }}
             <div x-show="activeTab === 'profile'">
               @include('profile.partials.edit-user-details')
             </div>
@@ -161,22 +162,26 @@
                   },
               ])
             </div>
-            <div x-show="activeTab === 'capacity'">
-              @include('profile.venue.capacity', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      default => [],
-                  },
-              ])
-            </div>
-            <div x-show="activeTab === 'inHouseGear'">
-              @include('profile.venue.in-house-gear', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      default => [],
-                  },
-              ])
-            </div>
+            @if ($dashboardType === 'venue')
+              <div x-show="activeTab === 'capacity'">
+                @include('profile.venue.capacity', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if ($dashboardType === 'venue')
+              <div x-show="activeTab === 'inHouseGear'">
+                @include('profile.venue.in-house-gear', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
             <div x-show="activeTab === 'myEvents'">
               @include('profile.events', [
                   'profileData' => match ($dashboardType) {
@@ -203,20 +208,21 @@
                   },
               ])
             </div>
-            <div x-show="activeTab === 'additionalInfo'">
-              @include('profile.venue.additional-info', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      default => [],
-                  },
-              ])
-            </div>
-
+            @if ($dashboardType === 'venue')
+              <div x-show="activeTab === 'additionalInfo'">
+                @include('profile.venue.additional-info', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
             <div x-show="activeTab === 'modules'">
               @include('profile.settings.modules', [
                   'modules' => $modules,
                   'dashboardType' => $dashboardType,
-                  'userId' => $userId,
+                  'userId' => $user->id,
               ])
             </div>
             <div x-show="activeTab === 'api'">

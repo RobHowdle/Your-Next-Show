@@ -60,7 +60,7 @@
     <div id="subgenres-accordion-all-genres"
       class="max-h-0 content grid grid-cols-2 overflow-hidden transition-all duration-300 ease-in-out">
       <div class="all-genre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
-        <x-input-checkbox class="all-genres-checkbox" id="all-genres-checkbox" data-genre="all" data-all="true"
+        <x-input-checkbox class="master-all-genres-checkbox" id="master-all-genres" data-type="master-all"
           name="all-genres-checkbox" value="all-genres">
         </x-input-checkbox>
         <x-input-label-dark>All Genres</x-input-label-dark>
@@ -87,10 +87,9 @@
       <div id="subgenres-accordion-{{ $index }}"
         class="max-h-0 content grid grid-cols-2 overflow-hidden transition-all duration-300 ease-in-out">
         <div class="all-genre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
-          <x-input-checkbox class="genre-checkbox" id="all-{{ strtolower($genre['name']) }}-{{ $index }}"
-            onclick="toggleSubgenresCheckboxes({{ $index }})" data-all="true"
-            name="all-{{ $genre['name'] }}-{{ $index }}" data-genre="{{ $genre['name'] }}"
-            value="all-{{ strtolower($genre['name']) }}">
+          <x-input-checkbox class="genre-all-checkbox" id="all-{{ strtolower($genre['name']) }}-{{ $index }}"
+            data-type="genre-all" data-genre="{{ $genre['name'] }}"
+            name="all-{{ $genre['name'] }}-{{ $index }}" value="all-{{ strtolower($genre['name']) }}">
           </x-input-checkbox>
           <x-input-label-dark>All {{ $genre['name'] }}</x-input-label-dark>
         </div>
@@ -174,15 +173,16 @@
 
   // Update state and hidden input
   function updateBandTypesState() {
+    console.log('Dashboard Type:', dashboardType); // Debug dashboard type
+
     bandTypesData = {
       allTypes: allTypesCheckbox.checked,
       bandTypes: Array.from(bandTypeCheckboxes)
         .filter(cb => cb.checked)
         .map(cb => cb.value)
     };
-    document.getElementById('band-types-data').value =
-      JSON.stringify(bandTypesData);
 
+    console.log('Band Types Data:', bandTypesData); // Debug data structure
     sendBandTypes(bandTypesData);
   }
 
@@ -200,206 +200,22 @@
           band_types: bandTypesData
         })
       })
-      .then(response => response.json().then(data => ({
-        status: response.status,
-        body: data
-      })))
-      .then(({
-        status,
-        body
-      }) => {
-        if (status === 422) {
-          // Format validation errors
-          const errors = body.errors;
-          const errorMessages = Object.values(errors)
-            .flat()
-            .join('\n');
-          throw new Error(errorMessages || 'Validation failed');
+      .then(response => response.json())
+      .then(data => {
+        console.log('Server Response:', data); // Debug server response
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to save band types');
         }
-        if (!body.success) {
-          throw new Error(body.message);
+        showSuccessNotification(data.message);
+        if (data.redirect) {
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 2000);
         }
-        showSuccessNotification(body.message);
-        setTimeout(() => {
-          window.location.href = body.redirect;
-        }, 2000);
       })
       .catch(error => {
         console.error("Error:", error);
         showFailureNotification(error.message || "An error occurred");
-      });
-  }
-
-  // Genres
-  let genresData = {};
-
-  function setInitialGenres(savedGenres) {
-    if (!savedGenres) return;
-
-    try {
-      const data = typeof savedGenres === 'string' ? JSON.parse(savedGenres) : savedGenres;
-
-      // Loop through each genre in saved data
-      Object.entries(data).forEach(([genreName, genreData]) => {
-        // Find genre's "All" checkbox
-        const allGenreCheckbox = document.querySelector(`.genre-checkbox[data-genre="${genreName}"]`);
-        console.log(allGenreCheckbox);
-
-        // Set the "All [Genre]" checkbox if all is true
-        if (allGenreCheckbox && genreData.all === true) {
-          allGenreCheckbox.checked = true;
-        }
-
-        // Find and check individual subgenre checkboxes
-        if (genreData.subgenres) {
-          genreData.subgenres.flat().forEach(subgenre => {
-            const subgenreCheckbox = document.querySelector(`#subgenre-${subgenre}`);
-            if (subgenreCheckbox) {
-              subgenreCheckbox.checked = true;
-            }
-          });
-        }
-      });
-
-      // Handle "All Genres" checkbox
-      const allGenresSelected = Object.values(data).every(genre => genre.all === true);
-      const allGenresCheckbox = document.getElementById('all-genres-checkbox');
-      if (allGenresCheckbox) {
-        allGenresCheckbox.checked = allGenresSelected;
-      }
-
-      // Initialize genresData state
-      genresData = data;
-
-      // Update status indicators for all genres
-      genres.forEach(genre => {
-        updateGenreStatus(genre.name);
-      });
-    } catch (error) {
-      console.error('Error setting initial genres:', error);
-    }
-  }
-
-  // Initialize with saved data
-  if (typeof profileGenres !== 'undefined') {
-    setInitialGenres(profileGenres);
-  }
-
-  // Handle "All Genres" checkbox
-  document.getElementById('all-genres-checkbox').addEventListener('change', function(e) {
-    const isChecked = e.target.checked;
-
-    // Update all genre and subgenre checkboxes
-    document.querySelectorAll('.genre-checkbox, .subgenre-checkbox').forEach(checkbox => {
-      checkbox.checked = isChecked;
-    });
-
-    if (isChecked) {
-      // Set all genres to selected with all subgenres
-      genres.forEach(genre => {
-        genresData[genre.name] = {
-          all: true,
-          subgenres: genre.subgenres
-        };
-      });
-    } else {
-      // Reset all selections
-      genresData = {};
-    }
-
-    sendGenresData(genresData);
-  });
-
-  // Handle individual genre "All" checkboxes
-  document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function(e) {
-      const genreName = this.dataset.genre;
-      const isChecked = e.target.checked;
-      const subgenreCheckboxes = document.querySelectorAll(`[data-parent="${genreName}"]`);
-
-      // Update all subgenre checkboxes for this genre
-      subgenreCheckboxes.forEach(subCheckbox => {
-        subCheckbox.checked = isChecked;
-      });
-
-      // Update genresData
-      if (isChecked) {
-        genresData[genreName] = {
-          all: true,
-          subgenres: Array.from(subgenreCheckboxes).map(cb => cb.value)
-        };
-      } else {
-        delete genresData[genreName];
-      }
-
-      sendGenresData(genresData);
-    });
-  });
-
-  // Handle individual subgenre checkboxes
-  document.querySelectorAll('.subgenre-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function(e) {
-      const genreName = this.dataset.parent;
-      const subgenreValue = this.value;
-      const allGenreCheckbox = document.querySelector(`[data-genre="${genreName}"]`);
-      const allSubgenreCheckboxes = document.querySelectorAll(`[data-parent="${genreName}"]`);
-      const allChecked = Array.from(allSubgenreCheckboxes).every(cb => cb.checked);
-
-      // Update "All" checkbox for this genre
-      if (allGenreCheckbox) {
-        allGenreCheckbox.checked = allChecked;
-      }
-
-      // Update genresData
-      if (!genresData[genreName]) {
-        genresData[genreName] = {
-          all: false,
-          subgenres: []
-        };
-      }
-
-      if (this.checked) {
-        genresData[genreName].subgenres.push(subgenreValue);
-      } else {
-        genresData[genreName].subgenres = genresData[genreName].subgenres
-          .filter(sg => sg !== subgenreValue);
-      }
-
-      genresData[genreName].all = allChecked;
-
-      // Clean up empty genres
-      if (genresData[genreName].subgenres.length === 0) {
-        delete genresData[genreName];
-      }
-
-      sendGenresData(genresData);
-    });
-  });
-
-  function sendGenresData(data) {
-    fetch(`/profile/${dashboardType}/save-genres`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({
-          genres: data
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          showSuccessNotification(data.message);
-          setTimeout(() => {
-            window.location.href = data.redirect;
-          }, 2000);
-        } else {
-          throw new Error(data.message);
-        }
-      })
-      .catch(error => {
-        showFailureNotification(error.message);
       });
   }
 
@@ -447,32 +263,4 @@
       icon.innerHTML = minusSVG; // Set the icon to Minus when opened
     }
   }
-
-  function updateGenreStatus(genreName) {
-    const subgenreCheckboxes = document.querySelectorAll(`[data-parent="${genreName}"]`);
-    const statusIndicator = document.querySelector(`[data-genre="${genreName}"].status`);
-    const totalSubgenres = subgenreCheckboxes.length;
-    const checkedSubgenres = Array.from(subgenreCheckboxes).filter(cb => cb.checked).length;
-
-    if (!statusIndicator) return;
-
-    if (checkedSubgenres === 0) {
-      statusIndicator.textContent = '';
-    } else if (checkedSubgenres === totalSubgenres) {
-      statusIndicator.innerHTML = '✓';
-      statusIndicator.classList.add('text-green-500');
-    } else {
-      statusIndicator.textContent = `${checkedSubgenres}/${totalSubgenres}`;
-      statusIndicator.classList.remove('text-green-500');
-    }
-  }
-
-  // Add to your existing event listeners
-  document.querySelectorAll('.subgenre-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      const genreName = this.dataset.parent;
-      updateGenreStatus(genreName);
-      // ...existing checkbox change code...
-    });
-  });
 </script>

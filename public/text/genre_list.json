@@ -18,7 +18,7 @@
         },
         {
             "name": "Dance",
-            "subgenres": ["Club Dance","Breakbeat Breakstep","4 Beat","Acid Breaks","Baltimore Club","Big Beat","Breakbeat Hardcore","Broken Beat","Florida Breaks","Nu Skool Breaks","Brostep","Chillstep","Dubstep","Electroswing","Exercise","Future Garage","Garage","Glitch Hop","Glitch Pop","Grime","Hardcore","Bouncy House","Bouncy Techno","Breakcore","Digital Hardcore","Doomcore","Dubstyle","Gabber","Happy Hardcore","Jumpstyle","Makina","Terrorcore","Uk Hardcore","Hard Dance","Hi NRG Eurodance","House","Chicago House","Diva House","Dutch House","Electro House","Freestyle House","French House","Funky House","Ghetto House","Hardbag","Hip House","Italo House","Latin House","Minimal House","Progressive House","Rave Music","Swing House","Tribal House","Tropical House","UK Hard House","US Garage","Vocal House","Jackin House","Jungle Drum and bass","Liquid Dub","Regstep","Speedcore","Techno","Acid Techno","Detroit Techno","Free Tekno","Ghettotech","Minimal","Nortec","Schranz","Techno Dnb","Technopop","Tecno Brega","Toytown Techno","Trance","Acid Trance","Acid House","Classic Trance","Dark Psy","Deep House","Dream Trance","Goa Trance","Dark Psytrance","Full on","Psybreaks","Psyprog","Suomisaundi","Hard Trance","Prog Trance","Psy Trance","Minimal Techno","Tech House","Tech Trance","Uplifting Trance","Orchestral Uplifting","Vocal Trance", "Trap"]
+            "subgenres": ["Club Dance","Breakbeat Breakstep","4 Beat","Acid Breaks","Baltimore Club","Big Beat","Breakbeat Hardcore","Broken Beat","Florida Breaks","Nu Skool Breaks","Brostep","Chillstep","Dubstep","Electroswing","Exercise","Future Garage","Garage","Glitch Hop","Glitch Pop","Grime","Hardcore","Bouncy House","Bouncy Techno","Breakcore","Digital Hardcore","Doomcore","Dubstyle","Gabber","Happy Hardcore","Jumpstyle","Makina","Terrorcore","Uk Hardcore","Hard Dance","Hi NRG Eurodance","House","Chicago House","Diva House","Dutch House","Electro House","Freestyle House","French House","Funky House","Ghetto House","Hardbag","Hip House","Italo House","Latin House","Minimal House","Progressive House","Rave Music","Swing House","Tribal House","Tropical House","UK Hard House","US Garage","Vocal House","Jackin House","Jungle Drum and bass","Liquid Dub","Regstep","Speedcore","Techno","Acid Techno","Detroit Techno","Free Tekno","Ghettotech","Minimal","Nortec","Schranz","Techno Dnb","Technopop","Tecno Brega","Toytown Techno","Trance","Acid Trance","Acid House","Classic Trance","Dark Psy","Deep House","Dream Trance","Goa Trance","Dark Psytrance","Full on","Psybreaks","Psyprog","Suomisaundi","Hard Trance","Prog Trance","Psy Trance","Minimal Techno","Tech House","Tech Trance","Uplifting Trance","Orchestral Uplifting","Vocal Trance","Trap"]
         },
         {
             "name": "Electronic",
@@ -46,36 +46,36 @@
         },
         {
             "name": "Metal",
-            "subgenres": ["Avantgarde Metal","Beatdown","Black Metal","Crossover","Death Metal","Deathcore","Djent","Doom Metal","Drone","Folk Metal","Glam Metal","Gothic Metal","Grindcore","Groove Metal","Hair Metal","Hardcore","Heavy Metal","Industrial Metal","Kawaii Metal","Math Metal","Mathcore","Metalcore","Modern Metal","Neoclassical Metal","Neue Deutsche Harte","New Wave Of British Heavy Metal","NHBD","NHSD","Nu Death Metal","Nu Metal","Pagan Metal","Pirate Metal","Post Hardcore","Post Metal","Power Metal","Progressive Metal","Slam", "Sludge","Speed Metal","Stoner Metal","Symphonic Metal","Thrash Metal","Viking Metal"
+            "subgenres": ["Avantgarde Metal","Beatdown","Black Metal","Crossover","Death Metal","Deathcore","Djent","Doom Metal","Drone","Folk Metal","Glam Metal","Gothic Metal","Grindcore","Groove Metal","Hair Metal","Hardcore","Heavy Metal","Industrial Metal","Kawaii Metal","Math Metal","Mathcore","Metalcore","Modern Metal","Neoclassical Metal","Neue Deutsche Harte","New Wave Of British Heavy Metal","NHBD","NHSD","Nu Death Metal","Nu Metal","Pagan Metal","Pirate Metal","Post Hardcore","Post Metal","Power Metal","Progressive Metal","Slam","Sludge","Speed Metal","Stoner Metal","Symphonic Metal","Thrash Metal","Viking Metal"
             ]
         },
         {
             "name": "Pop",
             "subgenres": [
-                "Adult Contemporary", "Arab Pop", "Baroque", "Britpop", "Bubblegum Pop", "Chamber Pop", "Chanson", "Christian Pop", "Classical Crossover", "Europop", "Austropop", "Balkan Pop", "French Pop", "Latin Pop", "Laiko", "Nederpop", "Russian Pop", "Dance Pop", "Dream Pop", "Electro Pop", "Iranian Pop", "Jangle Pop", "Latin Ballad", "Levenslied", "Louisiana Swamp Pop", "Mexican Pop", "Motorpop", "New Romanticism", "Orchestral Pop", "Pop Rap", "Popera", "Pop Rock",  "Power Pop", "Psychedelic Pop", "Schlager", "Soft Rock", "Sophisti Pop", "Space Age Pop", "Sunshine Pop", "Surf Pop", "Synthpop", "Teen Pop", "Traditional Pop Music", "Turkish Pop", "Vispop", "Wonky Pop"
+                "Adult Contemporary","Arab Pop","Baroque","Britpop","Bubblegum Pop","Chamber Pop","Chanson","Christian Pop","Classical Crossover","Europop","Austropop","Balkan Pop","French Pop","Latin Pop","Laiko","Nederpop","Russian Pop","Dance Pop","Dream Pop","Electro Pop","Iranian Pop","Jangle Pop","Latin Ballad","Levenslied","Louisiana Swamp Pop","Mexican Pop","Motorpop","New Romanticism","Orchestral Pop","Pop Rap","Popera","Pop Rock",  "Power Pop","Psychedelic Pop","Schlager","Soft Rock","Sophisti Pop","Space Age Pop","Sunshine Pop","Surf Pop","Synthpop","Teen Pop","Traditional Pop Music","Turkish Pop","Vispop","Wonky Pop"
             ]
         },
         {
             "name": "Progressive",
-            "subgenres": ["Progressive House Trance", "Disco House", "Dream House", "Space House", "Japanese House", "Bounce Scouse House", "Progressive Breaks", "Progressive Drum and Bass", "Progressive Techno"]
+            "subgenres": ["Progressive House Trance","Disco House","Dream House","Space House","Japanese House","Bounce Scouse House","Progressive Breaks","Progressive Drum and Bass","Progressive Techno"]
         },
         {
             "name": "Punk",
-            "subgenres": ["Afro Punk", "Art Punk", "Britpunk", "Crust Punk", "Dance Punk", "Electropunk", "Folk Punk", "Hardcore Punk", "Punk", "Punk Blues", "Punk Rock", "Psychobilly Punkabilly", "Pop Punk", "Steampunk", "Synthpunk"
+            "subgenres": ["Afro Punk","Art Punk","Britpunk","Crust Punk","Dance Punk","Electropunk","Folk Punk","Hardcore Punk","Punk","Punk Blues","Punk Rock","Psychobilly Punkabilly","Pop Punk","Steampunk","Synthpunk"
             ]
         },
         {
             "name": "R and B Soul",
-            "subgenres": ["Carolina Beach Music", "Contemporary R and B", "Disco", "Doo Wop", "Funk", "Modern Soul", "Motown", "Neo Soul", "Northern Soul", "Psychedelic Soul", "Quiet Storm", "Soul", "Soul Blues", "Southern Soul"]
+            "subgenres": ["Carolina Beach Music","Contemporary R and B","Disco","Doo Wop","Funk","Modern Soul","Motown","Neo Soul","Northern Soul","Psychedelic Soul","Quiet Storm","Soul","Soul Blues","Southern Soul"]
         },
         {
             "name": "Reggae",
-            "subgenres": ["2 Tone", "Roots Reggae", "Reggae Fusion", "Reggae en Espanol", "Spanish Reggae", "Reggae 110", "Reggae Bultron", "Romantic Flow", "Lovers Rock", "Raggamuffin", "Ragga", "Dancehall", "Ska", "Dub", "Rocksteady"]
+            "subgenres": ["2 Tone","Roots Reggae","Reggae Fusion","Reggae en Espanol","Spanish Reggae","Reggae 110","Reggae Bultron","Romantic Flow","Lovers Rock","Raggamuffin","Ragga","Dancehall","Ska","Dub","Rocksteady"]
         },
         {
             "name": "Rock",
             "subgenres": [
-                "Acid Rock", "Adult Oriented Rock", "Adult Alternative", "Alternative Rock", "American Traditional Rock", "Anatolian Rock", "Arena Rock", "Art Rock", "Blues Rock", "British Invasion", "Cult Rock", "Emo Rock", "Glam Rock", "Hard Rock", "Math Rock", "Noise Rock", "Jam Bands",  "Post Rock", "Prog Rock", "Psychedelic",  "Rock and Roll", "Rockabilly", "Roots Rock", "Southern Rock", "Surf", "Yacht Rock"
+                "Acid Rock","Adult Oriented Rock","Adult Alternative","Alternative Rock","American Traditional Rock","Anatolian Rock","Arena Rock","Art Rock","Blues Rock","British Invasion","Cult Rock","Emo Rock","Glam Rock","Hard Rock","Math Rock","Noise Rock","Jam Bands",  "Post Rock","Prog Rock","Psychedelic",  "Rock and Roll","Rockabilly","Roots Rock","Southern Rock","Surf","Yacht Rock"
             ]
         }
     ]

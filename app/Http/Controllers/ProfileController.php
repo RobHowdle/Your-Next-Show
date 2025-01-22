@@ -46,14 +46,6 @@ class ProfileController extends Controller
      */
     public function edit($dashboardType, $userId): View
     {
-        $userModules = UserModuleSetting::where('user_id', $userId)
-            ->get()
-            ->mapWithKeys(function ($module) {
-                return [$module->module_name => [
-                    'is_enabled' => $module->is_enabled,
-                    'description' => $module->description
-                ]];
-            })->toArray();
         $user = User::where('id', $userId)->first();
         $roles = Role::where('name', '!=', 'administrator')->get();
         $userRole = $user->roles;
@@ -81,13 +73,13 @@ class ProfileController extends Controller
             $designerData = $this->getDesignerData($user);
         }
 
-        $modulesWithSettings = $this->getModulesWithSettings($user, $dashboardType);
-        $communicationSettings = $this->getCommunicationSettings($user, $dashboardType);
+        $modulesWithSettings = $this->getModulesWithSettings($userId, $dashboardType);
+        $communicationSettings = $this->getCommunicationSettings($userId, $dashboardType);
 
         return view('profile.edit', [
-            'userId' => $this->getUserId(),
+            'user' => $user,
             'dashboardType' => $dashboardType,
-            'modules' => $userModules,
+            'modules' => $modulesWithSettings,
             'promoterData' => $promoterData,
             'bandData' => $bandData,
             'venueData' => $venueData,
@@ -105,7 +97,7 @@ class ProfileController extends Controller
             'userPostalTown' => $user->postal_town,
             'userLat' => $user->latitude,
             'userLong' => $user->longitude,
-            'modulesWithSettings' => $modulesWithSettings,
+            // 'modulesWithSettings' => $modulesWithSettings,
             'communications' => $communicationSettings,
         ]);
     }
@@ -220,7 +212,14 @@ class ProfileController extends Controller
                     $promoter->update(['contact_name' => $userData['contact_name']]);
                 }
                 // Location
-
+                if (isset($userData['location']) && isset($userData['latitude']) && isset($userData['longitude']) && isset($userData['postal_town'])) {
+                    $promoter->update([
+                        'location' => $userData['location'],
+                        'latitude' => $userData['latitude'],
+                        'longitude' => $userData['longitude'],
+                        'postal_town' => $userData['postal_town'],
+                    ]);
+                }
 
                 // Contact Email
                 if (isset($userData['contact_email']) && $promoter->contact_email !== $userData['contact_email']) {
@@ -251,8 +250,8 @@ class ProfileController extends Controller
                 }
 
                 // About
-                if (isset($userData['about']) && $promoter->description !== $userData['about']) {
-                    $promoter->update(['description' => $userData['about']]);
+                if (isset($userData['description']) && $promoter->description !== $userData['description']) {
+                    $promoter->update(['description' => $userData['description']]);
                 }
 
                 // My Venues
@@ -260,43 +259,46 @@ class ProfileController extends Controller
                     $promoter->update(['my_venues' => $userData['myVenues']]);
                 }
 
-
                 // Logo
-                if (isset($userData['logo'])) {
-                    $promoterLogoFile = $userData['logo'];
+                if (isset($userData['logo_url'])) {
+                    $promoterLogoFile = $userData['logo_url'];
 
                     // Generate the file name
                     $promoterName = $request->input('name');
                     $promoterLogoExtension = $promoterLogoFile->getClientOriginalExtension() ?: $promoterLogoFile->guessExtension();
                     $promoterLogoFilename = Str::slug($promoterName) . '.' . $promoterLogoExtension;
 
-                    // Store the file
-                    // $promoterLogoFile->storeAs('public/images/promoters_logos', $promoterLogoFilename);
-                    $promoterLogoFile->move(storage_path('app/public/images/promoters_logos'), $promoterLogoFilename);
+                    // Store file in public disk
+                    $path = $promoterLogoFile->storeAs('public/images/venue_logos', $promoterLogoFilename);
 
+                    // Generate proper URL for public access
+                    $logoUrl = asset(str_replace('public', 'storage', $path));
 
-                    // Log file path
-
-                    // Get the URL to the file
-                    $logoUrl = Storage::url('images/promoters_logos/' . $promoterLogoFilename);
-
-                    // Update database
+                    // Update database with relative path
                     $promoter->update(['logo_url' => $logoUrl]);
                 }
 
-
                 // Return success message with redirect
-                return redirect()->route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])->with('status', 'profile-updated');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile updated successfully',
+                    'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+                ]);
             } else {
                 // Handle case where no promoter is linked to the user
-                return response()->json(['error' => 'Promoter not found'], 404);
+                return response()->json(
+                    [
+                        'success' => false,
+                        'error' => 'Profile Failed to update'
+                    ],
+                    404
+                );
             }
         }
     }
 
     public function updateVenue($dashboardType, VenueProfileUpdateRequest $request, $user)
     {
-        // dd($request->all());
         $user = User::findOrFail($user);
         $userId = $user->id;
         $userData = $request->validated();
@@ -313,10 +315,12 @@ class ProfileController extends Controller
                 if (isset($userData['name']) && $venue->name !== $userData['name']) {
                     $venue->update(['name' => $userData['name']]);
                 }
+
                 // Contact Name
                 if (isset($userData['contact_name']) && $venue->contact_name !== $userData['contact_name']) {
                     $venue->update(['contact_name' => $userData['contact_name']]);
                 }
+
                 // Location
                 if (isset($userData['location']) && isset($userData['latitude']) && isset($userData['longitude']) && isset($userData['postal_town'])) {
                     $venue->update([
@@ -383,14 +387,6 @@ class ProfileController extends Controller
                 // Deposit Amount
                 if (isset($userData['deposit_amount']) && $venue->deposit_amount !== $userData['deposit_amount']) {
                     $venue->update(['deposit_amount' => $userData['deposit_amount']]);
-                }
-
-                // Genres
-                if (isset($userData['genres'])) {
-                    $storedGenres = json_decode($venue->genre, true);
-                    if ($storedGenres !== $userData['genres']) {
-                        $venue->update(['genre' => json_encode($userData['genres'])]);
-                    }
                 }
 
                 // Logo
@@ -729,8 +725,9 @@ class ProfileController extends Controller
         return Redirect::to('/');
     }
 
-    protected function getCommunicationSettings($user, $dashboardType)
+    protected function getCommunicationSettings($userId, $dashboardType)
     {
+        $user = User::findOrFail($userId);
         // Get default preferences from config
         $defaultPreferences = config('mailing_preferences.communication_preferences');
         if (!$defaultPreferences) {
@@ -759,25 +756,19 @@ class ProfileController extends Controller
         return $communicationSettings;
     }
 
-    protected function getModulesWithSettings($user, $dashboardType)
+    protected function getModulesWithSettings($userId, $dashboardType)
     {
         // Load all modules from config
         $modules = config('modules.modules');
 
-        // Get user-specific enabled modules from the session
-        $userModules = collect(session('modules', [])); // This should contain user's active modules
-        $modulesWithSettings = [];
-
-        foreach ($modules as $moduleKey => $module) {
-            // Check if the user has this module enabled
-            $isEnabled = $userModules->has($moduleKey) && $userModules->get($moduleKey)['is_enabled'] ?? false;
-
-            // Add the module to the settings array
-            $modulesWithSettings[$module['name']] = [
-                'description' => $module['description'], // Include the description
-                'is_enabled' => $isEnabled, // Directly set the enabled status
-            ];
-        }
+        $modulesWithSettings = UserModuleSetting::where('user_id', $userId)
+            ->get()
+            ->mapWithKeys(function ($module) {
+                return [$module->module_name => [
+                    'is_enabled' => $module->is_enabled,
+                    'description' => $module->description
+                ]];
+            })->toArray();
 
         return $modulesWithSettings;
     }
@@ -972,14 +963,14 @@ class ProfileController extends Controller
             'long' => $long,
             'w3w' => $w3w,
             'logo' => $logo,
+            'description' => $description,
+            'contact_name' => $contact_name,
+            'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'platformsToCheck' => $platformsToCheck,
-            'description' => $description,
             'inHouseGear' => $inHouseGear,
             'myEvents' => $myEvents,
-            'contact_name' => $contact_name,
-            'contact_email' => $contact_email,
             'uniqueBands' => $uniqueBands,
             'genres' => $genres,
             'profileGenres' => $profileGenres,
@@ -1653,9 +1644,15 @@ class ProfileController extends Controller
     /**
      * Save Genres
      */
-    public function saveGenres($dashboardType, StoreUpdateBandGenres $request)
+    public function saveGenres($dashboardType, Request $request)
     {
-        $validated = $request->validated();
+        dd($request->all());
+        \Log::info('Save Genres Request:', [
+            'dashboardType' => $dashboardType,
+            'requestData' => $request->all(),
+        ]);
+
+        $validated = $request;
         $user = User::where('id', Auth::user()->id)->first();
 
         // Get correct user type

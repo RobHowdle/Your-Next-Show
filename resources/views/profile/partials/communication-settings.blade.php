@@ -14,7 +14,7 @@
           </div>
           <div class="flex items-center justify-end">
             <label
-              class="{{ in_array($name, ['system_announcements', 'legal_or_policy_updates']) ? 'opacity-75' : '' }} relative inline-flex cursor-pointer items-center">
+              class="{{ in_array($name, ['system_announcements', 'legal_or_policy_updates']) ? 'opacity-50' : '' }} relative inline-flex cursor-pointer items-center">
               <input type="checkbox" class="toggle-checkbox sr-only" data-communication="{{ $name }}"
                 onchange="updateCommunicationStatus('{{ $name }}', this.checked)"
                 {{ $settings['is_enabled'] === 1 ? 'checked' : '' }}
@@ -34,13 +34,7 @@
 <script>
   function updateCommunicationStatus(settingName, enabled) {
     const dashboardType = '{{ $dashboardType }}';
-    const userId = '{{ $userId }}';
-
-    const settingsArray = {
-      [settingName]: {
-        is_enabled: enabled ? 1 : 0
-      }
-    };
+    const userId = '{{ $user->id }}';
 
     $.ajax({
       url: `/api/profile/${dashboardType}/communications/update`,
@@ -49,7 +43,7 @@
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
       data: {
-        settings: settingsArray,
+        setting: settingName,
         enabled: enabled ? 1 : 0,
         userId: userId
       },

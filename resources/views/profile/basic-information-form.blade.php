@@ -30,11 +30,13 @@
         placeholder="Enter an address" :value="old('location', $profileData['location'] ?? '')" :latitude="old('lat', $profileData['lat'] ?? '')" :longitude="old('long', $profileData['long'] ?? '')" />
     </div>
 
-    <div class="group mb-6">
-      <x-input-label-dark for="w3w">What3Words:</x-input-label-dark>
-      <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $profileData['w3w'] ?? '') }}"></x-text-input>
-      <div id="suggestions"></div>
-    </div>
+    @if ($dashboardType === 'venue')
+      <div class="group mb-6">
+        <x-input-label-dark for="w3w">What3Words:</x-input-label-dark>
+        <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $profileData['w3w'] ?? '') }}"></x-text-input>
+        <div id="suggestions"></div>
+      </div>
+    @endif
 
     <div class="group mb-6">
       <x-input-label-dark for="email">Email:</x-input-label-dark>
