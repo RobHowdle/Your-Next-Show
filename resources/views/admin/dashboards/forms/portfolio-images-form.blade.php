@@ -5,7 +5,7 @@
 
   <div class="group mb-6">
     <x-input-label-dark for="portfolio_link">Portfolio URL</x-input-label-dark>
-    <x-text-input id="portfolio_link" name="portfolio_link" :value="old('portfolio_link', $dashboardData['portfolio_link'])" />
+    <x-text-input id="portfolio_link" name="portfolio_link" :value="old('portfolio_link', $profileData['portfolio_link'])" />
     @error('portfolio_link')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror

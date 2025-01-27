@@ -1,20 +1,30 @@
 <header>
   <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Upload a max of 6 images to showcase your work, add a URL to your main portfolio') }} </h2>
+    {{ __('Upload a max of 6 images to showcase your work, add a URL to your main portfolio') }}
+  </h2>
 </header>
 
 <div class="mb-8 grid grid-cols-3 items-center gap-4 space-y-6">
-  @foreach ($waterMarkedPortfolioImages as $image)
-    <div class="overflow-hidden rounded shadow-md">
-      <img src="{{ asset($image) }}" alt="Portfolio Image" class="h-auto w-full">
+  @if (!isset($profileData['waterMarkedPortfolioImages']) || empty($profileData['waterMarkedPortfolioImages']))
+    <div class="text-center text-white">
+      <p>{{ __('No portfolio images uploaded yet.') }}</p>
     </div>
-  @endforeach
+  @else
+    @foreach ($profileData['waterMarkedPortfolioImages'] as $image)
+      <div class="overflow-hidden rounded shadow-md">
+        <img src="{{ asset($image) }}" alt="Portfolio Image" class="h-auto w-full">
+      </div>
+    @endforeach
+  @endif
 </div>
 
-@include('admin.dashboards.forms.portfolio-images-form', [
-    'dashboardType' => $dashboardType,
-    'waterMarkedPortfolioImages' => $dashboardData['waterMarkedPortfolioImages'],
-])
+@if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
+  @include('admin.dashboards.forms.portfolio-images-form', [
+      'dashboardType' => $dashboardType,
+      'waterMarkedPortfolioImages' => $profileData['waterMarkedPortfolioImages'] ?? [],
+  ])
+@endif
+
 
 <!-- Dropzone form for file upload -->
 <form action="{{ route('portfolio.upload', ['dashboardType' => $dashboardType]) }}"
@@ -24,8 +34,8 @@
     <span>Drag and drop files here or click to upload</span>
   </div>
   <input type="hidden" id="portfolio_image_path" name="portfolio_image_path">
-  <input type="hidden" name="serviceable_id" value="{{ $dashboardData['serviceableId'] }}">
-  <input type="hidden" name="serviceable_type" value="{{ $dashboardData['serviceableType'] }}">
+  <input type="hidden" name="serviceable_id" value="{{ $profileData['serviceableId'] }}">
+  <input type="hidden" name="serviceable_type" value="{{ $profileData['serviceableType'] }}">
 </form>
 
 <script>

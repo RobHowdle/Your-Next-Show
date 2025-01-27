@@ -101,9 +101,9 @@ class VenueController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $slug)
     {
-        $venue = Venue::where('id', '=', $id)->with('extraInfo')->first();
+        $venue = Venue::where('name', '=', $slug)->with('extraInfo')->first();
         $venueId = $venue->id;
         $existingPromoters = $venue->promoters;
 
@@ -112,18 +112,18 @@ class VenueController extends Controller
         $platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
         $venue->platforms = $platforms;
 
-        $recentReviews = VenueReview::getRecentReviewsForVenue($id);
+        $recentReviews = VenueReview::getRecentReviewsForVenue($venueId);
         $venue->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
-        $overallScore = VenueReview::calculateOverallScore($id);
-        $overallReviews[$id] = $this->renderRatingIcons($overallScore);
+        $overallScore = VenueReview::calculateOverallScore($venueId);
+        $overallReviews[$venueId] = $this->renderRatingIcons($overallScore);
 
         // Get Review Scores
-        $averageCommunicationRating = VenueReview::calculateAverageScore($id, 'communication_rating');
-        $averageRopRating = VenueReview::calculateAverageScore($id, 'rop_rating');
-        $averagePromotionRating = VenueReview::calculateAverageScore($id, 'promotion_rating');
-        $averageQualityRating = VenueReview::calculateAverageScore($id, 'quality_rating');
-        $reviewCount = VenueReview::getReviewCount($id);
+        $averageCommunicationRating = VenueReview::calculateAverageScore($venueId, 'communication_rating');
+        $averageRopRating = VenueReview::calculateAverageScore($venueId, 'rop_rating');
+        $averagePromotionRating = VenueReview::calculateAverageScore($venueId, 'promotion_rating');
+        $averageQualityRating = VenueReview::calculateAverageScore($venueId, 'quality_rating');
+        $reviewCount = VenueReview::getReviewCount($venueId);
 
         $genres = json_decode($venue->genre);
         $genreNames = collect($genres)->keys()->toArray();

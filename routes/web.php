@@ -45,19 +45,19 @@ Route::get('/venues', [VenueController::class, 'index'])->name('venues');
 Route::post('/venues/filter', [VenueController::class, 'filterCheckboxesSearch'])->name('venues.filterCheckboxesSearch');
 Route::get('/venues/filterByCoordinates', [VenueController::class, 'filterByCoordinates'])
     ->name('venues.filterByCoordinates');
-Route::post('/venues/{id}/submitReview', [VenueController::class, 'submitVenueReview'])->name('submit-venue-review');
-Route::get('/venues/{id}', [VenueController::class, 'show'])->name('venue');
+Route::post('/venues/{slug}/submitReview', [VenueController::class, 'submitVenueReview'])->name('submit-venue-review');
+Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue');
 Route::get('/promoter-suggestion', [VenueController::class, 'suggestPromoters'])->name('suggestPromoters');
 
 Route::get('/promoters', [PromoterController::class, 'index'])->name('promoters');
 Route::post('/promoters/filter', [PromoterController::class, 'filterCheckboxesSearch'])->name('promoters.filterCheckboxesSearch');
-Route::get('/promoters/{id}', [PromoterController::class, 'show'])->name('promoter');
-Route::post('/promoters/{id}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
+Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter');
+Route::post('/promoters/{slug}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
 
-Route::get('/other', [OtherServiceController::class, 'index'])->name('other');
-Route::post('/other/{serviceType}/filter', [OtherServiceController::class, 'filterCheckboxesSearch'])->name('other.filterCheckboxesSearch');
-Route::get('/other/{serviceName}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
-Route::get('/other/{serviceName}/{serviceId}', [OtherServiceController::class, 'show'])->name('singleService');
+Route::get('/services', [OtherServiceController::class, 'index'])->name('other');
+Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filterCheckboxesSearch'])->name('other.filterCheckboxesSearch');
+Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
+Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService');
 
 // Gig Guide
 Route::get('/gig-guide', [GigGuideController::class, 'index'])->name('gig-guide');
@@ -258,24 +258,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile Updates
     Route::put('/profile/{dashboardType}/promoter-profile-update/{user}', [ProfileController::class, 'updatePromoter'])->name('promoter.update');
     Route::put('/profile/{dashboardType}/venue-profile-update/{user}', [ProfileController::class, 'updateVenue'])->name('venue.update');
-    Route::put('/profile/{dashboardType}/band-profile-update/{user}', [ProfileController::class, 'updateBand'])->name('band.update');
+    Route::put('/profile/{dashboardType}/band-profile-update/{user}', [ProfileController::class, 'updateBand'])->name('artist.update');
     Route::put('/profile/{dashboardType}/photographer-profile-update/{user}', [ProfileController::class, 'updatePhotographer'])->name('photographer.update');
     Route::put('/profile/{dashboardType}/standard-user-update/{user}', [ProfileController::class, 'updateStandardUser'])->name('standard-user.update');
     Route::put('/profile/{dashboardType}/designer-user-update/{user}', [ProfileController::class, 'updateDesigner'])->name('designer.update');
     Route::post('/profile/{dashboardType}/portfolio-image-upload', [ProfileController::class, 'uploadPortfolioImages'])->name('portfolio.upload');
     Route::get('/profile/{dashboardType}/settings', [ProfileController::class, 'settings'])->name('settings.index');
     Route::post('/profile/{dashboardType}/photographer-environment-types', [ProfileController::class, 'updateEnvironmentTypes'])->name('photographer.environment-types');
-    Route::post('/profile/{dashboardType}/settings/update', [ProfileController::class, 'updateModule'])->name('settings.updateModule');
-    Route::get('/profile/{dashboardType}/communications', [ProfileController::class, 'communications'])->name('communications.index');
-    Route::post('/profile/{dashboardType}/communications/update', [ProfileController::class, 'updatePreferences'])->name('communications.updatePreferences');
     Route::post('/profile/{dashboardType}/save-genres', [ProfileController::class, 'saveGenres'])->name('save-genres');
     Route::post('/profile/{dashboardType}/save-band-types', [ProfileController::class, 'saveBandTypes'])->name('save-band-types');
-
     Route::put('/profile/{dashboardType}/{user}/portfolio-save', [ProfileController::class, 'savePortfolio'])->name('portfolio.save');
     Route::post('/profile/{dashboardType}/{user}/add-role', [ProfileController::class, 'addRole'])->name('profile.add-role');
     Route::post('/profile/{dashboardType}/{user}/edit-role', [ProfileController::class, 'editRole'])->name('profile.edit-role');
     Route::delete('/profile/{dashboardType}/{user}/delete-role', [ProfileController::class, 'deleteRole'])->name('profile.delete-role');
 
+    // API Key Routes
+    Route::put('/profile/{dashboardType}/update-api-key', [ProfileController::class, 'updateAPI'])->name('profile.update-api');
     // Calendar-specific routes
     Route::get('/profile/events/{user}/apple/sync', [CalendarController::class, 'syncAllEventsToAppleCalendar'])->name('apple.sync');
     Route::get('/profile/{dashboardType}/events/{user}', [APIRequestsController::class, 'getUserCalendarEvents']);

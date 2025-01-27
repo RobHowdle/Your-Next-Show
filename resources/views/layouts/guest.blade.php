@@ -85,8 +85,8 @@
                   class="{{ request()->is('promoters*') ? 'text-yns_yellow' : '' }} xl: font-heading text-lg font-semibold text-white transition duration-150 ease-in-out hover:text-yns_yellow focus:rounded-sm focus:outline focus:outline-2 focus:outline-red-500 lg:text-xl xl:text-2xl">Promoters</a>
               </li>
               <li>
-                <a href="{{ url('/other') }}"
-                  class="{{ request()->is('other*') ? 'text-yns_yellow' : '' }} xl: font-heading text-lg font-semibold text-white transition duration-150 ease-in-out hover:text-yns_yellow focus:rounded-sm focus:outline focus:outline-2 focus:outline-red-500 lg:text-xl xl:text-2xl">Other</a>
+                <a href="{{ url('/services') }}"
+                  class="{{ request()->is('service*') ? 'text-yns_yellow' : '' }} xl: font-heading text-lg font-semibold text-white transition duration-150 ease-in-out hover:text-yns_yellow focus:rounded-sm focus:outline focus:outline-2 focus:outline-red-500 lg:text-xl xl:text-2xl">Other</a>
               </li>
               @auth
                 <li>
@@ -128,8 +128,8 @@
                   class="{{ request()->is('venues*') ? 'dark:text-yns_yellow' : '' }} block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Venues</a>
                 <a href="{{ url('/promoters') }}"
                   class="{{ request()->is('promoters*') ? 'dark:text-yns_yellow' : '' }} block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Promoters</a>
-                <a href="{{ url('/other') }}"
-                  class="{{ request()->is('other*') ? 'dark:text-yns_yellow' : '' }} block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Other</a>
+                <a href="{{ url('/services') }}"
+                  class="{{ request()->is('services*') ? 'dark:text-yns_yellow' : '' }} block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Other</a>
                 @auth
                   <a href="{{ url('/dashboard') }}"
                     class="block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Dashboard</a>

@@ -2,16 +2,17 @@
   <div class="w-full">
     <p class="text-xl font-bold">Your Details</p>
     @include('profile.designer.basic-information-form', [
-        'firstName' => $firstName,
-        'lastName' => $lastName,
-        'location' => $location,
-        'name' => $designerUserData['name'],
-        'contact_name' => $designerUserData['contact_name'],
-        'contact_email' => $designerUserData['contact_email'],
-        'contact_number' => $designerUserData['contact_number'],
-        'platformsToCheck' => $designerUserData['platformsToCheck'],
-        'platforms' => $designerUserData['platforms'],
-        'logo' => $designerUserData['logo'],
+        'name' => $designerData['designerName'],
+        'promoterLocation' => $designerData['designerLocation'],
+        'promoterPostalTown' => $designerData['designerPostalTown'],
+        'promoterLat' => $designerData['designerLat'],
+        'promoterLong' => $designerData['designerLong'],
+        'contact_name' => $designerData['contact_name'],
+        'email' => $designerData['contact_email'],
+        'contact_number' => $designerData['contact_number'],
+        'platformsToCheck' => $designerData['platformsToCheck'],
+        'platforms' => $designerData['platforms'],
+        'logo' => $designerData['logo'],
     ])
   </div>
 </div>
@@ -20,12 +21,12 @@
     <p class="text-xl font-bold">About You</p>
 
     @include('profile.designer.about', [
-        'about' => $designerUserData['about'],
+        'description' => $designerData['description'],
     ])
   </div>
 </div>
 @php
-  $dashboardData = $designerUserData ?? ($photographerUserData ?? ($videographerUserData ?? []));
+  $dashboardData = $designerData ?? ($photographerUserData ?? ($videographerUserData ?? []));
 @endphp
 <div x-show="selectedTab === 4" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
@@ -39,18 +40,10 @@
   <div class="w-full">
     <p class="text-xl font-bold">Genres & Band Types</p>
     @include('profile.designer.my-genres', [
-        'dashboardType' => $dashboardType,
-        'userRole' => $userRole,
-        'firstName' => $firstName,
-        'lastName' => $lastName,
-        'email' => $email,
-        'location' => $location,
-        'genres' => $designerUserData['genres'],
-        'designerGenres' => $designerUserData['designerGenres'],
-        'userId' => $userId,
-        'designer' => $designerUserData['designer'],
-        'isAllGenres' => $designerUserData['isAllGenres'],
-        'bandTypes' => $designerUserData['bandTypes'],
+        'genres' => $designerData['genres'],
+        'designerGenres' => $designerData['designerGenres'],
+        'designer' => $designerData['designer'],
+        'bandTypes' => $designerData['bandTypes'],
     ])
   </div>
 </div>
@@ -61,8 +54,8 @@
         'dashboardType' => $dashboardType,
         'userRole' => $userRole,
         'userId' => $userId,
-        'designer' => $designerUserData['designer'],
-        'workingTimes' => $designerUserData['workingTimes'],
+        'designer' => $designerData['designer'],
+        'workingTimes' => $designerData['workingTimes'],
     ])
   </div>
 </div>

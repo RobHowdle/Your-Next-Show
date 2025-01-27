@@ -58,22 +58,6 @@ class PhotographerProfileUpdateRequest extends FormRequest
             ],
             'working_times.*.start' => 'nullable|required_with:working_times.*.end|date_format:H:i',
             'working_times.*.end' => 'nullable|required_with:working_times.*.start|date_format:H:i|after:working_times.*.start',
-            // 'working_times' => 'array',
-            // 'working_times.*' => 'nullable|string|in:all-day,unavailable',
-            // 'working_times.Monday.start' => 'nullable|required_if:working_times.Monday,!=,all-day|required_if:working_times.Monday,!=,unavailable|date_format:H:i',
-            // 'working_times.Monday.end' => 'nullable|required_if:working_times.Monday,!=,all-day|required_if:working_times.Monday,!=,unavailable|date_format:H:i',
-            // 'working_times.Tuesday.start' => 'nullable|required_if:working_times.Tuesday,!=,all-day|required_if:working_times.Tuesday,!=,unavailable|date_format:H:i',
-            // 'working_times.Tuesday.end' => 'nullable|required_if:working_times.Tuesday,!=,all-day|required_if:working_times.Tuesday,!=,unavailable|date_format:H:i',
-            // 'working_times.Wednesday.start' => 'nullable|required_if:working_times.Wednesday,!=,all-day|required_if:working_times.Wednesday,!=,unavailable|date_format:H:i',
-            // 'working_times.Wednesday.end' => 'nullable|required_if:working_times.Wednesday,!=,all-day|required_if:working_times.Wednesday,!=,unavailable|date_format:H:i',
-            // 'working_times.Thursday.start' => 'nullable|required_if:working_times.Thursday,!=,all-day|required_if:working_times.Thursday,!=,unavailable|date_format:H:i',
-            // 'working_times.Thursday.end' => 'nullable|required_if:working_times.Thursday,!=,all-day|required_if:working_times.Thursday,!=,unavailable|date_format:H:i',
-            // 'working_times.Friday.start' => 'nullable|required_if:working_times.Friday,!=,all-day|required_if:working_times.Friday,!=,unavailable|date_format:H:i',
-            // 'working_times.Friday.end' => 'nullable|required_if:working_times.Friday,!=,all-day|required_if:working_times.Friday,!=,unavailable|date_format:H:i',
-            // 'working_times.Saturday.start' => 'nullable|required_if:working_times.Saturday,!=,all-day|required_if:working_times.Saturday,!=,unavailable|date_format:H:i',
-            // 'working_times.Saturday.end' => 'nullable|required_if:working_times.Saturday,!=,all-day|required_if:working_times.Saturday,!=,unavailable|date_format:H:i',
-            // 'working_times.Sunday.start' => 'nullable|required_if:working_times.Sunday,!=,all-day|required_if:working_times.Sunday,!=,unavailable|date_format:H:i',
-            // 'working_times.Sunday.end' => 'nullable|required_if:working_times.Sunday,!=,all-day|required_if:working_times.Sunday,!=,unavailable|date_format:H:i',
         ];
     }
 }

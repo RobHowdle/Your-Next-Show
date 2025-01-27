@@ -30,6 +30,8 @@ class OtherService extends Model
         'stream_urls',
         'band_type',
         'genre',
+        'styles',
+        'print',
         'contact_name',
         'contact_number',
         'contact_email',
@@ -159,5 +161,10 @@ class OtherService extends Model
     public function review()
     {
         return $this->hasMany(OtherServicesReview::class);
+    }
+
+    public function apiKeys()
+    {
+        return $this->morphMany(ApiKey::class, 'serviceable');
     }
 }

@@ -68,4 +68,9 @@ class Promoter extends Model
     {
         return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id');
     }
+
+    public function apiKeys()
+    {
+        return $this->morphMany(ApiKey::class, 'serviceable');
+    }
 }

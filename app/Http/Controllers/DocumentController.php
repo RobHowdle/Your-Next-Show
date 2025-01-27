@@ -17,18 +17,59 @@ class DocumentController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
-        $user = Auth::user()->load('roles');
+        $user = Auth::user()->load(['roles', 'otherService']);
         $role = $user->roles->first()->name;
-        $service = $user->otherService(ucfirst($role))->first();
-        $dashboardType = lcfirst($service->services);
 
-        if ($service) {
-            $documents = Document::where('serviceable_id', $service->id)
-                ->where('serviceable_type', get_class($service))
+        // Determine the service based on the user's role
+        if (in_array($role, ["artist", "photographer", "videographer", "designer"])) {
+            $service = $user->otherService(ucfirst($role))->first();
+            if (is_null($service)) {
+                return view('admin.dashboards.show-documents', [
+                    'user' => $user,
+                    'userId' => $this->getUserId(),
+                    'dashboardType' => $dashboardType,
+                    'modules' => $modules,
+                    'documents' => collect(),
+                    'message' => "No documents found for this {$role}.",
+                ]);
+            }
+
+            $documents = Document::where('serviceable_type', 'App\Models\OtherService')
+                ->where('serviceable_id', $service->id)
+                ->orderBy('created_at', 'desc')
                 ->get();
+        } elseif ($role === "promoter") {
+            $service = $user->promoters()->first();
+            if ($service) {
+                $documents = Document::where('serviceable_type', 'App\Models\Promoter')
+                    ->where('serviceable_id', $service->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+        } elseif ($role === "venue") {
+            $service = $user->venues()->first();
+            if ($service) {
+                $documents = Document::where('serviceable_type', 'App\Models\Venue')
+                    ->where('serviceable_id', $service->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
         } else {
+            $service = null;
             $documents = collect();
         }
+
+        if (is_null($service)) {
+            return view('admin.dashboards.show-documents', [
+                'user' => $user,
+                'userId' => $this->getUserId(),
+                'dashboardType' => $dashboardType,
+                'modules' => $modules,
+                'documents' => collect(),
+                'message' => 'No documents available for your role.',
+            ]);
+        }
+
 
         return view('admin.dashboards.show-documents', [
             'userId' => $this->getUserId(),
@@ -62,8 +103,8 @@ class DocumentController extends Controller
 
     public function create($dashboardType)
     {
-        $userId = Auth::id();
-        $user = Auth::user();
+        $modules = collect(session('modules', []));
+        $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
         $serviceable = $user->otherService()->first();
         $serviceableId = $serviceable->id;
         $services = $serviceable->services;

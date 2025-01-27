@@ -26,6 +26,8 @@ class Venue extends Model
         'w3w',
         'capacity',
         'in_house_gear',
+        'deposit_required',
+        'deposit_amount',
         'band_type',
         'genre',
         'contact_name',
@@ -81,5 +83,10 @@ class Venue extends Model
         return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id')
             ->withPivot('created_at', 'updated_at', 'role')
             ->whereNull('service_user.deleted_at');
+    }
+
+    public function apiKeys()
+    {
+        return $this->morphMany(ApiKey::class, 'serviceable');
     }
 }

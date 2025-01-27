@@ -9,7 +9,7 @@
       <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
         <th scope="row"
           class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="{{ route('singleService', ['serviceName' => $service->services, 'serviceId' => $service->id]) }}"
+          <a href="{{ route('singleService', ['serviceType' => lcfirst($service->services), 'name' => Str::slug($service->name)]) }}"
             class="transition duration-150 ease-in-out hover:text-yns_yellow">{{ $service->name }}</a>
         </th>
         <td
@@ -203,7 +203,7 @@
 
     // Send AJAX request to fetch filtered data
     $.ajax({
-      url: `/other/${serviceType}/filter`,
+      url: `/services/${serviceType}/filter`,
       method: 'POST',
       data: {
         _token: $('meta[name="csrf-token"]').attr('content'),

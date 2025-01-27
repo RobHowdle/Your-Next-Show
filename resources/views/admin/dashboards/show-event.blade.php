@@ -56,11 +56,18 @@
                 <div class="group mb-4 flex flex-col text-center">
                   @if (count($otherBands) > 0)
                     <p class="text-lg font-bold underline">Band</p>
-                    @foreach ($otherBands as $band)
-                      <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $band->id]) }}"
-                        class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $band->name }}</a>
-                    @endforeach
+                    <ul class="flex flex-row flex-wrap justify-center">
+                      @foreach ($otherBands as $band)
+                        <li>
+                          <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $band->id]) }}"
+                            class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $band->name }}{{ !$loop->last ? ', ' : '' }}</a>
+                        </li>
+                        @if (!$loop->last)
+                          <li>&nbsp;</li>
+                        @endif
+                      @endforeach
                   @endif
+                  </ul>
                 </div>
               @endif
               @if ($opener)

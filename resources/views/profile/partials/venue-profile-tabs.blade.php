@@ -1,61 +1,61 @@
 <div x-show="selectedTab === 2" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.basic-information-form', [
-        'name' => $venueUserData['venueName'],
-        'venueLocation' => $venueUserData['venueLocation'],
-        'venuePostalTown' => $venueUserData['venuePostalTown'],
-        'venueLat' => $venueUserData['venueLat'],
-        'venueLong' => $venueUserData['venueLong'],
-        'contact_name' => $venueUserData['contact_name'],
-        'contact_number' => $venueUserData['contact_number'],
-        'contact_email' => $venueUserData['contact_email'],
-        'platforms' => $venueUserData['platforms'],
-        'platformsToCheck' => $venueUserData['platformsToCheck'],
-        'logo' => $venueUserData['logo'],
+        'name' => $venueData['venueName'],
+        'venueLocation' => $venueData['venueLocation'],
+        'venuePostalTown' => $venueData['venuePostalTown'],
+        'venueLat' => $venueData['venueLat'],
+        'venueLong' => $venueData['venueLong'],
+        'contact_name' => $venueData['contact_name'],
+        'contact_number' => $venueData['contact_number'],
+        'contact_email' => $venueData['contact_email'],
+        'platforms' => $venueData['platforms'],
+        'platformsToCheck' => $venueData['platformsToCheck'],
+        'logo' => $venueData['logo'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 3" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.about', [
-        'description' => $venueUserData['description'],
+        'description' => $venueData['description'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 4" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.capacity', [
-        'capacity' => $venueUserData['capacity'],
+        'capacity' => $venueData['capacity'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 5" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.in-house-gear', [
-        'inHouseGear' => $venueUserData['inHouseGear'],
+        'inHouseGear' => $venueData['inHouseGear'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 6" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.my-events', [
-        'myEvents' => $venueUserData['myEvents'],
+        'myEvents' => $venueData['myEvents'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 7" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.my-bands', [
-        'uniqueBands' => $venueUserData['uniqueBands'],
+        'uniqueBands' => $venueData['uniqueBands'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 8" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.my-genres', [
-        'genres' => $venueUserData['genres'],
-        'promoterGenres' => $venueUserData['venueGenres'],
-        'venue' => $venueUserData['venue'],
-        'bandTypes' => $venueUserData['bandTypes'],
+        'genres' => $venueData['genres'],
+        'promoterGenres' => $venueData['venueGenres'],
+        'venue' => $venueData['venue'],
+        'bandTypes' => $venueData['bandTypes'],
     ]) </div>
 </div>
 <div x-show="selectedTab === 9" x-init="if (selectedTab === 9) { initializeMaps() }" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">
     @include('profile.venue.additional-info', [
-        'additionalInfo' => $venueUserData['additionalInfo'],
+        'additionalInfo' => $venueData['additionalInfo'],
     ]) </div>
 </div>

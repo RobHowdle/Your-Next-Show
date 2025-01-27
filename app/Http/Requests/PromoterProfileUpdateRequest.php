@@ -27,16 +27,15 @@ class PromoterProfileUpdateRequest extends FormRequest
             'postal_town' => 'nullable|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'logo' => 'nullable|image|mimes:jpeg,jpg,png,webp,svg|max:5120',
-            'about' => 'nullable|string',
-            'myVenues' => 'nullable|string',
-            'genres' => 'nullable|array',
+            'logo_url' => 'nullable|image|mimes:jpeg,jpg,png,webp,svg|max:5120',
             'band_types' => 'nullable|array',
+            'genres' => 'nullable|array',
             'contact_name' => 'nullable|string',
             'contact_number' => ['nullable', 'regex:/^(?:0|\+44)(?:\d\s?){9,10}$/'],
             'contact_email' => 'nullable|email',
             'contact_links.*.*' => 'nullable|url',
-            'genres' => 'nullable|array',
+            'description' => 'nullable|string',
+
         ];
     }
 }

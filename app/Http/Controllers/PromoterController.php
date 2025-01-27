@@ -105,9 +105,9 @@ class PromoterController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $slug)
     {
-        $promoter = Promoter::where('id', $id)->with('venues')->first();
+        $promoter = Promoter::where('name', $slug)->with('venues')->first();
         $promoterId = $promoter->id;
         $existingVenues = $promoter->venues;
 
@@ -117,18 +117,18 @@ class PromoterController extends Controller
         $promoter->platforms = $platforms;
 
         // Add the processed data to the venue
-        $recentReviews = PromoterReview::getRecentReviewsForPromoter($id);
+        $recentReviews = PromoterReview::getRecentReviewsForPromoter($promoterId);
         $promoter->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
-        $overallScore = PromoterReview::calculateOverallScore($id);
-        $overallReviews[$id] = $this->renderRatingIcons($overallScore);
+        $overallScore = PromoterReview::calculateOverallScore($promoterId);
+        $overallReviews[$promoterId] = $this->renderRatingIcons($overallScore);
 
         // Get Review Scores
-        $averageCommunicationRating = PromoterReview::calculateAverageScore($id, 'communication_rating');
-        $averageRopRating = PromoterReview::calculateAverageScore($id, 'rop_rating');
-        $averagePromotionRating = PromoterReview::calculateAverageScore($id, 'promotion_rating');
-        $averageQualityRating = PromoterReview::calculateAverageScore($id, 'quality_rating');
-        $reviewCount = PromoterReview::getReviewCount($id);
+        $averageCommunicationRating = PromoterReview::calculateAverageScore($promoterId, 'communication_rating');
+        $averageRopRating = PromoterReview::calculateAverageScore($promoterId, 'rop_rating');
+        $averagePromotionRating = PromoterReview::calculateAverageScore($promoterId, 'promotion_rating');
+        $averageQualityRating = PromoterReview::calculateAverageScore($promoterId, 'quality_rating');
+        $reviewCount = PromoterReview::getReviewCount($promoterId);
 
         $genres = json_decode($promoter->genre);
 

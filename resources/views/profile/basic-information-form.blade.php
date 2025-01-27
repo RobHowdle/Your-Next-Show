@@ -1,16 +1,16 @@
 <header>
-  <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Venue Details') }}
+  <h2 class="text-md mb-4 font-heading font-medium text-white">
+    {{ __(ucfirst($dashboardType) . ' Details') }}
   </h2>
 </header>
-<form method="POST" action="{{ route('venue.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}"
-  class="grid grid-cols-3 gap-x-8 gap-y-8" enctype="multipart/form-data">
+
+<form id="saveBasicInformation" method="POST" class="grid grid-cols-3 gap-x-8 gap-y-8" enctype="multipart/form-data">
   @csrf
   @method('PUT')
   <div class="col-start-1 col-end-2">
     <div class="group mb-6">
-      <x-input-label-dark for="name">Venue Name:</x-input-label-dark>
-      <x-text-input id="name" name="name" value="{{ old('name', $name) }}"></x-text-input>
+      <x-input-label-dark for="name">{{ ucfirst($dashboardType) }} Name:</x-input-label-dark>
+      <x-text-input id="name" name="name" value="{{ old('name', $profileData['name']) }}"></x-text-input>
       @error('name')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -19,27 +19,29 @@
     <div class="group mb-6">
       <x-input-label-dark for="contact_name">Contact Name:</x-input-label-dark>
       <x-text-input id="contact_name" name="contact_name"
-        value="{{ old('contact_name', $contact_name) }}"></x-text-input>
+        value="{{ old('contact_name', $profileData['contact_name']) }}"></x-text-input>
       @error('contact_name')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
     </div>
 
     <div class="group mb-6">
-      <x-google-address-picker :postalTown="old('venuePostalTown', $venueUserData['venuePostalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
-        placeholder="Enter an address" :value="old('venueLocation', $venueUserData['venueLocation'] ?? '')" :latitude="old('venueLat', $venueUserData['venueLat'] ?? '')" :longitude="old('venueLong', $venueUserData['venueLong'] ?? '')" />
+      <x-google-address-picker :postalTown="old('postalTown', $profileData['postalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
+        placeholder="Enter an address" :value="old('location', $profileData['location'] ?? '')" :latitude="old('lat', $profileData['lat'] ?? '')" :longitude="old('long', $profileData['long'] ?? '')" />
     </div>
 
-    <div class="group mb-6">
-      <x-input-label-dark for="w3w">What3Words:</x-input-label-dark>
-      <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $venueUserData['w3w'] ?? '') }}"></x-text-input>
-      <div id="suggestions"></div>
-    </div>
+    @if ($dashboardType === 'venue')
+      <div class="group mb-6">
+        <x-input-label-dark for="w3w">What3Words:</x-input-label-dark>
+        <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $profileData['w3w'] ?? '') }}"></x-text-input>
+        <div id="suggestions"></div>
+      </div>
+    @endif
 
     <div class="group mb-6">
       <x-input-label-dark for="email">Email:</x-input-label-dark>
       <x-text-input id="contact_email" name="contact_email"
-        value="{{ old('contact_email', $venueUserData['contact_email']) }}"></x-text-input>
+        value="{{ old('contact_email', $profileData['contact_email']) }}"></x-text-input>
       @error('contact_email')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -48,26 +50,25 @@
     <div class="group mb-6">
       <x-input-label-dark for="contact_number">Contact Phone:</x-input-label-dark>
       <x-text-input id="contact_number" name="contact_number"
-        value="{{ old('contact_number', $venueUserData['contact_number']) }}"></x-text-input>
+        value="{{ old('contact_number', $profileData['contact_number']) }}"></x-text-input>
       @error('contact_number')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
     </div>
   </div>
 
-  @if (is_array($platformsToCheck))
+  @if (isset($profileData['platformsToCheck']) && is_array($profileData['platformsToCheck']))
     <div class="col-start-2 col-end-3">
-      @foreach ($platformsToCheck as $platform)
+      @foreach ($profileData['platformsToCheck'] as $platform)
         <div class="group mb-6">
           <x-input-label-dark for="{{ $platform }}">{{ ucfirst($platform) }}:</x-input-label-dark>
 
           @php
-            // Ensure the links for the platform are correctly handled as an array
             $links =
-                isset($platforms[$platform]) && is_array($platforms[$platform])
-                    ? $platforms[$platform]
-                    : ($platforms[$platform]
-                        ? [$platforms[$platform]]
+                isset($profileData['platforms'][$platform]) && is_array($profileData['platforms'][$platform])
+                    ? $profileData['platforms'][$platform]
+                    : (isset($profileData['platforms'][$platform])
+                        ? [$profileData['platforms'][$platform]]
                         : []);
           @endphp
 
@@ -77,7 +78,6 @@
             </x-text-input>
           @endforeach
 
-          <!-- If no links exist, provide a way to add one -->
           @if (empty($links))
             <x-text-input id="{{ $platform }}-new" name="contact_links[{{ $platform }}][]"
               value="{{ old('contact_links.' . $platform . '.new', '') }}"
@@ -93,19 +93,18 @@
     </div>
   @endif
 
-  <div class="col-start-3 col-end-4">
-    <div class="group mb-6 flex flex-col items-center">
-      <x-input-label-dark for="logo" class="text-left">Logo:</x-input-label-dark>
-      <x-input-file id="logo" name="logo" onchange="previewLogo(event)"></x-input-file>
+  <div class="group mb-6 flex flex-col items-center">
+    <x-input-label-dark for="logo_url" class="text-left">Logo:</x-input-label-dark>
+    <x-input-file id="logo_url" name="logo_url" onchange="previewLogo(event)"></x-input-file>
 
-      <!-- Preview Image -->
-      <img id="logo-preview" src="{{ $logo }}" alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
-        style="display: {{ $logo ? 'block' : 'none' }};">
+    <img id="logo-preview"
+      src="{{ !empty($profileData['logo_url']) ? Storage::url($profileData['logo_url']) : asset('images/system/yns_no_image_found.png') }}"
+      alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
+      onerror="this.src='{{ asset('images/system/yns_no_image_found.png') }}'">
 
-      @error('logo')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
+    @error('logo_url')
+      <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+    @enderror
   </div>
 
   <div class="flex items-center gap-4">
@@ -123,15 +122,7 @@
     const preview = document.getElementById('logo-preview');
 
     if (file) {
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        preview.src = e.target.result; // Set the preview to the file data
-        preview.style.display = 'block'; // Show the preview image
-        console.log('Preview URL:', e.target.result); // Log the preview URL
-      };
-
-      reader.readAsDataURL(file); // Read the file as a data URL
+      preview.src = URL.createObjectURL(file);
     }
   }
 
@@ -174,6 +165,36 @@
       } else {
         jQuery('#suggestions').empty(); // Clear suggestions if input is less than 3 characters
       }
+    });
+
+    $('#saveBasicInformation').on('submit', function(e) {
+      e.preventDefault();
+
+      const form = $(this);
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: '{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          console.log(response);
+          if (response.success) {
+            showSuccessNotification(response.message);
+            setTimeout(() => {
+              window.location.href = response.redirect;
+            }, 2000);
+          } else {
+            alert('Failed to update profile');
+          }
+        },
+        error: function(xhr, status, error) {
+          const response = xhr.responseJSON;
+          showFailureNotification(response);
+        }
+      });
     });
   });
 </script>

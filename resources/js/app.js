@@ -1,4 +1,5 @@
 import Alpine from "alpinejs";
+import "summernote/dist/summernote-bs4.css";
 import Swal from "../../node_modules/sweetalert2";
 import $ from "jquery";
 window.$ = window.jQuery = $;
@@ -233,32 +234,35 @@ jQuery(document).ready(function () {
 });
 
 // Function to initialize Summernote
-// window.initialiseSummernote = function (selector, initialContent) {
-//     $(selector).summernote({
-//         height: 300,
-//         toolbar: [
-//             ["style", ["style"]],
-//             ["font", ["bold", "italic", "underline", "clear"]],
-//             ["fontname", ["fontname"]],
-//             ["fontsize", ["fontsize"]],
-//             ["fontSizeUnits", ["px", "pt"]],
-//             ["color", ["color"]],
-//             ["para", ["ul", "ol", "paragraph"]],
-//             ["table", ["table"]],
-//             ["insert", ["link", "picture", "video"]],
-//             ["view", ["fullscreen", "help"]],
-//         ],
-//         callbacks: {
-//             onInit: function () {
-//                 jQuery(this).summernote("code", initialContent); // Set the initial content
-//             },
-//             onKeyup: function () {
-//                 var editor = jQuery(this);
-//                 var content = editor.summernote("code");
-//             },
-//         },
-//     });
-// };
+window.initialiseSummernote = function (selector, content) {
+    $(selector).summernote({
+        placeholder: "Tell us about you...",
+        tabsize: 2,
+        height: 300,
+        toolbar: [
+            ["style", ["style"]],
+            ["font", ["bold", "underline", "clear"]],
+            ["color", ["color"]],
+            ["para", ["ul", "ol", "paragraph"]],
+            ["insert", ["link"]],
+            ["view", ["fullscreen", "codeview", "help"]],
+        ],
+        callbacks: {
+            onInit: function () {
+                if (aboutContent) {
+                    $("#description").summernote("code", aboutContent);
+                } else if (inHouseGearContent) {
+                    $("#inHouseGear").summernote("code", inHouseGearContent);
+                } else if (additionalInfoContent) {
+                    $("#additionalInfo").summernote(
+                        "code",
+                        additionalInfoContent
+                    );
+                }
+            },
+        },
+    });
+};
 
 // Sweet Alert 2 Notifications
 window.showSuccessNotification = function (message) {

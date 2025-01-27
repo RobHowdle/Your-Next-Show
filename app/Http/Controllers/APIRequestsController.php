@@ -6,9 +6,14 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Event;
 use App\Models\Venue;
+use App\Models\ApiKeys;
 use App\Models\Promoter;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
+use App\Models\UserModuleSetting;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\StoreUpdatePackages;
 
 class APIRequestsController extends Controller
 {
@@ -317,5 +322,178 @@ class APIRequestsController extends Controller
         }
 
         return response()->json(['success' => true, 'events' => []]);
+    }
+
+    private function getModelClass($dashboardType)
+    {
+        $modelMap = [
+            'promoter' => \App\Models\Promoter::class,
+            'venue' => \App\Models\Venue::class,
+            'artist' => \App\Models\OtherService::class,
+            'photographer' => \App\Models\OtherService::class,
+            'designer' => \App\Models\OtherService::class,
+            'videographer' => \App\Models\OtherService::class,
+        ];
+
+        return $modelMap[strtolower($dashboardType)] ?? null;
+    }
+
+    public function updateAPI($dashboardType, Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'id' => 'required|integer',
+                'provider' => 'required|string',
+                'api_key' => 'required|string',
+                'api_secret' => 'nullable|string',
+            ]);
+
+            $modelClass = $this->getModelClass($dashboardType);
+            // dd($modelClass);
+
+            if (!$modelClass) {
+                return response()->json(['success' => false, 'message' => 'Invalid dashboard type'], 400);
+            }
+
+            $newApiKey = ApiKeys::create([
+                'serviceable_type' => $modelClass,
+                'serviceable_id' => $validated['id'],
+                'name' => 'API Key',
+                'key_type' => $validated['provider'],
+                'api_key' => $validated['api_key'],
+                'api_secret' => $validated['api_secret'] ?? null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'API Key created successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('API Key creation failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create API Key'
+            ], 500);
+        }
+    }
+
+    public function updateModule(Request $request)
+    {
+        // Validate the incoming request
+        $request->validate([
+            'module' => 'required|string',
+            'enabled' => 'required|boolean',
+            'userId' => 'required|integer|exists:users,id',
+        ]);
+
+        $user = User::findOrFail($request->userId);
+
+        // Update the module settings in the database
+        $module = UserModuleSetting::where('user_id', $user->id)->where('module_name', $request->module)->first();
+
+        if ($module) {
+            $module->is_enabled = $request->enabled;
+            $module->save();
+
+            return response()->json(['success' => true, 'message' => 'Module updated successfully.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Module not found.'], 404);
+    }
+
+    public function updateCommunications(Request $request)
+    {
+        $request->validate([
+            'setting' => 'required|string',
+            'enabled' => 'required|boolean',
+            'userId' => 'required|integer|exists:users,id',
+        ]);
+
+        $user = User::findOrFail($request->userId);
+
+        $mailingPreferences = $user->mailing_preferences ?? [];
+
+        // Simply update the specific setting
+        $mailingPreferences[$request->setting] = $request->enabled;
+
+        $user->update(['mailing_preferences' => $mailingPreferences]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Communications updated successfully'
+        ]);
+    }
+
+    public function updateStylesAndPrint(Request $request)
+    {
+        $request->validate([
+            'userId' => 'required|integer|exists:users,id',
+            'styles' => 'required|array',
+            'print' => 'required|array',
+        ]);
+
+        $user = User::findOrFail($request->userId);
+
+        $user->update([
+            'styles' => $request->styles,
+            'print' => $request->print,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Styles and Print updated successfully'
+        ]);
+    }
+
+    public function updatePackages($dashboardType, StoreUpdatePackages $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $user = User::findOrFail($id);
+            $userId = $user->id;
+            $validated = $request->validated();
+
+            \Log::info('Updating packages for user:', [
+                'user_id' => $userId,
+                'dashboard_type' => $dashboardType,
+                'packages' => $validated['packages']
+            ]);
+
+            $service = match ($dashboardType) {
+                'designer' => $user->otherService('Designer')->first(),
+                'photographer' => $user->otherService('Photographer')->first(),
+                'videographer' => $user->otherService('Videographer')->first(),
+                default => null
+            };
+
+            if (!$service) {
+                throw new \Exception('Service not found for user');
+            }
+
+            $service->update([
+                'packages' => json_encode($validated['packages'])
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Packages updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Failed to update packages:', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId ?? null,
+                'dashboard_type' => $dashboardType
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update packages: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

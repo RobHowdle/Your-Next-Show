@@ -30,6 +30,8 @@ class VenueProfileUpdateRequest extends FormRequest
             'w3w' => 'nullable|string',
             'capacity' => 'nullable|numeric',
             'inHouseGear' => 'nullable|string',
+            'deposit_required' => 'nullable|in:yes,no',
+            'deposit_amount' => 'nullable|numeric',
             'band_types' => 'nullable|array',
             'genres' => 'nullable|array',
             'contact_name' => 'nullable|string',
@@ -39,6 +41,14 @@ class VenueProfileUpdateRequest extends FormRequest
             'description' => 'nullable|string',
             'additionalInfo' => 'nullable|string',
             'logo_url' => 'nullable|image|mimes:jpeg,jpg,png,webp,svg|max:5120',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'deposit_required.required' => 'Please specify if a deposit is required',
+            'deposit_required.in' => 'Deposit required must be either yes or no'
         ];
     }
 }
