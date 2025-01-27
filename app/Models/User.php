@@ -88,6 +88,11 @@ class User extends Authenticatable
         });
     }
 
+    public function hasActiveModule($user, $module)
+    {
+        return $user->moduleSettings()->where('module', $module)->where('status', 1)->exists();
+    }
+
     public function linkedCompany()
     {
         $service = DB::table('service_user')

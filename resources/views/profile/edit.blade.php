@@ -61,7 +61,7 @@
                   ])
                 @elseif($dashboardType == 'photographer')
                   @include('profile.partials.photographer-profile', [
-                      'photographerUserData' => $photographerUserData ?? [],
+                      'photographerData' => $photographerData ?? [],
                   ])
                 @elseif($dashboardType == 'standard')
                   @include('profile.partials.standard-profile', [
@@ -119,7 +119,6 @@
         {{-- Content Area --}}
         <div class="p-8">
           <div class="mx-auto max-w-7xl space-y-6 rounded-lg bg-opac_8_black p-4 shadow sm:p-8">
-            {{ $user->id }}
             <div x-show="activeTab === 'profile'">
               @include('profile.partials.edit-user-details')
             </div>
@@ -182,6 +181,26 @@
                 ])
               </div>
             @endif
+            @if ($dashboardType === 'artist')
+              <div x-show="activeTab === 'streamLinks'">
+                @include('profile.artist.stream-links', [
+                    'profileData' => match ($dashboardType) {
+                        'artist' => $bandData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if ($dashboardType === 'artist')
+              <div x-show="activeTab === 'members'">
+                @include('profile.artist.members', [
+                    'profileData' => match ($dashboardType) {
+                        'artist' => $bandData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
             <div x-show="activeTab === 'myEvents'">
               @include('profile.events', [
                   'profileData' => match ($dashboardType) {
@@ -189,7 +208,6 @@
                       'promoter' => $promoterData,
                       'artist' => $bandData,
                       'photographer' => $photographerData,
-                      'designer' => $designerData,
                       'videographer' => $videographerData,
                       default => [],
                   },
@@ -208,6 +226,42 @@
                   },
               ])
             </div>
+            <div x-show="activeTab === 'designAndHours'">
+              @include('profile.designer.styles-and-times', [
+                  'profileData' => match ($dashboardType) {
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
+              <div x-show="activeTab === 'portfolio'">
+                @include('profile.portfolio', [
+                    'dashboardType' => $dashboardType,
+                    'waterMarkedPortfolioImages' => $profileData['waterMarkedPortfolioImages'] ?? [],
+                    'profileData' => match ($dashboardType) {
+                        'designer' => $designerData,
+                        'photographer' => $photographerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
+              <div x-show="activeTab === 'packages'">
+                @include('profile.packages', [
+                    'profileData' => match ($dashboardType) {
+                        'designer' => $designerData,
+                        'photographer' => $photographerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
             @if ($dashboardType === 'venue')
               <div x-show="activeTab === 'additionalInfo'">
                 @include('profile.venue.additional-info', [

@@ -34,12 +34,35 @@
 <x-input-label-dark class="mt-6">Select your genre(s):</x-input-label-dark>
 <div class="grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
   @php
-    $profileGenres = is_string($profileData['profileGenres'])
-        ? json_decode($profileData['profileGenres'], true)
-        : $profileData['profileGenres'];
-    $profileBandTypes = is_string($profileData['bandTypes'])
-        ? json_decode($profileData['bandTypes'], true)
-        : $profileData['bandTypes'];
+    // Handle genres
+    $profileGenres = [];
+    if (!empty($profileData['profileGenres'])) {
+        if (is_string($profileData['profileGenres'])) {
+            try {
+                $decoded = json_decode($profileData['profileGenres'], true);
+                $profileGenres = $decoded ?: [];
+            } catch (\Exception $e) {
+                $profileGenres = [];
+            }
+        } else {
+            $profileGenres = $profileData['profileGenres'] ?: [];
+        }
+    }
+
+    // Handle band types
+    $profileBandTypes = [];
+    if (!empty($profileData['bandTypes'])) {
+        if (is_string($profileData['bandTypes'])) {
+            try {
+                $decoded = json_decode($profileData['bandTypes'], true);
+                $profileBandTypes = $decoded ?: [];
+            } catch (\Exception $e) {
+                $profileBandTypes = [];
+            }
+        } else {
+            $profileBandTypes = $profileData['bandTypes'] ?: [];
+        }
+    }
   @endphp
 
   <!-- "All Genres" checkbox -->

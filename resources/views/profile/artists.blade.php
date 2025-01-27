@@ -17,7 +17,10 @@
       </tr>
     </thead>
     <tbody>
-      @if ($profileData['uniqueBands']->isEmpty())
+      @if (
+          !isset($profileData['uniqueBands']) ||
+              (is_array($profileData['uniqueBands']) && empty($profileData['uniqueBands'])) ||
+              (is_object($profileData['uniqueBands']) && $profileData['uniqueBands']->isEmpty()))
         <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
           <td class="max-w-md whitespace-normal break-words px-6 py-4 text-center font-sans text-white" colspan="4">
             No artists found.

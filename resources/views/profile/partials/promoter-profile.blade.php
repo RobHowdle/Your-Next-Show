@@ -29,8 +29,3 @@
   <i class="fa-solid fa-users-line h-5 w-5"></i>
   <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">My Bands</span>
 </button>
-<button @click="activeTab = 'ticketApiKeys'" class="hover:text-yns_pink block py-2 text-white transition"
-  :class="activeTab === 'ticketApiKeys' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
-  <i class="fa-solid fa-circle-question h-5 w-5"></i>
-  <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Ticket API Keys</span>
-</button>

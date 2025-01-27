@@ -8,7 +8,7 @@
       <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
         <th scope="row"
           class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="{{ route('promoter', $promoter->id) }}"
+          <a href="{{ route('promoter', $promoter['name']) }}"
             class="promoter-link transition duration-150 ease-in-out hover:text-yns_yellow">{{ $promoter->name }}</a>
         </th>
         <td
@@ -27,7 +27,7 @@
           <td
             class="{{ $promoters ? 'md:block' : 'hidden' }} whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
             @foreach ($promoters->venues as $venue)
-              <a class="hover:text-yns_yellow" href="{{ url('venues', $venue->id) }}">{{ $venue['name'] }}</a>
+              <a class="hover:text-yns_yellow" href="{{ url('venues', $venue['name']) }}">{{ $venue['name'] }}</a>
             @endforeach
           </td>
         @endif

@@ -30,6 +30,8 @@ class OtherService extends Model
         'stream_urls',
         'band_type',
         'genre',
+        'styles',
+        'print',
         'contact_name',
         'contact_number',
         'contact_email',

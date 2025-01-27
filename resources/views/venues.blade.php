@@ -8,7 +8,7 @@
       <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
         <th scope="row"
           class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="{{ route('venue', $venue->id) }}"
+          <a href="{{ route('venue', $venue['name']) }}"
             class="venue-link transition duration-150 ease-in-out hover:text-yns_yellow">{{ $venue->name }}</a>
         </th>
         <td
@@ -28,7 +28,7 @@
             class="{{ $venues ? 'md:block' : 'hidden' }} whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
             @foreach ($venue->venues as $venue)
               <a class="transition duration-150 ease-in-out hover:text-yns_yellow"
-                href="{{ url('venues', $venue->id) }}">{{ $venue['name'] }}</a>
+                href="{{ url('venues', $venue['name']) }}">{{ $venue['name'] }}</a>
             @endforeach
           </td>
         @endif

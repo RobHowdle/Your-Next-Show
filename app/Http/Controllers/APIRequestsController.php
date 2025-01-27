@@ -11,7 +11,9 @@ use App\Models\Promoter;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Models\UserModuleSetting;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\StoreUpdatePackages;
 
 class APIRequestsController extends Controller
 {
@@ -420,5 +422,78 @@ class APIRequestsController extends Controller
             'success' => true,
             'message' => 'Communications updated successfully'
         ]);
+    }
+
+    public function updateStylesAndPrint(Request $request)
+    {
+        $request->validate([
+            'userId' => 'required|integer|exists:users,id',
+            'styles' => 'required|array',
+            'print' => 'required|array',
+        ]);
+
+        $user = User::findOrFail($request->userId);
+
+        $user->update([
+            'styles' => $request->styles,
+            'print' => $request->print,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Styles and Print updated successfully'
+        ]);
+    }
+
+    public function updatePackages($dashboardType, StoreUpdatePackages $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $user = User::findOrFail($id);
+            $userId = $user->id;
+            $validated = $request->validated();
+
+            \Log::info('Updating packages for user:', [
+                'user_id' => $userId,
+                'dashboard_type' => $dashboardType,
+                'packages' => $validated['packages']
+            ]);
+
+            $service = match ($dashboardType) {
+                'designer' => $user->otherService('Designer')->first(),
+                'photographer' => $user->otherService('Photographer')->first(),
+                'videographer' => $user->otherService('Videographer')->first(),
+                default => null
+            };
+
+            if (!$service) {
+                throw new \Exception('Service not found for user');
+            }
+
+            $service->update([
+                'packages' => json_encode($validated['packages'])
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Packages updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('Failed to update packages:', [
+                'error' => $e->getMessage(),
+                'user_id' => $userId ?? null,
+                'dashboard_type' => $dashboardType
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update packages: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

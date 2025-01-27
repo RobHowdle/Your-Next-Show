@@ -10,9 +10,12 @@ use Illuminate\View\View;
 use Illuminate\Support\Str;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
+use App\Helpers\VenueDataHelper;
 use App\Models\UserModuleSetting;
+use App\Helpers\ServiceDataHelper;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
+use App\Helpers\PromoterDataHelper;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -20,25 +23,47 @@ use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\StoreUpdateBandTypes;
 use App\Http\Requests\StoreUpdateBandGenres;
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\BandProfileUpdateRequest;
 use App\Http\Requests\VenueProfileUpdateRequest;
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Requests\DesignerProfileUpdateRequest;
 use App\Http\Requests\PromoterProfileUpdateRequest;
 use App\Http\Requests\PhotographerProfileUpdateRequest;
-use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Requests\StoreUpdatePackages;
 
 class ProfileController extends Controller
 {
     protected $passwordController;
+    protected $serviceDataHelper;
+    protected $venueDataHelper;
+    protected $promoterDataHelper;
 
     protected function getUserId()
     {
         return Auth::id();
     }
 
-    public function __construct(PasswordController $passwordController)
-    {
+    public function __construct(
+        PromoterDataHelper $promoterDataHelper,
+        VenueDataHelper $venueDataHelper,
+        ServiceDataHelper $serviceDataHelper,
+        PasswordController $passwordController
+    ) {
         $this->passwordController = $passwordController;
+        $this->serviceDataHelper = $serviceDataHelper;
+        $this->venueDataHelper = $venueDataHelper;
+        $this->promoterDataHelper = $promoterDataHelper;
+    }
+
+    private function getUniqueBandsForPromoterEvents($promoterId)
+    {
+        return $this->serviceDataHelper->getBandsData($promoterId);
+    }
+
+    private function getPortfolioData($service)
+    {
+        return $this->serviceDataHelper->getPortfolioData(auth()->user(), $service);
     }
 
     /**
@@ -50,11 +75,12 @@ class ProfileController extends Controller
         $roles = Role::where('name', '!=', 'administrator')->get();
         $userRole = $user->roles;
 
+
         // Initialize promoter variables
         $promoterData = [];
         $bandData = [];
         $venueData = [];
-        $photographerUserData = [];
+        $photographerData = [];
         $standardUserData = [];
         $designerData = [];
 
@@ -62,15 +88,17 @@ class ProfileController extends Controller
         if ($dashboardType === 'promoter') {
             $promoterData = $this->getPromoterData($user);
         } elseif ($dashboardType === 'artist') {
-            $bandData = $this->getBandData($user);
+            $bandData = $this->getOtherServicData($dashboardType, $user);
         } elseif ($dashboardType === 'venue') {
             $venueData = $this->getvenueData($user);
         } elseif ($dashboardType === 'photographer') {
-            $photographerUserData = $this->getPhotographerData($user);
+            $photographerData = $this->getOtherServicData($dashboardType, $user);
         } elseif ($dashboardType === 'standard') {
             $standardUserData = $this->getStandardUserData($user);
         } elseif ($dashboardType === 'designer') {
-            $designerData = $this->getDesignerData($user);
+            $designerData = $this->getOtherServicData($dashboardType, $user);
+        } elseif ($dashboardType === 'videographer') {
+            $designerData = $this->getOtherServicData($dashboardType, $user);
         }
 
         $modulesWithSettings = $this->getModulesWithSettings($userId, $dashboardType);
@@ -83,7 +111,7 @@ class ProfileController extends Controller
             'promoterData' => $promoterData,
             'bandData' => $bandData,
             'venueData' => $venueData,
-            'photographerUserData' => $photographerUserData,
+            'photographerData' => $photographerData,
             'standardUserData' => $standardUserData,
             'designerData' => $designerData,
             'user' => $user,
@@ -97,7 +125,6 @@ class ProfileController extends Controller
             'userPostalTown' => $user->postal_town,
             'userLat' => $user->latitude,
             'userLong' => $user->longitude,
-            // 'modulesWithSettings' => $modulesWithSettings,
             'communications' => $communicationSettings,
         ]);
     }
@@ -107,7 +134,6 @@ class ProfileController extends Controller
      */
     public function update($dashboardType, ProfileUpdateRequest $request, $userId)
     {
-        dd('update user');
         try {
             $user = User::findOrFail($userId);
             $userData = $request->validated();
@@ -491,21 +517,24 @@ class ProfileController extends Controller
                     $band->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
-                // Stream Links
                 if (isset($userData['stream_links'])) {
-                    // Decode the stored stream URLs from JSON to an array
-                    $storedStreamLinks = json_decode($band->stream_urls, true);
+                    $streamLinks = $userData['stream_links'];
+                    $defaultPlatform = $userData['default_platform'] ?? null;
 
-                    // Ensure $userData['stream_links'] is an array
-                    if (is_array($userData['stream_links'])) {
-                        // If the stored stream links are different from the user input, update the database
-                        if ($storedStreamLinks !== $userData['stream_links']) {
-                            // Encode the user input as JSON and update
-                            $band->update(['stream_urls' => json_encode($userData['stream_links'])]);
-                        }
-                    } else {
-                        // If $userData['stream_links'] is not an array, handle the error
-                        dd('Error: $userData[\'stream_links\'] is not an array');
+                    // Clean null values and empty arrays
+                    $cleanedLinks = array_filter($streamLinks, function ($platformLinks) {
+                        return !empty($platformLinks[0]);
+                    });
+
+                    // Add default platform if set
+                    if ($defaultPlatform) {
+                        $cleanedLinks['default'] = $defaultPlatform;
+                    }
+
+                    // Update only if links have changed
+                    $storedStreamLinks = json_decode($band->stream_urls, true) ?? [];
+                    if ($storedStreamLinks !== $cleanedLinks) {
+                        $band->update(['stream_urls' => json_encode($cleanedLinks)]);
                     }
                 }
 
@@ -549,8 +578,11 @@ class ProfileController extends Controller
                     $band->update(['logo_url' => $logoUrl]);
                 }
 
-                // Return success message with redirect
-                return redirect()->route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])->with('status', 'profile-updated');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Profile updated successfully',
+                    'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+                ]);
             } else {
                 // Handle case where no promoter is linked to the user
                 return response()->json(['error' => 'Band not found'], 404);
@@ -687,6 +719,135 @@ class ProfileController extends Controller
             ], 500);
         }
     }
+    public function updateDesigner($dashboardType, DesignerProfileUpdateRequest $request, $user)
+    {
+        $user = User::findOrFail($user);
+        $userId = $user->id;
+        $userData = $request->validated();
+
+        if ($dashboardType == 'designer') {
+            $designer = OtherService::designers()->whereHas('linkedUsers', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })->first();
+
+            if ($designer) {
+                try {
+                    // Designer Name
+                    if (isset($userData['name']) && $designer->name !== $userData['name']) {
+                        $designer->update(['name' => $userData['name']]);
+                    }
+
+                    // Contact Name
+                    if (isset($userData['contact_name']) && $designer->contact_name !== $userData['contact_name']) {
+                        $designer->update(['contact_name' => $userData['contact_name']]);
+                    }
+
+                    // Contact Email
+                    if (isset($userData['contact_email']) && $designer->contact_email !== $userData['contact_email']) {
+                        $designer->update(['contact_email' => $userData['contact_email']]);
+                    }
+
+                    // Contact Number
+                    if (isset($userData['contact_number']) && $designer->contact_number !== $userData['contact_number']) {
+                        $designer->update(['contact_number' => $userData['contact_number']]);
+                    }
+
+                    // Contact Links
+                    if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
+                        // Start with the existing `contact_links` array or an empty array if it doesn't exist
+                        $updatedLinks = !empty($designer->contact_link) ? json_decode($designer->contact_link, true) : [];
+
+                        // Iterate through the `contact_link` array from the request data
+                        foreach ($userData['contact_links'] as $platform => $links) {
+                            // Ensure we're setting only non-empty values
+                            $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                        }
+
+                        // Filter out null values to remove platforms with no links
+                        $updatedLinks = array_filter($updatedLinks);
+
+                        // Encode the array back to JSON for storage and update the promoter record
+                        $designer->update(['contact_link' => json_encode($updatedLinks)]);
+                    }
+
+                    // Location
+                    if (isset($userData['location']) && isset($userData['latitude']) && isset($userData['longitude']) && isset($userData['postal_town'])) {
+                        $designer->update([
+                            'location' => $userData['location'],
+                            'latitude' => $userData['latitude'],
+                            'longitude' => $userData['longitude'],
+                            'postal_town' => $userData['postal_town'],
+                        ]);
+                    }
+
+                    // Description
+                    if (isset($userData['description']) && $designer->description !== $userData['description']) {
+                        $designer->update(['description' => $userData['description']]);
+                    }
+
+                    // Logo
+                    if (isset($userData['logo_url'])) {
+                        $logoPath = $this->uploadLogo($userData['logo_url'], $userData['name']);
+                        $designer->update(['logo_url' => $logoPath]);
+                    }
+
+                    // Working Times
+                    if (isset($userData['working_times'])) {
+                        $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                        // Sort and validate working times
+                        $sortedWorkingTimes = array_merge(
+                            array_flip($weekDaysOrder),
+                            array_intersect_key($userData['working_times'], array_flip($weekDaysOrder))
+                        );
+
+                        $sortedWorkingTimes = array_filter($sortedWorkingTimes, fn($value) => $value !== null);
+
+                        // Validate time ranges
+                        foreach ($sortedWorkingTimes as $day => $time) {
+                            if (is_array($time)) {
+                                $start = $time['start'] ?? null;
+                                $end = $time['end'] ?? null;
+
+                                if ($start && $end) {
+                                    if ($start >= $end) {
+                                        DB::rollBack();
+                                        return response()->json([
+                                            'success' => false,
+                                            'message' => "Start time must be earlier than end time for $day."
+                                        ], 422);
+                                    }
+                                }
+                            }
+                        }
+
+                        $designer->update(['working_times' => json_encode($sortedWorkingTimes)]);
+                    }
+
+                    // Styles
+                    if (isset($userData['styles'])) {
+                        $designer->update(['styles' => json_encode($userData['styles'])]);
+                    }
+
+                    // Print
+                    if (isset($userData['print'])) {
+                        $designer->update(['print' => json_encode($userData['print'])]);
+                    }
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Profile updated successfully',
+                        'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+                    ]);
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to update profile: ' . $e->getMessage()
+                    ], 500);
+                }
+            }
+        }
+    }
 
     // Helper for JSON Fields
     protected function updateJsonField($photographer, $field, $data)
@@ -776,409 +937,30 @@ class ProfileController extends Controller
     // Get Data for Dashboard Type User
     private function getPromoterData(User $user)
     {
-        $promoter = $user->promoters()->first();
-
-        // Basic Information
-        $name = $promoter ? $promoter->name : '';
-        $location = $promoter ? $promoter->location : '';
-        $postalTown = $promoter ? $promoter->postal_town : '';
-        $lat = $promoter ? $promoter->latitude : '';
-        $long = $promoter ? $promoter->longitude : '';
-        $logo = $promoter && $promoter->logo_url
-            ? (filter_var($promoter->logo_url, FILTER_VALIDATE_URL) ? $promoter->logo_url : Storage::url($promoter->logo_url))
-            : asset('images/system/yns_no_image_found.png');
-
-        $contact_name = $promoter ? $promoter->contact_name : '';
-        $contact_email = $promoter ? $promoter->contact_email : '';
-        $contact_number = $promoter ? $promoter->contact_number : '';
-        $contactLinks = $promoter ? json_decode($promoter->contact_link, true) : [];
-
-        $platforms = [];
-        $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-        // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
-            $platforms[$platform] = '';  // Set default to empty string
-        }
-
-        // Check if the contactLinks array exists and contains social links
-        if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
-                    $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
-                }
-            }
-        }
-
-        // About Section
-        $description = $promoter ? $promoter->description : '';
-
-        // My Venues
-        $myVenues = $promoter ? $promoter->my_venues : '';
-
-        // My Events
-        $myEvents = $promoter ? $promoter->events()->with('venues')->get() : collect();
-        $uniqueBands = $this->getUniqueBandsForPromoterEvents($promoter->id);
-
-        // Genres
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true) ?? [];
-        $isAllGenres = in_array('All', $data);
-        $genres = $data['genres'];
-        $profileGenres = is_array($promoter->genre) ? $promoter->genre : json_decode($promoter->genre, true);
-        $normalizedProfileGenres = [];
-        if ($profileGenres) {
-            foreach ($profileGenres as $genreName => $genreData) {
-                $normalizedProfileGenres[$genreName] = [
-                    'all' => $genreData['all'] ?? 'false',
-                    'subgenres' => isset($genreData['subgenres'][0])
-                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-                        : []
-                ];
-            }
-        }
-
-        $bandTypes = json_decode($promoter->band_type) ?? [];
-        $apiProviders = config('api_providers.providers');
-        $apiKeys = ApiKeys::where('serviceable_id', $promoter->id)->where('serviceable_type', get_class($promoter))->get();
-
-        if ($apiKeys) {
-            $apiKeys = $apiKeys->map(function ($apiKey) {
-                if ($apiKey->is_active) {
-                    return [
-                        'id' => $apiKey->id,
-                        'type' => $apiKey->key_type,
-                        'key' => $apiKey->api_key,
-                        'secret' => $apiKey->api_secret,
-                    ];
-                }
-            });
-        }
-
-        return [
-            'promoter' => $promoter,
-            'promoterId' => $promoter->id,
-            'name' => $name,
-            'location' => $location,
-            'postalTown' => $postalTown,
-            'lat' => $lat,
-            'long' => $long,
-            'logo' => $logo,
-            'description' => $description,
-            'contact_name' => $contact_name,
-            'contact_email' => $contact_email,
-            'contact_number' => $contact_number,
-            'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
-            'myVenues' => $myVenues,
-            'myEvents' => $myEvents,
-            'uniqueBands' => $uniqueBands,
-            'genres' => $genres,
-            'profileGenres' => $profileGenres,
-            'isAllGenres' => $isAllGenres,
-            'normalizedProfileGenres' => $normalizedProfileGenres,
-            'bandTypes' => $bandTypes,
-            'apiProviders' => $apiProviders,
-            'apiKeys' => $apiKeys,
-        ];
+        return $this->promoterDataHelper->getPromoterData($user);
     }
 
     private function getVenueData(User $user)
     {
-        $venue = $user->venues()->first();
-
-        // Basic Information
-        $name = $venue ? $venue->name : '';
-        $location = $venue ? $venue->location : '';
-        $postalTown = $venue ? $venue->postal_town : '';
-        $lat = $venue ? $venue->latitude : '';
-        $long = $venue ? $venue->longitude : '';
-        $w3w = $venue ? $venue->w3w : '';
-        $logo = $venue && $venue->logo_url
-            ? (filter_var($venue->logo_url, FILTER_VALIDATE_URL) ? $venue->logo_url : Storage::url($venue->logo_url))
-            : asset('images/system/yns_no_image_found.png');
-
-        $capacity = $venue ? $venue->capacity : '';
-        $contact_name = $venue ? $venue->contact_name : '';
-        $contact_number = $venue ? $venue->contact_number : '';
-        $contact_email = $venue ? $venue->contact_email : '';
-        $contactLinks = $venue ? json_decode($venue->contact_link, true) : [];
-
-        $platforms = [];
-        $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-        // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
-            $platforms[$platform] = '';  // Set default to empty string
-        }
-
-        // Check if the contactLinks array exists and contains social links
-        if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
-                    $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
-                }
-            }
-        }
-
-        // About Section
-        $description = $venue ? $venue->description : '';
-
-        // In House Gear
-        $inHouseGear = $venue ? $venue->in_house_gear : '';
-
-        // My Events
-        $myEvents = $venue ? $venue->events()->with('venues')->get() : collect();
-        $uniqueBands = $this->getUniqueBandsForPromoterEvents($venue->id);
-
-        // Genres
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true) ?? [];
-        $isAllGenres = in_array('All', $data);
-        $genres = $data['genres'];
-        $profileGenres = is_array($venue->genre) ? $venue->genre : json_decode($venue->genre, true);
-        $normalizedProfileGenres = [];
-        if ($profileGenres) {
-            foreach ($profileGenres as $genreName => $genreData) {
-                $normalizedProfileGenres[$genreName] = [
-                    'all' => $genreData['all'] ?? 'false',
-                    'subgenres' => isset($genreData['subgenres'][0])
-                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-                        : []
-                ];
-            }
-        }
-
-        $bandTypes = json_decode($venue->band_type) ?? [];
-        $additionalInfo = $venue ? $venue->additional_info : '';
-
-        return [
-            'venue' => $venue,
-            'name' => $name,
-            'location' => $location,
-            'postalTown' => $postalTown,
-            'lat' => $lat,
-            'long' => $long,
-            'w3w' => $w3w,
-            'logo' => $logo,
-            'description' => $description,
-            'contact_name' => $contact_name,
-            'contact_email' => $contact_email,
-            'contact_number' => $contact_number,
-            'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
-            'inHouseGear' => $inHouseGear,
-            'myEvents' => $myEvents,
-            'uniqueBands' => $uniqueBands,
-            'genres' => $genres,
-            'profileGenres' => $profileGenres,
-            'isAllGenres' => $isAllGenres,
-            'normalizedProfileGenres' => $normalizedProfileGenres,
-            'bandTypes' => $bandTypes,
-            'capacity' => $capacity,
-            'additionalInfo' => $additionalInfo,
-        ];
+        return $this->venueDataHelper->getVenueData($user);
     }
 
-    private function getBandData(User $user)
+    private function getOtherServicData($dashboardType, User $user)
     {
-        $band = $user->otherService("Artist")->first();
-
-        $name = $band ? $band->name : '';
-        $location = $band ? $band->location : '';
-        $logo = $band ? $band->logo_url : 'images/system/yns_logo.png';
-        $phone = $band ? $band->contact_number : '';
-        $contact_name = $band ? $band->contact_name : '';
-        $contact_email = $band ? $band->contact_email : '';
-        $contact_number = $band ? $band->contact_number : '';
-        $contactLinks = $band ? json_decode($band->contact_link, true) : [];
-
-        $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-        // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
-            $platforms[$platform] = '';  // Set default to empty string
+        switch ($dashboardType) {
+            case 'artist':
+                return $this->serviceDataHelper->getArtistData($user);
+                break;
+            case 'photographer':
+                return $this->serviceDataHelper->getPhotographerData($user);
+                break;
+            case 'designer':
+                return $this->serviceDataHelper->getDesignerData($user);
+                break;
+            case 'videographer':
+                return $this->serviceDataHelper->getVideographerData($user);
+                break;
         }
-
-        // Check if the contactLinks array exists and contains social links
-        if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
-                    $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
-                }
-            }
-        }
-
-        $about = $band ? $band->description : '';
-        $myEvents = $band ? $band->events()->with('venues')->get() : collect();
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true) ?? [];
-        $isAllGenres = in_array('All', $data);
-        $genres = $data['genres'];
-        $artistGenres = is_array($band->genre) ? $band->genre : json_decode($band->genre, true);
-        $normalizedArtistGenres = [];
-
-        if ($artistGenres) {
-            foreach ($artistGenres as $genreName => $genreData) {
-                $normalizedArtistGenres[$genreName] = [
-                    'all' => $genreData['all'] ?? 'false',
-                    'subgenres' => isset($genreData['subgenres'][0])
-                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-                        : []
-                ];
-            }
-        }
-
-        $bandTypes = json_decode($band->band_type) ?? [];
-        $streamLinks = json_decode($band->stream_urls, true);
-
-        $streamPlatforms = [];
-        $streamPlatformsToCheck = ['spotify', 'apple-music', 'youtube-music', 'amazon-music', 'bandcamp', 'soundcloud'];
-
-        $members = is_array($band->members) ? $band->members : json_decode($band->members, true);
-
-        return [
-            'artist' => $band,
-            'name' => $name,
-            'location' => $location,
-            'logo' => $logo,
-            'phone' => $phone,
-            'about' => $about,
-            'myEvents' => $myEvents,
-            'contact_name' => $contact_name,
-            'contact_email' => $contact_email,
-            'contact_number' => $contact_number,
-            'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
-            'genres' => $genres,
-            'artistGenres' => $artistGenres,
-            'isAllGenres' => $isAllGenres,
-            'designerGenres' => $normalizedArtistGenres,
-            'bandTypes' => $bandTypes,
-            'streamLinks' => $streamLinks,
-            'streamPlatformsToCheck' => $streamPlatformsToCheck,
-            'members' => $members
-        ];
-    }
-
-    private function getPhotographerData(User $user)
-    {
-        $photographer = $user->otherService("Photographer")->first();
-        $serviceableId = $photographer->id;
-        $serviceableType = 'App\Models\OtherService';
-
-        // Basic Information
-        $photographerName = $photographer ? $photographer->name : '';
-        $photographerLocation = $photographer ? $photographer->location : '';
-        $photographerPostalTown = $photographer ? $photographer->postal_town : '';
-        $photographerLat = $photographer ? $photographer->latitude : '';
-        $photographerLong = $photographer ? $photographer->longitude : '';
-        $logo = $photographer && $photographer->logo_url
-            ? (filter_var($photographer->logo_url, FILTER_VALIDATE_URL) ? $photographer->logo_url : Storage::url($photographer->logo_url))
-            : asset('images/system/yns_no_image_found.png');
-        $contact_name = $photographer ? $photographer->contact_name : '';
-        $contact_number = $photographer ? $photographer->contact_number : '';
-        $contact_email = $photographer ? $photographer->contact_email : '';
-        $contactLinks = $photographer ? json_decode($photographer->contact_link, true) : [];
-
-        $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-        // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
-            $platforms[$platform] = '';  // Set default to empty string
-        }
-
-        // Check if the contactLinks array exists and contains social links
-        if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
-                    $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
-                }
-            }
-        }
-
-        $description = $photographer ? $photographer->description : '';
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true);
-        $genres = $data['genres'];
-        $photographerGenres = is_array($photographer->genre) ? $photographer->genre : json_decode($photographer->genre, true);
-        $portfolioLink = $photographer ? $photographer->portfolio_link : '';
-        $waterMarkedPortfolioImages = $photographer->portfolio_images;
-
-        if (!is_array($waterMarkedPortfolioImages)) {
-            try {
-                $waterMarkedPortfolioImages = json_decode($waterMarkedPortfolioImages, true);
-            } catch (\Exception $e) {
-                throw new \Exception("Portfolio images could not be converted to an array.");
-            }
-        }
-
-        $groupedEnvironmentTypes = config('environment_types');
-
-        $environmentTypes = json_decode($photographer->environment_type, true);
-        $groupedData = [];
-
-        foreach ($groupedEnvironmentTypes as $groupName => $items) {
-            foreach ($items as $item) {
-                if ($environmentTypes && is_array($environmentTypes)) {
-                    $groupedData[$groupName][] = $item;
-                }
-            }
-        }
-
-        $workingTimes = is_array($photographer->working_times) ? $photographer->working_times : json_decode($photographer->working_times, true);
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true) ?? [];
-        $isAllGenres = in_array('All', $data);
-        $genres = $data['genres'];
-        $photographerGenres = is_array($photographer->genre) ? $photographer->genre : json_decode($photographer->genre, true);
-        $normalizedPhotographerGenres = [];
-        if ($photographerGenres) {
-            foreach ($photographerGenres as $genreName => $genreData) {
-                $normalizedPhotographerGenres[$genreName] = [
-                    'all' => $genreData['all'] ?? 'false',
-                    'subgenres' => isset($genreData['subgenres'][0])
-                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-                        : []
-                ];
-            }
-        }
-
-        $bandTypes = json_decode($photographer->band_type) ?? [];
-
-        return [
-            'photographer' => $photographer,
-            'photographerName' => $photographerName,
-            'photographerLocation' => $photographerLocation,
-            'photographerPostalTown' => $photographerPostalTown,
-            'photographerLat' => $photographerLat,
-            'photographerLong' => $photographerLong,
-            'logo' => $logo,
-            'contact_name' => $contact_name,
-            'contact_email' => $contact_email,
-            'contact_number' => $contact_number,
-            'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
-            'description' => $description,
-            'genres' => $genres,
-            'photographerGenres' => $photographerGenres,
-            'portfolio_link' => $portfolioLink,
-            'serviceableId' => $serviceableId,
-            'serviceableType' => $serviceableType,
-            'waterMarkedPortfolioImages' => $waterMarkedPortfolioImages,
-            'environmentTypes' => $environmentTypes,
-            'groups' => $groupedData,
-            'workingTimes' => $workingTimes,
-            'isAllGenres' => $isAllGenres,
-            'photographerGenres' => $normalizedPhotographerGenres,
-            'bandTypes' => $bandTypes,
-        ];
     }
 
     private function getStandardUserData(User $user)
@@ -1216,123 +998,6 @@ class ProfileController extends Controller
             'isAllGenres' => $isAllGenres,
             'standardUserGenres' => $normalizedStandardUserGenres,
             'bandTypes' => $bandTypes
-        ];
-    }
-
-    private function getDesignerData(User $user)
-    {
-        $designer = $user->otherService("Designer")->first();
-
-        $serviceableId = $designer->id;
-        $serviceableType = 'App\Models\OtherService';
-
-        // Basic Information
-        $designerName = $designer ? $designer->name : '';
-        $designerLocation = $designer ? $designer->location : '';
-        $designerPostalTown = $designer ? $designer->postal_town : '';
-        $designerLat = $designer ? $designer->latitude : '';
-        $designerLong = $designer ? $designer->longitude : '';
-        $logo = $designer && $designer->logo_url
-            ? (filter_var($designer->logo_url, FILTER_VALIDATE_URL) ? $designer->logo_url : Storage::url($designer->logo_url))
-            : asset('images/system/yns_no_image_found.png');
-
-        $contact_name = $designer ? $designer->contact_name : '';
-        $contact_email = $designer ? $designer->contact_email : '';
-        $contact_number = $designer ? $designer->contact_number : '';
-        $contactLinks = $designer ? json_decode($designer->contact_link, true) : [];
-
-        $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-        // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
-            $platforms[$platform] = '';  // Set default to empty string
-        }
-
-        // Check if the contactLinks array exists and contains social links
-        if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
-                    $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
-                }
-            }
-        }
-
-        $description = $designer ? $designer->description : '';
-
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true) ?? [];
-        $isAllGenres = in_array('All', $data);
-        $genres = $data['genres'];
-        $designerGenres = is_array($designer->genre) ? $designer->genre : json_decode($designer->genre, true);
-        $normalizedDesignerGenres = [];
-        if ($designerGenres) {
-            foreach ($normalizedDesignerGenres as $genreName => $genreData) {
-                $normalizedPromoterGenres[$genreName] = [
-                    'all' => $genreData['all'] ?? 'false',
-                    'subgenres' => isset($genreData['subgenres'][0])
-                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-                        : []
-                ];
-            }
-        }
-
-        $bandTypes = json_decode($designer->band_type) ?? [];
-
-        $portfolioLink = $designer ? $designer->portfolio_link : '';
-        $waterMarkedPortfolioImages = $designer->portfolio_images;
-
-        // Ensure it's an array
-        if (!is_array($waterMarkedPortfolioImages)) {
-            try {
-                $waterMarkedPortfolioImages = json_decode($waterMarkedPortfolioImages, true);
-            } catch (\Exception $e) {
-                throw new \Exception("Portfolio images could not be converted to an array.");
-            }
-        }
-
-        $groupedEnvironmentTypes = config('environment_types');
-        $environmentTypes = json_decode($designer->environment_type, true);
-        $groupedData = [];
-
-        foreach ($groupedEnvironmentTypes as $groupName => $items) {
-            foreach ($items as $item) {
-                if (in_array($item, $environmentTypes)) {
-                    $groupedData[$groupName][] = $item;
-                }
-            }
-        }
-
-        $workingTimes = is_array($designer->working_times) ? $designer->working_times : json_decode($designer->working_times, true);
-
-        return [
-            'designer' => $designer,
-            'designerId'  => $designer->id,
-            'designerName' => $designerName,
-            'designerLocation' => $designerLocation,
-            'designerPostalTown' => $designerPostalTown,
-            'designerLat' => $designerLat,
-            'designerLong' => $designerLong,
-            'logo' => $logo,
-            'description' => $description,
-            'contact_name' => $contact_name,
-            'contact_email' => $contact_email,
-            'contact_number' => $contact_number,
-            'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
-            'genres' => $genres,
-            'designerGenres' => $designerGenres,
-            'portfolio_link' => $portfolioLink,
-            'serviceableId' => $serviceableId,
-            'serviceableType' => $serviceableType,
-            'waterMarkedPortfolioImages' => $waterMarkedPortfolioImages,
-            'environmentTypes' => $environmentTypes,
-            'groups' => $groupedData,
-            'workingTimes' => $workingTimes,
-            'isAllGenres' => $isAllGenres,
-            'designerGenres' => $normalizedDesignerGenres,
-            'bandTypes' => $bandTypes,
         ];
     }
 
@@ -1422,25 +1087,6 @@ class ProfileController extends Controller
                 'message' => 'An error occurred while removing the role.'
             ], 500);
         }
-    }
-
-    /**
-     * Get a unique list of bands linked to events associated with the given promoter.
-     *
-     * @param  int  $promoterId
-     * @return \Illuminate\Support\Collection
-     */
-    private function getUniqueBandsForPromoterEvents($promoterId)
-    {
-        // Fetch unique bands linked to events that the promoter is associated with
-        return OtherService::where('other_service_id', 4)
-            ->whereHas('events', function ($query) use ($promoterId) {
-                $query->whereHas('promoters', function ($q) use ($promoterId) {
-                    $q->where('promoter_id', $promoterId);
-                });
-            })
-            ->distinct()
-            ->get();
     }
 
     /**
@@ -1591,6 +1237,8 @@ class ProfileController extends Controller
 
     public function updateEnvironmentTypes(Request $request)
     {
+        $environmentTypes = $this->serviceDataHelper->getEnvironmentTypes(auth()->user());
+
         try {
             // Validate request
             $request->validate([
@@ -1646,7 +1294,6 @@ class ProfileController extends Controller
      */
     public function saveGenres($dashboardType, Request $request)
     {
-        dd($request->all());
         \Log::info('Save Genres Request:', [
             'dashboardType' => $dashboardType,
             'requestData' => $request->all(),

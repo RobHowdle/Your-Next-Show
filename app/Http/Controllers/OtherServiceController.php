@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Venue;
 use App\Models\Promoter;
 use App\Models\BandReviews;
+use Illuminate\Support\Str;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Models\DesignerReviews;
@@ -134,9 +135,10 @@ class OtherServiceController extends Controller
         ]);
     }
 
-    public function show(Request $request, $serviceName, $serviceId)
+    public function show($serviceName, $name)
     {
-        $singleService = OtherService::where('id', $serviceId)->first();
+        $formattedName = Str::title(str_replace('-', ' ', $name));
+        $singleService = OtherService::where('name', $formattedName)->first();
 
         $singleArtistData = [];
         $singlePhotographerData = [];
@@ -148,7 +150,7 @@ class OtherServiceController extends Controller
         $data = json_decode($genreList, true);
         $genres = $data['genres'];
 
-        switch ($serviceName) {
+        switch (ucfirst($serviceName)) {
             case 'Artist':
                 $singleArtistData = $this->getArtistData($singleService);
                 break;
@@ -200,7 +202,7 @@ class OtherServiceController extends Controller
         ];
 
         $model = '';
-      
+
         switch ($serviceType) {
             case 'Artist':
                 $model = OtherService::class;
@@ -208,18 +210,11 @@ class OtherServiceController extends Controller
             case 'Photography':
                 $model = OtherService::class;
                 break;
-
             case 'Videography':
                 $model = OtherService::class;
                 break;
             case 'Designer':
                 $model = OtherService::class;
-                break;
-            case 'Venue':
-                $model = Venue::class;
-                break;
-            case 'Promoter':
-                $model = Promoter::class;
                 break;
         }
 
@@ -264,50 +259,52 @@ class OtherServiceController extends Controller
         ];
     }
 
-    private function getPhotographerData(OtherService $singleService)
+    private function getPhotographerData($service)
     {
-        $service = $singleService;
-        $serviceId = $service->id;
+        // Handle portfolio images
+        $portfolioImages = [];
+        if ($service->portfolio_images) {
+            if (is_string($service->portfolio_images)) {
+                try {
+                    $portfolioImages = json_decode($service->portfolio_images, true) ?: [];
+                } catch (\Exception $e) {
+                    \Log::error('Failed to decode portfolio images: ' . $e->getMessage());
+                }
+            } elseif (is_array($service->portfolio_images)) {
+                $portfolioImages = $service->portfolio_images;
+            }
+        }
 
-        $description = $service ? $service->description : '';
-        $packages = $service ? json_decode($service->packages) : [];
-        $portfolioImages = $service ? $service->portfolio_images : [];
-        $portfolioLink = $service ? $service->portfolio_link : '';
-        $platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
-        $service->platforms = $platforms;
-        $environmentTypes = $service ? json_decode($service->environment_type, true) : [];
-        $types = $environmentTypes ? $environmentTypes['types'] : [];
-        $settings = $environmentTypes ? $environmentTypes['settings'] : [];
-        $workingTimes = $service ? json_decode($service->working_times, true) : [];
-
-        $overallScore = OtherServicesReview::calculateOverallScore($serviceId);
-        $overallReviews[$serviceId] = $this->renderRatingIcons($overallScore);
-
-        $photographerAverageCommunicationRating = PhotographyReviews::calculateAverageScore($serviceId, 'communication_rating');
-        $photographerAverageFlexibilityRating = PhotographyReviews::calculateAverageScore($serviceId, 'flexibility_rating');
-        $photographerAverageProfessionalismRating = PhotographyReviews::calculateAverageScore($serviceId, 'professionalism_rating');
-        $photographerAveragePhotoQualityRating = PhotographyReviews::calculateAverageScore($serviceId, 'photo_quality_rating');
-        $photographerAveragePriceRating = PhotographyReviews::calculateAverageScore($serviceId, 'price_rating');
-        $reviewCount = PhotographyReviews::getReviewCount($serviceId);
+        // Handle packages
+        $packages = [];
+        if ($service->packages) {
+            try {
+                $packages = json_decode($service->packages, true) ?: [];
+            } catch (\Exception $e) {
+                \Log::error('Failed to decode packages: ' . $e->getMessage());
+            }
+        }
 
         return [
-            'description' => $description,
-            'packages' => $packages,
+            'description' => $service->description ?? '',
             'portfolioImages' => $portfolioImages,
-            'portfolioLink' => $portfolioLink,
-            'environmentTypes' => $environmentTypes,
-            'types' => $types,
-            'settings' => $settings,
-            'workingTimes' => $workingTimes,
-            'overallScore' => $overallScore,
-            'overallReviews' => $overallReviews,
-            'photographerAverageCommunicationRating' => $photographerAverageCommunicationRating,
-            'photographerAverageFlexibilityRating' => $photographerAverageFlexibilityRating,
-            'photographerAverageProfessionalismRating' => $photographerAverageProfessionalismRating,
-            'photographerAveragePhotoQualityRating' => $photographerAveragePhotoQualityRating,
-            'photographerAveragePriceRating' => $photographerAveragePriceRating,
-            'renderRatingIcons' => [$this, 'renderRatingIcons'],
-            'reviewCount' => $reviewCount,
+            'packages' => $packages,
+            'portfolioLink' => $service->portfolio_link ?? '',
+            'environmentTypes' => $service->environment_type
+                ? json_decode($service->environment_type, true)
+                : [],
+            'types' => isset($service->environment_type)
+                ? array_keys(json_decode($service->environment_type, true))
+                : [],
+            'settings' => isset($service->environment_type)
+                ? array_values(json_decode($service->environment_type, true))
+                : [],
+            'photographerAverageCommunicationRating' => OtherServicesReview::calculateAverageScore($service->id, 'communication_rating'),
+            'photographerAverageFlexibilityRating' => OtherServicesReview::calculateAverageScore($service->id, 'flexibility_rating'),
+            'photographerAverageProfessionalismRating' => OtherServicesReview::calculateAverageScore($service->id, 'professionalism_rating'),
+            'photographerAveragePhotoQualityRating' => OtherServicesReview::calculateAverageScore($service->id, 'photo_quality_rating'),
+            'photographerAveragePriceRating' => OtherServicesReview::calculateAverageScore($service->id, 'price_rating'),
+            'renderRatingIcons' => [$this, 'renderRatingIcons']
         ];
     }
 
@@ -364,11 +361,11 @@ class OtherServiceController extends Controller
         $serviceId = $service->id;
 
         $description = $service ? $service->description : '';
-        $packages = json_decode($service->packages);
         $portfolioImages = $service->portfolio_images;
         $portfolioLink = $service->portfolio_link;
         $platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
         $service->platforms = $platforms;
+        $packages = $service ? json_decode($service->packages) : [];
 
         $overallScore = OtherServicesReview::calculateOverallScore($serviceId);
         $overallReviews[$serviceId] = $this->renderRatingIcons($overallScore);
