@@ -227,7 +227,6 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/uncompleted', [TodoController::class, 'showUncompletedTodoItems'])->name('admin.dashboard.uncompleted-todos');
         Route::get('/load-more', [TodoController::class, 'loadMoreTodos'])->name('admin.dashboard.load-more-todos');
 
-        // Action Routes
         Route::post('/new', [TodoController::class, 'newTodoItem'])->name('admin.dashboard.new-todo');
         Route::post('/{id}/complete', [TodoController::class, 'completeTodoItem'])->name('admin.dashboard.complete-todo');
         Route::post('/{id}/uncomplete', [TodoController::class, 'uncompleteTodoItem'])->name('admin.dashboard.uncomplete-todo');
@@ -243,10 +242,10 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/jobs', [JobsController::class, 'showJobs'])->name('admin.dashboard.jobs');
         Route::get('/jobs/new', [JobsController::class, 'newJob'])->name('admin.dashboard.jobs.create');
         Route::post('/jobs/store', [JobsController::class, 'storeJob'])->name('admin.dashboard.jobs.store');
-        Route::get('/job/{id}', [JobsController::class, 'viewJob'])->name('admin.dashboard.job.view');
+        Route::get('/jobs/{job}', [JobsController::class, 'viewJob'])->name('admin.dashboard.jobs.view');
+        Route::get('/jobs/{job}/edit', [JobsController::class, 'viewJob'])->name('admin.dashboard.jobs.edit');
         Route::put('/jobs/{id}/update', [JobsController::class, 'updateJob'])->name('admin.dashboard.jobs.update');
         Route::delete('/jobs/{id}/delete', [JobsController::class, 'deleteJob'])->name('admin.dashboard.jobs.delete');
-        Route::get('/jobs/search-clients', [JobsController::class, 'searchClients'])->name('admin.dashboard.jobs.client-search');
     });
 });
 

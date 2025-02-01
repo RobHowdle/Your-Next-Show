@@ -41,7 +41,7 @@
                 <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
                   <th scope="row"
                     class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                    {{ $job->name }}
+                    {{ $job->name }}{{ $job->id }}
                   </th>
                   <td
                     class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
@@ -69,13 +69,16 @@
                     {{ Str::of($job->job_status)->replace(['-', '_'], ' ')->title() }}
                   </td>
                   <td
-                    class="flex flex-col gap-2 px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                    class="flex flex-row gap-2 px-2 py-2 text-center font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+                    <a href="{{ route('admin.dashboard.jobs.view', ['dashboardType' => $dashboardType, 'job' => $job->pivot_job_id]) }}"
+                      class="w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:text-yns_yellow">
+                      <span class="fas fa-eye"></span>
+                    </a> <button
+                      class="w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:text-yns_dark_orange"><span
+                        class="fas fa-pencil"></span></button>
                     <button
-                      class="w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:text-yns_yellow">View</button>
-                    <button
-                      class="w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:text-yns_dark_orange">Edit</button>
-                    <button
-                      class="w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:text-yns_red">Delete</button>
+                      class="w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:text-yns_red"><span
+                        class="fas fa-trash-can"></span></button>
                   </td>
                 </tr>
               @empty

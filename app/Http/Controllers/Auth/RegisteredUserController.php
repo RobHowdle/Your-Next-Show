@@ -60,7 +60,7 @@ class RegisteredUserController extends Controller
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
                 ]);
-
+                \Log::info($request->role);
                 $role = Role::findOrFail($request->role);
                 $user->assignRole($role->name);
 
@@ -81,7 +81,7 @@ class RegisteredUserController extends Controller
                     'success' => true,
                     'message' => 'Registration successful! Let\'s set up your profile.',
                     'redirect' => route('dashboard.index')
-                ], 200);
+                ], 201);
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('Registration failed:', [

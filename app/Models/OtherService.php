@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasVerification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,37 +10,42 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class OtherService extends Model
 {
+    use HasVerification;
     use HasFactory;
     use SoftDeletes;
 
     protected $table = 'other_services';
 
     protected $fillable = [
-        'name',
-        'logo_url',
-        'location',
-        'postal_town',
-        'longitude',
-        'latitude',
-        'other_service_id',
-        'description',
-        'packages',
-        'environment_type',
-        'working_times',
-        'members',
-        'stream_urls',
-        'band_type',
-        'genre',
-        'styles',
-        'print',
-        'contact_name',
-        'contact_number',
-        'contact_email',
-        'contact_link',
-        'portfolio_link',
-        'portfolio_images',
-        'services'
-    ];
+            'name',
+            'logo_url',
+            'location',
+            'postal_town',
+            'longitude',
+            'latitude',
+            'other_service_id',
+            'description',
+            'packages',
+            'environment_type',
+            'working_times',
+            'members',
+            'stream_urls',
+            'band_type',
+            'genre',
+            'styles',
+            'print',
+            'default_lead_time_value',
+            'default_lead_time_unit',
+            'contact_name',
+            'contact_number',
+            'contact_email',
+            'contact_link',
+            'portfolio_link',
+            'portfolio_images',
+            'services',
+            'is_verified',
+            'verified_at',
+        ];
 
     protected $casts = [
         'packages' => 'array',

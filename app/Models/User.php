@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\Carbon;
 use App\Models\Role;
 use App\Models\StandardUser;
 use Laravel\Sanctum\HasApiTokens;
@@ -219,5 +220,15 @@ class User extends Authenticatable
     public function events()
     {
         return $this->belongsToMany(Event::class, 'event_user');
+    }
+
+    public function getIsUnderageAttribute()
+    {
+        return Carbon::parse($this->date_of_birth)->age < 18;
+    }
+
+    public function jobs()
+    {
+        return $this->hasMany(Job::class);
     }
 }

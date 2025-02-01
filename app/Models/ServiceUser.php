@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ServiceUser extends Model
 {
@@ -16,8 +17,13 @@ class ServiceUser extends Model
     protected $fillable = [
         'user_id',
         'serviceable_id',
-        'servieable_type'
+        'serviceable_type'
     ];
 
     public $timestamps = true;
+
+    public function serviceable(): MorphTo
+    {
+        return $this->morphTo();
+    }
 }

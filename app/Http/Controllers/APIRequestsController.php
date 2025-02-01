@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Venue;
 use App\Models\ApiKeys;
 use App\Models\Promoter;
+use App\Models\ServiceUser;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Models\UserModuleSetting;
@@ -475,11 +476,13 @@ class APIRequestsController extends Controller
                 'packages' => json_encode($validated['packages'])
             ]);
 
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Packages updated successfully'
+
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -495,5 +498,101 @@ class APIRequestsController extends Controller
                 'message' => 'Failed to update packages: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function leaveService($dashboardType, Request $request, $id)
+    {
+        try {
+            \Log::info('Leaving service:', [
+                'dashboard' => $dashboardType,
+                'user_id' => $id,
+                'request' => $request->all()
+            ]);
+
+            $user = User::findOrFail($id);
+            $service = $request->input('service');
+
+            // Delete service user relationship
+            ServiceUser::where('user_id', $id)
+                ->where('serviceable_type', 'like', '%' . $dashboardType . '%')
+                ->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully left service'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error leaving service:', [
+                'error' => $e->getMessage(),
+                'user_id' => $id
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to leave service'
+            ], 500);
+        }
+    }
+
+    public function searchClients(Request $request)
+    {
+        $search = $request->input('query');
+
+        // Search users by first_name and last_name
+        $users = User::where(function ($query) use ($search) {
+            $query->where('first_name', 'LIKE', "%{$search}%")
+                ->orWhere('last_name', 'LIKE', "%{$search}%")
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+        })->get(['id', 'first_name', 'last_name'])
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => "{$user->first_name} {$user->last_name}",
+                    'service_type' => 'User'
+                ];
+            });
+
+        // Search venues
+        $venues = Venue::where('name', 'LIKE', "%{$search}%")
+            ->get()
+            ->map(function ($venue) {
+                return [
+                    'id' => $venue->id,
+                    'name' => $venue->name,
+                    'service_type' => 'Venue'
+                ];
+            });
+
+        // Search promoters
+        $promoters = Promoter::where('name', 'LIKE', "%{$search}%")
+            ->get()
+            ->map(function ($promoter) {
+                return [
+                    'id' => $promoter->id,
+                    'name' => $promoter->name,
+                    'service_type' => 'Promoter'
+                ];
+            });
+
+        // Search other services
+        $otherServices = OtherService::where('name', 'LIKE', "%{$search}%")
+            ->with('otherServiceList')
+            ->get()
+            ->map(function ($otherService) {
+                return [
+                    'id' => $otherService->id,
+                    'name' => $otherService->name,
+                    'service_type' => $otherService->otherServiceList->service_name ?? null,
+                ];
+            });
+
+        // Merge all results
+        $clients = collect()
+            ->merge($users)
+            ->merge($venues)
+            ->merge($promoters)
+            ->merge($otherServices);
+
+        return response()->json($clients);
     }
 }
