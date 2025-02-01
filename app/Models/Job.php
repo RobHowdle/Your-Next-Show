@@ -30,6 +30,7 @@ class Job extends Model
     protected $dates = [
         'job_start_date',
         'job_end_date',
+        'completed_date',
     ];
 
     public function pivot()
@@ -56,21 +57,4 @@ class Job extends Model
     {
         return $this->belongsTo(OtherService::class);
     }
-
-    // public function getLeadTimeAttribute()
-    // {
-    //     if ($this->lead_time_value && $this->lead_time_unit) {
-    //         return $this->lead_time_value . ' ' .
-    //             Str::plural($this->lead_time_unit, $this->lead_time_value);
-    //     }
-
-    //     // Fallback to service default
-    //     $service = $this->services->first();
-    //     if ($service && $service->default_lead_time_value && $service->default_lead_time_unit) {
-    //         return $service->default_lead_time_value . ' ' .
-    //             Str::plural($service->default_lead_time_unit, $service->default_lead_time_value);
-    //     }
-
-    //     return 'No lead time set';
-    // }
 }

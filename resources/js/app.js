@@ -331,6 +331,10 @@ window.showConfirmationNotification = function (options) {
         icon: "warning",
         title: "Are you sure?",
         text: options.text,
+    }).then((result) => {
+        if (result.isConfirmed && typeof options.onConfirm === "function") {
+            options.onConfirm();
+        }
     });
 };
 

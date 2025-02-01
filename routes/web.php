@@ -243,9 +243,11 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/jobs/new', [JobsController::class, 'newJob'])->name('admin.dashboard.jobs.create');
         Route::post('/jobs/store', [JobsController::class, 'storeJob'])->name('admin.dashboard.jobs.store');
         Route::get('/jobs/{job}', [JobsController::class, 'viewJob'])->name('admin.dashboard.jobs.view');
-        Route::get('/jobs/{job}/edit', [JobsController::class, 'viewJob'])->name('admin.dashboard.jobs.edit');
-        Route::put('/jobs/{id}/update', [JobsController::class, 'updateJob'])->name('admin.dashboard.jobs.update');
-        Route::delete('/jobs/{id}/delete', [JobsController::class, 'deleteJob'])->name('admin.dashboard.jobs.delete');
+        Route::get('/jobs/{job}/edit', [JobsController::class, 'editJob'])->name('admin.dashboard.jobs.edit');
+        Route::put('/jobs/{job}/update', [JobsController::class, 'updateJob'])->name('admin.dashboard.jobs.update');
+        Route::delete('/jobs/{job}/delete', [JobsController::class, 'deleteJob'])->name('admin.dashboard.jobs.delete');
+        Route::get('/jobs/{job}/download', [JobsController::class, 'downloadFile'])->name('admin.dashboard.jobs.download');
+        Route::post('/jobs/{job}/complete', [JobsController::class, 'completeJob'])->name('admin.dashboard.jobs.complete');
     });
 });
 

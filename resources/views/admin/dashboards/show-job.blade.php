@@ -11,6 +11,7 @@
             <h1 class="font-heading text-4xl font-bold">
               {{ $job->pivot->first()->name }} - {{ ucwords(str_replace(['_', '-'], ' ', $job->job_type)) }}
             </h1>
+            <x-button type="button" id="complete-job" label="Complete Job" />
             <a href="{{ route('admin.dashboard.jobs.edit', ['dashboardType' => $dashboardType, 'job' => $job->id]) }}"
               class="inline-flex items-center rounded-md border border-white bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Edit
               Job</a>
@@ -58,14 +59,87 @@
               <p class="font-bold text-white">Scope</p>
               <p class="text-white">{{ $job->scope }}</p>
             </div>
-          </div>
 
-          <div class="group">
-            <p class="font-bold text-white">Uploaded Files</p>
-            <p class="text-white">{{ $job->scope_url }}</p>
+            <div class="group">
+              <p class="font-bold text-white">Uploaded Files</p>
+              @if ($job->scope_url)
+                <a href="{{ route('admin.dashboard.jobs.download', ['dashboardType' => $dashboardType, 'job' => $job->id]) }}"
+                  class="text-yns_yellow hover:underline" target="_blank">
+                  Download Files
+                </a>
+              @else
+                <p class="text-white">No files uploaded</p>
+              @endif
+            </div>
+          </div>
+        </div>
+        <div id="complete-job-modal" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-50">
+          <div class="w-96 rounded-lg bg-yns_dark_gray p-8 shadow-xl">
+            <h2 class="mb-4 text-xl font-bold text-white">Complete Job</h2>
+            <form id="complete-job-form">
+              <div class="space-y-4">
+                <div>
+                  <x-input-label-dark>Final Amount</x-input-label-dark>
+                  <x-number-input-pound id="final-amount" name="final_amount" :value="$job->estimated_amount" />
+                </div>
+                <div>
+                  <x-input-label-dark>Completion Date</x-input-label-dark>
+                  <x-date-input id="completion-date" name="completion_date" :value="now()" />
+                </div>
+                <div class="flex justify-end space-x-2">
+                  <button type="button" id="cancel-complete"
+                    class="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700">
+                    Cancel
+                  </button>
+                  <button type="submit" class="rounded bg-yns_yellow px-4 py-2 text-black hover:bg-yellow-400">
+                    Complete Job
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
   </div>
 </x-app-layout>
+<script>
+  jQuery(document).ready(function($) {
+    const modal = $('#complete-job-modal');
+    const form = $('#complete-job-form');
+
+    $('#complete-job').on('click', function() {
+      const job = @json($job);
+      if (job.job_status === 'completed') return;
+      modal.removeClass('hidden').addClass('flex');
+    });
+
+    $('#cancel-complete').on('click', function() {
+      modal.removeClass('flex').addClass('hidden');
+    });
+
+    form.on('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: '{{ route('admin.dashboard.jobs.complete', ['dashboardType' => $dashboardType, 'job' => $job->id]) }}',
+        method: 'POST',
+        data: {
+          final_amount: $('#final-amount').val(),
+          completion_date: $('#completion-date').val(),
+          _token: '{{ csrf_token() }}'
+        },
+        success: function(response) {
+          if (response.success) {
+            modal.removeClass('flex').addClass('hidden');
+            location.reload();
+          }
+        },
+        error: function(xhr) {
+          console.error('Error:', xhr.responseText);
+        }
+      });
+    });
+  });
+</script>
