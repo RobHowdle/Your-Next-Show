@@ -7,9 +7,9 @@
     @endif
   </div>
   <div id="members" class="max-h-80 flex h-full flex-col gap-4 overflow-auto text-center md:text-left">
-    @if (empty($singleArtistData['members']))
+    @if (empty($serviceData['members']))
       <div class="service min-w-[calc(50%-1rem)] flex-1">
-        @foreach ($singleArtistData['members'] as $member)
+        @foreach ($serviceData['members'] as $member)
           <p>{{ $member->first_name . ' ' . $member->last_name }}</p>
         @endforeach
       </div>
@@ -23,7 +23,7 @@
       follow to stay updated with our releases!</p>
 
     @php
-      $streamUrls = $singleArtistData['streamUrls'] ?? [];
+      $streamUrls = $serviceData['streamUrls'] ?? [];
       if (is_string($streamUrls)) {
           $streamUrls = json_decode($streamUrls, true) ?? [];
       }
@@ -91,7 +91,7 @@
 
     @php
       // Get stream URLs and decode if string
-      $streamUrls = $singleArtistData['streamUrls'] ?? [];
+      $streamUrls = $serviceData['streamUrls'] ?? [];
       if (is_string($streamUrls)) {
           $streamUrls = json_decode($streamUrls, true) ?? [];
       }
@@ -132,24 +132,24 @@
       <div class="ratings-block mt-4 flex flex-col items-center gap-4">
         <p class="grid grid-cols-2">Communication:
           <span class="rating-wrapper flex flex-row gap-3">
-            {!! $singleArtistData['renderRatingIcons']($singleArtistData['bandAverageCommunicationRating']) !!}
+            {!! $serviceData['renderRatingIcons']($serviceData['bandAverageCommunicationRating']) !!}
           </span>
         </p>
         <p class="grid grid-cols-2">Music:
           <span class="rating-wrapper flex flex-row gap-3">
-            {!! $singleArtistData['renderRatingIcons']($singleArtistData['bandAverageMusicRating']) !!}
+            {!! $serviceData['renderRatingIcons']($serviceData['bandAverageMusicRating']) !!}
 
           </span>
         </p>
         <p class="grid grid-cols-2">Promotion:
           <span class="rating-wrapper flex flex-row gap-3">
-            {!! $singleArtistData['renderRatingIcons']($singleArtistData['bandAveragePromotionRating']) !!}
+            {!! $serviceData['renderRatingIcons']($serviceData['bandAveragePromotionRating']) !!}
 
           </span>
         </p>
         <p class="grid grid-cols-2">Gig Quality:
           <span class="rating-wrapper flex flex-row gap-3">
-            {!! $singleArtistData['renderRatingIcons']($singleArtistData['bandAverageGigQualityRating']) !!}
+            {!! $serviceData['renderRatingIcons']($serviceData['bandAverageGigQualityRating']) !!}
 
           </span>
         </p>

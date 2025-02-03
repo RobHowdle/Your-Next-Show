@@ -14,12 +14,12 @@
         @php
           $route = match (strtolower($serviceType)) {
               'designer' => 'submit-single-service-review',
-              'photographer' => 'admin.dashboard.photographer.submit-review',
-              'videographer' => 'admin.dashboard.videographer.submit-review',
-              'venue' => 'admin.dashboard.venue.submit-review',
-              'promoter' => 'admin.dashboard.promoter.submit-review',
-              'artist' => 'admin.dashboard.artist.submit-review',
-              default => 'admin.dashboard.submit-review',
+              'photographer' => 'submit-single-service-review',
+              'videographer' => 'submit-single-service-review',
+              'venue' => 'submit-single-service-review',
+              'promoter' => 'submit-single-service-review',
+              'artist' => 'submit-single-service-review',
+              default => 'submit-single-service-review',
           };
         @endphp
         <!-- Form -->

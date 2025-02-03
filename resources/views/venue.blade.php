@@ -19,7 +19,7 @@
             <img src="{{ asset('images/system/yns_no_image_found.png') }}" alt="No Image"
               class="_250img hidden md:block">
           @endif
-          <div class="header-text flex flex-col items-center justify-center gap-2">
+          <div class="header-text flex flex-col items-center justify-center gap-2 md:items-start">
             <h1 class="text-sans text-center text-xl md:text-left xl:text-2xl 2xl:text-4xl">
               {{ $venue->name }}
               @if ($venue->is_verified)
@@ -255,7 +255,8 @@
         </div>
         {{-- <x-suggestion-block :existingPromoters="$existingPromoters" :promoterWithHighestRating="$promoterWithHighestRating" :photographerWithHighestRating="$photographerWithHighestRating" :videographerWithHighestRating="$videographerWithHighestRating" :bandWithHighestRating="$bandWithHighestRating"
           :designerWithHighestRating="$designerWithHighestRating" /> --}}
-        <x-review-modal title="{{ $venue->name }}" route="submit-venue-review" profileId="{{ $venue->id }}" />
+        <x-review-modal title="{{ $venue->name }}" serviceType="venue" profileId="{{ $venue->id }}"
+          service="{{ $venue->name }}" />
       </div>
     </div>
   </div>

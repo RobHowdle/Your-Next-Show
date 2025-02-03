@@ -3,7 +3,6 @@
     <h1 class="text-whitel text-center font-heading text-6xl">
       {{ $serviceName }}</h1>
   </x-slot>
-
   <x-other-service-table :singleServices="$singleServices" :genres="$genres" :serviceName="$serviceName">
     @forelse ($singleServices as $service)
       <tr class="border-gray-700 odd:bg-black even:bg-gray-900">

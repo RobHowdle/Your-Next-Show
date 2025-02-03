@@ -32,7 +32,7 @@ class PromoterReview extends Model
         return $this->belongsTo(Promoter::class, 'promoter_id');
     }
 
-    public static function getRecentReviewsForPromoter($promoterId)
+    public static function getRecentReviews($promoterId)
     {
         return self::where('promoter_id', $promoterId)
             ->whereNull('deleted_at')

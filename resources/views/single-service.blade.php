@@ -52,30 +52,10 @@
           {{-- Tabs --}}
           @include("components.{$singleService->services}-service-tabs")
 
-          {{-- @if ($singleService->services == 'Artist')
-            @include('components.artist-service-tabs')
-          @elseif ($singleService->services == 'Photography')
-            @include('components.photographer-service-tabs')
-          @elseif ($singleService->services == 'Videography')
-            @include('components.videographer-service-tabs')
-          @elseif ($singleService->services == 'Designer')
-            @include('components.designer-service-tabs')
-          @endif --}}
-
           {{-- Tab Content --}}
           @include("components.{$singleService->services}-service-tab-content", [
               'serviceData' => $serviceData,
           ])
-
-          {{-- @if ($singleService->services == 'Artist')
-            @include('components.artist-service-tab-content')
-          @elseif ($singleService->services == 'Photography')
-            @include('components.photographer-service-tab-content')
-          @elseif ($singleService->services == 'Designer')
-            @include('components.designer-service-tab-content')
-          @elseif ($singleService->services == 'Videography')
-            @include('components.videographer-service-tab-content')
-          @endif --}}
           {{-- <x-suggestion-block :promoterWithHighestRating="$promoterWithHighestRating" :photographerWithHighestRating="$photographerWithHighestRating" :videographerWithHighestRating="$videographerWithHighestRating" :bandWithHighestRating="$bandWithHighestRating"
             :designerWithHighestRating="$designerWithHighestRating" /> --}}
           <x-review-modal title="{{ $singleService->name }}" serviceType="{{ $singleService->services }}"
