@@ -39,7 +39,7 @@ class BandReviews extends Model
         return $this->belongsTo(OtherServiceList::class, 'other_services_list_id');
     }
 
-    public static function getRecentReviewsForBand($otherServiceId)
+    public static function getRecentReviews($otherServiceId)
     {
         return self::where('other_services_id', $otherServiceId)
             ->whereNull('deleted_at')
