@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -74,7 +75,10 @@ class BandJourneyController extends Controller
         }
 
         // Add the user to the band
-        $user->otherService('artist')->attach($artistId);
+        $user->otherService('artist')->attach($artistId, [
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+        ]);
 
         return response()->json([
             'success' => true,
@@ -82,7 +86,6 @@ class BandJourneyController extends Controller
             'redirect' => route('dashboard', ['dashboardType' => $dashboardType])
         ], 200);
     }
-
 
     public function createBand(Request $request)
     {
@@ -117,7 +120,9 @@ class BandJourneyController extends Controller
                 'contact_number' => $request->contact_number,
                 'contact_email' => $request->contact_email,
                 'contact_link' => $platformsJson,
-                'services' => 'Artist'
+                'services' => 'Artist',
+                'band_type'  =>  [],
+                'genre' => "[]",
             ]);
 
             if (!$band) {
@@ -137,7 +142,7 @@ class BandJourneyController extends Controller
             return redirect()->route('dashboard', $dashboardType)->with('success', 'Successfully created and joined the new artist!');
         } catch (\Exception $e) {
             logger()->error('Error in createBand:', ['error' => $e->getMessage()]);
-            return back()->withErrors(['error' => 'Something went wrong.']);
+            return back()->withErrors(['error' => 'Something went wrong. We\'ve logged the error and will fix it soon.']);
         }
     }
 }

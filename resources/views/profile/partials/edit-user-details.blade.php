@@ -4,41 +4,129 @@
       {{ __('Change your user details') }}
     </h2>
   </header>
-  <form method="POST" action="{{ route('profile.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}"
-    class="mt-6 space-y-6">
+  <form class="mt-6 space-y-6" id="saveProfile">
     @csrf
     @method('PUT')
     <div>
-      <x-input-label for="firstName" :value="__('First Name')" />
-      <x-text-input id="firstName" class="mt-1 block w-full" type="text" name="firstName" :value="old('firstName', $firstName ?? '')" required
-        autofocus autocomplete="firstName" />
-      <x-input-error :messages="$errors->get('firstName')" class="mt-2" />
-    </div>
-    <div class="mt-4">
-      <x-input-label for="lastName" :value="__('Last Name')" />
-      <x-text-input id="lastName" class="mt-1 block w-full" type="text" name="lastName" :value="old('lastName', $lastName ?? '')" required
-        autofocus autocomplete="lastName" />
-      <x-input-error :messages="$errors->get('lastName')" class="mt-2" />
+      <x-input-label-dark for="userFirstName" :value="__('First Name')" />
+      <x-text-input id="userFirstName" class="mt-1 block w-full" type="text" name="userFirstName" :value="old('userFirstName', $userFirstName ?? '')"
+        required autofocus autocomplete="first_name" />
+      <x-input-error :messages="$errors->get('userFirstName')" class="mt-2" />
     </div>
 
     <div class="mt-4">
-      <x-input-label for="email" :value="__('Email')" />
-      <x-text-input id="email" class="mt-1 block w-full" type="email" name="email" :value="old('email', $email ?? '')" required
-        autocomplete="username" />
-      <x-input-error :messages="$errors->get('email')" class="mt-2" />
+      <x-input-label-dark for="userLastName" :value="__('Last Name')" />
+      <x-text-input id="last_name" class="mt-1 block w-full" type="text" name="userLastName" :value="old('userLastName', $userLastName ?? '')"
+        required autofocus autocomplete="userLastName" />
+      <x-input-error :messages="$errors->get('userLastName')" class="mt-2" />
     </div>
 
     <div class="mt-4">
-      <x-input-label for="password" :value="__('Password')" />
-      <x-text-input id="password" class="mt-1 block w-full" type="password" name="password"
-        autocomplete="new-password" />
+      <x-input-label-dark for="userEmail" :value="__('Email')" />
+      <x-text-input id="userEmail" class="mt-1 block w-full" type="email" name="email" :value="old('userEmail', $userEmail ?? '')" required
+        autocomplete="email" />
+      <x-input-error :messages="$errors->get('userEmail')" class="mt-2" />
+    </div>
+
+    <div class="mt-4">
+      <x-input-label-dark for="email" :value="__('Date Of Birth')" />
+      <x-date-input id="userDob" class="mt-1 block w-full" type="userDob" name="userDob" :value="old('userDob', $userDob ?? '')" required
+        autocomplete="date_of_birth" />
+      <x-input-error :messages="$errors->get('userDob')" class="mt-2" />
+    </div>
+
+    <div class="mt-4">
+      <x-input-label-dark for="password" :value="__('Password')" />
+      <div class="relative">
+        <x-text-input id="password" class="mt-1 block w-full" type="password" name="password"
+          autocomplete="new-password" />
+        <button type="button" onclick="togglePasswordVisibility()"
+          class="password-toggle-icon absolute inset-y-0 right-0 flex items-center px-3">
+          <svg class="h-5 w-5 text-gray-400" id="password-eye" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </button>
+      </div>
+      <div id="password-strength-container"
+        style="width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; margin-top: 5px;">
+        <div id="password-strength-meter" style="height: 100%; width: 0%; border-radius: 5px;"></div>
+      </div>
+      <span id="password-strength-text"></span>
       <x-input-error :messages="$errors->get('password')" class="mt-2" />
     </div>
 
+    <div id="password-requirements" class="mt-2 w-full text-sm text-white">
+      <p class="font-bold">Password Requirements:</p>
+      <ul>
+        <li class="flex items-center">
+          <span id="length-requirement" class="requirement flex items-center">
+            <svg id="length-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+            </svg>
+            Minimum 8 characters
+          </span>
+        </li>
+        <li class="flex items-center">
+          <span id="uppercase-requirement" class="requirement flex items-center">
+            <svg id="uppercase-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+            </svg>
+            At least 1 uppercase letter (A-Z)
+          </span>
+        </li>
+        <li class="flex items-center">
+          <span id="lowercase-requirement" class="requirement flex items-center">
+            <svg id="lowercase-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+            </svg>
+            At least 1 lowercase letter (a-z)
+          </span>
+        </li>
+        <li class="flex items-center">
+          <span id="number-requirement" class="requirement flex items-center">
+            <svg id="number-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+            </svg>
+            At least 1 number (0-9)
+          </span>
+        </li>
+        <li class="flex items-center">
+          <span id="special-requirement" class="requirement flex items-center">
+            <svg id="special-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+            </svg>
+            At least 1 special character (@$!%*?&)
+          </span>
+        </li>
+        <li class="flex items-center">
+          <span id="not-compromised-requirement" class="requirement flex items-center">
+            <svg id="not-compromised-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor"
+              viewBox="0 0 20 20">
+              <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+            </svg>
+            Must not be compromised
+          </span>
+        </li>
+        <li class="flex items-center">
+          <span id="password-match-requirement" class="requirement flex items-center">
+            <svg id="password-match-icon" class="mr-2 hidden h-4 w-4 text-green-400" fill="currentColor"
+              viewBox="0 0 20 20">
+              <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
+            </svg>
+            Passwords match
+          </span>
+        </li>
+      </ul>
+    </div>
+
     <div class="mt-4">
-      <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-      <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password" name="password_confirmation"
-        autocomplete="new-password" />
+      <x-input-label-dark for="password_confirmation" :value="__('Confirm Password')" />
+      <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password"
+        name="password_confirmation" autocomplete="new-password" />
       <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
     </div>
 
@@ -46,343 +134,147 @@
       @php
         $dataId = 1;
       @endphp
-      <x-google-address-picker :dataId="$dataId" id="location_{{ $dataId }}" name="location" label="Location"
-        placeholder="Enter an address" :value="old('location', $location ?? '')" :latitude="old('latitude', $latitude ?? '')" :longitude="old('longitude', $longitude ?? '')" :postalTown="old('postal_town', $postalTown ?? '')" />
-    </div>
-
-    {{-- <div class="mt-4">
-      <table id="role-table" class="min-w-full table-auto border-collapse">
-        <thead>
-          <tr>
-            <th class="px-4 py-2 text-left">Current Role(s)</th>
-            <th class="px-4 py-2 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach ($userRole as $role)
-            <tr class="border-b">
-              <td class="px-4 py-2 capitalize">{{ $role->name }}</td>
-              <td class="px-4 py-2">
-                <x-button type="button" id="edit-role" data-role-id="{{ $role->id }}"
-                  data-role-name="{{ $role->name }}" label="Edit"></x-button>
-                <x-button type="button" id="delete-role" data-role-id="{{ $role->id }}"
-                  data-role-name="{{ $role->name }}" label="Delete"></x-button>
-              </td>
-            </tr>
-          @endforeach
-        </tbody>
-      </table>
-
-      <div class="mt-4">
-        <x-button type="button" id="add-role" label="Add Role"></x-button>
-      </div>
-    </div> --}}
-
-    <div id="editRoleModal" class="fixed inset-0 hidden items-center justify-center bg-gray-500 bg-opacity-75">
-      <div class="rounded bg-black p-4 text-white shadow-md">
-        <h2 id="editModalTitle" class="text-lg font-semibold">Edit Role</h2>
-        <input type="hidden" id="edit-role-id" />
-        <div class="mt-2">
-          <x-input-label for="role" :value="__('Role')" />
-          <select id="role" name="role"
-            class="mt-1 block w-full rounded-md border-yns_red capitalize shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600"
-            autofocus autocomplete="role">
-            @foreach ($roles as $role)
-              <option value="{{ $role->id }}" {{ $userRole->first()->id == $role->id ? 'selected' : '' }}>
-                {{ $role->name }}
-              </option>
-            @endforeach
-          </select>
-        </div>
-        <div class="mt-4">
-          <button id="save-edit-role-btn" class="rounded bg-blue-500 px-4 py-2 text-white">Save Changes</button>
-          <button onclick="closeModal('editRoleModal')" class="rounded bg-gray-300 px-4 py-2 text-black">Cancel</button>
-        </div>
-      </div>
-    </div>
-
-    @php
-      $userRoleIds = $userRole->pluck('id')->toArray();
-    @endphp
-
-    <div id="addRoleModal" tabindex="-1" class="fixed inset-0 z-[9999] hidden place-items-center px-4">
-      <div class="relative mx-auto w-full max-w-4xl border border-white bg-white dark:bg-black">
-        <div class="review-popup relative rounded-lg bg-white dark:bg-black">
-          <div class="flex items-center justify-between rounded-t border-b p-4 md:p-5">
-            <div class="group">
-              <h3 class="text-xl font-semibold">
-                Add Role
-              </h3>
-              <span>Add a new role to your account</span>
-            </div>
-            <button type="button" data-modal-hide="review-modal" class="text-white hover:text-yns_light_gray">
-              <span class="fas fa-times"></span>
-              <span class="sr-only">Close modal</span>
-            </button>
-          </div>
-          <div class="p-4 md:p-5">
-            <input type="hidden" id="add-role-id" />
-            <select type="select" id="new-role" name="role"
-              class="w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-yns_red dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600"
-              required autofocus autocomplete="role">
-              @foreach ($roles as $role)
-                <option value="{{ $role->id }}" @if (in_array($role->id, $userRoleIds)) disabled @endif>
-                  {{ ucfirst($role->name) }}</option>
-              @endforeach
-            </select>
-            <x-input-error :messages="$errors->get('role')" class="mt-2" />
-
-            <div class="mt-4 flex flex-row gap-6">
-              <x-button id="save-add-role-btn" label="Add Role"></x-button>
-              <x-button onclick="closeModal('addRoleModal')" label="Cancel"></x-button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="deleteRoleModal" class="fixed inset-0 hidden items-center justify-center bg-gray-500 bg-opacity-75">
-      <div class="w-96 rounded bg-black p-8 text-white shadow-md">
-        <h2 id="deleteModalTitle" class="text-lg font-semibold">Delete Role</h2>
-        <input type="hidden" id="add-role-id" />
-        <div class="mt-2">
-          <p>Are you sure you want to delete this role? You will loose all access to this dashboard.</p>
-        </div>
-        <div class="mt-4 flex flex-row gap-6">
-          <x-button id="save-delete-role-btn" label="Delete Role"></x-button>
-          <x-button onclick="closeModal('deleteRoleModal')" label="Cancel"></x-button>
-        </div>
-      </div>
+      <x-google-address-picker :postalTown="old('postal_town', $userPostalTown ?? '')" :dataId="$dataId" id="location_{{ $dataId }}" name="location"
+        label="Your Location" placeholder="Enter an address" :value="old('location', $userLocation ?? '')" :latitude="old('latitude', $userLat ?? '')"
+        :longitude="old('longitude', $userLong ?? '')" />
     </div>
 
     <div class="flex items-center gap-4">
       <button type="submit"
         class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading font-bold text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
-      @if (session('status') === 'profile-updated')
-        <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
-          class="text-sm text-gray-600 dark:text-gray-400">{{ __('Saved.') }}</p>
-      @endif
     </div>
   </form>
 </section>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const addRoleBtn = document.getElementById('add-role');
-    const deleteRoleBtns = document.querySelectorAll('#delete-role');
+  // Utility Functions
+  const checkRequirement = (value, test) => {
+    const requirement = document.getElementById(`${test}-requirement`);
+    const icon = document.getElementById(`${test}-icon`);
+    const isValid = {
+      length: pwd => pwd.length >= 8,
+      uppercase: pwd => /[A-Z]/.test(pwd),
+      lowercase: pwd => /[a-z]/.test(pwd),
+      number: pwd => /[0-9]/.test(pwd),
+      special: pwd => /[@$!%*?&]/.test(pwd)
+    } [test](value);
 
-    if (addRoleBtn) {
-      addRoleBtn.addEventListener('click', showAddRoleModal);
+    requirement?.classList.toggle('valid', isValid);
+    icon?.classList.toggle('hidden', !isValid);
+    return isValid;
+  };
+
+  const updatePasswordStrength = (password) => {
+    const meter = document.getElementById('password-strength-meter');
+    const text = document.getElementById('password-strength-text');
+    const requirements = ['length', 'uppercase', 'lowercase', 'number', 'special'];
+    const strength = requirements.filter(req => checkRequirement(password, req)).length;
+
+    const levels = {
+      0: {
+        width: '0%',
+        class: '',
+        text: ''
+      },
+      1: {
+        width: '25%',
+        class: 'weak',
+        text: 'Weak'
+      },
+      2: {
+        width: '50%',
+        class: 'medium',
+        text: 'Medium'
+      },
+      3: {
+        width: '75%',
+        class: 'strong',
+        text: 'Strong'
+      },
+      4: {
+        width: '100%',
+        class: 'strong',
+        text: 'Very Strong'
+      }
+    };
+
+    const {
+      width,
+      class: className,
+      text: strengthText
+    } = levels[strength];
+    meter.style.width = width;
+    meter.className = className;
+    text.textContent = strengthText;
+  };
+
+  function checkPasswordMatch() {
+    const password = document.getElementById('password').value;
+    const confirmation = document.getElementById('password_confirmation').value;
+    const matchRequirement = document.getElementById('password-match-requirement');
+    const matchIcon = document.getElementById('password-match-icon');
+
+    if (password && confirmation) {
+      const matches = password === confirmation;
+      matchRequirement?.classList.toggle('valid', matches);
+      matchIcon?.classList.toggle('hidden', !matches);
     }
+  }
 
-    deleteRoleBtns.forEach(button => {
-      button.addEventListener('click', function(event) {
-        const roleId = event.target.getAttribute('data-role-id');
-        const roleName = event.target.getAttribute('data-role-name');
-        showDeleteRoleModal(roleId, roleName);
+  function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('password-eye');
+
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            `;
+    } else {
+      passwordInput.type = 'password';
+      eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            `;
+    }
+  }
+
+  $(document).ready(function() {
+    const dashboardType = "{{ $dashboardType }}";
+    const userId = "{{ $user->id }}";
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('password_confirmation');
+
+    passwordInput?.addEventListener('input', (e) => {
+      updatePasswordStrength(e.target.value);
+      checkPasswordMatch();
+    });
+
+    confirmInput?.addEventListener('input', checkPasswordMatch);
+
+
+    $('#saveProfile').on('submit', function(e) {
+      e.preventDefault();
+
+      const form = $(this);
+      const formData = new FormData(this);
+
+      $.ajax({
+        url: '{{ route('profile.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          showSuccessNotification(response.message);
+          setTimeout(() => {
+            window.location.href = response.redirect;
+          }, 2000);
+        },
+        error: function(xhr) {
+          const response = xhr.responseJSON;
+          showFailureNotification(response);
+        }
       });
     });
   })
-
-  function showEditRoleModal(roleId, roleName) {
-    const editModalTitle = document.getElementById('editModalTitle');
-    const editRoleInput = document.getElementById('edit-role-name');
-    const saveEditButton = document.getElementById('save-edit-role-btn');
-
-    editModalTitle.textContent = 'Edit Role';
-    editRoleInput.value = roleName;
-    document.getElementById('edit-role-id').value = roleId;
-
-    saveEditButton.onclick = function() {
-      saveEditRole(roleId);
-    };
-
-    // Remove the hidden class to show the edit modal
-    document.getElementById('editRoleModal').classList.remove('hidden');
-  }
-
-  function showAddRoleModal() {
-    const addModalTitle = document.getElementById('addModalTitle');
-    const saveAddButton = document.getElementById('save-add-role-btn');
-    const dashboardType = "{{ $dashboardType }}";
-    const userId = "{{ $user->id }}";
-
-    saveAddButton.onclick = function() {
-      const roleSelect = document.getElementById('new-role');
-      saveAddRole(roleSelect.value);
-    };
-
-    // Remove the hidden class to show the add modal
-    document.getElementById('addRoleModal').classList.remove('hidden');
-    document.getElementById('addRoleModal').classList.add('flex');
-  }
-
-  function showDeleteRoleModal(roleId, roleName) {
-    const deleteModalTitle = document.getElementById('deleteModalTitle');
-    const saveDeleteButton = document.getElementById('save-delete-role-btn');
-
-    deleteModalTitle.textContent = 'Delete Role';
-
-    // Store role information on the button
-    saveDeleteButton.setAttribute('data-role-id', roleId);
-    saveDeleteButton.setAttribute('data-role-name', roleName);
-
-    // Update the button's onclick to handle deletion
-    saveDeleteButton.onclick = function() {
-      const roleId = saveDeleteButton.getAttribute('data-role-id');
-      saveDeleteRole(roleId);
-    };
-
-    // Show the modal
-    document.getElementById('deleteRoleModal').classList.remove('hidden');
-  }
-
-  // Close modal function
-  window.closeModal = function(modalId) {
-    document.getElementById(modalId).classList.add('hidden');
-  }
-
-  function saveAddRole(roleSelect) {
-    const dashboardType = "{{ $dashboardType }}";
-    const userId = "{{ $user->id }}";
-
-    if (!roleSelect) {
-      showFailureNotification('Please select a role');
-      return;
-    }
-
-    fetch(`/profile/${dashboardType}/${userId}/add-role`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        },
-        body: JSON.stringify({
-          id: userId,
-          roleId: roleSelect,
-          dashboardType: dashboardType,
-        }),
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Close the modal
-          closeModal('addRoleModal');
-          showSuccessNotification(data.message);
-
-          // Update the roles table dynamically
-          const roleTableBody = document.querySelector('#role-table tbody');
-
-          // Create a new row for the added role
-          const newRow = document.createElement('tr');
-          newRow.classList.add('border-b');
-          newRow.innerHTML = `
-                <td class="px-4 py-2 capitalize">${data.newRoleName}</td>
-                <td class="px-4 py-2">
-                    <x-button type="button" id="edit-role" data-role-id="${data.newRoleId}" data-role-name="${data.newRoleName}" label="Edit"></x-button>
-                </td>
-            `;
-
-          // Append the new row to the table
-          roleTableBody.appendChild(newRow);
-        } else {
-          showFailureNotification(data.message || 'Failed to add role');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        showFailureNotification('An error occurred while adding the role');
-      });
-  }
-
-  function removeRole(userId, roleId) {
-    console.log(`Removing role ${roleId} for user ${userId}`);
-  }
-
-  function saveEditRole(roleId) {
-    const newRole = document.getElementById('role').value;
-    const dashboardType = "{{ $dashboardType }}";
-    const userId = "{{ $user->id }}";
-
-    fetch(`/profile/${dashboardType}/${userId}/edit-role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        },
-        body: JSON.stringify({
-          roleId: roleId,
-          newRole: newRole,
-        }),
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Close the modal
-          closeModal('editRoleModal');
-          showSuccessNotification(data.message);
-
-          // Add new row to the table
-          const table = document.getElementById('role-table');
-          const newRow = table.insertRow();
-
-          // Insert cells into the row and populate with the new role data
-          const roleCell = newRow.insertCell(0);
-          const actionCell = newRow.insertCell(1);
-
-          roleCell.textContent = newRole;
-
-          // You can also add an action button (e.g., delete/edit) to this row
-          const editButton = document.createElement('button');
-          editButton.textContent = 'Edit';
-          editButton.className = 'btn btn-warning';
-          editButton.onclick = () => {
-            // Trigger the edit role modal, passing the current role data
-            openEditRoleModal(roleId, newRole);
-          };
-
-          actionCell.appendChild(editButton);
-
-          // Optional: You may also want to clear the form or reset the inputs
-          document.getElementById('role').value = '';
-        } else {
-          showFailureNotification(data.message);
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        showFailureNotification('An unexpected error occurred: ' + error.message);
-      });
-  }
-
-  function saveDeleteRole(roleId) {
-    const dashboardType = "{{ $dashboardType }}";
-    const userId = "{{ $user->id }}";
-
-    fetch(`/profile/${dashboardType}/${userId}/delete-role`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-        body: JSON.stringify({
-          id: userId,
-          roleId: roleId,
-          dashboardType: dashboardType
-        }),
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          showSuccessNotification('Role deleted successfully');
-          closeModal('deleteRoleModal');
-          location.reload();
-        } else {
-          showFailureNotification('Failed to delete role');
-        }
-      })
-      .catch(error => {
-        console.error('Error deleting role:', error);
-        showFailureNotification('Error occurred while deleting role');
-      });
-  }
 </script>

@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Venue;
+use App\Models\Promoter;
 use App\Models\BandReviews;
+use Illuminate\Support\Str;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Models\DesignerReviews;
+use App\Services\FilterService;
 use App\Models\OtherServiceList;
 use App\Helpers\SocialLinksHelper;
 use App\Models\PhotographyReviews;
@@ -76,30 +80,7 @@ class OtherServiceController extends Controller
         $serviceCounts = [];
         foreach ($otherServices as $service) {
             $serviceCounts[$service->other_service_id] = $service->total;
-
-            // Split the field containing multiple URLs into an array
-            $urls = explode(',', $service->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                // Store the platform information for each URL
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
-                ];
-            }
-
-            // Add the processed data to the venue
-            $service->platforms = $platforms;
+            $service->platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
         }
 
         return view('other', [
@@ -134,45 +115,30 @@ class OtherServiceController extends Controller
             ]);
         }
 
-        // Process contact links and map them to platforms
+
+        $overallReviews = [];
+        // Process contact links using SocialLinksHelper
         foreach ($singleServices as $singleOtherService) {
-            $urls = explode(',', $singleOtherService->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
-                ];
-            }
-
-            $singleServices->platforms = $platforms;
-        }
-
-        $overallReviews = []; // Array to store overall reviews for each venue
-
-        foreach ($singleServices as $service) {
-            $overallScore = OtherServicesReview::calculateOverallScore($service->id);
-            $overallReviews[$service->id] = $this->renderRatingIcons($overallScore);
+            $singleOtherService->platforms = SocialLinksHelper::processSocialLinks($singleOtherService->contact_link);
+            $overallScore = OtherServicesReview::calculateOverallScore($singleOtherService->id);
+            $overallReviews[$singleOtherService->id] = $this->renderRatingIcons($overallScore);
         }
 
         $firstService = $singleServices->first();
         $serviceName = $firstService->services;
 
-        return view('single-service-group', compact('singleServices', 'genres', 'overallReviews', 'serviceName'));
+        return view('single-service-group', [
+            'singleServices' => $singleServices,
+            'genres' => $genres,
+            'overallReviews' => $overallReviews,
+            'serviceName' => $serviceName,
+        ]);
     }
 
-    public function show(Request $request, $serviceName, $serviceId)
+    public function show($serviceName, $name)
     {
-        $singleService = OtherService::where('id', $serviceId)->first();
+        $formattedName = Str::title(str_replace('-', ' ', $name));
+        $singleService = OtherService::where('name', $formattedName)->first();
 
         $singleArtistData = [];
         $singlePhotographerData = [];
@@ -184,130 +150,66 @@ class OtherServiceController extends Controller
         $data = json_decode($genreList, true);
         $genres = $data['genres'];
 
-        switch ($serviceName) {
-            case 'Artist':
-                $singleArtistData = $this->getArtistData($singleService);
-                break;
-            case 'Photography':
-                $singlePhotographerData = $this->getPhotographerData($singleService);
-                break;
-            case 'Videographer':
-                $singleVideographerData = $this->getVideographerData($singleService);
-                break;
-            case 'Designer':
-                $singleDesignerData = $this->getDesignerData($singleService);
-                break;
-        }
+        $serviceData = match ($singleService->services) {
+            'Artist' => $this->getArtistData($singleService),
+            'Photography' => $this->getPhotographerData($singleService),
+            'Videography' => $this->getVideographerData($singleService),
+            'Designer' => $this->getDesignerData($singleService),
+            default => []
+        };
 
         $overallReviews = [];
         $overallScore = OtherServicesReview::calculateOverallScore($singleService->id);
         $overallReviews[$singleService->id] = $this->renderRatingIcons($overallScore);
-
         return view('single-service', [
             'singleService' => $singleService,
             'genres' => $genres,
             'overallReviews' => $overallReviews,
-            'singleArtistData' => $singleArtistData,
-            'singlePhotographerData' => $singlePhotographerData,
-            'singleVideographerData' => $singleVideographerData,
-            'singleDesignerData' => $singleDesignerData,
+            'serviceData' => $serviceData,
         ]);
     }
 
     public function filterCheckboxesSearch(Request $request, $serviceType)
     {
-        $query = OtherService::query();
+        $serviceTypeId = OtherServiceList::where('service_name', $serviceType)->first()->id;
 
-        $query->where('services', $serviceType);
-
-        // Search Results
-        $searchQuery = $request->input('search_query');
-        if ($searchQuery) {
-            $query->where(function ($query) use ($searchQuery) {
-                $query->where('postal_town', 'LIKE', "%$searchQuery%")
-                    ->orWhere('name', 'LIKE', "%$searchQuery%");
-            });
-        }
-
-        // Band Type Filter
-        if ($request->has('band_type')) {
-            $bandType = $request->input('band_type');
-            if (!empty($bandType)) {
-                $bandType = array_map('trim', $bandType);
-                $query->where(function ($query) use ($bandType) {
-                    foreach ($bandType as $type) {
-                        $query->orWhereRaw('JSON_CONTAINS(band_type, ?)', [json_encode($type)]);
-                    }
-                });
-            }
-        }
-
-        // Genre Filter
-        if ($request->has('genres')) {
-            $genres = $request->input('genres');
-            if (!empty($genres)) {
-                $genres = array_map('trim', $genres);
-                $query->where(function ($query) use ($genres) {
-                    foreach ($genres as $genre) {
-                        $query->orWhereRaw('JSON_CONTAINS(genre, ?)', [json_encode($genre)]);
-                    }
-                });
-            }
-        }
-
-        // Get the venues with pagination
-        $otherServices = $query->paginate(10);
-
-        // Process each venue
-        $transformedData = $otherServices->getCollection()->map(function ($other) {
-            // Split the field containing multiple URLs into an array
-            $urls = explode(',', $other->contact_link);
-            $platforms = [];
-
-            // Check each URL against the platforms
-            foreach ($urls as $url) {
-                // Initialize the platform as unknown
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                // Store the platform information for each URL
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
+        $filters = [
+            'service_type' => $serviceTypeId, // The column to filter by service type
+            'search_fields' => ['postal_town', 'name'], // Fields to search
+            'transform' => function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'postal_town' => $item->postal_town,
+                    'contact_number' => $item->contact_number,
+                    'contact_email' => $item->contact_email,
+                    'platforms' => explode(',', $item->contact_link),
+                    'average_rating' => \App\Models\OtherServicesReview::calculateOverallScore($item->id),
+                    'service_type' => $item->services,
                 ];
-            }
+            },
+        ];
 
-            // Use the static method to calculate the overall score
-            $overallScore = \App\Models\OtherServicesReview::calculateOverallScore($other->id);
+        $model = '';
 
-            return [
-                'id' => $other->id,
-                'name' => $other->name,
-                'postal_town' => $other->postal_town,
-                'contact_number' => $other->contact_number,
-                'contact_email' => $other->contact_email,
-                'platforms' => $platforms,
-                'average_rating' => $overallScore,
-                'service_type' => $other->services,
-            ];
-        });
+        switch ($serviceType) {
+            case 'Artist':
+                $model = OtherService::class;
+                break;
+            case 'Photography':
+                $model = OtherService::class;
+                break;
+            case 'Videography':
+                $model = OtherService::class;
+                break;
+            case 'Designer':
+                $model = OtherService::class;
+                break;
+        }
 
-        // Return the transformed data with pagination info
-        return response()->json([
-            'otherServices' => $transformedData,
-            'pagination' => [
-                'current_page' => $otherServices->currentPage(),
-                'last_page' => $otherServices->lastPage(),
-                'total' => $otherServices->total(),
-                'per_page' => $otherServices->perPage(),
-            ]
-        ]);
+        $data = FilterService::filterEntities($request, $model, $filters);
+
+        return response()->json($data);
     }
 
     /**
@@ -346,50 +248,52 @@ class OtherServiceController extends Controller
         ];
     }
 
-    private function getPhotographerData(OtherService $singleService)
+    private function getPhotographerData($service)
     {
-        $service = $singleService;
-        $serviceId = $service->id;
+        // Handle portfolio images
+        $portfolioImages = [];
+        if ($service->portfolio_images) {
+            if (is_string($service->portfolio_images)) {
+                try {
+                    $portfolioImages = json_decode($service->portfolio_images, true) ?: [];
+                } catch (\Exception $e) {
+                    \Log::error('Failed to decode portfolio images: ' . $e->getMessage());
+                }
+            } elseif (is_array($service->portfolio_images)) {
+                $portfolioImages = $service->portfolio_images;
+            }
+        }
 
-        $description = $service ? $service->description : '';
-        $packages = $service ? json_decode($service->packages) : [];
-        $portfolioImages = $service->portfolio_images;
-        $portfolioLink = $service->portfolio_link;
-        $platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
-        $service->platforms = $platforms;
-        $environmentTypes = $service ? json_decode($service->environment_type, true) : [];
-        $types = $environmentTypes ? $environmentTypes['types'] : [];
-        $settings = $environmentTypes ? $environmentTypes['settings'] : [];
-        $workingTimes = $service ? json_decode($service->working_times, true) : [];
-
-        $overallScore = OtherServicesReview::calculateOverallScore($serviceId);
-        $overallReviews[$serviceId] = $this->renderRatingIcons($overallScore);
-
-        $photographerAverageCommunicationRating = PhotographyReviews::calculateAverageScore($serviceId, 'communication_rating');
-        $photographerAverageFlexibilityRating = PhotographyReviews::calculateAverageScore($serviceId, 'flexibility_rating');
-        $photographerAverageProfessionalismRating = PhotographyReviews::calculateAverageScore($serviceId, 'professionalism_rating');
-        $photographerAveragePhotoQualityRating = PhotographyReviews::calculateAverageScore($serviceId, 'photo_quality_rating');
-        $photographerAveragePriceRating = PhotographyReviews::calculateAverageScore($serviceId, 'price_rating');
-        $reviewCount = PhotographyReviews::getReviewCount($serviceId);
+        // Handle packages
+        $packages = [];
+        if ($service->packages) {
+            try {
+                $packages = json_decode($service->packages, true) ?: [];
+            } catch (\Exception $e) {
+                \Log::error('Failed to decode packages: ' . $e->getMessage());
+            }
+        }
 
         return [
-            'description' => $description,
-            'packages' => $packages,
+            'description' => $service->description ?? '',
             'portfolioImages' => $portfolioImages,
-            'portfolioLink' => $portfolioLink,
-            'environmentTypes' => $environmentTypes,
-            'types' => $types,
-            'settings' => $settings,
-            'workingTimes' => $workingTimes,
-            'overallScore' => $overallScore,
-            'overallReviews' => $overallReviews,
-            'photographerAverageCommunicationRating' => $photographerAverageCommunicationRating,
-            'photographerAverageFlexibilityRating' => $photographerAverageFlexibilityRating,
-            'photographerAverageProfessionalismRating' => $photographerAverageProfessionalismRating,
-            'photographerAveragePhotoQualityRating' => $photographerAveragePhotoQualityRating,
-            'photographerAveragePriceRating' => $photographerAveragePriceRating,
-            'renderRatingIcons' => [$this, 'renderRatingIcons'],
-            'reviewCount' => $reviewCount,
+            'packages' => $packages,
+            'portfolioLink' => $service->portfolio_link ?? '',
+            'environmentTypes' => $service->environment_type
+                ? json_decode($service->environment_type, true)
+                : [],
+            'types' => isset($service->environment_type)
+                ? array_keys(json_decode($service->environment_type, true))
+                : [],
+            'settings' => isset($service->environment_type)
+                ? array_values(json_decode($service->environment_type, true))
+                : [],
+            'photographerAverageCommunicationRating' => OtherServicesReview::calculateAverageScore($service->id, 'communication_rating'),
+            'photographerAverageFlexibilityRating' => OtherServicesReview::calculateAverageScore($service->id, 'flexibility_rating'),
+            'photographerAverageProfessionalismRating' => OtherServicesReview::calculateAverageScore($service->id, 'professionalism_rating'),
+            'photographerAveragePhotoQualityRating' => OtherServicesReview::calculateAverageScore($service->id, 'photo_quality_rating'),
+            'photographerAveragePriceRating' => OtherServicesReview::calculateAverageScore($service->id, 'price_rating'),
+            'renderRatingIcons' => [$this, 'renderRatingIcons']
         ];
     }
 
@@ -446,13 +350,14 @@ class OtherServiceController extends Controller
         $serviceId = $service->id;
 
         $description = $service ? $service->description : '';
-        $packages = json_decode($service->packages);
         $portfolioImages = $service->portfolio_images;
         $portfolioLink = $service->portfolio_link;
         $platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
         $service->platforms = $platforms;
+        $packages = $service ? json_decode($service->packages) : [];
+        $services = collect($packages)->pluck('job_type')->unique()->values()->toArray();
 
-        $overallScore = OtherServicesReview::calculateOverallScore($serviceId);
+        $overallScore = DesignerReviews::calculateOverallScore($serviceId);
         $overallReviews[$serviceId] = $this->renderRatingIcons($overallScore);
 
         $designerAverageCommunicationRating = DesignerReviews::calculateAverageScore($serviceId, 'communication_rating');
@@ -461,8 +366,11 @@ class OtherServiceController extends Controller
         $designerAverageDesignQualityRating = DesignerReviews::calculateAverageScore($serviceId, 'design_quality_rating');
         $designerAveragePriceRating = DesignerReviews::calculateAverageScore($serviceId, 'price_rating');
         $reviewCount = DesignerReviews::getReviewCount($serviceId);
+        $recentReviews = DesignerReviews::getRecentReviews($serviceId);
 
         return [
+            'serviceType' => $service->services,
+            'serviceId' => $serviceId,
             'description' => $description,
             'packages' => $packages,
             'overallScore' => $overallScore,
@@ -473,9 +381,70 @@ class OtherServiceController extends Controller
             'designerAverageDesignQualityRating' => $designerAverageDesignQualityRating,
             'designerAveragePriceRating' => $designerAveragePriceRating,
             'renderRatingIcons' => [$this, 'renderRatingIcons'],
+            'recentReviews' => $recentReviews,
             'reviewCount' => $reviewCount,
             'portfolioImages' => $portfolioImages,
             'portfolioLink' => $portfolioLink,
+            'platforms' => $service->platforms,
+            'services' => $services,
         ];
+    }
+
+    public function submitReview(Request $request, $serviceName, $name)
+    {
+        $formattedName = Str::title(str_replace('-', ' ', $name));
+        $singleService = OtherService::where('name', $formattedName)->first();
+
+        $serviceId = $singleService->id;
+        $serviceType = $singleService->services;
+
+        $otherServicesListId = $singleService->other_service_id;
+
+        // Process rating arrays to get final values
+        $processRating = function ($ratingArray) {
+            return count($ratingArray); // Count checked boxes for final rating
+        };
+
+        switch ($serviceType) {
+            case 'Artist':
+                $bandReview = new BandReviews();
+                $bandReview->other_services_id = $serviceId;
+                $bandReview->other_services_list_id = $otherServicesListId;
+                $bandReview->music_rating = $request->music_rating;
+                $bandReview->promotion_rating = $request->promotion_rating;
+                $bandReview->gig_quality_rating = $request->gig_quality_rating;
+                $bandReview->save();
+                break;
+            case 'Photography':
+                $photographyReview = new PhotographyReviews();
+                $photographyReview->other_services_id = $serviceId;
+                $photographyReview->other_services_list_id = $otherServicesListId;
+                $photographyReview->photo_quality_rating = $request->photo_quality_rating;
+                $photographyReview->save();
+                break;
+            case 'Videography':
+                $videographyReview = new VideographyReviews();
+                $videographyReview->other_services_id = $serviceId;
+                $videographyReview->other_services_list_id = $otherServicesListId;
+                $videographyReview->video_quality_rating = $request->video_quality_rating;
+                $videographyReview->save();
+                break;
+            case 'Designer':
+                $designerReview = new DesignerReviews();
+                $designerReview->other_services_id = $serviceId;
+                $designerReview->other_services_list_id = $otherServicesListId;
+                $designerReview->reviewer_ip = $request->reviewer_ip;
+                $designerReview->communication_rating = $processRating($request->input('communication-rating', []));
+                $designerReview->flexibility_rating = $processRating($request->input('flexibility-rating', []));
+                $designerReview->professionalism_rating = $processRating($request->input('professionalism-rating', []));
+                $designerReview->design_quality_rating = $processRating($request->input('designer_quality-rating', []));
+                $designerReview->price_rating = $processRating($request->input('price-rating', []));
+                $designerReview->author = $request->review_author;
+                $designerReview->review = $request->review_message;
+                $designerReview->save();
+                break;
+        }
+
+        return response()->json(['success' => true, 'message' => 'Review submitted successfully']);
     }
 }

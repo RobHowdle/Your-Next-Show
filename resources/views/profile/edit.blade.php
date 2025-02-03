@@ -1,224 +1,293 @@
 <x-app-layout :dashboardType="$dashboardType" :modules="$modules">
-  <x-slot name="header">
-    <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-      {{ __('Profile') }}
-    </h2>
-  </x-slot>
+  <div x-data="{
+      sidebarOpen: localStorage.getItem('sidebarOpen') === 'true',
+      activeTab: 'profile',
+      settingsOpen: false,
+      publicProfileOpen: false,
+      init() {
+          this.$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))
+      }
+  }" class="from-yns_pink min-h-screen bg-gradient-to-br to-yns_purple">
+    <div class="relative h-full">
+      {{-- Grid Container --}}
+      <div class="grid transition-all duration-300"
+        :class="sidebarOpen ? 'grid-cols-[300px,1fr]' : 'grid-cols-[80px,1fr]'">
 
-  <div x-data="{ selected: 1, open: false, selectedTab: 1 }" class="grid min-h-screen grid-cols-[1fr,2fr] gap-4">
-    <div class="h-full bg-opac_8_black">
-      <div class="py-8 font-heading text-xl">
-        <p class="mb-8 px-8 font-bold">Settings</p>
-        <div class="flex flex-col items-start gap-4">
-          <button @click="selected = 1; selectedTab = 1"
-            :class="{ 'bg-gradient-button': selected === 1, 'bg-yns_dark_gray': selected !== 1 }"
-            class="group relative w-full px-8 py-2 text-left text-white transition duration-150 ease-in-out">
-            <span class="absolute inset-0 transition-opacity duration-300 ease-in-out"
-              :class="{ 'opacity-100': selected === 1, 'opacity-0': selected !== 1 }"></span>
-            <span class="relative z-10">User</span>
-          </button>
-
-          @if ($dashboardType == 'promoter')
-            @include('profile.partials.promoter-profile', [
-                'promoterData' => $promoterData,
-            ])
-          @elseif($dashboardType == 'artist')
-            @include('profile.partials.band-profile', [
-                'bandData' => $bandData,
-            ])
-          @elseif($dashboardType == 'venue')
-            @include('profile.partials.venue-profile', [
-                'venueData' => $venueData,
-            ])
-          @elseif($dashboardType == 'photographer')
-            @include('profile.partials.photographer-profile', [
-                'photographerData' => $photographerData,
-            ])
-          @elseif($dashboardType == 'standard')
-            @include('profile.partials.standard-profile', [
-                'standardUserData' => $standardUserData,
-            ])
-          @elseif($dashboardType == 'designer')
-            @include('profile.partials.designer-profile', [
-                'designerUserData' => $designerUserData,
-            ])
-            {{-- @elseif($dashboardType == 'videographer')
-          @include('profile.partials.videographer-profile', [
-              'standardUserData' => $standardUserData,
-          ]) --}}
-          @endif
-
-          @if ($dashboardType !== 'designer')
-            <button @click="selected = 10; selectedTab = 10" data-tab="calendar"
-              :class="{ 'bg-gradient-button': selected === 10, 'bg-yns_dark_gray': selected !== 10 }"
-              class="group relative w-full px-8 py-2 text-left text-white transition duration-150 ease-in-out">
-              <span class="absolute inset-0 transition-opacity duration-300 ease-in-out"
-                :class="{ 'opacity-100': selected === 10, 'opacity-0': selected !== 10 }"></span>
-              <span class="relative z-10">Calendar</span>
+        {{-- Sidebar --}}
+        <div class="relative h-screen bg-opac_8_black transition-all duration-300">
+          {{-- Navigation Header --}}
+          <div class="flex items-center justify-between px-4 py-6">
+            <p class="font-heading font-bold text-white" x-show="sidebarOpen">Navigation</p>
+            <button @click="sidebarOpen = !sidebarOpen"
+              class="bg-yns_pink rounded-full p-1.5 text-white transition-transform duration-300">
+              <i class="fa-solid" :class="sidebarOpen ? 'fa-chevron-left' : 'fa-bars'"></i>
             </button>
-          @endif
-
-          @if ($dashboardType !== 'standard')
-            <button @click="selected = 11; selectedTab =11"
-              :class="{ 'bg-gradient-button': selected === 11, 'bg-yns_dark_gray': selected !== 11 }"
-              class="group relative w-full px-8 py-2 text-left text-white transition duration-150 ease-in-out">
-              <span class="absolute inset-0 transition-opacity duration-300 ease-in-out"
-                :class="{ 'opacity-100': selected === 11, 'opacity-0': selected !== 11 }"></span>
-              <span class="relative z-10">Settings</span>
-            </button>
-          @endif
-
-          <button @click="selected = 12; selectedTab =12"
-            :class="{ 'bg-gradient-button': selected === 12, 'bg-yns_dark_gray': selected !== 12 }"
-            class="group relative w-full px-8 py-2 text-left text-white transition duration-150 ease-in-out">
-            <span class="absolute inset-0 transition-opacity duration-300 ease-in-out"
-              :class="{ 'opacity-100': selected === 12, 'opacity-0': selected !== 12 }"></span>
-            <span class="relative z-10">Communication</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="mx-4 my-4 h-auto self-center font-heading">
-      <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-        <div x-show="selectedTab === 1" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
-          <div class="max-w-xl">
-            <p class="text-xl font-bold">User Settings</p>
-            @include('profile.partials.edit-user-details', [
-                'userRole' => $userRole,
-                'firstName' => $firstName,
-                'lastName' => $lastName,
-                'email' => $email,
-                'location' => $location,
-                'latitude' => $latitude,
-                'longitude' => $longitude,
-            ])
           </div>
-        </div>
-        @if ($dashboardType == 'promoter')
-          @include('profile.partials.promoter-profile-tabs', [
-              'promoterData' => $promoterData,
-          ])
-        @elseif($dashboardType == 'artist')
-          @include('profile.partials.band-profile-tabs', [
-              'bandData' => $bandData,
-          ])
-        @elseif($dashboardType == 'venue')
-          @include('profile.partials.venue-profile-tabs', [
-              'venueData' => $venueData,
-          ])
-        @elseif($dashboardType == 'photographer')
-          @include('profile.partials.photographer-profile-tabs', [
-              'photographerData' => $photographerData,
-          ])
-        @elseif($dashboardType == 'standard')
-          @include('profile.partials.standard-profile-tabs', [
-              'standardUserData' => $standardUserData,
-          ])
-        @elseif($dashboardType == 'designer')
-          @include('profile.partials.designer-profile-tabs', [
-              'designerUserData' => $designerUserData,
-          ])
-          {{-- @elseif($dashboardType == 'videographer')
-          @include('profile.partials.videographer-profile-tabs', [
-              'standardUserData' => $standardUserData,
-          ]) --}}
-        @endif
 
-        @if ($dashboardType !== 'designer')
-          <div x-show="selectedTab === 10" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
-            <div class="w-full">
-              <div class="flex items-center justify-center">
-                <div class="group">
-                  @if (Auth::user()->google_access_token)
-                    <form action="{{ route('google.unlink') }}" method="POST">
-                      @csrf
-                      <x-button type="submit" label="Unlink Google Calendar"></x-button>
-                    </form>
-                  @else
-                    <a href="{{ route('google.redirect') }}" class="btn btn-primary">Link Google Calendar</a>
-                  @endif
+          {{-- Navigation Items --}}
+          <div class="mt-4 flex flex-col gap-2">
+            {{-- Profile --}}
+            <button @click="activeTab = 'profile'" class="group flex items-center px-8 py-2 text-white transition"
+              :class="activeTab === 'profile' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+              <i class="fa-solid fa-user h-5 w-5"></i>
+              <span x-show="sidebarOpen" class="ml-3 transition-opacity duration-300">Profile</span>
+            </button>
+
+            {{-- Public Profiles --}}
+            <div>
+              <button @click="publicProfileOpen = !publicProfileOpen"
+                class="hover:text-yns_pink flex w-full items-center justify-between px-8 py-2 text-white transition">
+                <div class="flex items-center">
+                  <i class="fa-solid fa-circle-user h-5 w-5"></i>
+                  <span x-show="sidebarOpen" class="ml-3">Public Profile</span>
                 </div>
-                <div class="group">
-                  <form action="{{ route('google.sync') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-success">Manual Google Sync</button>
-                  </form>
-                </div>
-                {{-- <div class="group">
-                <button id="sync-all-events-apple"
-                  class="rounded bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600"
-                  title="Sync All Events to Apple Calendar">
-                  Sync All Events to Apple Calendar
-                </button>
-              </div> --}}
+                <i x-show="sidebarOpen" class="fa-solid fa-chevron-down transition-transform duration-300"
+                  :class="{ 'rotate-180': publicProfileOpen }"></i>
+              </button>
+
+              <div x-show="publicProfileOpen && sidebarOpen" class="space-y-1 pl-12">
+                {{-- Role Specific Navigation --}}
+                @if ($dashboardType == 'promoter')
+                  @include('profile.partials.promoter-profile', [
+                      'promoterData' => $promoterData,
+                  ])
+                @elseif($dashboardType == 'artist')
+                  @include('profile.partials.band-profile', [
+                      'bandData' => $bandData,
+                  ])
+                @elseif($dashboardType == 'venue')
+                  @include('profile.partials.venue-profile', [
+                      'venueData' => $venueData,
+                  ])
+                @elseif($dashboardType == 'photographer')
+                  @include('profile.partials.photographer-profile', [
+                      'photographerData' => $photographerData ?? [],
+                  ])
+                @elseif($dashboardType == 'standard')
+                  @include('profile.partials.standard-profile', [
+                      'standardUserData' => $standardUserData,
+                  ])
+                @elseif($dashboardType == 'designer')
+                  @include('profile.partials.designer-profile', [
+                      'designerData' => $designerData,
+                  ])
+                @elseif($dashboardType == 'videographer')
+                  @include('profile.partials.videographer-profile', [
+                      'standardUserData' => $standardUserData,
+                  ])
+                @endif
               </div>
-              <div id="calendar" data-user-id="{{ Auth::check() ? Auth::user()->id : '' }}"
-                data-dashboard-type="{{ $dashboardType }}"></div>
             </div>
-          </div>
-        @endif
-        <div x-show="selectedTab === 11" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
-          <div class="w-full">
-            <div class="group">
-              @include('profile.partials.settings', [
-                  'modules' => $modules,
-              ])
+
+            {{-- Settings --}}
+            <div>
+              <button @click="settingsOpen = !settingsOpen"
+                class="hover:text-yns_pink flex w-full items-center justify-between px-8 py-2 text-white transition">
+                <div class="flex items-center">
+                  <i class="fa-solid fa-gear h-5 w-5"></i>
+                  <span x-show="sidebarOpen" class="ml-3">Settings</span>
+                </div>
+                <i x-show="sidebarOpen" class="fa-solid fa-chevron-down transition-transform duration-300"
+                  :class="{ 'rotate-180': settingsOpen }"></i>
+              </button>
+
+              <div x-show="settingsOpen && sidebarOpen" class="space-y-1 pl-12">
+                <button @click="activeTab = 'modules'" class="hover:text-yns_pink block py-2 text-white transition"
+                  :class="activeTab === 'modules' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+                  <i class="fa-solid fa-layer-group h-5 w-5"></i>
+                  <span x-show="settingsOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Modules</span>
+                </button>
+                <button @click="activeTab = 'api'" class="hover:text-yns_pink block py-2 text-white transition"
+                  :class="activeTab === 'api' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+                  <i class="fa-solid fa-key h-5 w-5"></i>
+                  <span x-show="settingsOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">API
+                    Keys</span>
+                </button>
+              </div>
             </div>
+
+            {{-- Communications --}}
+            <button @click="activeTab = 'communications'"
+              class="hover:text-yns_pink group flex items-center px-8 py-2 text-white transition"
+              :class="activeTab === 'communications' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+              <i class="fa-solid fa-comments h-5 w-5"></i>
+              <span x-show="sidebarOpen" class="ml-3 transition-opacity duration-300">Communications</span>
+            </button>
           </div>
         </div>
-        <div x-show="selectedTab === 12" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
-          <div class="w-full">
-            <div class="group">
-              @include('profile.partials.communication-settings', [
-                  'communications' => $communications,
+
+        {{-- Content Area --}}
+        <div class="p-8">
+          <div class="mx-auto max-w-7xl space-y-6 rounded-lg bg-opac_8_black p-4 shadow sm:p-8">
+            <div x-show="activeTab === 'profile'">
+              @include('profile.partials.edit-user-details')
+            </div>
+            <div x-show="activeTab === 'basicInfo'">
+              @include('profile.basic-information-form', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
               ])
+            </div>
+            <div x-show="activeTab === 'description'">
+              @include('profile.about', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'genresAndTypes'">
+              @include('profile.genres-and-types', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            @if ($dashboardType === 'venue')
+              <div x-show="activeTab === 'capacity'">
+                @include('profile.venue.capacity', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if ($dashboardType === 'venue')
+              <div x-show="activeTab === 'inHouseGear'">
+                @include('profile.venue.in-house-gear', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if ($dashboardType === 'artist')
+              <div x-show="activeTab === 'streamLinks'">
+                @include('profile.artist.stream-links', [
+                    'profileData' => match ($dashboardType) {
+                        'artist' => $bandData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if ($dashboardType === 'artist')
+              <div x-show="activeTab === 'members'">
+                @include('profile.artist.members', [
+                    'profileData' => match ($dashboardType) {
+                        'artist' => $bandData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            <div x-show="activeTab === 'myEvents'">
+              @include('profile.events', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'myBands'">
+              @include('profile.artists', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            <div x-show="activeTab === 'designAndHours'">
+              @include('profile.designer.styles-and-times', [
+                  'profileData' => match ($dashboardType) {
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+            @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
+              <div x-show="activeTab === 'portfolio'">
+                @include('profile.portfolio', [
+                    'dashboardType' => $dashboardType,
+                    'waterMarkedPortfolioImages' => $profileData['waterMarkedPortfolioImages'] ?? [],
+                    'profileData' => match ($dashboardType) {
+                        'designer' => $designerData,
+                        'photographer' => $photographerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
+              <div x-show="activeTab === 'packages'">
+                @include('profile.packages', [
+                    'profileData' => match ($dashboardType) {
+                        'designer' => $designerData,
+                        'photographer' => $photographerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            @if ($dashboardType === 'venue')
+              <div x-show="activeTab === 'additionalInfo'">
+                @include('profile.venue.additional-info', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+            <div x-show="activeTab === 'modules'">
+              @include('profile.settings.modules', [
+                  'modules' => $modules,
+                  'dashboardType' => $dashboardType,
+                  'userId' => $user->id,
+              ])
+            </div>
+            <div x-show="activeTab === 'api'">
+              @include('profile.settings.api-keys')
+            </div>
+            <div x-show="activeTab === 'communications'">
+              @include('profile.partials.communication-settings')
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 </x-app-layout>
-
-<style>
-  [x-cloak] {
-    display: none;
-  }
-</style>
-<script>
-  document.getElementById('sync-all-events-apple').addEventListener('click', function() {
-    var calendarEl = document.getElementById("calendar");
-    var userId = calendarEl.getAttribute("data-user-id");
-    const url = `/profile/events/${userId}/apple/sync`; // Define your route for syncing
-
-    // Show loading state if needed
-    this.textContent = 'Syncing...';
-
-    // Make an AJAX request to trigger the download
-    fetch(url)
-      .then(response => {
-        if (response.ok) {
-          return response.blob(); // Return blob data for the .ics file
-        }
-        throw new Error('Network response was not ok.');
-      })
-      .then(blob => {
-        // Create a link element to download the file
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'events.ics'; // Set a name for the file
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-
-        // Reset button text
-        this.textContent = 'Sync All Events to Apple Calendar';
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to sync events. Please try again.');
-        this.textContent = 'Sync All Events to Apple Calendar';
-      });
-  });
-</script>

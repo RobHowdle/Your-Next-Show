@@ -14,6 +14,27 @@ class StoreUpdateFinanceRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'desired_profit' => $this->desired_profit ?? 0,
+            'income_presale' => $this->income_presale ?? 0,
+            'income_otd' => $this->income_otd ?? 0,
+            'income_other' => $this->income_other ?? [],
+            'income_label' => $this->income_label ?? [],
+            'outgoing_venue' => $this->outgoing_venue ?? 0,
+            'outgoing_band' => $this->outgoing_band ?? 0,
+            'outgoing_promotion' => $this->outgoing_promotion ?? 0,
+            'outgoing_rider' => $this->outgoing_rider ?? 0,
+            'outgoing_other' => $this->outgoing_other ?? [],
+            'outgoing_label' => $this->outgoing_label ?? [],
+            'income_total' => $this->income_total ?? 0,
+            'outgoing_total' => $this->outgoing_total ?? 0,
+            'profit_total' => $this->profit_total ?? 0,
+            'desired_profit_remaining' => $this->desired_profit_remaining ?? 0,
+        ]);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -26,17 +47,21 @@ class StoreUpdateFinanceRequest extends FormRequest
             'budget_name' => 'required|string',
             'date_from' => 'required|date',
             'date_to' => 'required|date',
-            'link_to_event' => 'nullable|url',
-            'income_presale' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'income_otd' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'income_other' => 'array|nullable',
+            'external_link' => 'nullable|url',
+            'income_presale' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'income_otd' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'income_other' => 'nullable|array',
             'income_other.*' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'outgoing_venue' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'outgoing_band' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'outgoing_promotion' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'outgoing_rider' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'outgoing_other' => 'array|nullable',
+            'income_label' => 'nullable|array',
+            'income_label.*' => 'nullable|string|max:255',
+            'outgoing_venue' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'outgoing_band' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'outgoing_promotion' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'outgoing_rider' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'outgoing_other' => 'nullable|array',
             'outgoing_other.*' => 'nullable|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'outgoing_label' => 'nullable|array',
+            'outgoing_label.*' => 'nullable|string|max:255',
             'income_total' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
             'outgoing_total' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
             'profit_total' => 'required|numeric',

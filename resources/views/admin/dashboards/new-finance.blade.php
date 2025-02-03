@@ -13,32 +13,33 @@
             <div class="mb-4 grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="group">
                 <x-input-label-dark>Desired Profit</x-input-label-dark>
-                <x-number-input-pound id="desired_profit" name="desired_profit"></x-number-input-pound>
+                <x-number-input-pound id="desired_profit" name="desired_profit"
+                  :value="old('desired_profit')"></x-number-input-pound>
                 @error('desired_profit')
+                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                @enderror
+              </div>
+
+              <div class="group">
+                <x-input-label-dark :required="true">Budget Name</x-input-label-dark>
+                <x-text-input id="budget_name" name="budget_name" :required="true" :value="old('budget_name')"></x-text-input>
+                @error('budget_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
             </div>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="group">
-                <x-input-label-dark>Budget Name</x-input-label-dark>
-                <x-text-input id="budget_name" name="budget_name"></x-text-input>
-                @error('budget_name')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group">
-                <x-input-label-dark>Date From</x-input-label-dark>
-                <x-date-input id="date_from" name="date_from"></x-date-input>
+                <x-input-label-dark :required="true">Date From</x-input-label-dark>
+                <x-date-input id="date_from" name="date_from" :required="true" :value="old('date_from')"></x-date-input>
                 @error('date_from')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
               <div class="group">
-                <x-input-label-dark>Date To</x-input-label-dark>
-                <x-date-input id="date_to" name="date_to"></x-date-input>
+                <x-input-label-dark :required="true">Date To</x-input-label-dark>
+                <x-date-input id="date_to" name="date_to" :required="true" :value="old('date_to')"></x-date-input>
                 @error('date_to')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -46,8 +47,8 @@
 
               <div class="group">
                 <x-input-label-dark>Link To Event</x-input-label-dark>
-                <x-text-input id="link_to_event" name="link_to_event"></x-text-input>
-                @error('link_to_event')
+                <x-text-input id="external_link" name="external_link" :value="old('external_link')"></x-text-input>
+                @error('external_link')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
@@ -57,7 +58,8 @@
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="income group">
                 <x-input-label-dark>Presale Tickets</x-input-label-dark>
-                <x-number-input-pound id="income_presale" name="income_presale"></x-number-input-pound>
+                <x-number-input-pound id="income_presale" name="income_presale"
+                  :value="old('income_presale')"></x-number-input-pound>
                 @error('income_presale')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -65,7 +67,7 @@
 
               <div class="income group">
                 <x-input-label-dark>On The Door Tickets</x-input-label-dark>
-                <x-number-input-pound id="income_otd" name="income_otd"></x-number-input-pound>
+                <x-number-input-pound id="income_otd" name="income_otd" :value="old('income_otd')"></x-number-input-pound>
                 @error('income_otd')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -73,22 +75,24 @@
             </div>
 
             <button id="add-income-row"
-              class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Add
-              Row <span class="fas fa-plus"></span></button>
+              class="mt-8 rounded-lg border border-green-500 bg-green-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-green-700 hover:bg-green-700">
+              <span class="fas fa-plus-circle mr-2"></span>Add Income
+            </button>
 
             <p class="my-4 text-xl font-bold">Outgoings</p>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="outgoing group">
                 <x-input-label-dark>Venue</x-input-label-dark>
-                <x-number-input-pound id="outgoing_venue" name="outgoing_venue"></x-number-input-pound>
+                <x-number-input-pound id="outgoing_venue" name="outgoing_venue"
+                  :value="old('outgoing_venue')"></x-number-input-pound>
                 @error('outgoing_venue')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
               <div class="outgoing group">
-                <x-input-label-dark>Band (s)</x-input-label-dark>
-                <x-number-input-pound id="outgoing_band" name="outgoing_band"></x-number-input-pound>
+                <x-input-label-dark>Artist(s)</x-input-label-dark>
+                <x-number-input-pound id="outgoing_band" name="outgoing_band" :value="old('outgoing_band')"></x-number-input-pound>
                 @error('outgoing_band')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -96,7 +100,8 @@
 
               <div class="outgoing group">
                 <x-input-label-dark>Promotion</x-input-label-dark>
-                <x-number-input-pound id="outgoing_promotion" name="outgoing_promotion"></x-number-input-pound>
+                <x-number-input-pound id="outgoing_promotion" name="outgoing_promotion"
+                  :value="old('outgoing_promotion')"></x-number-input-pound>
                 @error('outgoing_promotion')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -104,7 +109,8 @@
 
               <div class="outgoing group">
                 <x-input-label-dark>Rider</x-input-label-dark>
-                <x-number-input-pound id="outgoing_rider" name="outgoing_rider"></x-number-input-pound>
+                <x-number-input-pound id="outgoing_rider" name="outgoing_rider"
+                  :value="old('outgoing_rider')"></x-number-input-pound>
                 @error('outgoing_rider')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -112,9 +118,9 @@
             </div>
 
             <button id="add-outgoing-row"
-              class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Add
-              Row
-              <span class="fas fa-plus"></span></button>
+              class="mt-8 rounded-lg border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
+              <span class="fas fa-minus-circle mr-2"></span>Add Outgoing
+            </button>
             <div class="group mt-4">
               <x-button type="submit" label="Save"></x-button>
             </div>
@@ -149,9 +155,21 @@
   </div>
 </x-app-layout>
 
-
 <script>
   jQuery(document).ready(function() {
+    // Initialize date pickers
+    flatpickr('#date_from', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      dateFormat: "d-m-Y",
+    });
+
+    flatpickr('#date_to', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      dateFormat: "d-m-Y",
+    });
+
     let desiredProfit, incomePresale, incomeOtd, incomeOther = 0,
       outgoingVenue, outgoingBand, outgoingPromotion,
       outgoingRider, outgoingOther = 0,
@@ -160,13 +178,14 @@
       profitTotal = 0;
     const dashboardType = "{{ $dashboardType }}";
 
+    calculateTotals();
 
     function calculateTotals() {
       desiredProfit = parseFloat(jQuery('#desired_profit').val()) || 0;
       incomePresale = parseFloat(jQuery('#income_presale').val()) || 0;
       incomeOtd = parseFloat(jQuery('#income_otd').val()) || 0;
       incomeOther = Array.from(jQuery('.income_other')).reduce((sum, input) => sum + (parseFloat(jQuery(input)
-        .val()) || 0),
+          .val()) || 0),
         0);
       outgoingVenue = parseFloat(jQuery('#outgoing_venue').val()) || 0;
       outgoingBand = parseFloat(jQuery('#outgoing_band').val()) || 0;
@@ -217,25 +236,36 @@
       jQuery('#finances-form').data('numericValue', numericValue);
     }
 
-    // Recalculate on input changes
-    jQuery('#finances-form').on('input', 'input', function() {
+    jQuery(document).ready(function() {
+      const dashboardType = "{{ $dashboardType }}";
       calculateTotals();
+
+      // Watch for changes
+      jQuery('#finances-form').on('input', function() {
+        calculateTotals();
+      });
     });
 
     // Add income row functionality
     document.getElementById('add-income-row').addEventListener('click', function(event) {
       event.preventDefault();
       const newRow = document.createElement('div');
-      newRow.classList.add('grid', 'grid-cols-2', 'gap-x-8', 'gap-y-4', 'items-end');
+      newRow.classList.add('grid', 'grid-cols-3', 'gap-x-8', 'gap-y-4', 'items-end');
       newRow.innerHTML = `
         <div class="income group mt-4">
-            <x-input-label-dark>Other Income</x-input-label-dark>
-            <x-number-input-pound class="income_other" name="income_other"></x-number-input-pound>
+            <x-input-label-dark>Label</x-input-label-dark>
+            <x-text-input class="income_label" name="income_label[]" placeholder="e.g. Donation"></x-text-input>
         </div>
-        <button class="remove-other-income-row rounded-lg h-10 bg-yns_dark_orange px-4 py-2 font-heading text-black border border-yns_dark_orange hover:text-white hover:border-white transition duration-150 ease-in-out">Remove <span class="fas fa-minus"></span></button>
-      `;
+        <div class="income group mt-4">
+            <x-input-label-dark>Amount</x-input-label-dark>
+            <x-number-input-pound class="income_other" name="income_other[]"></x-number-input-pound>
+        </div>
+        <button class="remove-row remove-income-row h-10 rounded-lg border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
+            <span class="fas fa-trash mr-2"></span>Remove
+        </button>
+    `;
       this.parentNode.insertBefore(newRow, this);
-      newRow.querySelector('.remove-other-income-row').addEventListener('click', function() {
+      newRow.querySelector('.remove-row').addEventListener('click', function() {
         newRow.remove();
         calculateTotals();
       });
@@ -245,16 +275,22 @@
     document.getElementById('add-outgoing-row').addEventListener('click', function(event) {
       event.preventDefault();
       const newRow = document.createElement('div');
-      newRow.classList.add('grid', 'grid-cols-2', 'gap-x-8', 'gap-y-4', 'items-end');
+      newRow.classList.add('grid', 'grid-cols-3', 'gap-x-8', 'gap-y-4', 'items-end');
       newRow.innerHTML = `
-          <div class="outgoing group mt-4">
-              <x-input-label-dark>Other Outgoing</x-input-label-dark>
-              <x-number-input-pound class="outgoing_other" name="outgoing_other"></x-number-input-pound>
-          </div>
-          <button class="remove-other-outgoing-row rounded-lg h-10 bg-yns_dark_orange px-4 py-2 font-heading text-black border border-yns_dark_orange hover:text-white hover:border-white transition duration-150 ease-in-out">Remove <span class="fas fa-minus"></span></button>
-      `;
+        <div class="outgoing group mt-4">
+            <x-input-label-dark>Label</x-input-label-dark>
+            <x-text-input class="outgoing_label" name="outgoing_label[]" placeholder="e.g. Security"></x-text-input>
+        </div>
+        <div class="outgoing group mt-4">
+            <x-input-label-dark>Amount</x-input-label-dark>
+            <x-number-input-pound class="outgoing_other" name="outgoing_other[]"></x-number-input-pound>
+        </div>
+        <button class="remove-row h-10 rounded-lg remove-outgoing-row border border-red-500 bg-red-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-red-700 hover:bg-red-700">
+            <span class="fas fa-trash mr-2"></span>Remove
+        </button>
+    `;
       this.parentNode.insertBefore(newRow, this);
-      newRow.querySelector('.remove-other-outgoing-row').addEventListener('click', function() {
+      newRow.querySelector('.remove-row').addEventListener('click', function() {
         newRow.remove();
         calculateTotals();
       });
@@ -315,10 +351,19 @@
             }
           }
         },
-        error: function(jqXHR, textStatus, errorThrown) {
-          console.error('Error:', textStatus, errorThrown);
-          const response = jqXHR.responseJSON;
-          showFailureNotification(response.message || 'An error occurred, please try again later.');
+        error: function(response) {
+          showFailureNotification(response.responseJSON.message);
+          // Clear existing error messages
+          $('.error-message').remove();
+
+          // Show individual field errors
+          const errors = response.responseJSON.errors;
+          Object.keys(errors).forEach(field => {
+            const errorMessage = errors[field][0];
+            $(`#${field}`).after(`
+                    <p class="error-message text-yns_red mt-1 text-sm">${errorMessage}</p>
+                `);
+          });
         }
       });
     });

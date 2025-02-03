@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\TrackChanges;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Event extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    use TrackChanges;
 
     protected $table = 'events';
 
@@ -48,7 +50,7 @@ class Event extends Model
 
     public function promoters()
     {
-        return $this->belongsToMany(Promoter::class);
+        return $this->belongsToMany(Promoter::class, 'event_promoter');
     }
 
     public function bands()

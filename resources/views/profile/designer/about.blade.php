@@ -3,14 +3,15 @@
     {{ __('About You') }}
   </h2>
 </header>
-<form method="POST" action="{{ route('band.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}">
+<form method="POST" action="{{ route('designer.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}">
   @csrf
   @method('PUT')
   <div class="group mb-6">
-    <x-input-label-dark for="about">Tell us about you... Where you started, why you started, what you do
-      etc</x-input-label-dark>
-    <x-textarea-input class="summernote" id="about" name="about"></x-textarea-input>
-    @error('about')
+    <x-input-label-dark for="about">Where you started, why you started, what you do etc</x-input-label-dark>
+    <x-textarea-input id="description" name="description">{{ old('description', $description ?? '') }}</x-textarea-input>
+
+    {{-- <x-textarea-input class="summernote" id="about" name="about"></x-textarea-input> --}}
+    @error('description')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror
   </div>
@@ -25,8 +26,8 @@
   </div>
 </form>
 <script>
-  var aboutContent = @json(old('about', $about));
+  var aboutContent = @json(old('description', $description));
   jQuery(document).ready(function() {
-    initialiseSummernote("#about", aboutContent);
+    initialiseSummernote("#description", aboutContent);
   });
 </script>

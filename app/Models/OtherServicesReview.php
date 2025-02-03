@@ -67,6 +67,8 @@ class OtherServicesReview extends Model
         $totalROP = 0;
         $totalPromotion = 0;
         $totalQuality = 0;
+        $totalFlexibility = 0;
+        $totalProfe
         $totalReviews = $reviews->count();
 
         foreach ($reviews as $review) {

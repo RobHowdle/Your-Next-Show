@@ -17,18 +17,59 @@ class DocumentController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
-        $user = Auth::user()->load('roles');
+        $user = Auth::user()->load(['roles', 'otherService']);
         $role = $user->roles->first()->name;
-        $service = $user->otherService(ucfirst($role))->first();
-        $dashboardType = lcfirst($service->services);
 
-        if ($service) {
-            $documents = Document::where('serviceable_id', $service->id)
-                ->where('serviceable_type', get_class($service))
+        // Determine the service based on the user's role
+        if (in_array($role, ["artist", "photographer", "videographer", "designer"])) {
+            $service = $user->otherService(ucfirst($role))->first();
+            if (is_null($service)) {
+                return view('admin.dashboards.show-documents', [
+                    'user' => $user,
+                    'userId' => $this->getUserId(),
+                    'dashboardType' => $dashboardType,
+                    'modules' => $modules,
+                    'documents' => collect(),
+                    'message' => "No documents found for this {$role}.",
+                ]);
+            }
+
+            $documents = Document::where('serviceable_type', 'App\Models\OtherService')
+                ->where('serviceable_id', $service->id)
+                ->orderBy('created_at', 'desc')
                 ->get();
+        } elseif ($role === "promoter") {
+            $service = $user->promoters()->first();
+            if ($service) {
+                $documents = Document::where('serviceable_type', 'App\Models\Promoter')
+                    ->where('serviceable_id', $service->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+        } elseif ($role === "venue") {
+            $service = $user->venues()->first();
+            if ($service) {
+                $documents = Document::where('serviceable_type', 'App\Models\Venue')
+                    ->where('serviceable_id', $service->id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
         } else {
+            $service = null;
             $documents = collect();
         }
+
+        if (is_null($service)) {
+            return view('admin.dashboards.show-documents', [
+                'user' => $user,
+                'userId' => $this->getUserId(),
+                'dashboardType' => $dashboardType,
+                'modules' => $modules,
+                'documents' => collect(),
+                'message' => 'No documents available for your role.',
+            ]);
+        }
+
 
         return view('admin.dashboards.show-documents', [
             'userId' => $this->getUserId(),
@@ -46,43 +87,99 @@ class DocumentController extends Controller
      */
     public function show($dashboardType, $id)
     {
+        $modules = collect(session('modules', []));
         $user = Auth::user();
         $serviceable = $user->otherService()->first();
         $dashboardType = lcfirst($serviceable->services);
         $document = Document::findOrFail($id);
 
-        $userId = auth()->user()->id;
-
         return view('admin.dashboards.show-document', [
-            'userId' => $userId,
+            'userId' => $user->id,
             'document' => $document,
             'dashboardType' => $dashboardType,
+            'modules' => $modules,
         ]);
     }
 
     public function create($dashboardType)
     {
-        $userId = Auth::id();
-        $user = Auth::user();
-        $serviceable = $user->otherService()->first();
-        $serviceableId = $serviceable->id;
-        $services = $serviceable->services;
-        $dashboardType = lcfirst($service->services);
-        $serviceableType = 'App\Models\OtherService';
-        return view('admin.dashboards.create', [
-            'userId' => $userId,
-            'serviceableId' => $serviceableId,
-            'services' => $services,
-            'serviceableType' => $serviceableType,
+        $modules = collect(session('modules', []));
+        $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
+        $role = $user->roles->first()->name;
+
+        $serviceableId = null;
+        $serviceableType = null;
+        $service = null;
+
+        $tags = config("document_tags.$dashboardType", []);
+
+        switch (true) {
+            case in_array($dashboardType, ['designer', 'photographer', 'artist', 'videographer']):
+                $serviceableType = 'App\Models\OtherService';
+                $service = $user->otherService(ucfirst($dashboardType))->first();
+                $serviceableId = $service->id;
+                break;
+            case $dashboardType === 'venue':
+                $serviceableType = 'App\Models\Venue';
+                $service = $user->venues()->first();
+                $serviceableId = $service->id;
+                break;
+            case $dashboardType === 'promoter':
+                $serviceableType = 'App\Models\Promoter';
+                $service = $user->promoters()->first();
+                $serviceableId = $service->id;
+                break;
+            default:
+                $serviceableType = null;
+                $service = null;
+                $serviceableId = null;
+        }
+
+        return view('admin.dashboards.new-document', [
+            'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
+            'modules' => $modules,
+            'serviceableType'  => $serviceableType,
+            'serviceableId' => $serviceableId,
+            'service' => $service,
+            'tags' => $tags,
         ]);
     }
 
     public function storeDocument($dashboardType, Request $request)
     {
+        // dd($request->all());
         $user = Auth::user();
-        $serviceable = $user->otherService()->first();
-        $dashboardType = lcfirst($serviceable->services);
+
+        switch ($dashboardType) {
+            case 'designer':
+                $serviceableType = 'App\Models\OtherService';
+                $service = $user->otherService('Designer')->first();
+                break;
+            case 'photographer':
+                $serviceableType = 'App\Models\OtherService';
+                $service = $user->otherService('Photographer')->first();
+                break;
+            case 'artist':
+                $serviceableType = 'App\Models\OtherService';
+                $service = $user->otherService('Artist')->first();
+                break;
+            case 'videographer':
+                $serviceableType = 'App\Models\OtherService';
+                $service = $user->otherService('Videographer')->first();
+                break;
+            case 'venue':
+                $serviceableType = 'App\Models\Venue';
+                $service = $user->venues()->first();
+                break;
+            case 'promoter':
+                $serviceableType = 'App\Models\Promoter';
+                $service = $user->promoters()->first();
+                break;
+            default:
+                $serviceableType = null;
+                $service = null;
+        }
 
         // Validate request data
         $request->validate([
@@ -94,14 +191,9 @@ class DocumentController extends Controller
 
         // Get uploaded files from the session
         $uploadedFiles = Session::get('uploaded_files', []);
-        $user->load('roles');
-        $role = $user->roles->first()->name;
-        $service = $user->otherService(ucfirst($role))->first();
 
         if ($service) {
             $serviceableId = $service->id;
-            $serviceableType = get_class($service);
-            $serviceType = $service->otherServiceList()->first()->service_name;
 
             // Flatten and remove duplicates from tags
             $tags = [];
@@ -123,7 +215,7 @@ class DocumentController extends Controller
                 $document = new Document();
                 $document->user_id = $user->id;
                 $document->serviceable_type = $serviceableType;
-                $document->service = $serviceType;
+                $document->service = $service->services;
                 $document->serviceable_id = $serviceableId;
                 $document->title = $request->title;
                 $document->description = $request->description;
@@ -144,8 +236,6 @@ class DocumentController extends Controller
             'redirect_url' => route('admin.dashboard.document.show', ['dashboardType' => $dashboardType, 'id' => $document->id])
         ]);
     }
-
-
 
     public function fileUpload(Request $request)
     {
@@ -220,8 +310,6 @@ class DocumentController extends Controller
 
         return redirect()->route('admin.dashboard.document.show', ['dashboardType' => $dashboardType, 'id' => $document->id])->with('success', 'Document updated successfully!');
     }
-
-
 
     public function download($id)
     {

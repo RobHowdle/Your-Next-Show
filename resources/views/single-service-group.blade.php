@@ -9,7 +9,7 @@
       <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
         <th scope="row"
           class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="{{ route('singleService', ['serviceName' => $service->services, 'serviceId' => $service->id]) }}"
+          <a href="{{ route('singleService', ['serviceType' => lcfirst($service->services), 'name' => Str::slug($service->name)]) }}"
             class="transition duration-150 ease-in-out hover:text-yns_yellow">{{ $service->name }}</a>
         </th>
         <td
@@ -35,6 +35,10 @@
     @endforelse
   </x-other-service-table>
 </x-guest-layout>
+@stack('scripts')
+<script
+  src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initialize"
+  async defer></script>
 <script>
   // Search Bar
   function initialize() {
@@ -187,26 +191,32 @@
     // Collect selected subgenres
     $('.subgenre-checkbox:checked').each(function() {
       selectedSubgenres.push($(this).val());
+      console.log(selectedSubgenres);
     });
 
     // Combine genres and subgenres
-    var mergedGenres = [...selectedGenres, ...selectedSubgenres];
     var serviceType = '{{ $serviceName }}';
+
+    $('.search').on('change', function() {
+      console.log(serviceType);;
+    });
 
     // Send AJAX request to fetch filtered data
     $.ajax({
-      url: `/other/${serviceType}/filter`,
+      url: `/services/${serviceType}/filter`,
       method: 'POST',
       data: {
         _token: $('meta[name="csrf-token"]').attr('content'),
         search_query: searchQuery,
         band_type: bandTypeValue,
-        genres: mergedGenres,
+        genres: selectedGenres,
+        subgenres: selectedSubgenres,
         serviceType: serviceType,
       },
       success: function(data) {
+        console.log(Array.isArray(data.results));
         // Extract venues array and pass it to the function
-        if (data.otherServices && Array.isArray(data.otherServices)) {
+        if (data.results && Array.isArray(data.results)) {
           updateTable(data);
         } else {
           console.error("The 'otherServices' field is not an array or is missing:", data.otherServices);
@@ -218,63 +228,102 @@
     });
   }
 
-  function updateResultsTable(filteredOtherServices) {
+  // Update search input handler
+  $('#address-input').on('input', function() {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      applyFilters();
+    }, 300);
+  });
+
+  function updateResultsTable(filteredOtherServices, pagination) {
     if (!Array.isArray(filteredOtherServices)) {
       console.error("filteredOtherServices is not an array:", filteredOtherServices);
       return;
     }
 
-    // Generate HTML for the filtered venues
     var otherRoute = "{{ route('singleService', [':serviceName', ':serviceId']) }}";
-
     var rowsHtml = filteredOtherServices.map(function(otherService) {
       var finalRoute = otherRoute
         .replace(':serviceName', otherService.service_type)
         .replace(':serviceId', otherService.id);
+
       var ratingHtml = getRatingHtml(otherService.average_rating);
+      var platformsHtml = '';
+
+      if (otherService.platforms && Array.isArray(otherService.platforms)) {
+        platformsHtml = otherService.platforms.map(function(platform) {
+          try {
+            // Access platform properties directly
+            const platformType = platform.platform;
+            const url = platform.url;
+
+            let icon = '';
+            switch (platformType.toLowerCase()) {
+              case 'facebook':
+                icon = 'fab fa-facebook';
+                break;
+              case 'instagram':
+                icon = 'fab fa-instagram';
+                break;
+              case 'twitter':
+                icon = 'fab fa-twitter';
+                break;
+              case 'website':
+                icon = 'fas fa-globe';
+                break;
+              case 'snapchat':
+                icon = 'fab fa-snapchat-ghost';
+                break;
+              case 'youtube':
+                icon = 'fab fa-youtube';
+                break;
+              case 'tiktok':
+                icon = 'fab fa-tiktok';
+                break;
+              case 'bluesky':
+                icon = 'fa-brands fa-bluesky';
+                break;
+              default:
+                icon = 'fas fa-link';
+            }
+
+            return `<a href="${url}" target="_blank" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
+        <span class="${icon}"></span>
+      </a>`;
+          } catch (e) {
+            console.error('Error processing platform:', platform);
+            return '';
+          }
+        }).join('');
+      }
 
       return `
-            <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
-                <th scope="row" class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                <a href="${finalRoute}" class="venue-link transition duration-150 ease-in-out hover:text-yns_yellow">${otherService.name}</a>
-            </th>
-            <td class="rating-wrapper px:2 py:2 hidden whitespace-nowrap sm:text-base md:px-6 md:py-3 lg:flex lg:px-8 lg:py-4">
-                ${ratingHtml}
-            </td>
-            <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                ${otherService.postal_town}
-            </td>
-            <td class="hidden whitespace-nowrap px-2 py-2 align-middle text-white md:block md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                ${otherService.contact_number ? '<a href="tel:' + otherService.contact_number + '" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out"><span class="fas fa-phone"></span></a>' : ''}
-                ${otherService.contact_email ? '<a href="mailto:' + otherService.contact_email + '" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out"><span class="fas fa-envelope"></span></a>' : ''}
-                ${otherService.platforms ? otherService.platforms.map(function(platform) {
-                    switch (platform.platform) {
-                        case 'facebook':
-                            return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-facebook"></span></a>';
-                        case 'twitter':
-                            return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-twitter"></span></a>';
-                        case 'instagram':
-                            return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-instagram"></span></a>';
-                        case 'snapchat':
-                            return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-snapchat-ghost"></span></a>';
-                        case 'tiktok':
-                            return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-tiktok"></span></a>';
-                        case 'youtube':
-                            return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-youtube"></span></a>';
-                        case 'bluesky':
-                            return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fa-brands fa-bluesky"></span></a>';
-                        default:
-                            return '';
-                    }
-                }).join('') : ''}
-            </td>
-        </tr>
-    `;
+      <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
+        <th scope="row" class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+          <a href="${finalRoute}" class="venue-link transition duration-150 ease-in-out hover:text-yns_yellow">${otherService.name}</a>
+        </th>
+        <td class="rating-wrapper px:2 py:2 hidden whitespace-nowrap sm:text-base md:px-6 md:py-3 lg:flex lg:px-8 lg:py-4">
+          ${ratingHtml}
+        </td>
+        <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+          ${otherService.postal_town || ''}
+        </td>
+        <td class="hidden whitespace-nowrap px-2 py-2 align-middle text-white md:block md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+          ${otherService.contact_number ? 
+            `<a href="tel:${otherService.contact_number}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
+              <span class="fas fa-phone"></span>
+            </a>` : ''}
+          ${otherService.contact_email ? 
+            `<a href="mailto:${otherService.contact_email}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
+              <span class="fas fa-envelope"></span>
+            </a>` : ''}
+          ${platformsHtml}
+        </td>
+      </tr>`;
     }).join('');
 
-
-    // Replace the existing HTML content with the new HTML
-    jQuery('#otherServices tbody').html(rowsHtml);
+    $('#resultsTableBody').html(rowsHtml);
   }
 
   // Function to generate HTML for the rating
@@ -320,29 +369,25 @@
 
   // Update the updateTable function to pass the filtered venues to updateVenuesTable
   function updateTable(data) {
-    // console.log("Data:", data); // Check the entire data object
-
     // If the data doesn't have otherServices, we'll log an error and exit
-    if (!data || !data.otherServices) {
+    if (!data || !data.results) {
       console.error("Other services data is missing or undefined.");
       return; // Exit the function if the data is not structured as expected
     }
 
-    var otherServices = data.otherServices;
+    var otherServices = data.results;
     var pagination = data.pagination;
-
-    // console.log("Other Services:", otherServices);
 
     // Check if data is not null or empty array
     if (otherServices && otherServices.length > 0) {
-      updateResultsTable(otherServices);
+      updateResultsTable(otherServices, pagination);
     } else {
       var noOtherServicesRow = `
             <tr class=" border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
                 <td colspan="5" class="whitespace-nowrap font-sans text-white sm:px-2 sm:py-3 sm:text-base md:px-6 md:py-2 md:text-lg lg:px-8 lg:py-4 uppercase text-center">No Services Found</td>
             </tr>
         `;
-      jQuery('#otherServices tbody').html(noOtherServicesRow);
+      jQuery('#resultsTableBody').html(noOtherServicesRow);
     }
   }
 

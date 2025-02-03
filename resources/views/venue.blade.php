@@ -10,14 +10,24 @@
       <div
         class="min-w-screen-xl mx-auto max-w-screen-xl bg-opac_8_black px-4 py-4 text-white md:px-6 md:py-4 lg:px-8 lg:py-6 xl:px-10 xl:py-8 2xl:px-12 2xl:py-10 3xl:px-16 3xl:py-12">
         <div class="header flex justify-center md:justify-start md:gap-4">
-          @if ($venue->logo_url)
+          @php
+            $imagePath = public_path($venue->logo_url);
+          @endphp
+          @if ($venue->logo_url && file_exists($imagePath))
             <img src="{{ asset($venue->logo_url) }}" alt="{{ $venue->name }} Logo" class="_250img hidden md:block">
           @else
             <img src="{{ asset('images/system/yns_no_image_found.png') }}" alt="No Image"
               class="_250img hidden md:block">
           @endif
-          <div class="header-text flex flex-col justify-center gap-2">
-            <h1 class="text-sans text-center text-xl md:text-left xl:text-2xl 2xl:text-4xl">{{ $venue->name }}</h1>
+          <div class="header-text flex flex-col items-center justify-center gap-2">
+            <h1 class="text-sans text-center text-xl md:text-left xl:text-2xl 2xl:text-4xl">
+              {{ $venue->name }}
+              @if ($venue->is_verified)
+                <span class="verified-badge text-base text-yns_cyan">
+                  <i class="fas fa-check-circle"></i> Verified
+                </span>
+              @endif
+            </h1>
             @if ($venue->location)
               <div class="group flex flex-row items-center justify-center gap-1 md:justify-start xl:gap-2">
                 <i class="fa-solid fa-location-dot mr-2"></i>
@@ -96,7 +106,7 @@
               @if (empty($venue->description))
                 <p>We're still working on this! Come back later to read about us!</p>
               @else
-                <p>{{ $venue->description }}</p>
+                <p>{!! $venue->description !!}</p>
               @endif
             </div>
 
@@ -167,7 +177,7 @@
                 <p class="mt-4">The genres that we usually have at {{ $venue->name }} are:</p>
 
                 <ul class="genre-list columns-1 gap-2 md:columns-3 md:gap-4">
-                  @foreach ($genres as $genre)
+                  @foreach ($genreNames as $genre)
                     <li class="ml-6">{{ $genre }}</li>
                   @endforeach
                 </ul>

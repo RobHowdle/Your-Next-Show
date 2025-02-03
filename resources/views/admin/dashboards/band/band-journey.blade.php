@@ -34,8 +34,8 @@
             <div class="col-span-2" id="create-band-form" style="display: none;">
               <p class="col-span-2 mb-3 font-bold">It looks like you're not already in the system - Let's get you added!
               </p>
-              <form action="{{ route('band.create', ['dashboardType' => $dashboardType]) }}"
-                class="grid grid-cols-2 gap-x-8 gap-y-4" id="band-create-form" method="POST"
+              <form action="{{ route('band.store', ['dashboardType' => $dashboardType]) }}"
+                class="grid grid-cols-2 gap-x-8 gap-y-4" id="create-band-form" method="POST"
                 enctype="multipart/form-data">
                 @csrf
                 <x-google-address-picker id="location" name="location" label="Where are you based?"

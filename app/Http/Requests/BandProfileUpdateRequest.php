@@ -34,6 +34,7 @@ class BandProfileUpdateRequest extends FormRequest
             'environment_type' => "nullable|array",
             'working_times' => "nullable|array",
             'members' => "nullable|string",
+            'default_platform' => "nullable|string",
             'stream_links' => "nullable|array",
             'band_types' => 'nullable|array',
             'genres' => 'nullable|array',
@@ -43,6 +44,7 @@ class BandProfileUpdateRequest extends FormRequest
             'contact_links.*.*' => 'nullable|url',
             'portfolio_link' => 'nullable|url',
             'services' => 'nullable|string',
+            'members' => 'nullable|array',
         ];
     }
 }

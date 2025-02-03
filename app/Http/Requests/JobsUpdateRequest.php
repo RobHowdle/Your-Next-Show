@@ -27,12 +27,14 @@ class JobsUpdateRequest extends FormRequest
             'client_name' => 'required|string',
             'job_start_date' => 'required',
             'job_deadline_date' => 'required',
-            'job_type' => 'required|string',
+            'package' => 'required|string',
             'job_status' => 'required|string',
             'job_scope_file' => 'nullable|file|mimes:pdf,doc,docx,png,jpg,jpeg,svg,zip|max:10240',
             'job_cost' => 'required|numeric',
             'job_text_scope' => 'nullable|string',
             'job_priority' => 'required|string',
+            'estimated_lead_time_value' => 'required|numeric',
+            'estimated_lead_time_unit' => 'required',
         ];
     }
 }

@@ -15,7 +15,6 @@
             <button id="pending-reviews-btn" class="rounded-lg bg-yns_yellow px-4 py-2 font-bold text-black">Pending
               Reviews</button>
           </div>
-
         </div>
 
         <table class="w-full border border-white text-left font-sans text-xl rtl:text-right" id="promoterReviewsTable">
@@ -40,164 +39,136 @@
   </div>
 </x-app-layout>
 <script>
+  const dashboardType = '{{ $dashboardType }}';
+  let currentFilter = '{{ $filter }}'; // Make filter globally accessible
+
   document.addEventListener('DOMContentLoaded', function() {
-    const table = document.getElementById('promoterReviewsTable');
-    const dashboardType = `{{ $dashboardType }}`;
-    const filter = `{{ $filter }}`;
+    // Initial fetch of reviews
+    fetchReviews(dashboardType, currentFilter);
 
-    function fetchReviews(dashboardType, filter) {
-      let url = `/dashboard/${dashboardType}/filtered-reviews/${filter}`;
-      fetch(url)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          populateReviewsTable(data.reviews);
-        })
-        .catch(error => {
-          console.error('Error fetching reviews:', error);
-
-        });
-    }
-
-    fetchReviews(dashboardType, filter);
-
-    // Approve Display
-    table.addEventListener('click', function(e) {
-      if (e.target && e.target.matches('button.display-review')) {
-        e.preventDefault();
-        let form = e.target.closest('form');
-        let url = form.action;
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-              'Content-Type': 'application/json',
-            },
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              showSuccessNotification(data.message)
-              form.closest('tr').remove();
-            } else {
-              showFailureNotification(data.message)
-            }
-          });
-      }
+    // Filter button listeners
+    document.getElementById('pending-reviews-btn').addEventListener('click', () => {
+      currentFilter = 'pending';
+      fetchReviews(dashboardType, currentFilter);
     });
 
-    // Approve Review
-    table.addEventListener('click', function(e) {
-      if (e.target && e.target.matches('button.approve-review')) {
-        e.preventDefault();
-        let form = e.target.closest('form');
-        let url = form.action;
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-              'Content-Type': 'application/json',
-            },
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              showSuccessNotification(data.message)
-              form.closest('tr').remove();
-            } else {
-              showFailureNotification(data.message)
-            }
-          });
-      }
+    document.getElementById('all-reviews-btn').addEventListener('click', () => {
+      currentFilter = 'all';
+      fetchReviews(dashboardType, currentFilter);
     });
 
-    // Delete Review
-    table.addEventListener('click', function(e) {
-      if (e.target && e.target.matches('button.delete-review')) {
-        e.preventDefault();
-        let form = e.target.closest('form');
-        let url = form.action;
+    // Review action handler
+    document.getElementById('reviewsBody').addEventListener('click', function(e) {
+      const button = e.target.closest('button');
+      if (!button) return;
 
-        fetch(url, {
-            method: 'DELETE',
-            headers: {
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-              'Content-Type': 'application/json',
-            },
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              showSuccessNotification(data.message)
-              form.closest('tr').remove();
-            } else {
-              showFailureNotification(data.message)
-            }
-          });
-      }
-    });
-
-    // Attach event listeners to buttons
-    document.getElementById('pending-reviews-btn').addEventListener('click', function() {
-      fetchReviews(dashboardType, 'pending');
-    });
-
-    document.getElementById('all-reviews-btn').addEventListener('click', function() {
-      fetchReviews(dashboardType, 'all');
+      const reviewId = button.dataset.reviewId;
+      const action = button.dataset.action;
+      handleReviewAction(button, action, reviewId);
     });
   });
 
+  // Fetch reviews function
+  function fetchReviews(dashboardType, filter) {
+    fetch(`/dashboard/${dashboardType}/filtered-reviews/${filter}`)
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+      .then(data => {
+        populateReviewsTable(data.reviews);
+      })
+      .catch(error => {
+        console.error('Error fetching reviews:', error);
+        showFailureNotification('Failed to fetch reviews');
+      });
+  }
+
+  // Handle review actions
+  function handleReviewAction(button, action, reviewId) {
+    const url = `/dashboard/${dashboardType}/reviews/${reviewId}/${action}`;
+    const method = action === 'delete' ? 'DELETE' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          _token: document.querySelector('meta[name="csrf-token"]').content
+        })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          showSuccessNotification(data.message);
+          fetchReviews(dashboardType, currentFilter);
+        } else {
+          throw new Error(data.message || 'Failed to update review');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showFailureNotification(error.message);
+      });
+  }
+
+  // Populate reviews table
   function populateReviewsTable(reviews) {
     const tbody = document.getElementById('reviewsBody');
-    const dashboardType = "{{ $dashboardType }}";
-
-    const approveDisplayRoute = "{{ route('admin.dashboard.approve-display-review', [':dashboardType', ':id']) }}";
-    const approveReviewRoute = "{{ route('admin.dashboard.approve-pending-review', [':dashboardType', ':id']) }}";
-    const deleteReviewRoute = "{{ route('admin.dashboard.delete-review', [':dashboardType', ':id']) }}";
-    const hideReviewRoute = "{{ route('admin.dashboard.hide-display-review', [':dashboardType', ':id']) }}";
-    const unapproveReviewRoute = "{{ route('admin.dashboard.unapprove-review', [':dashboardType', ':id']) }}";
-
     tbody.innerHTML = '';
 
     if (reviews.length > 0) {
       reviews.forEach(review => {
+        const isApproved = review.review_approved === 1 || review.review_approved === true;
+        const isDisplayed = review.display === 1 || review.display === true;
+
         tbody.innerHTML += `
-                <tr class=" border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-                    <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">${review.review}</td>
-                    <td class="whitespace-nowrap px-6 py-4">${review.author}</td>
-                    <td class="max-w-md whitespace-normal flex flex-row gap-4 break-words px-6 py-4 font-sans text-white">
-                        <form class="mb-2" action="${review.review_approved == 1 ? unapproveReviewRoute.replace(':dashboardType', dashboardType).replace(':id', review.id) : approveDisplayRoute.replace(':dashboardType', dashboardType).replace(':id', review.id)}" method="POST">
-                            <button type="submit" class="approve-review w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out ${review.review_approved == 1 ? 'hover:bg-yns_red' : 'hover:bg-yns_yellow'}">
-                                ${review.review_approved == 1 ? '<span class="fas fa-times"></span>' : '<span class="fas fa-check"></span>'}
-                            </button>
-                        </form>
+                <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
+                    <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">
+                        ${review.review_message || review.review || 'No review text'}
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4 text-white">
+                        ${review.review_author || review.author || 'Anonymous'}
+                    </td>
+                    <td class="flex gap-2 px-6 py-4">
+                        <button 
+                            class="approve-button rounded-lg bg-white px-4 py-2 font-heading text-black transition hover:${isApproved ? 'bg-yns_red' : 'bg-yns_yellow'}"
+                            data-review-id="${review.id}"
+                            data-action="${isApproved ? 'unapprove' : 'approve'}"
+                            title="${isApproved ? 'Unapprove Review' : 'Approve Review'}"
+                        >
+                            <span class="fas ${isApproved ? 'fa-times' : 'fa-check'}"></span>
+                        </button>
 
-                        <form class="mb-2" action="${review.display == 1 ? hideReviewRoute.replace(':dashboardType', dashboardType).replace(':id', review.id) : approveDisplayRoute.replace(':dashboardType', dashboardType).replace(':id', review.id)}" method="POST">
-                            <button type="submit" class="display-review w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out ${review.display == 1 ? 'hover:bg-yns_teal' : 'hover:bg-yns_red'}">
-                                ${review.display == 1 ? '<span class="far fa-eye-slash"></span>' : '<span class="far fa-eye"></span>'}
-                            </button>
-                        </form>
+                        <button 
+                            class="display-button rounded-lg bg-white px-4 py-2 font-heading text-black transition hover:${isDisplayed ? 'bg-yns_red' : 'bg-yns_teal'}"
+                            data-review-id="${review.id}"
+                            data-action="${isDisplayed ? 'hide' : 'show'}"
+                            title="${isDisplayed ? 'Hide Review' : 'Show Review'}"
+                        >
+                            <span class="far ${isDisplayed ? 'fa-eye-slash' : 'fa-eye'}"></span>
+                        </button>
 
-                        <form class="mb-2" action="${deleteReviewRoute.replace(':dashboardType', dashboardType).replace(':id', review.id)}" method="POST">
-                            <button class="delete-review w-full rounded-lg bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:bg-yns_red">
-                                <span class="fas fa-trash-alt"></span>
-                            </button>
-                        </form>
+                        <button 
+                            class="delete-button rounded-lg bg-white px-4 py-2 font-heading text-black transition hover:bg-yns_red"
+                            data-review-id="${review.id}"
+                            data-action="delete"
+                            title="Delete Review"
+                        >
+                            <span class="fas fa-trash-alt"></span>
+                        </button>
                     </td>
                 </tr>
             `;
       });
     } else {
-      tbody.innerHTML = `
-          <tr class=" border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-            <td colspan="3" class="whitespace-nowrap px-6 py-4 text-center">No Reviews</td>
-          </tr>`;
+      tbody.innerHTML = `<tr><td colspan="3" class="text-center text-white py-4">No reviews found</td></tr>`;
     }
   }
 </script>

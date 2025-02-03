@@ -11,29 +11,50 @@
         </button>
       </div>
       <div class="p-4 md:p-5">
+        @php
+          $route = match (strtolower($serviceType)) {
+              'designer' => 'submit-single-service-review',
+              'photographer' => 'admin.dashboard.photographer.submit-review',
+              'videographer' => 'admin.dashboard.videographer.submit-review',
+              'venue' => 'admin.dashboard.venue.submit-review',
+              'promoter' => 'admin.dashboard.promoter.submit-review',
+              'artist' => 'admin.dashboard.artist.submit-review',
+              default => 'admin.dashboard.submit-review',
+          };
+        @endphp
         <!-- Form -->
-        <form action="{{ route($route, $profileId) }}" method="POST">
-          @csrf
-          @foreach (['communication', 'rate_of_pay', 'promotion', 'gig_quality'] as $ratingType)
+        <form
+          action="{{ route($route, [
+              'serviceType' => strtolower($serviceType),
+              'name' => strtolower(str_replace(' ', '-', $service)),
+          ]) }}"
+          method="POST"> @csrf
+          <input type="text" name="service_type" value="{{ $serviceType }}">
+          <input type="text" name="reviewer_ip" id="reviewer_ip">
+
+          @php
+            $reviewFields = config('review_fields.' . strtolower($serviceType), []);
+          @endphp
+          @foreach ($reviewFields as $field => $label)
             <div class="rating-block grid grid-cols-2">
-              <p>{{ ucfirst(str_replace('_', ' ', $ratingType)) }}:</p>
+              <p>{{ $label }}:</p>
               <div class="rating">
                 @for ($i = 1; $i <= 5; $i++)
-                  <input type="checkbox" name="{{ $ratingType }}-rating[]" value="{{ $i }}"
-                    id="{{ $ratingType }}-rating-{{ $i }}" class="rating-icon" />
-                  <label for="{{ $ratingType }}-rating-{{ $i }}" class="rating-label"></label>
+                  <input type="checkbox" name="{{ $field }}-rating[]" value="{{ $i }}"
+                    id="{{ $field }}-rating-{{ $i }}" class="rating-icon" />
+                  <label for="{{ $field }}-rating-{{ $i }}" class="rating-label"></label>
                 @endfor
               </div>
             </div>
           @endforeach
 
           <div class="mt-4">
-            <x-input-label for="review_author" :value="__('Your Name')" />
+            <x-input-label-dark for="review_author" :value="__('Your Name')" />
             <x-text-input name="review_author" id="review_author" class="mt-1 block w-full" required
               autocomplete="name" />
           </div>
           <div class="mt-4">
-            <x-input-label for="review_message" :value="__('Your Review')" />
+            <x-input-label-dark for="review_message" :value="__('Your Review')" />
             <x-textarea-input name="review_message" id="review_message" class="mt-1 block w-full" required />
           </div>
           <button type="submit"
@@ -44,3 +65,60 @@
     </div>
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const ratingBlocks = document.querySelectorAll('.rating-block');
+
+    ratingBlocks.forEach(block => {
+      const checkboxes = block.querySelectorAll('input[type="checkbox"]');
+
+      checkboxes.forEach((checkbox, index) => {
+        checkbox.addEventListener('change', function() {
+          // Uncheck all checkboxes after the current one
+          for (let i = index + 1; i < checkboxes.length; i++) {
+            checkboxes[i].checked = false;
+          }
+
+          // Check all checkboxes before the current one
+          for (let i = 0; i <= index; i++) {
+            checkboxes[i].checked = true;
+          }
+        });
+      });
+    });
+
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const submitButton = this.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+
+      fetch(this.action, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+          },
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showSuccessNotification('Review submitted successfully');
+            document.getElementById('review-modal').style.display = 'none';
+            setTimeout(() => window.location.reload(), 2000);
+          } else {
+            throw new Error(data.message || 'Failed to submit review');
+          }
+        })
+        .catch(error => {
+          showFailureNotification(error.message);
+          console.error('Error:', error);
+        })
+        .finally(() => {
+          submitButton.disabled = false;
+        });
+    });
+  });
+</script>

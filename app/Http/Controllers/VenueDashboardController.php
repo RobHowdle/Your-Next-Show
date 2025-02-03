@@ -19,9 +19,11 @@ class VenueDashboardController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $venue = $user->load('venues');
+        $role = $venue->roles->first()->name;
 
         $pendingReviews = VenueReview::with('venue')->where('review_approved', '0')->whereNull('deleted_at')->count();
-        $venue = Auth::user()->load('venues');
         $todoItemsCount = $venue->venues()->with(['todos' => function ($query) {
             $query->where('completed', 0)->whereNull('deleted_at');
         }])->get()->pluck('todos')->flatten()->count();
@@ -40,6 +42,8 @@ class VenueDashboardController extends Controller
 
         return view('admin.dashboards.venue-dash', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'pendingReviews' => $pendingReviews,

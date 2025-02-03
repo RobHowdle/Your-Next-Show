@@ -4,12 +4,12 @@
     'user',
 ])
 <form id="workingTimesForm" method="POST"
-  action="{{ route('photographer.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}" class="mt-8">
+  action="{{ route('designer.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}" class="mt-8">
   @csrf
   @method('PUT')
 
   <div class="grid grid-cols-1 gap-4 md:grid-cols-1">
-    <x-input-label class="">When are you available to work?</x-input-label>
+    <x-input-label-dark>When are you available to work?</x-input-label-dark>
 
     {{-- Loop through days of the week --}}
     @foreach (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
@@ -65,7 +65,6 @@
     @endif
   </div>
 </form>
-
 
 <script>
   document.getElementById('workingTimesForm').addEventListener('submit', function(e) {

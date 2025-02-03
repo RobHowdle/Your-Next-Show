@@ -1,10 +1,10 @@
 <header>
   <h2 class="text-md font-heading font-medium text-white">
-    {{ __('The genres and band types you work with') }}
+    {{ __('The genres and band types you prefer to work with') }}
   </h2>
 </header>
 
-<x-input-label>Select your genres</x-input-label>
+<x-input-label-dark class="mt-6">Select your genres:</x-input-label-dark>
 <div class="grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
   @php
     $promoterGenres = is_string($promoter->genre) ? json_decode($promoter->genre, true) : $promoter->genre;
@@ -32,7 +32,7 @@
         <x-input-checkbox class="all-genres-checkbox" id="all-genres-checkbox" data-genre="all" data-all="true"
           name="all-genres-checkbox" value="all-genres">
         </x-input-checkbox>
-        <x-input-label>All Genres</x-input-label>
+        <x-input-label-dark>All Genres</x-input-label-dark>
       </div>
     </div>
   </div>
@@ -61,7 +61,7 @@
             name="all-{{ $genre['name'] }}-{{ $index }}" data-genre="{{ $genre['name'] }}"
             value="all-{{ strtolower($genre['name']) }}">
           </x-input-checkbox>
-          <x-input-label>All {{ $genre['name'] }}</x-input-label>
+          <x-input-label-dark>All {{ $genre['name'] }}</x-input-label-dark>
         </div>
 
         @foreach ($genre['subgenres'] as $subIndex => $subgenre)
@@ -72,7 +72,7 @@
             <x-input-checkbox class="subgenre-checkbox" id="subgenre-{{ $subgenreSlug }}"
               name="subgenre-{{ $subgenreSlug }}" data-parent="{{ $genre['name'] }}"
               value="{{ $subgenreSlug }}"></x-input-checkbox>
-            <x-input-label>{{ $subgenre }}</x-input-label>
+            <x-input-label-dark>{{ $subgenre }}</x-input-label-dark>
           </div>
         @endforeach
       </div>
@@ -118,7 +118,7 @@
       console.log(allGenres.dataset);
 
       if (allGenres) {
-
+        //
       }
     });
 

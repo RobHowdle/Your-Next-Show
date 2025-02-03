@@ -3,34 +3,34 @@
 return [
     'communication_preferences' => [
         'system_announcements' => [
-            'enabled' => true,
+            'name' => 'System Announcements',
             'description' => 'Receive system announcements on major updates and changes via email.',
-            'title' => 'System Annoucenments',
+            'is_enabled' => true
         ],
         'legal_or_policy_updates' => [
-            'enabled' => true,
+            'name' => 'Legal or Policy Updates',
             'description' => 'Get legal and policy updates via email.',
-            'title' => 'Legal or Policy Updates',
+            'is_enabled' => true
         ],
         'account_notifications' => [
-            'enabled' => true,
+            'name' => 'Account Notifications',
             'description' => 'Receive account notifications via email.',
-            'title' => 'Account Notifications',
+            'is_enabled' => true
         ],
         'event_invitations' => [
-            'enabled' => true,
+            'name' => 'Event Invites',
             'description' => 'Receive event invitations via email.',
-            'title' => 'Event Invites',
+            'enabled' => true
         ],
         'surveys_and_feedback' => [
-            'enabled' => true,
+            'name' => 'Survey & Feedback',
             'description' => 'Receive surveys and feedback requests via email.',
-            'title' => 'Survey & Feedback',
+            'is_enabled' => true
         ],
         'birthday_anniversary_holiday' => [
-            'enabled' => true,
+            'name' => 'Birthday, Anniversary, Holiday',
             'description' => 'Receive birthday, anniversary, and holiday wishes via email.',
-            'title' => 'Birthday, Anniversary, Holiday',
-        ],
-    ],
+            'is_enabled' => true
+        ]
+    ]
 ];

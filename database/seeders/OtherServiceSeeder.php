@@ -65,11 +65,17 @@ class OtherServiceSeeder extends Seeder
                 //     $streamUrls = '[]'; // Set to an empty array if it's empty
                 // }
                 if (!empty($genre) && $genre !== '[]') {
-                    $genre = json_encode([$genre]); // Wrap in an array if needed
-                } else {
-                    $genre = '[]'; // Set to an empty array if it's empty
-                }
+                    // Decode the JSON string into an associative array
+                    $genres = json_decode($genre, true);
 
+                    // Check for JSON decode errors
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        \Log::warning('Invalid JSON in genre field: ' . $genre);
+                        $genres = []; // Default to an empty array if invalid
+                    }
+                } else {
+                    $genres = []; // Set to an empty array if it's empty
+                }
                 // Ensure band_type is a valid JSON array if it's not already
                 if (!empty($bandType) && $bandType !== '[]') {
                     $bandType = json_encode([$bandType]); // Wrap in an array if needed
@@ -98,7 +104,7 @@ class OtherServiceSeeder extends Seeder
                     "members" => $members,
                     "stream_urls" => $data[12],
                     "band_type" => $bandType,
-                    "genre" => $genre,
+                    "genre" => $genres,
                     "contact_name" => $data[15],
                     "contact_number" => $data[16],
                     "contact_email" => $data[17],

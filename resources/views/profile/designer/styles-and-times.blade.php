@@ -1,32 +1,67 @@
-<x-design-styles-and-mediums></x-design-styles-and-mediums>
-<x-working-times :workingTimes="$workingTimes" :dashboardType="$dashboardType" :user="$user" />
+@php
+  $workingTimes = isset($profileData['workingTimes']) ? $profileData['workingTimes'] : [];
+  $styles = isset($profileData['styles']) ? $profileData['styles'] : [];
+  $print = isset($profileData['print']) ? $profileData['print'] : [];
+@endphp
+<x-design-styles-and-mediums :styles="$styles" :print="$print" :dashboardType="$dashboardType"
+  :user="$user"></x-design-styles-and-mediums>
+<x-working-times :workingTimes="$workingTimes" :dashboardType="$dashboardType" :user="$user"></x-working-times>
 
 <script>
   jQuery(document).ready(function() {
-    // Event listener for when checkboxes are clicked
-    jQuery('input[name="environment_type[]"]').on('change', function() {
-      // Get all selected values from the checkboxes
-      let selectedEnvironmentTypes = jQuery('input[name="environment_type[]"]:checked').map(function() {
+    const dashboardType = '{{ $dashboardType }}';
+    const userId = '{{ $user->id }}';
+
+    function updateDesignerProfile() {
+      // Collect styles data
+      let selectedStyles = jQuery('input[name="styles[]"]:checked').map(function() {
         return jQuery(this).val();
       }).get();
 
-      // Send the selected values via AJAX
+      // Collect prints data
+      let selectedPrints = jQuery('input[name="prints[]"]:checked').map(function() {
+        return jQuery(this).val();
+      }).get();
+
+      // Collect working times data
+      let workingTimesData = {};
+      jQuery('.working-times-input').each(function() {
+        let day = jQuery(this).data('day');
+        let type = jQuery(this).data('type');
+        let value = jQuery(this).val();
+
+        if (!workingTimesData[day]) {
+          workingTimesData[day] = {};
+        }
+        workingTimesData[day][type] = value;
+      });
+
+
+
+      // Send combined data
       $.ajax({
-        url: '{{ route('photographer.environment-types', ['dashboardType' => $dashboardType]) }}',
+        url: `/profile/${dashboardType}/designer-user-update/${userId}`,
         method: 'POST',
         data: {
           _token: '{{ csrf_token() }}',
-          environment_types: selectedEnvironmentTypes
+          _method: 'PUT',
+          styles: selectedStyles,
+          print: selectedPrints,
+          working_times: workingTimesData
         },
         success: function(response) {
-          // Handle success (optional: show success message, update UI, etc.)
-          console.log(response.message);
+          showSuccessNotification(response.message);
         },
         error: function(xhr, status, error) {
-          // Handle error
-          console.error('Error updating environment types:', error);
+          showFailureNotification('Error updating designer profile');
+          console.error('Error:', error);
         }
       });
+    }
+
+    // Add change event listeners
+    jQuery('input[name="styles[]"], input[name="prints[]"], .working-times-input').on('change', function() {
+      updateDesignerProfile();
     });
   });
 </script>

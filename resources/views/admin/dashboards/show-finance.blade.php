@@ -28,94 +28,97 @@
               <p class="mb-2 mt-4 font-heading text-2xl">{{ $finance->finance_type }}</p>
               <p class="mb-2 font-heading">Name: {{ $finance->name }}</p>
               <div class="grid grid-cols-2">
-                <p class="mb-2 font-heading">Date From: {{ $finance->date_from }}</p>
-                <p class="mb-2 font-heading">Date To: {{ $finance->date_to }}</p>
+                <p class="mb-2 font-heading">Date From:
+                  {{ \Carbon\Carbon::parse($finance->date_from)->format('jS M Y') }}</p>
+                <p class="mb-2 font-heading">Date To: {{ \Carbon\Carbon::parse($finance->date_to)->format('jS M Y') }}
+                </p>
               </div>
               <p class="mb-2 font-heading">Link to Event: {{ $finance->external_link ?? 'None' }}</p>
               <div class="grid grid-cols-2">
-                <p class="mb-2 font-heading">Created By: {{ $finance->user->name }}</p>
+                <p class="mb-2 font-heading">Created By: {{ $finance->user->first_name }}
+                  {{ $finance->user->last_name }}</p>
                 <p class="mb-2 font-heading">Linked Promoter: {{ $finance->serviceable->name }}</p>
               </div>
+              {{-- Income Section --}}
               <p class="mb-2 mt-4 font-heading text-2xl">Incoming</p>
+
               @php
-                $incoming = json_decode($finance->incoming, true);
+                $incoming = json_decode($finance->incoming, true) ?? [];
+                $otherIncoming = json_decode($finance->other_incoming, true) ?? [];
 
                 $fieldNames = [
-                    'income_presale' => 'Income Presale',
-                    'income_otd' => 'Income On The Door',
+                    'income_presale' => 'Presale',
+                    'income_otd' => 'On The Door',
                 ];
               @endphp
+
+              {{-- Standard Income Items --}}
               @if (!empty($incoming))
                 <ul class="grid grid-cols-2">
                   @foreach ($incoming as $income)
-                    @if (array_key_exists($income['field'], $fieldNames))
-                      <li class="mb-2 font-heading">{{ $fieldNames[$income['field']] }}:
-                        {{ formatCurrency($income['value']) }}</li>
-                    @else
-                      <li class="mb-2 font-heading">{{ $income['field'] }}: {{ formatCurrency($income['value']) }}
-                      </li>
-                    @endif
+                    <li class="mb-2 font-heading">
+                      {{ $fieldNames[$income['field']] ?? $income['field'] }}:
+                      {{ formatCurrency($income['value']) }}
+                    </li>
                   @endforeach
                 </ul>
-              @else
-                <p class="mb-2 font-heading">Income: None Recorded</p>
               @endif
-              @php
-                $incomingOther = json_decode($finance->other_incoming, true);
-              @endphp
-              @if (!empty($incomingOther))
-                <ul>
-                  @foreach ($incomingOther as $other)
-                    <li class="mb-2 font-heading">Other Income: {{ formatCurrency($other) }}</li>
+
+              {{-- Other Income Items with Labels --}}
+              @if (!empty($otherIncoming))
+                <ul class="grid grid-cols-2">
+                  @foreach ($otherIncoming as $other)
+                    <li class="mb-2 font-heading">
+                      {{ $other['label'] }}: {{ formatCurrency($other['value']) }}
+                    </li>
                   @endforeach
                 </ul>
-              @else
-                <p class="mb-2 font-heading">Other Income: None Recorded</p>
               @endif
+
+              {{-- Outgoing Section --}}
               <p class="mb-2 mt-4 font-heading text-2xl">Outgoing</p>
+
               @php
-                $outgoing = json_decode($finance->outgoing, true);
+                $outgoings = json_decode($finance->outgoing, true) ?? [];
+                $otherOutgoing = json_decode($finance->other_outgoing, true) ?? [];
 
                 $fieldNames = [
-                    'outgoing_venue' => 'Venue',
-                    'outgoing_band' => 'Band(s)',
+                    'outgoing_venue' => 'Venue Hire',
+                    'outgoing_band' => 'Artist(s)',
                     'outgoing_promotion' => 'Promotion',
-                    'outgoing_rider' => 'Rider',
+                    'outgoing_rider' => 'Rider(s)',
                 ];
               @endphp
-              @if (!empty($outgoing))
+
+              {{-- Standard Outgoing Items --}}
+              @if (!empty($outgoings))
                 <ul class="grid grid-cols-2">
-                  @foreach ($outgoing as $out)
-                    @if (array_key_exists($out['field'], $fieldNames))
-                      <li class="mb-2 font-heading">{{ $fieldNames[$out['field']] }}:
-                        {{ formatCurrency($out['value']) }}</li>
-                    @else
-                      <li class="mb-2 font-heading">{{ $out['field'] }}: {{ formatCurrency($out['value']) }}</li>
-                    @endif
+                  @foreach ($outgoings as $outgoin)
+                    <li class="mb-2 font-heading">
+                      {{ $fieldNames[$outgoin['field']] ?? $outgoin['field'] }}:
+                      {{ formatCurrency($outgoin['value']) }}
+                    </li>
                   @endforeach
                 </ul>
-              @else
-                <p class="mb-2 font-heading">Outgoing: None Recorded</p>
               @endif
-              @php
-                $outgoingOther = json_decode($finance->other_outgoing, true);
-              @endphp
-              @if (!empty($outgoingOther))
-                <ul>
-                  @foreach ($outgoingOther as $otherOut)
-                    <li class="mb-2 font-heading">Other: {{ formatCurrency($otherOut) }}</li>
+
+              {{-- Other Income Items with Labels --}}
+              @if (!empty($otherOutgoing))
+                <ul class="grid grid-cols-2">
+                  @foreach ($otherOutgoing as $other)
+                    <li class="mb-2 font-heading">
+                      {{ $other['label'] }}: {{ formatCurrency($other['value']) }}
+                    </li>
                   @endforeach
                 </ul>
-              @else
-                <p class="mb-2 font-heading">Other Outgoing: None Recorded</p>
               @endif
               <p class="mb-2 mt-4 font-heading text-2xl">Totals</p>
               <div class="grid grid-cols-2">
-                <p class="mb-2 font-heading">Desired Profit: {{ formatCurrency($finance->desired_profit) ?? 'None' }}
-                </p>
                 <p class="mb-2 font-heading">Total Incoming: {{ formatCurrency($finance->total_incoming) ?? 'None' }}
                 </p>
                 <p class="mb-2 font-heading">Total Outgoing: {{ formatCurrency($finance->total_outgoing) ?? 'None' }}
+                </p>
+                <p class="mb-2 font-heading">Desired Profit: {{ formatCurrency($finance->desired_profit) ?? 'None' }}
                 </p>
                 <p class="mb-2 font-heading">Total Profit: {{ formatCurrency($finance->total_profit) ?? 'None' }}</p>
                 <p class="mb-2 font-heading">Total Profit Shortfall:

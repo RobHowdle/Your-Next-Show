@@ -22,14 +22,11 @@
     <div class="group">
       <x-input-label-dark>Tags</x-input-label-dark>
       <div class="mb-4">
-        <x-multi-select id="tags" name="tags[]" :options="[
-            'EPK' => 'EPK',
-            'Rider Instructions' => 'Rider Instructions',
-            'Tech Spec' => 'Tech Spec',
-            'Artwork' => 'Artwork',
-            'Band Picture' => 'Band Picture',
-            'Setlist' => 'Setlist',
-        ]" />
+        <x-multi-select id="tags" name="tags[]" :options="collect($tags)
+            ->mapWithKeys(function ($tag) {
+                return [$tag => $tag];
+            })
+            ->toArray()" />
       </div>
       @error('tags')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>

@@ -1,350 +1,117 @@
 <x-app-layout :dashboardType="$dashboardType" :modules="$modules">
+  <x-slot name="header">
+    <x-sub-nav :userId="$userId" />
+  </x-slot>
+
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg bg-yns_dark_gray px-16 py-12 text-white">
         <p class="mb-3 text-3xl font-bold text-white">Oops, you're not linked to anywhere! Let's fix that!</p>
-        <div class="group">
-          <x-input-label-dark>What is the name of your Venue?</x-input-label-dark>
-          <x-text-input id="venue-search" placeholder="Search for venues..." />
-
-          <h2 class="my-4 text-xl font-semibold">Available Venues</h2>
-          <table class="w-full border border-white text-left font-sans rtl:text-right" id="venuesTable">
-            <thead class="underline">
-              <tr>
-                <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
-                  Venue Name</th>
-                <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
-                  Action</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-          <p id="noVenuesMessage" class="mt-4 hidden">No venues available to join at the moment.</p>
+        <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-4">
+          <div class="group">
+            <x-input-label-dark>What is the name of your venue?
+              <span id="result-count"></span>
+            </x-input-label-dark>
+            <x-text-input id="venue-search"></x-text-input>
+            <h2 class="my-4 text-xl font-semibold" id="venue-table-title">Available Venues</h2>
+            <table class="w-full border border-white text-left font-sans rtl:text-right" id="venuesTable">
+              <thead class="underline">
+                <tr>
+                  <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
+                    Venue Name</th>
+                  <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
+                    Action</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+            <p id="noVenueMessage" class="mt-4 hidden">No venues available to join at the moment.</p>
+          </div>
         </div>
+        <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-4">
+          <div class="mb-4">
+            <div class="col-span-2" id="create-venue-form" style="display: none;">
+              <p class="col-span-2 mb-3 font-bold">It looks like you're not already in the system - Let's get you added!
+              </p>
+              <form action="{{ route('venue.store', ['dashboardType' => $dashboardType]) }}"
+                class="grid grid-cols-2 gap-x-8 gap-y-4" id="create-venue-form" method="POST"
+                enctype="multipart/form-data">
+                @csrf
+                <x-google-address-picker id="location" name="location" label="Where are you based?"
+                  placeholder="Search for a location..." value="" latitude="" longitude="" dataId=""
+                  postalTown=""></x-google-address-picker>
 
-        <div class="mb-4">
-          <div class="col-span-2" id="create-venue-form" style="display: none;">
-            <p class="col-span-2 mb-3 font-bold">It looks like you're not already in the system - Let's get you added!
-            </p>
-            <form action="{{ route('venue.store', ['dashboardType' => $dashboardType]) }}"
-              class="grid grid-cols-2 gap-x-8 gap-y-4" id="venue-create-form" method="POST"
-              enctype="multipart/form-data">
-              @csrf
-              <div class="group">
-                <x-input-label-dark>Where are you based?</x-input-label-dark>
-                <x-text-input id="address-input" name="address-input" class="map-input"></x-text-input>
-                @error('address-input')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div id="address-map-container" style="width: 100%; height: 400px; display: none;">
-                <div style="width: 100%; height: 100%;" id="address-map"></div>
-              </div>
-
-              <div class="group relative z-0 mb-5 hidden w-full">
-                <input
-                  class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
-                  type="text" id="postal-town-input" name="postal-town-input" placeholder="Postal Town Input"
-                  value="{{ old('postal-town-input') }}">
-                @error('postal-town-input')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-                <input
-                  class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
-                  type="text" id="address-latitude" name="latitude" placeholder="Latitude"
-                  value="{{ old('latitude') }}">
-                @error('latitude')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-                <input
-                  class="peer block w-full appearance-none border-0 border-b-2 border-gray-300 bg-transparent px-0 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-0 dark:border-gray-600 dark:text-white dark:focus:border-blue-500"
-                  type="text" id="address-longitude" name="longitude" placeholder="Longitude"
-                  value="{{ old('longitude') }}">
-                @error('longitude')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group">
-                <x-input-label-dark>Venue Name</x-input-label-dark>
-                <x-text-input id="name" name="name" value="{{ old('name') }}"></x-text-input>
-                @error('name')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group">
-                <x-input-label-dark>Logo</x-input-label-dark>
-                <x-input-file id="venue_logo" name="venue_logo"></x-input-file>
-                @error('venue_logo')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group">
-                <x-input-label-dark>Tell us a bit about you</x-input-label-dark>
-                <x-textarea-input class="w-full" id="description"
-                  name="description">{{ old('description') }}</x-textarea-input>
-                @error('description')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="col-span-2">
                 <div class="group">
-                  <x-input-label-dark>Do you use a promoter? <span class="text-sm">Separate by
-                      comma</span></x-input-label-dark>
-                  <x-text-input id="my_promoters" name="my_promoters" value="{{ old('my_promoters') }}"></x-text-input>
-                  @error('my_promoters')
+                  <x-input-label-dark>Venue Name</x-input-label-dark>
+                  <x-text-input id="name" name="name" value="{{ old('name') }}"></x-text-input>
+                  @error('name')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
-              </div>
 
-              <div class="group relative z-0 mb-5 w-full">
-                <x-input-label-dark>Preferred Band Types</x-input-label-dark>
-                <div class="sm-gap:3 mt-4 grid sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
-                  <div class="flex items-center gap-2">
-                    <x-input-checkbox id="all-bands" name="band_type[]" value="all" class="band-checkbox" />
-                    <x-input-label-dark class="mb-0" for="all-bands">All Types</x-input-label-dark>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <x-input-checkbox id="original-bands" name="band_type[]" value="original-bands"
-                      class="band-checkbox" />
-                    <x-input-label-dark class="mb-0" for="original-bands">Original</x-input-label-dark>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <x-input-checkbox id="cover-bands" name="band_type[]" value="cover-bands" class="band-checkbox" />
-                    <x-input-label-dark class="mb-0" for="cover-bands">Covers</x-input-label-dark>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <x-input-checkbox id="tribute-bands" name="band_type[]" value="tribute-bands"
-                      class="band-checkbox" />
-                    <x-input-label-dark class="mb-0" for="tribute-bands">Tributes</x-input-label-dark>
-                  </div>
-                  @error('band_type')
+                <div class="group">
+                  <x-input-label-dark>Tell us a bit about you</x-input-label-dark>
+                  <x-textarea-input class="w-full" id="description"
+                    name="description">{{ old('description') }}</x-textarea-input>
+                  @error('description')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
-              </div>
 
-              <div class="group relative z-0 mb-5 w-full">
-                <x-input-label-dark>Preferred Genre(s) - <span>Yes, there is a lot</span></x-input-label-dark>
-                <div class="mt-4 grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
-                  <!-- "All Genres" checkbox -->
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <x-input-checkbox id="all-genres" name="all-genres" value=""
-                        class="all-genres-checkbox" />
-                      <x-input-label-dark class="mb-0" for="all-genres">All Genres</x-input-label-dark>
-                    </div>
-                  </div>
-                  <!-- Genres -->
-                  @foreach ($genres as $index => $genre)
-                    <div>
-                      <div class="accordion" id="accordion-container">
-                        <div class="accordion-item">
-                          <x-input-checkbox id="all-genre-{{ $index }}" name="genres[]"
-                            value="All {{ $genre['name'] }}" class="genre-checkbox"
-                            data-parent-genre="{{ $index }}" />
-                          <x-input-label-dark class="accordion-title mb-0 inline"
-                            for="all-genre-{{ $index }}">All {{ $genre['name'] }}</x-input-label-dark>
-
-                          <div class="accordion-content">
-                            @foreach ($genre['subgenres'] as $subIndex => $subgenre)
-                              <div class="checkbox-wrapper">
-                                <x-input-checkbox id="genre-{{ $index }}-subgenre-{{ $subIndex }}"
-                                  name="genres[]" value="{{ $subgenre }}" class="subgenre-checkbox"
-                                  data-parent-genre="{{ $index }}" />
-                                <x-input-label-dark class="inline"
-                                  for="genre-{{ $index }}-subgenre-{{ $subIndex }}">{{ $subgenre }}</x-input-label-dark>
-                              </div>
-                            @endforeach
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  @endforeach
-                </div>
-              </div>
-
-              <div class="group">
-                <x-input-label-dark for="contact_number">Contact Number</x-input-label-dark>
-                <x-text-input id="contact_number" name="contact_number" />
-              </div>
-              <div class="group">
-                <x-input-label-dark for="contact_email">Contact Email</x-input-label-dark>
-                <x-text-input id="contact_email" name="contact_email" />
-              </div>
-              <div class="group">
-                <x-input-label-dark for="contact_link">Social Links</x-input-label-dark>
-                <x-text-input id="contact_link" name="contact_link" />
-              </div>
-
-              <div class="group relative z-0 mb-5 w-full" x-data="{ isMainContact: 'true' }">
-                <x-input-label-dark>Are you the main contact for the venue?</x-input-label-dark>
-
-                <!-- Radio buttons for Yes/No -->
-                <div class="my-4 flex items-center gap-4">
-                  <div class="flex items-center gap-2">
-                    <x-input-radio id="main-contact-yes" name="is_main_contact" value="true"
-                      x-model="isMainContact"></x-input-radio>
-                    <x-input-label-dark for="main-contact-yes" class="mb-0">Yes</x-input-label-dark>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <x-input-radio id="main-contact-no" name="is_main_contact" value="false"
-                      x-model="isMainContact"></x-input-radio>
-                    <x-input-label-dark for="main-contact-no" class="mb-0">No</x-input-label-dark>
-                  </div>
+                <div class="group">
+                  <x-input-label-dark>Do you have any gear in house that you allow artists to
+                    use?</x-input-label-dark>
+                  <x-textarea-input class="w-full" id="in_house_gear"
+                    name="in_house_gear">{{ old('in_house_gear') }}</x-textarea-input>
+                  @error('in_house_gear')
+                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                  @enderror
                 </div>
 
-                <!-- Fields for main contact information -->
-                <div x-show="isMainContact === 'false'" x-cloak class="mt-4">
-                  <div class="mb-4">
-                    <x-input-label-dark for="contact_name">Contact Name</x-input-label-dark>
-                    <x-text-input id="contact_name" name="contact_name" />
-                  </div>
+                <div class="group">
+                  <x-input-label-dark>What is your venue capacity?</x-input-label-dark>
+                  <x-text-input id="capacity" name="capacity" value="{{ old('capacity') }}"></x-text-input>
+                  @error('capacity')
+                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                  @enderror
+                </div>
+
+                <div class="group">
+                  <x-input-label-dark for="contact_name">Contact Name</x-input-label-dark>
+                  <x-text-input id="contact_name" name="contact_name" />
+                </div>
+
+                <div class="group">
+                  <x-input-label-dark for="contact_number">Contact Number</x-input-label-dark>
+                  <x-text-input id="contact_number" name="contact_number" />
+                </div>
+                <div class="group">
+                  <x-input-label-dark for="contact_email">Contact Email</x-input-label-dark>
+                  <x-text-input id="contact_email" name="contact_email" />
+                </div>
+                <div class="group">
+                  <x-input-label-dark for="contact_link">Social Links</x-input-label-dark>
+                  <x-text-input id="contact_link" name="contact_link" />
                 </div>
 
                 <div class="group">
                   <button type="submit"
                     class="mt-8 flex w-full justify-center rounded-lg border border-yns_cyan bg-yns_cyan px-4 py-2 font-heading text-xl text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
                 </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 </x-app-layout>
-
 <script>
   jQuery(document).ready(function() {
-    const genres = @json($genres);
-    const allBandsCheckbox = jQuery('#all-bands');
-    const bandCheckboxes = jQuery('.band-checkbox').not('#all-bands');
-
-    allBandsCheckbox.change(function() {
-      const isChecked = jQuery(this).prop('checked');
-
-      bandCheckboxes.prop('checked', isChecked);
-    });
-
-    bandCheckboxes.change(function() {
-      const allChecked = bandCheckboxes.length === bandCheckboxes.filter(':checked').length;
-
-      allBandsCheckbox.prop('checked', allChecked);
-    });
-
-    function populateGenres(genres) {
-      const genresContainer = jQuery('#genres-container');
-      genresContainer.empty(); // Clear existing genres
-
-      genres.forEach((genre, genreIndex) => {
-        // Create the main genre accordion item
-        const accordionItem = jQuery('<div class="accordion-item"></div>');
-
-        // Create the header for the genre with a checkbox for the entire genre
-        const header = jQuery(`
-            <h2 class="accordion-header">
-                <div class="flex items-center gap-2">
-                    <x-input-checkbox id="all-genre-${genreIndex}" name="genres[]" value="All ${genre.name}" class="genre-checkbox" data-all-genre-id="${genreIndex}" />
-                    <x-input-label-dark class="accordion-title mb-0 inline" for="all-genre-${genreIndex}">All ${genre.name}</x-input-label-dark>
-                </div>
-            </h2>
-        `);
-
-        // Create the body for subgenres
-        const body = jQuery('<div class="accordion-body" style="display: none;"></div>');
-
-        // Populate subgenres
-        genre.subgenres.forEach((subgenre, subIndex) => {
-          const subgenreCheckbox = jQuery(`
-                <div class="checkbox-wrapper">
-                    <x-input-checkbox id="subgenre-${genreIndex}-${subIndex}" name="genres[]" value="${subgenre}" class="subgenre-checkbox" data-parent-genre="${genreIndex}" />
-                    <x-input-label-dark class="inline" for="subgenre-${genreIndex}-${subIndex}">${subgenre}</x-input-label-dark>
-                </div>
-            `);
-          body.append(subgenreCheckbox);
-        });
-
-        // Append header and body to the accordion item
-        accordionItem.append(header).append(body);
-        genresContainer.append(accordionItem);
-      });
-
-      // Attach event listeners after populating the genres
-      attachGenreEventListeners();
-    }
-
-    function attachGenreEventListeners() {
-      // Accordion toggle functionality for genres
-      jQuery(document).on('click', '.accordion-header', function() {
-        jQuery(this).next('.accordion-body').slideToggle();
-      });
-
-      // Event listener for the "All Genres" checkbox
-      jQuery(document).on('change', '.all-genres-checkbox', function() {
-        const isChecked = jQuery(this).prop('checked');
-
-        // Check/uncheck all individual genre and subgenre checkboxes based on "All Genres"
-        jQuery('.genre-checkbox').prop('checked', isChecked);
-        jQuery('.subgenre-checkbox').prop('checked', isChecked);
-      });
-
-      // Event listener for individual genre checkboxes
-      jQuery(document).on('change', '.genre-checkbox', function() {
-        const genreId = jQuery(this).attr('id').split('-')[2]; // Extract the genre index
-        const isChecked = jQuery(this).prop('checked');
-
-        // Check/uncheck all subgenres of this genre based on the "All Genre" checkbox
-        jQuery(`.subgenre-checkbox[data-parent-genre="${genreId}"]`).prop('checked', isChecked);
-
-        // Check if any subgenre is unchecked
-        const allSubgenresChecked = jQuery(`.subgenre-checkbox[data-parent-genre="${genreId}"]:checked`)
-          .length ===
-          jQuery(`.subgenre-checkbox[data-parent-genre="${genreId}"]`).length;
-
-        // Update the "All Genre" checkbox based on subgenre states
-        jQuery(this).prop('checked', allSubgenresChecked);
-      });
-
-      // Event listener for subgenre checkboxes
-      jQuery(document).on('change', '.subgenre-checkbox', function() {
-        const genreId = jQuery(this).data('parent-genre');
-
-        // Check if all subgenres of the parent genre are checked
-        const allSubgenresChecked = jQuery(`.subgenre-checkbox[data-parent-genre="${genreId}"]:checked`)
-          .length ===
-          jQuery(`.subgenre-checkbox[data-parent-genre="${genreId}"]`).length;
-
-        // Update the "All Genre" checkbox based on subgenre states
-        jQuery(`#all-genre-${genreId}`).prop('checked', allSubgenresChecked);
-      });
-
-      // Event listener for accordion toggle to ensure states are checked correctly
-      jQuery(document).on('click', '.accordion-header', function() {
-        const genreId = jQuery(this).find('.genre-checkbox').attr('id').split('-')[2];
-        const allSubgenresChecked = jQuery(`.subgenre-checkbox[data-parent-genre="${genreId}"]:checked`)
-          .length ===
-          jQuery(`.subgenre-checkbox[data-parent-genre="${genreId}"]`).length;
-
-        // Only check the "All Genre" checkbox if all subgenres are checked when the accordion is opened
-        if (jQuery(this).next('.accordion-body').is(':visible') && allSubgenresChecked) {
-          jQuery(`#all-genre-${genreId}`).prop('checked', true);
-        } else {
-          jQuery(`#all-genre-${genreId}`).prop('checked', false);
-        }
-      });
-    }
-
-    // Promoter search functionality
     jQuery('#venue-search').on('keyup', function() {
+      let query = jQuery(this).val();
       const dashboardType = "{{ $dashboardType }}";
 
-      let query = jQuery(this).val();
       $.ajax({
         url: `/${dashboardType}/venue-search`,
         type: 'GET',
@@ -352,9 +119,12 @@
           query: query
         },
         success: function(data) {
+          console.log(data.html);
           if (data.html.trim() === '') {
-            jQuery('#venuesTable tbody').empty();
+            jQuery('#venuesTable').hide();
+            jQuery('#venue-table-title').hide();
             jQuery('#noVenuesMessage').removeClass('hidden');
+            jQuery('#create-venue-form').show();
           } else {
             jQuery('#venuesTable tbody').html(data.html);
             jQuery('#noVenuesMessage').addClass('hidden');
@@ -363,30 +133,32 @@
       });
     });
 
-    jQuery(document).on('click', '.join-venue-btn', function(e) {
-      console.log('click');
-      e.preventDefault();
-      const dashboardType = "{{ $dashboardType }}";
-      const venueId = jQuery(this).data('venue-id');
+    // Event delegation for dynamically created buttons
+    jQuery(document).on('click', '.join-venue-btn', function() {
+      const venueId = jQuery(this).data('venue-id'); // Retrieve the id from data-id attribute
+      linkUserToVenue(venueId); // Call your function
+    });
 
+    function linkUserToVenue(venueId) {
+      const dashboardType = "{{ $dashboardType }}";
       $.ajax({
-        url: `/${dashboardType}/venue-journey/link/${venueId}`,
+        url: `/${dashboardType}/venue-journey/join/${venueId}`,
         type: 'POST',
         data: {
-          serviceable_id: venueId,
-          _token: '{{ csrf_token() }}'
+          _token: '{{ csrf_token() }}',
+          serviceable_id: venueId
         },
         success: function(response) {
-          showSuccessNotification(response.message);
-          setTimeout(function() {
-            window.location.href = response.redirect_url;
-          }, 3000);
+          if (response.success) {
+            showSuccessNotification(response.message);
+            window.location.href = response.redirect;
+          }
         },
         error: function(xhr) {
           let errorMessage = xhr.responseJSON.message || 'Something went wrong!';
           showFailureNotification(errorMessage);
         }
       });
-    });
+    }
   });
 </script>

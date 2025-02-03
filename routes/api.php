@@ -2,9 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\JobsController;
 use App\Http\Controllers\FinanceController;
-use App\Http\Controllers\CalendarController;
-use App\Http\Controllers\VenueApiController;
 use App\Http\Controllers\APIRequestsController;
 
 /*
@@ -22,7 +21,18 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/venues/{id}', [VenueApiController::class, 'show']);
-Route::get('/dashboard/{$dashboardType}/finances', [FinanceController::class, 'getFinanceData']);
-Route::get('/bands/search', [APIRequestsController::class, 'searchBands']);
-Route::post('/bands/create', [APIRequestsController::class, 'createBand']);
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard/{$dashboardType}/finances', [FinanceController::class, 'getFinanceData']);
+    Route::get('/bands/search', [APIRequestsController::class, 'searchBands']);
+    Route::post('/bands/create', [APIRequestsController::class, 'createBand']);
+    Route::get('/promoters/search', [APIRequestsController::class, 'searchPromoters']);
+    Route::post('/promoters/create', [APIRequestsController::class, 'createPromoter']);
+    Route::get('/venues/search', [APIRequestsController::class, 'searchVenues']);
+    Route::post('/venues/create', [APIRequestsController::class, 'createVenue']);
+    Route::get('/{dashboardType}/jobs/search-clients', [APIRequestsController::class, 'searchClients']);
+    Route::post('/profile/{dashboardType}/{id}/update-api-keys', [APIRequestsController::class, 'updateAPI']);
+    Route::post('/profile/{dashboardType}/{id}/save-styles-and-print', [APIRequestsController::class, 'updateStylesAndPrint'])->name('profile.styles-and-print');
+    Route::post('/profile/{dashboardType}/settings/update', [APIRequestsController::class, 'updateModule'])->name('settings.updateModule');
+    Route::post('/profile/{dashboardType}/communications/update', [APIRequestsController::class, 'updateCommunications'])->name('settings.updateCommunications');
+    Route::post('/profile/{dashboardType}/{id}/leave-service', [APIRequestsController::class, 'leaveService'])->name('settings.deleteModule');
+});

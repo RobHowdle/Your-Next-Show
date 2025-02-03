@@ -28,7 +28,7 @@
           </th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="resultsTableBody">
         {{ $slot }}
       </tbody>
     </table>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasVerification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class OtherService extends Model
 {
+    use HasVerification;
     use HasFactory;
     use SoftDeletes;
 
@@ -30,13 +32,19 @@ class OtherService extends Model
         'stream_urls',
         'band_type',
         'genre',
+        'styles',
+        'print',
+        'default_lead_time_value',
+        'default_lead_time_unit',
         'contact_name',
         'contact_number',
         'contact_email',
         'contact_link',
         'portfolio_link',
         'portfolio_images',
-        'services'
+        'services',
+        'is_verified',
+        'verified_at',
     ];
 
     protected $casts = [
@@ -44,8 +52,6 @@ class OtherService extends Model
         'environment_type' => 'array',
         'working_times' => 'array',
         'members' => 'array',
-        // 'stream_urls' => 'array',
-        'genre' => 'array',
         'contact_links' => 'array',
         'portfolio_images' => 'array',
     ];
@@ -85,11 +91,10 @@ class OtherService extends Model
     /**
      * Retrieve all bands (other services with `other_service_id` as 4).
      */
-    public static function bands()
+    public function bands()
     {
-        return self::where('other_service_id', 4);
+        return $this->hasMany(OtherService::class, 'other_service_id')->where('other_service_id', 4);
     }
-
     /**
      * Belongs to OtherServiceList relation.
      */
@@ -159,8 +164,24 @@ class OtherService extends Model
             ->wherePivot('serviceable_type', '=', Job::class);
     }
 
-    public function review()
+    public function apiKeys()
     {
-        return $this->hasMany(OtherServicesReview::class);
+        return $this->morphMany(ApiKey::class, 'serviceable');
+    }
+
+    public function reviews($dashboardType)
+    {
+        switch ($dashboardType) {
+            case 'artist':
+                return $this->hasMany(BandReviews::class, 'other_services_id');
+            case 'designer':
+                return $this->hasMany(DesignerReviews::class, 'other_services_id');
+            case 'photographer':
+                return $this->hasMany(PhotographerReviews::class, 'other_services_id');
+            case 'videographer':
+                return $this->hasMany(VideographyReviews::class, 'other_services_id');
+            default:
+                return null;
+        }
     }
 }

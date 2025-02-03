@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Carbon\Carbon;
 use App\Models\User;
 use Illuminate\View\View;
 use App\Models\StandardUser;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Validation\Rules;
 use App\Models\UserModuleSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,15 +14,21 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Config;
-use App\Providers\RouteServiceProvider;
 use App\Http\Requests\RegisterUserRequest;
+use App\Http\Controllers\DashboardController;
 
 
 class RegisteredUserController extends Controller
 {
+    protected $dashboardController;
+
+    public function __construct(DashboardController $dashboardController)
+    {
+        $this->dashboardController = $dashboardController;
+    }
+
     /**
      * Display the registration view.
      */
@@ -42,102 +46,69 @@ class RegisteredUserController extends Controller
 
     public function store(RegisterUserRequest $request): JsonResponse
     {
+        // Check if the selected role is not an administrator
         $adminRoleId = Role::where('name', 'administrator')->pluck('id')->first();
 
-        // Check if the selected role is not an administrator
-        if ($request->has('role') && $adminRoleId) {
-            $selectedRole = $request->input('role');
+        if ($request->has('role') && $adminRoleId && $request->input('role') != $adminRoleId) {
+            try {
+                DB::beginTransaction();
 
-            if ($selectedRole != $adminRoleId) {
-                try {
-                    // Create the user
-                    $user = User::create([
-                        'first_name' => $request->first_name,
-                        'last_name' => $request->last_name,
-                        'date_of_birth' => $request->date_of_birth,
-                        'email' => $request->email,
-                        'password' => Hash::make($request->password),
-                    ]);
+                $user = User::create([
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'date_of_birth' => $request->date_of_birth,
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                ]);
+                \Log::info($request->role);
+                $role = Role::findOrFail($request->role);
+                $user->assignRole($role->name);
 
-                    // Assign the requested role
-                    $role = Role::findOrFail($request->role);
-                    $user->assignRole($role->name);
-
-                    // Create Standard User Record if role type is Standard
-                    if ($user->role('standard')) {
-                        $standardUser = StandardUser::create([
-                            'name' => $user->first_name . ' ' . $user->last_name,
-                            'location' => 'United Kingdom',
-                            'postal_town' => 'United Kingdom',
-                            'longitude' => '2.4333',
-                            'latitude' => '53.5500',
-                            'band_type' => json_encode([]),
-                            'genre' => json_encode([])
-                        ]);
-
-                        $serviceUserRecord = DB::table('service_user')->insert([
-                            'user_id' => $user->id,
-                            'serviceable_id' => $standardUser->id,
-                            'serviceable_type' => 'App\Models\StandardUser',
-                            'role' => 'Standard'
-                        ]);
-                    }
-
-                    // Set default modules and mailing preferences
-                    $this->setDefaultModules($user, $role->name);
-                    $this->setDefaultMailingPreferences($user);
-
-                    // Fire the Registered event
-                    event(new Registered($user));
-
-                    // Log the user in
-                    Auth::login($user);
-
-                    $dashboardType = lcfirst($role->name);
-
-                    // Success JSON response
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Registration successful! Hang tight, we\'re making your dashboard!',
-                        'redirect' => route('dashboard.index')  // Use the correct named route
-                    ], 200);
-                } catch (\Exception $e) {
-                    Log::error('Registration failed:', [
-                        'message' => $e->getMessage(),
-                        'user_data' => [
-                            'first_name' => $request->first_name,
-                            'last_name' => $request->last_name,
-                            'email' => $request->email,
-                        ],
-                        'stack' => $e->getTraceAsString(),
-                    ]);
-
-                    // Error response for JSON requests
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Registration failed. Please try again.'
-                    ], 500);
+                // Create standard user service if role is standard
+                if ($role->name === 'standard') {
+                    $this->createStandardUserService($user);
                 }
-            } else {
-                // Log and return error for users attempting to register as an admin
-                $ipAddress = $request->ip();
-                Log::error('User attempted to register with an admin role', ['ip_address' => $ipAddress]);
 
-                // Error response for JSON requests
+                $this->setDefaultModules($user, $role->name);
+                $this->setDefaultMailingPreferences($user);
+
+                event(new Registered($user));
+                Auth::login($user);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Registration successful! Let\'s set up your profile.',
+                    'redirect' => route('dashboard.index')
+                ], 201);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Registration failed:', [
+                    'message' => $e->getMessage(),
+                    'user_data' => $request->only(['first_name', 'last_name', 'email']),
+                    'stack' => $e->getTraceAsString(),
+                ]);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'You cannot register as this role.'
-                ], 403);
+                    'message' => 'Registration failed. Please try again.'
+                ], 500);
             }
         }
 
-        // Error response for missing role in request
-        return response()->json([
-            'success' => false,
-            'message' => 'Role selection is required.'
-        ], 422);
-    }
+        if ($request->input('role') == $adminRoleId) {
+            // Log and return error for users attempting to register as an admin
+            $ipAddress = $request->ip();
+            Log::error('User attempted to register with an admin role', ['ip_address' => $ipAddress]);
 
+            // Error response for JSON requests
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot register as this role.'
+            ], 403);
+        }
+    }
 
     protected function setDefaultModules($user, $roleName)
     {
@@ -216,6 +187,28 @@ class RegisteredUserController extends Controller
         // Optionally, you can return a success response
         return response()->json([
             'message' => 'Default mailing preferences set successfully.'
+        ]);
+    }
+
+    protected function createStandardUserService($user): void
+    {
+        $standardUser = StandardUser::create([
+            'name' => $user->first_name . ' ' . $user->last_name,
+            'location' => 'United Kingdom',
+            'postal_town' => 'United Kingdom',
+            'longitude' => '2.4333',
+            'latitude' => '53.5500',
+            'band_type' => json_encode([]),
+            'genre' => json_encode([])
+        ]);
+
+        DB::table('service_user')->insert([
+            'user_id' => $user->id,
+            'serviceable_id' => $standardUser->id,
+            'serviceable_type' => StandardUser::class,
+            'role' => 'Standard',
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
         ]);
     }
 }

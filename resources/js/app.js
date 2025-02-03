@@ -1,4 +1,5 @@
 import Alpine from "alpinejs";
+import "summernote/dist/summernote-bs4.css";
 import Swal from "../../node_modules/sweetalert2";
 import $ from "jquery";
 window.$ = window.jQuery = $;
@@ -125,54 +126,54 @@ $(document).ready(function () {
 });
 
 // Review Modal JS
-// document.addEventListener("DOMContentLoaded", function () {
-//     // Function to show the modal
-//     function showModal(modalId) {
-//         const modal = document.getElementById(modalId);
+document.addEventListener("DOMContentLoaded", function () {
+    // Function to show the modal
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
 
-//         if (modal) {
-//             modal.classList.remove("hidden");
-//             modal.classList.add("flex"); // Add 'flex' for display
-//             modal.setAttribute("aria-hidden", "false");
-//             modal.focus();
-//         }
-//     }
+        if (modal) {
+            modal.classList.remove("hidden");
+            modal.classList.add("flex"); // Add 'flex' for display
+            modal.setAttribute("aria-hidden", "false");
+            modal.focus();
+        }
+    }
 
-//     // Function to hide the modal
-//     function hideModal(modalId) {
-//         const modal = document.getElementById(modalId);
+    // Function to hide the modal
+    function hideModal(modalId) {
+        const modal = document.getElementById(modalId);
 
-//         if (modal) {
-//             modal.classList.remove("flex"); // Remove 'flex'
-//             modal.classList.add("hidden");
-//             modal.setAttribute("aria-hidden", "true");
-//         }
-//     }
+        if (modal) {
+            modal.classList.remove("flex"); // Remove 'flex'
+            modal.classList.add("hidden");
+            modal.setAttribute("aria-hidden", "true");
+        }
+    }
 
-//     // Event listener for buttons to show the modal
-//     document.querySelectorAll("[data-modal-toggle]").forEach((button) => {
-//         button.addEventListener("click", function () {
-//             const modalId = this.getAttribute("data-modal-toggle");
-//             showModal(modalId);
-//         });
-//     });
+    // Event listener for buttons to show the modal
+    document.querySelectorAll("[data-modal-toggle]").forEach((button) => {
+        button.addEventListener("click", function () {
+            const modalId = this.getAttribute("data-modal-toggle");
+            showModal(modalId);
+        });
+    });
 
-//     // Event listener for modal close buttons
-//     document.querySelectorAll("[data-modal-hide]").forEach((button) => {
-//         button.addEventListener("click", function () {
-//             const modalId = this.getAttribute("data-modal-hide");
-//             hideModal(modalId);
-//         });
-//     });
+    // Event listener for modal close buttons
+    document.querySelectorAll("[data-modal-hide]").forEach((button) => {
+        button.addEventListener("click", function () {
+            const modalId = this.getAttribute("data-modal-hide");
+            hideModal(modalId);
+        });
+    });
 
-//     // Close modal when clicking outside of it
-//     document.addEventListener("click", function (event) {
-//         const modal = event.target.closest(".fixed"); // Check for modal clicks
-//         if (modal && event.target === modal) {
-//             hideModal(modal.id);
-//         }
-//     });
-// });
+    // Close modal when clicking outside of it
+    document.addEventListener("click", function (event) {
+        const modal = event.target.closest(".fixed"); // Check for modal clicks
+        if (modal && event.target === modal) {
+            hideModal(modal.id);
+        }
+    });
+});
 
 // Ratings
 document.addEventListener("DOMContentLoaded", function () {
@@ -233,81 +234,35 @@ jQuery(document).ready(function () {
 });
 
 // Function to initialize Summernote
-window.initialiseSummernote = function (selector, initialContent) {
+window.initialiseSummernote = function (selector, content) {
     $(selector).summernote({
+        placeholder: "Tell us about you...",
+        tabsize: 2,
         height: 300,
         toolbar: [
             ["style", ["style"]],
-            ["font", ["bold", "italic", "underline", "clear"]],
-            ["fontname", ["fontname"]],
-            ["fontsize", ["fontsize"]],
-            ["fontSizeUnits", ["px", "pt"]],
+            ["font", ["bold", "underline", "clear"]],
             ["color", ["color"]],
             ["para", ["ul", "ol", "paragraph"]],
-            ["table", ["table"]],
-            ["insert", ["link", "picture", "video"]],
-            ["view", ["fullscreen", "help"]],
+            ["insert", ["link"]],
+            ["view", ["fullscreen", "codeview", "help"]],
         ],
         callbacks: {
             onInit: function () {
-                jQuery(this).summernote("code", initialContent); // Set the initial content
-            },
-            onKeyup: function () {
-                var editor = jQuery(this);
-                var content = editor.summernote("code");
-
-                // Analyze and get the highlighted content
-                // var highlightedContent = analyzeText(content);
-
-                // Update only if the content has changed
-                // if (highlightedContent !== content) {
-                //     // Get the current selection before updating the content
-                //     var selection = window.getSelection();
-                //     var range = selection.getRangeAt(0);
-
-                //     // Update the content directly
-                //     editor.summernote("code", highlightedContent);
-
-                //     // Restore the selection
-                //     setTimeout(function () {
-                //         // Get the editable area
-                //         var $editable = editor.summernote("editable")[0];
-
-                //         // Set the cursor position back to where it was
-                //         selection.removeAllRanges(); // Clear existing selections
-                //         selection.addRange(range); // Set the new range
-
-                //         // Refocus on the editor
-                //         $editable.focus(); // Focus the editable area
-                //     }, 0); // Use a small delay to ensure the content is rendered before moving the cursor
-                // }
+                if (aboutContent) {
+                    $("#description").summernote("code", aboutContent);
+                } else if (inHouseGearContent) {
+                    $("#inHouseGear").summernote("code", inHouseGearContent);
+                } else if (additionalInfoContent) {
+                    $("#additionalInfo").summernote(
+                        "code",
+                        additionalInfoContent
+                    );
+                }
             },
         },
     });
 };
-
-// Function to analyze text for venue names
-
-// function analyzeText(inputText) {
-//     const venues = [
-//         {
-//             name: "The Forum",
-//             link: "https://www.google.com/theforummusiccenter",
-//         },
-//         { name: "The Turks Head", link: "https://www.google.com/theturkshead" },
-//     ];
-
-//     let highlightedContent = inputText; // Start with the original input text
-
-//     venues.forEach((venue) => {
-//         const regex = new RegExp(`\\b(${venue.name})\\b`, "gi");
-//         highlightedContent = highlightedContent.replace(
-//             regex,
-//             `<span class="highlight" data-link="${venue.link}">$1</span>`
-//         );
-//     });
-//     return highlightedContent; // Return the modified content
-// }
 
 // Sweet Alert 2 Notifications
 window.showSuccessNotification = function (message) {
@@ -353,7 +308,8 @@ window.showWarningNotification = function (message) {
         customClass: {
             popup: "bg-yns_dark_gray !important rounded-lg font-heading",
             title: "text-yns_red",
-            html: "text-white",
+            htmlContainer: "!text-white",
+            content: "!text-white",
         },
         icon: "warning",
         title: "Warning!",
@@ -375,6 +331,10 @@ window.showConfirmationNotification = function (options) {
         icon: "warning",
         title: "Are you sure?",
         text: options.text,
+    }).then((result) => {
+        if (result.isConfirmed && typeof options.onConfirm === "function") {
+            options.onConfirm();
+        }
     });
 };
 

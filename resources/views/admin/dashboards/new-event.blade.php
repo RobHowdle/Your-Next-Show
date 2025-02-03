@@ -2,7 +2,7 @@
   <x-slot name="header">
     <x-sub-nav :userId="$userId" />
   </x-slot>
-
+  {{-- @dd($promoter) --}}
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
@@ -11,77 +11,67 @@
         </div>
         <form id="eventForm" method="POST" enctype="multipart/form-data" data-dashboard-type="{{ $dashboardType }}">
           @csrf
+
           <div class="grid grid-cols-3 gap-x-8 px-8 py-8">
             <div class="col">
               <input type="hidden" id="dashboard_type" value="{{ $dashboardType }}">
               <div class="group mb-4">
-                <x-input-label-dark>Event Name</x-input-label-dark>
-                <x-text-input id="event_name" name="event_name" required></x-text-input>
+                <x-input-label-dark :required="true">Event Name</x-input-label-dark>
+                <x-text-input id="event_name" name="event_name" :required="true" :value="old('event_name')"></x-text-input>
                 @error('event_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
-                <x-input-label-dark>Date & Time of Event</x-input-label-dark>
-                <x-date-input id="merged_date_time" name="merged_date_time"></x-date-input>
-                @error('merged_date_time')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4 hidden">
-                <x-input-label-dark>Date of Event</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-date-input id="event_date" name="event_date"></x-date-input>
+                <x-input-label-dark :required="true">Event Date</x-input-label-dark>
+                <x-date-input id="event_date" name="event_date"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_date') }}"></x-date-input>
                 @error('event_date')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
-              <div class="group mb-4 hidden">
-                <x-input-label-dark>Start Time</x-input-label-dark>
-                <span>This is supposed to be hidden...naughty naughty</span>
-                <x-text-input class="w-auto" id="event_start_time" name="event_start_time"></x-text-input>
+              <div class="group mb-4">
+                <x-input-label-dark :required="true">Event Start Time</x-input-label-dark>
+                <x-time-input id="event_start_time" name="event_start_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  :required="true" value="{{ old('event_start_time') }}"></x-time-input>
                 @error('event_start_time')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
-              @if ($dashboardType === 'promoter')
-                <div class="group mb-4 hidden">
-                  <x-input-label-dark>Promoter</x-input-label-dark>
-                  <span>This is supposed to be hidden...naughty naughty</span>
-                  <x-text-input class="w-auto" id="promoter_id" name="promoter_id"
-                    value="{{ $role->id }}"></x-text-input>
-                  @error('promoter_id')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-              @else
-                <div class="group mb-4">
-                  <x-input-label-dark>Promoter</x-input-label-dark>
-                  <x-text-input id="promoter_name" name="promoter_name"
-                    placeholder="Search for a promoter..."></x-text-input>
-                  <input type="hidden" id="promoter_id" name="promoter_id" value="">
-                  <ul id="promoter-suggestions"
-                    class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
-                  </ul>
-                  @error('promoter_id')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-              @endif
 
               <div class="group mb-4">
-                <x-input-label-dark>End Time</x-input-label-dark>
-                <x-text-input class="w-auto" id="event_end_time" name="event_end_time"></x-text-input>
+                <x-input-label-dark>Event End Time</x-input-label-dark>
+                <x-time-input id="event_end_time" name="event_end_time"
+                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                  value="{{ old('event_end_time') }}"></x-time-input>
                 @error('event_end_time')
+                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                @enderror
+              </div>
+              <div class="group mb-4">
+                <x-input-label-dark>Promoter</x-input-label-dark>
+                <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
+                  :value="old('promoter_name', $promoterData ? $promoterData['name'] : '')"></x-text-input>
+                <ul id="promoter-suggestions"
+                  class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
+                </ul>
+                <x-input-label-dark>Promoter ID</x-input-label-dark>
+                <x-text-input id="promoter_ids" name="promoter_ids" :value="old('')"></x-text-input>
+                <ul id="promoter-suggestions"
+                  class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
+                </ul>
+                @error('promoter_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
 
               <div class="group mb-4">
-                <x-input-label-dark>Description</x-input-label-dark>
-                <x-textarea-input id="event_description" name="event_description" class="w-full"></x-textarea-input>
+                <x-input-label-dark :required="true">Description</x-input-label-dark>
+                <x-textarea-input id="event_description" name="event_description" class="w-full" :required="true"
+                  :value="old('')"></x-textarea-input>
                 @error('event_description')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -89,30 +79,31 @@
 
               <div class="group mb-4">
                 <x-input-label-dark>Facebook Event Link</x-input-label-dark>
-                <x-text-input id="facebook_event_url" name="facebook_event_url"></x-text-input>
+                <x-text-input id="facebook_event_url" name="facebook_event_url" :value="old('')"></x-text-input>
                 @error('facebook_event_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Pre Sale Ticket Link</x-input-label-dark>
-                <x-text-input id="ticket_url" name="ticket_url"></x-text-input>
+                <x-text-input id="ticket_url" name="ticket_url" :value="old('')"></x-text-input>
                 @error('ticket_url')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
               <div class="group mb-4">
                 <x-input-label-dark>Door Ticket Price</x-input-label-dark>
-                <x-number-input-pound id="otd_ticket_price" name="otd_ticket_price"></x-number-input-pound>
-                @error('otd_ticket_price')
+                <x-number-input-pound id="on_the_door_ticket_price" name="on_the_door_ticket_price"
+                  :value="old('')"></x-number-input-pound>
+                @error('on_the_door_ticket_price')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
               </div>
             </div>
             <div class="col">
               <div class="group">
-                <x-input-label-dark>Poster</x-input-label-dark>
-                <x-input-file id="poster_url" name="poster_url"></x-input-file>
+                <x-input-label-dark :required="true">Poster</x-input-label-dark>
+                <x-input-file id="poster_url" name="poster_url" :required="true" :value="old('')"></x-input-file>
                 <div class="mt-4">
                   <img id="posterPreview" src="#" alt="Poster Preview" class="hidden h-auto w-400">
                 </div>
@@ -123,13 +114,14 @@
             </div>
             <div class="col">
               <div class="group mb-4">
-                <x-input-label-dark>Venue</x-input-label-dark>
-                <x-text-input id="venue_name" name="venue_name" autocomplete="off"></x-text-input>
+                <x-input-label-dark :required="true">Venue</x-input-label-dark>
+                <x-text-input id="venue_name" name="venue_name" autocomplete="off" :required="true"
+                  :value="old('')"></x-text-input>
                 <ul id="venue-suggestions"
                   class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                 </ul>
-                <x-input-label-dark>Venue ID</x-input-label-dark>
-                <x-text-input id="venue_id" name="venue_id" class=""></x-text-input>
+                <x-input-label-dark :required="true">Venue ID</x-input-label-dark>
+                <x-text-input id="venue_id" name="venue_id" :value="old('')" :required="true"></x-text-input>
                 @error('venue_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -137,12 +129,14 @@
               <div class="group" id="band-rows-container">
                 <!-- Headline Band -->
                 <div class="group mb-4">
-                  <x-input-label-dark>Headline Band</x-input-label-dark>
-                  <x-text-input id="headliner-search" name="headliner" autocomplete="off"></x-text-input>
+                  <x-input-label-dark :required="true">Headline Band</x-input-label-dark>
+                  <x-text-input id="headliner-search" name="headliner" autocomplete="off" :required="true"
+                    :value="old('')"></x-text-input>
                   <ul id="headliner-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-input-label-dark>Headliner Band ID</x-input-label-dark>
-                  <x-text-input id="headliner_id" name="headliner_id" class=""></x-text-input>
+                  <x-input-label-dark :required="true">Headliner Band ID</x-input-label-dark>
+                  <x-text-input id="headliner_id" name="headliner_id" :value="old('')"
+                    :required="true"></x-text-input>
                   @error('headliner')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -151,11 +145,12 @@
                 <!-- Main Support -->
                 <div class="group mb-4">
                   <x-input-label-dark>Main Support</x-input-label-dark>
-                  <x-text-input id="main-support-search" name="main_support" autocomplete="off"></x-text-input>
+                  <x-text-input id="main-support-search" name="main_support" autocomplete="off"
+                    :value="old('')"></x-text-input>
                   <ul id="main-support-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
                   <x-input-label-dark>Main Support Band ID</x-input-label-dark>
-                  <x-text-input id="main_support_id" name="main_support_id" class=""></x-text-input>
+                  <x-text-input id="main_support_id" name="main_support_id" :value="old('')"></x-text-input>
                   @error('mainSupport')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -165,11 +160,12 @@
                 <div class="group mb-4" id="bandsContainer">
                   <x-input-label-dark>Bands</x-input-label-dark>
                   <x-text-input id="bands-search" name="bands" class="band-input" autocomplete="off"
-                    placeholder="Type band name and press Enter, separated by commas"></x-text-input>
+                    placeholder="Type band name and press Enter, separated by commas"
+                    :value="old('')"></x-text-input>
                   <ul id="bands-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
                   <x-input-label-dark>Bands IDs</x-input-label-dark>
-                  <x-text-input id="bands_ids" name="bands_ids" class="" />
+                  <x-text-input id="bands_ids" name="bands_ids" :value="old('')" />
                   @error('bands')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
@@ -178,18 +174,17 @@
                 <!-- Opening Band -->
                 <div class="group mb-4">
                   <x-input-label-dark>Opening Band</x-input-label-dark>
-                  <x-text-input id="opener-search" name="opener" autocomplete="off"></x-text-input>
+                  <x-text-input id="opener-search" name="opener" autocomplete="off"
+                    :value="old('')"></x-text-input>
                   <ul id="opener-suggestions"
                     class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
                   <x-input-label-dark>Opening Band ID</x-input-label-dark>
-                  <x-text-input id="opener_id" name="opener_id" class=""></x-text-input>
+                  <x-text-input id="opener_id" name="opener_id" :value="old('')"></x-text-input>
                   @error('opener')
                     <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                   @enderror
                 </div>
               </div>
-
-
             </div>
 
             <button type="submit"
@@ -203,11 +198,10 @@
 <script>
   $(document).ready(function() {
     // Initialize the date pickers
-    flatpickr('#event_end_time', {
-      enableTime: true,
-      noCalendar: true,
-      dateFormat: "H:i",
-      time_24hr: true,
+    flatpickr('#event_date', {
+      altInput: true,
+      altFormat: "d-m-Y",
+      dateFormat: "d-m-Y",
     });
     flatpickr('#event_start_time', {
       enableTime: true,
@@ -215,31 +209,25 @@
       dateFormat: "H:i",
       time_24hr: true,
     });
-    flatpickr('#merged_date_time', {
+    flatpickr('#event_end_time', {
       enableTime: true,
-      dateFormat: "d-m-Y H:i",
+      noCalendar: true,
+      dateFormat: "H:i",
       time_24hr: true,
-    });
-    flatpickr('#event_date', {
-      enableTime: true,
-      dateFormat: "d-m-Y H:i",
-      time_24hr: true,
-    });
-
-    $('#merged_date_time').on('change', function(event) {
-      event.preventDefault();
-      const dateTimeValue = $(this).val();
-
-      const [date, time] = dateTimeValue.split(' ');
-
-      $('#event_date').val(date);
-      $('#event_start_time').val(time);
     });
 
     // Poster Preview
     $('#poster_url').on('change', function(event) {
       const file = event.target.files[0];
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+
       if (file) {
+        if (file.size > maxSize) {
+          showFailureNotification('File size exceeds 10MB limit');
+          this.value = ''; // Clear the file input
+          $('#posterPreview').addClass('hidden').attr('src', '#');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = function(e) {
           $('#posterPreview').attr('src', e.target.result).removeClass('hidden');
@@ -254,12 +242,21 @@
 
       const dashboardType = "{{ $dashboardType }}"; // Capture the dashboard type from the template
       const bandIds = $('#bands_ids').val().split(',').filter(id => id.trim());
+      const promoterIds = $('#promoter_ids').val().split(',').filter(id => id.trim());
 
       const formData = new FormData(this); // Get form data
       formData.delete('bands_ids');
       bandIds.forEach(id => {
         formData.append('bands_ids[]', id);
       });
+      promoterIds.forEach(id => {
+        formData.append('promoter_ids[]', id);
+      });
+
+      // Debug log FormData
+      for (var pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
 
       $.ajax({
         url: "{{ route('admin.dashboard.store-new-event', ['dashboardType' => ':dashboardType']) }}"
@@ -290,77 +287,250 @@
           }
         },
         error: function(jqXHR, textStatus, errorThrown) {
-          console.error('AJAX error:', textStatus, errorThrown); // Log any AJAX errors
-          showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
+          if (jqXHR.status === 413) {
+            showFailureNotification('The uploaded file is too large. Maximum size is 10MB.');
+          } else {
+            showFailureNotification('An error occurred: ' + errorThrown); // Show error notification
+          }
         }
       });
     });
 
-    // Venue Search
-    const venueInput = document.getElementById('venue_name');
-    const suggestionsList = document.getElementById('venue-suggestions');
+    // Promoter Search
+    function handlePromoterSearch() {
+      const searchInput = $('#promoter_name');
+      const suggestionsElement = $('#promoter-suggestions');
+      const promoterIdsField = $('#promoter_ids');
+      let selectedPromoterIds = [];
+      let debounceTimer;
 
-    venueInput.addEventListener('input', function() {
-      const query = this.value;
+      function createNewPromoter(promoterName, inputElement, suggestionsElement, setterCallback, idField) {
+        $.ajax({
+          url: '/api/promoters/create',
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          },
+          data: {
+            name: promoterName
+          },
+          success: function(response) {
+            if (response.success && response.promoter) {
+              const promoterId = response.promoter.id;
+              let currentIds = promoterIdsField.val() ? promoterIdsField.val().split(',') : [];
+              currentIds.push(promoterId);
+              promoterIdsField.val(currentIds.join(','));
 
-      if (query.length < 3) {
-        suggestionsList.innerHTML = '';
-        suggestionsList.classList.add('hidden');
-        return;
-      }
-
-      const dashboardType = document.getElementById('dashboard_type').value;
-
-      fetch(`/dashboard/${dashboardType}/events/search-venues?query=${encodeURIComponent(query)}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+              setterCallback(response.promoter);
+              suggestionsElement.empty().addClass('hidden');
+              showSuccessNotification('Promoter created successfully');
+            }
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error creating promoter:', errorThrown);
+            showFailureNotification('Failed to create promoter');
           }
-          return response.json();
-        })
-        .then(data => {
-          suggestionsList.innerHTML = '';
-          data.forEach(venue => {
-            const suggestionItem = document.createElement('li');
-            suggestionItem.textContent = venue.name;
-            suggestionItem.setAttribute('data-id', venue.id);
-            suggestionItem.classList.add(
-              'cursor-pointer',
-              'hover:text-yns_yellow',
-              'px-4',
-              'py-2',
-              'bg-opac_8_black',
-              'text-white'
-            );
-
-            // Fixed the event listener setup here
-            suggestionItem.addEventListener('click', function() {
-              venueInput.value = venue.name;
-              document.getElementById('venue_id').value = venue.id;
-              suggestionsList.classList.add('hidden');
-            });
-
-            suggestionsList.appendChild(suggestionItem);
-          });
-
-          if (data.length) {
-            suggestionsList.classList.remove('hidden');
-          } else {
-            suggestionsList.classList.add('hidden');
-          }
-        })
-        .catch(error => {
-          console.error('Error fetching venue suggestions:', error);
-          suggestionsList.classList.add('hidden');
         });
-    });
-
-    // Venue Hide suggestions when clicking outside
-    document.addEventListener('click', function(event) {
-      if (!venueInput.contains(event.target) && !suggestionsList.contains(event.target)) {
-        suggestionsList.classList.add('hidden');
       }
-    });
+
+      searchInput.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
+          debounceTimer = setTimeout(() => {
+            $.ajax({
+              url: `/api/promoters/search?q=${searchQuery}`,
+              method: 'GET',
+              success: function(response) {
+                suggestionsElement.empty().removeClass('hidden');
+                const promoters = response.promoters || [];
+
+                if (promoters.length === 0) {
+                  const createOption = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer px-4 py-2 bg-opac_8_black text-yns_yellow font-bold'
+                    )
+                    .html(`<i class="fas fa-plus mr-2"></i>Create new promoter "${searchQuery}"`)
+                    .on('click', function() {
+                      createNewPromoter(
+                        searchQuery,
+                        searchInput,
+                        suggestionsElement,
+                        (promoter) => {
+                          const currentValue = searchInput.val();
+                          const existingPromoters = currentValue.split(',')
+                            .map(p => p.trim())
+                            .filter(p => p.length > 0)
+                            .slice(0, -1);
+
+                          existingPromoters.push(promoter.name);
+                          searchInput.val(existingPromoters.join(', ') + ', ');
+
+                          selectedPromoterIds.push(promoter.id);
+                          promoterIdsField.val(selectedPromoterIds.join(','));
+                        },
+                        promoterIdsField
+                      );
+                    });
+                  suggestionsElement.append(createOption);
+                  return;
+                }
+
+                promoters.forEach(promoter => {
+                  const li = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white'
+                    )
+                    .text(promoter.name)
+                    .on('click', () => {
+                      const currentValue = searchInput.val();
+                      const existingPromoters = currentValue.split(',')
+                        .map(p => p.trim())
+                        .filter(p => p.length > 0)
+                        .slice(0, -1);
+
+                      existingPromoters.push(promoter.name);
+                      searchInput.val(existingPromoters.join(', ') + ', ');
+
+                      selectedPromoterIds.push(promoter.id);
+                      promoterIdsField.val(selectedPromoterIds.join(','));
+
+                      suggestionsElement.addClass('hidden');
+                    });
+                  suggestionsElement.append(li);
+                });
+              },
+              error: function(xhr, status, error) {
+                console.error('Search failed:', error);
+                suggestionsElement.empty()
+                  .append(
+                    '<li class="suggestion-item text-red-500 px-4 py-2 bg-opac_8_black">Error loading promoters</li>'
+                  )
+                  .removeClass('hidden');
+              }
+            });
+          }, 300);
+        } else {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+
+      $(document).on('click', function(e) {
+        if (!$(e.target).closest('#promoter_name, #promoter-suggestions').length) {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+    }
+
+    handlePromoterSearch();
+
+    // Venue Search
+    function handleVenueSearch() {
+      const searchInput = $('#venue_name');
+      const suggestionsElement = $('#venue-suggestions');
+      const venueIdField = $('#venue_id');
+      let selectedVenueId = null;
+      let debounceTimer;
+
+      function createNewVenue(venueName, inputElement, suggestionsElement, setterCallback, idField) {
+        $.ajax({
+          url: '/api/venues/create',
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+          },
+          data: {
+            name: venueName
+          },
+          success: function(response) {
+            if (response.success && response.venue) {
+              const venueId = response.venue.id;
+              venueIdField.val(venueId);
+              setterCallback(response.venue);
+              suggestionsElement.empty().addClass('hidden');
+              showSuccessNotification('Venue created successfully');
+            }
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error creating venue:', errorThrown);
+            showFailureNotification('Failed to create venue');
+          }
+        });
+      }
+
+      searchInput.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
+          debounceTimer = setTimeout(() => {
+            $.ajax({
+              url: `/api/venues/search?q=${searchQuery}`,
+              method: 'GET',
+              success: function(response) {
+                suggestionsElement.empty().removeClass('hidden');
+                const venues = response.venues || [];
+
+                if (venues.length === 0) {
+                  const createOption = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer px-4 py-2 bg-opac_8_black text-yns_yellow font-bold'
+                    )
+                    .html(`<i class="fas fa-plus mr-2"></i>Create new venue "${searchQuery}"`)
+                    .on('click', function() {
+                      createNewVenue(
+                        searchQuery,
+                        searchInput,
+                        suggestionsElement,
+                        (venue) => {
+                          searchInput.val(venue.name);
+                          venueIdField.val(venue.id);
+                        },
+                        venueIdField
+                      );
+                    });
+                  suggestionsElement.append(createOption);
+                  return;
+                }
+
+                venues.forEach(venue => {
+                  const li = $('<li>')
+                    .addClass(
+                      'suggestion-item cursor-pointer hover:text-yns_yellow px-4 py-2 bg-opac_8_black text-white'
+                    )
+                    .text(venue.name)
+                    .on('click', () => {
+                      searchInput.val(venue.name);
+                      venueIdField.val(venue.id);
+                      suggestionsElement.addClass('hidden');
+                    });
+                  suggestionsElement.append(li);
+                });
+              },
+              error: function(xhr, status, error) {
+                console.error('Search failed:', error);
+                suggestionsElement.empty()
+                  .append(
+                    '<li class="suggestion-item text-red-500 px-4 py-2 bg-opac_8_black">Error loading venues</li>'
+                  )
+                  .removeClass('hidden');
+              }
+            });
+          }, 300);
+        } else {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+
+      $(document).on('click', function(e) {
+        if (!$(e.target).closest('#venue_name, #venue-suggestions').length) {
+          suggestionsElement.addClass('hidden');
+        }
+      });
+    }
+
+    handleVenueSearch();
 
 
     const headlinerSearchInput = $('#headliner-search');
@@ -387,10 +557,41 @@
 
     // Handle band search for all fields (Headline, Main Support, Opener, Bands)
     function handleBandSearch(inputElement, suggestionsElement, setterCallback, idField) {
-      inputElement.on('input', function() {
-        let searchQuery = inputElement.val().split(',').pop().trim();
+      let debounceTimer;
 
-        if (searchQuery.length >= 2) {
+      if (inputElement.attr('id') === 'bands-search') {
+        inputElement.on('keydown', function(e) {
+          if (e.key === 'Backspace') {
+            const value = inputElement.val();
+            const cursorPosition = this.selectionStart;
+            const bands = value.split(',').map(b => b.trim()).filter(b => b.length > 0);
+
+            let currentPosition = 0;
+            let bandIndex = -1;
+
+            for (let i = 0; i < bands.length; i++) {
+              currentPosition += bands[i].length + 2;
+              if (cursorPosition <= currentPosition) {
+                bandIndex = i;
+                break;
+              }
+            }
+
+            if (bandIndex !== -1) {
+              e.preventDefault();
+              bands.splice(bandIndex, 1);
+              selectedBandIds.splice(bandIndex, 1);
+              inputElement.val(bands.length ? bands.join(', ') + ', ' : '');
+              bandIdsField.val(selectedBandIds.join(','));
+            }
+          }
+        });
+      }
+      inputElement.on('input', function() {
+        clearTimeout(debounceTimer);
+        const searchQuery = this.value.split(',').pop().trim();
+
+        if (searchQuery.length >= 3) {
           $.ajax({
             url: `/api/bands/search?q=${searchQuery}`,
             method: 'GET',

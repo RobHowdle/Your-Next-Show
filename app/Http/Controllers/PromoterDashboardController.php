@@ -36,10 +36,11 @@ class PromoterDashboardController extends Controller
     public function index($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+        $promoter = $user->load('promoters');
+        $role = $user->roles->first()->name;
 
-        $user = Auth::user()->load(['roles', 'promoters']);
         $pendingReviews = PromoterReview::with('promoter')->where('review_approved', '0')->whereNull('deleted_at')->count();
-        $promoter = Auth::user()->load('promoters');
         $todoItemsCount = $promoter->promoters()->with(['todos' => function ($query) {
             $query->where('completed', 0)->whereNull('deleted_at');
         }])->get()->pluck('todos')->flatten()->count();
@@ -57,6 +58,8 @@ class PromoterDashboardController extends Controller
 
         return view('admin.dashboards.promoter-dash', [
             'userId' => $this->getUserId(),
+            'user' => $user,
+            'role' => $role,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'pendingReviews' => $pendingReviews,

@@ -5,111 +5,147 @@
 
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
-      <div
-        class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg bg-yns_dark_gray px-16 py-12 text-center text-white">
-        <h1 class="mb-8 text-2xl font-bold">Find/ Create Your Photography Company</h1>
-
-        @if (session('success'))
-          <div class="mb-4 rounded bg-green-200 p-4 text-green-800">
-            {{ session('success') }}
+      <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg bg-yns_dark_gray px-16 py-12 text-white">
+        <p class="mb-3 text-3xl font-bold text-white">Oops, you're not linked to anywhere! Let's fix that!</p>
+        <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-4">
+          <div class="group">
+            <x-input-label-dark>What is the name of your photography company?
+              <span id="result-count"></span>
+            </x-input-label-dark>
+            <x-text-input id="photographer-search"></x-text-input>
+            <h2 class="my-4 text-xl font-semibold" id="photographer-table-title">Available Photographers</h2>
+            <table class="w-full border border-white text-left font-sans rtl:text-right" id="photographerTable">
+              <thead class="underline">
+                <tr>
+                  <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
+                    Photographer Name</th>
+                  <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
+                    Action</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+            <p id="noArtistMessage" class="mt-4 hidden">No photographers available to join at the moment.</p>
           </div>
-        @endif
-
-        <div class="group mb-4 text-left">
-          <x-input-label-dark>If your photography company is already on the system, search for it!</x-input-label-dark>
-          <x-text-input id="photographerSearch" placeholder="Search for photographers..." />
         </div>
-
-        <div class="group mb-4">
-          <h2 class="mb-4 text-xl font-semibold">Available Photographers</h2>
-          <table class="w-full border border-white text-left font-sans rtl:text-right" id="photographyTable">
-            <thead class="underline">
-              <tr>
-                <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
-                  Photographer Name</th>
-                <th scope="col" class="md-text-2xl sm:px-2 sm:py-2 sm:text-xl md:px-6 md:py-3 lg:px-8 lg:py-4">
-                  Action</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-          <p id="noPhotographersMessage" class="mt-4 hidden">No photographers available to join at the moment.</p>
-        </div>
-
-        <h2 class="mb-4 text-xl font-semibold">Not seeing your photography company? Create a New One!</h2>
-        <form action="{{ route('photographer.store', ['dashboardType' => $dashboardType]) }}" method="POST"
-          class="mb-4">
-          @csrf
+        <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-4">
           <div class="mb-4">
-            <label for="photographer_name" class="mb-1 block text-left text-sm font-medium">Photographer Name:</label>
-            <x-text-input name="photographer_name" id="photographer_name" required
-              placeholder="Enter photographer name" />
+            <div class="col-span-2" id="create-photographer-form" style="display: none;">
+              <p class="col-span-2 mb-3 font-bold">It looks like you're not already in the system - Let's get you added!
+              </p>
+              <form action="{{ route('photographer.store', ['dashboardType' => $dashboardType]) }}"
+                class="grid grid-cols-2 gap-x-8 gap-y-4" id="create-photographer-form" method="POST"
+                enctype="multipart/form-data">
+                @csrf
+                <x-google-address-picker id="location" name="location" label="Where are you based?"
+                  placeholder="Search for a location..." value="" latitude="" longitude="" dataId=""
+                  postalTown="" :required="true"></x-google-address-picker>
+
+                <div class="group">
+                  <x-input-label-dark :required="true">Photography Name</x-input-label-dark>
+                  <x-text-input id="name" name="name" value="{{ old('name') }}"
+                    :required="true"></x-text-input>
+                  @error('name')
+                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                  @enderror
+                </div>
+
+                <div class="group">
+                  <x-input-label-dark :required="true">Tell us a bit about you</x-input-label-dark>
+                  <x-textarea-input class="w-full" id="description" name="description"
+                    :required="true">{{ old('description') }}</x-textarea-input>
+                  @error('description')
+                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+                  @enderror
+                </div>
+
+                <div class="group">
+                  <x-input-label-dark for="contact_name" :required="true">Contact Name</x-input-label-dark>
+                  <x-text-input id="contact_name" name="contact_name" value="{{ old('contact_name') }}"
+                    :required="true" />
+                </div>
+
+                <div class="group">
+                  <x-input-label-dark for="contact_number" :required="true">Contact Number</x-input-label-dark>
+                  <x-text-input id="contact_number" name="contact_number" value="{{ old('contact_number') }}"
+                    :required="true" />
+                </div>
+                <div class="group">
+                  <x-input-label-dark for="contact_email" :required="true">Contact Email</x-input-label-dark>
+                  <x-text-input id="contact_email" name="contact_email" value="{{ old('contact_email') }}"
+                    :required="true" />
+                </div>
+                <div class="group">
+                  <x-input-label-dark for="contact_link" :required="true">Social Links (separate by
+                    coma)</x-input-label-dark>
+                  <x-text-input id="contact_link" name="contact_link" :required="true" />
+                </div>
+
+                <div class="group">
+                  <button type="submit"
+                    class="mt-8 flex w-full justify-center rounded-lg border border-yns_cyan bg-yns_cyan px-4 py-2 font-heading text-xl text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
+                </div>
+              </form>
+            </div>
           </div>
-          <button type="submit" class="rounded bg-green-500 px-3 py-1 text-white hover:bg-green-600">Create
-            Photographer</button>
-        </form>
+        </div>
       </div>
     </div>
-  </div>
 </x-app-layout>
-
 <script>
-  const dashboardType = "{{ $dashboardType }}";
-
   jQuery(document).ready(function() {
-    function fetchPhotographers(query = '') {
+    jQuery('#photographer-search').on('keyup', function() {
+      let query = jQuery(this).val();
+      const dashboardType = "{{ $dashboardType }}";
+
       $.ajax({
         url: `/${dashboardType}/photographer-search`,
-        method: 'GET',
+        type: 'GET',
         data: {
           query: query
         },
         success: function(data) {
+          console.log(data.html);
           if (data.html.trim() === '') {
-            jQuery('#photographyTable tbody').empty();
-            jQuery('#noPhotographersMessage').removeClass('hidden');
+            jQuery('#photographerTable').hide();
+            jQuery('#photographer-table-title').hide();
+            jQuery('#nophotographerMessage').removeClass('hidden');
+            jQuery('#create-photographer-form').show();
           } else {
-            jQuery('#photographyTable tbody').html(data.html);
-            jQuery('#noPhotographersMessage').addClass('hidden');
+            jQuery('#photographerTable tbody').html(data.html);
+            jQuery('#nophotographerMessage').addClass('hidden');
           }
         }
       });
-    }
-
-    // Initial fetch of bands
-    fetchPhotographers();
-
-    // Search functionality
-    jQuery('#photographerSearch').on('keyup', function() {
-      let query = jQuery(this).val();
-      fetchPhotographers(query);
     });
 
-    // Join band functionality
-    jQuery(document).on('click', '.join-photographer-btn', function(e) {
-      e.preventDefault();
-      let photographerId = jQuery(this).data('photographer-id');
-      console.log(photographerId);
+    // Event delegation for dynamically created buttons
+    jQuery(document).on('click', '.join-photographer-btn', function() {
+      const photographerId = jQuery(this).data('photographer-id'); // Retrieve the id from data-id attribute
+      linkUserToPhotographer(photographerId); // Call your function
+    });
 
+    function linkUserToPhotographer(photographerId) {
+      const dashboardType = "{{ $dashboardType }}";
       $.ajax({
-        url: `/${dashboardType}/photographer-journey/link/${photographerId}`,
-        method: 'POST',
+        url: `/${dashboardType}/photographer-journey/join/${photographerId}`,
+        type: 'POST',
         data: {
-          photographer_id: photographerId,
-          _token: '{{ csrf_token() }}'
+          _token: '{{ csrf_token() }}',
+          serviceable_id: photographerId
         },
         success: function(response) {
-          showSuccessNotification(response.message);
-          setTimeout(function() {
-            window.location.href = response.redirect_url;
-          }, 3000);
+          if (response.success) {
+            showSuccessNotification(response.message);
+            window.location.href = response.redirect;
+          }
         },
         error: function(xhr) {
           let errorMessage = xhr.responseJSON.message || 'Something went wrong!';
           showFailureNotification(errorMessage);
         }
       });
-    });
+    }
   });
 </script>

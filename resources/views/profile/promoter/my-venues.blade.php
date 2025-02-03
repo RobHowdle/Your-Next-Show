@@ -1,21 +1,22 @@
 <header>
   <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Tell us about the venues you\'ve worked with') }}
+    {{ __('The venues that you have worked with') }}
   </h2>
 </header>
 <form method="POST" action="{{ route('promoter.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}"
-  class="space-y-8">
+  class="mt-6">
   @csrf
   @method('PUT')
   <div class="group mb-6">
-    <x-textarea-input class="summernote" id="myVenues" name="myVenues"></x-textarea-input>
+    <x-input-label-dark for="myVenues">Where have you hosted your events?</x-input-label-dark>
+    <x-textarea-input id="myVenues" name="myVenues">{{ old('myVenues', $myVenues ?? '') }}</x-textarea-input>
+    {{-- <x-textarea-input class="summernote" id="myVenues" name="myVenues"></x-textarea-input> --}}
     @error('myVenues')
       <p class="yns_red mt-1 text-sm">{{ $message }}</p>
     @enderror
   </div>
-  <div id="suggestions"
-    style="display:none; position: absolute; background: white; border: 1px solid #ccc; z-index: 1000;"></div>
-
+  {{-- <div id="suggestions"
+    style="display:none; position: absolute; background: white; border: 1px solid #ccc; z-index: 1000;"></div> --}}
 
   <div class="flex items-center gap-4">
     <button type="submit"

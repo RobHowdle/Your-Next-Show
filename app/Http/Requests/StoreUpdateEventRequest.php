@@ -8,8 +8,14 @@ class StoreUpdateEventRequest extends FormRequest
 {
     public function authorize()
     {
-        // Determine if the user is authorized to make this request.
         return true;
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'on_the_door_ticket_price' => $this->on_the_door_ticket_price ?? 0,
+        ]);
     }
 
     public function rules()
@@ -19,34 +25,38 @@ class StoreUpdateEventRequest extends FormRequest
             'event_date' => 'required|date_format:d-m-Y',
             'event_start_time' => 'required|date_format:H:i',
             'event_end_time' => 'nullable|date_format:H:i',
-            'event_description' => 'nullable|string',
+            'promoter_ids' => 'nullable|array',
+            'promoter_ids.*' => 'integer|exists:promoters,id',
+            'event_description' => 'required|string',
             'facebook_event_url' => 'nullable|url',
             'ticket_url' => 'nullable|url',
-            'otd_ticket_price' => 'required|numeric',
+            'on_the_door_ticket_price' => 'nullable|numeric',
             'venue_id' => 'required|integer|exists:venues,id',
             'headliner' => 'required|string',
             'headliner_id' => 'required|integer',
-            'mainSupport' => 'required|string',
-            'main_support_id' => 'required|integer',
-            'artist' => 'nullable|array',
-            'band.*' => 'nullable|string',
-            'band_id' => 'required|array',
-            'band_id.*' => 'required|integer',
+            'main_support' => 'nullable|string',
+            'main_support_id' => 'nullable|integer',
+            'bands' => 'nullable|string',
+            'bands_ids' => 'nullable|array',
+            'bands_ids.*' => 'nullable|integer',
             'opener' => 'nullable|string',
-            'opener_id' => 'required|integer',
+            'opener_id' => 'nullable|integer',
         ];
 
         $rules['poster_url'] = [
             'nullable',
+            'max:10240',
             function ($attribute, $value, $fail) {
-                // Check if `poster_url` is a file upload
                 if ($this->file('poster_url')) {
-                    // Validate as an image file if it's a file upload
-                    if (!$value->isValid() || !in_array($value->extension(), ['jpeg', 'jpg', 'png', 'webp', 'svg'])) {
-                        $fail('The poster must be a valid image file (jpeg, jpg, png, webp, svg).');
+                    if (!$value->isValid()) {
+                        if ($value->getError() === UPLOAD_ERR_INI_SIZE) {
+                            $maxSize = ini_get('upload_max_filesize');
+                            $fail("The poster file size must not exceed {$maxSize}.");
+                        } elseif (!in_array($value->extension(), ['jpeg', 'jpg', 'png', 'webp', 'svg'])) {
+                            $fail('The poster must be a valid image file (jpeg, jpg, png, webp, svg).');
+                        }
                     }
                 } elseif (is_string($value)) {
-                    // If it's a string, validate as an existing URL
                     if (!preg_match('/\.(jpeg|jpg|png|webp|svg)$/i', $value)) {
                         $fail('The poster URL must be a valid image URL.');
                     }
@@ -59,7 +69,13 @@ class StoreUpdateEventRequest extends FormRequest
             $rules['poster_url'][] = 'required';
         }
 
-
         return $rules;
+    }
+
+    public function messages()
+    {
+        return [
+            'poster_url.max' => 'The poster file size must not exceed 10MB.'
+        ];
     }
 }

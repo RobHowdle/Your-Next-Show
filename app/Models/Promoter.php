@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Venue;
 use App\Models\PromoterReview;
+use App\Models\Traits\HasVerification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Promoter extends Model
 {
+    use HasVerification;
     use HasFactory;
     use SoftDeletes;
 
@@ -31,11 +33,12 @@ class Promoter extends Model
         'contact_number',
         'contact_email',
         'contact_link',
+        'is_verified',
+        'verified_at',
     ];
 
     protected $casts = [
-        'contact_links' => 'array',
-        'genre' => 'array',
+        'contact_link' => 'array',
     ];
 
     public function venues()
@@ -67,6 +70,11 @@ class Promoter extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id');
+    }
+
+    public function apiKeys()
+    {
+        return $this->morphMany(ApiKey::class, 'serviceable');
     }
 }

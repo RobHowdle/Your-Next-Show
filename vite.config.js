@@ -19,7 +19,7 @@ export default defineConfig({
     },
     build: {
         rollupOptions: {
-            external: ["summernote/dist/summernote-lite.js"], // External resources
+            // external: ["summernote/dist/summernote-lite.js"], // External resources
         },
     },
 });

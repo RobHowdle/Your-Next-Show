@@ -8,12 +8,15 @@ use Illuminate\View\Component;
 
 class DesignStylesAndMediums extends Component
 {
+    public $styles;
+    public $print;
     /**
      * Create a new component instance.
      */
-    public function __construct()
+    public function __construct($styles = null, $print = null)
     {
-        //
+        $this->styles = $styles;
+        $this->print = $print;
     }
 
     /**
