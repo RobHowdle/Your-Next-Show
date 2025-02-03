@@ -103,7 +103,7 @@ class VenueController extends Controller
      */
     public function show(string $slug)
     {
-        $venue = Venue::where('name', '=', $slug)->with('extraInfo')->first();
+        $venue = Venue::where('name', $slug)->with('extraInfo')->first();
         $venueId = $venue->id;
         $existingPromoters = $venue->promoters;
 
@@ -111,7 +111,6 @@ class VenueController extends Controller
 
         $platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
         $venue->platforms = $platforms;
-
 
         $overallScore = VenueReview::calculateOverallScore($venueId);
         $overallReviews[$venueId] = $this->renderRatingIcons($overallScore);
@@ -140,6 +139,7 @@ class VenueController extends Controller
             'averagePromotionRating',
             'averageQualityRating',
             'reviewCount',
+            'recentReviews',
             'platforms',
         ))
             ->with([

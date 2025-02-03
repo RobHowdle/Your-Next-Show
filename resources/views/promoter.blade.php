@@ -181,7 +181,8 @@
         {{-- <x-suggestion-block :existingVenues="$existingVenues" :venueWithHighestRating="$venueWithHighestRating" :photographerWithHighestRating="$photographerWithHighestRating" :videographerWithHighestRating="$videographerWithHighestRating" :bandWithHighestRating="$bandWithHighestRating"
           :designerWithHighestRating="$designerWithHighestRating" /> --}}
 
-        <x-review-modal title="{{ $promoter->name }}" route="submit-venue-review" profileId="{{ $promoter->id }}" />
+        <x-review-modal title="{{ $promoter->name }}" serviceType="promoter" profileId="{{ $promoter->id }}"
+          service="{{ $promoter->name }}" />
       </div>
     </div>
   </div>

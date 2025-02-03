@@ -11,14 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class PromoterController extends Controller
 {
-    protected $dashboardType;
-
-    public function __construct(Request $request)
-    {
-        $this->dashboardType = $request->dashboardType;
-        view()->share('dashboardType', $this->dashboardType);
-    }
-
     /**
      * Helper function to render rating icons
      */
@@ -117,8 +109,7 @@ class PromoterController extends Controller
         $promoter->platforms = $platforms;
 
         // Add the processed data to the venue
-        $recentReviews = PromoterReview::getRecentReviewsForPromoter($promoterId);
-        $promoter->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
+        $recentReviews = PromoterReview::getRecentReviews($promoterId);
 
         $overallScore = PromoterReview::calculateOverallScore($promoterId);
         $overallReviews[$promoterId] = $this->renderRatingIcons($overallScore);
@@ -129,6 +120,9 @@ class PromoterController extends Controller
         $averagePromotionRating = PromoterReview::calculateAverageScore($promoterId, 'promotion_rating');
         $averageQualityRating = PromoterReview::calculateAverageScore($promoterId, 'quality_rating');
         $reviewCount = PromoterReview::getReviewCount($promoterId);
+        $recentReviews = PromoterReview::getRecentReviews($promoterId);
+        $promoter->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
+
 
         $genres = json_decode($promoter->genre);
 
@@ -142,7 +136,9 @@ class PromoterController extends Controller
             'averageRopRating',
             'averagePromotionRating',
             'averageQualityRating',
-            'reviewCount'
+            'reviewCount',
+            'recentReviews',
+            'platforms',
         ))->with([
             'venueWithHighestRating' => $suggestions['venue'],
             'photographerWithHighestRating' => $suggestions['photographer'],
