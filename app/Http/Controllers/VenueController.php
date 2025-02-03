@@ -112,8 +112,6 @@ class VenueController extends Controller
         $platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
         $venue->platforms = $platforms;
 
-        $recentReviews = VenueReview::getRecentReviewsForVenue($venueId);
-        $venue->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
         $overallScore = VenueReview::calculateOverallScore($venueId);
         $overallReviews[$venueId] = $this->renderRatingIcons($overallScore);
@@ -124,6 +122,9 @@ class VenueController extends Controller
         $averagePromotionRating = VenueReview::calculateAverageScore($venueId, 'promotion_rating');
         $averageQualityRating = VenueReview::calculateAverageScore($venueId, 'quality_rating');
         $reviewCount = VenueReview::getReviewCount($venueId);
+        $recentReviews = VenueReview::getRecentReviews($venueId);
+        $venue->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
+
 
         $genres = json_decode($venue->genre);
         $genreNames = collect($genres)->keys()->toArray();
@@ -138,7 +139,8 @@ class VenueController extends Controller
             'averageRopRating',
             'averagePromotionRating',
             'averageQualityRating',
-            'reviewCount'
+            'reviewCount',
+            'platforms',
         ))
             ->with([
                 'promoterWithHighestRating' => $suggestions['promoter'],
