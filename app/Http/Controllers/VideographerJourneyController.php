@@ -70,7 +70,10 @@ class VideographerJourneyController extends Controller
             ], 400);
         }
 
-        $user->otherService('videography')->attach($videographerId);
+        $user->otherService('videography')->attach($videographerId, [
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
 
         return response()->json([
             'success' => true,

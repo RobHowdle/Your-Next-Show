@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Promoter;
 use App\Models\VenueReview;
 use App\Models\VenueExtraInfo;
+use App\Models\Traits\HasVerification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Venue extends Model
 {
+    use HasVerification;
     use HasFactory;
     use SoftDeletes;
 
@@ -37,6 +39,8 @@ class Venue extends Model
         'description',
         'additional_info',
         'logo_url',
+        'is_verified',
+        'verified_at',
     ];
 
     protected $casts = [

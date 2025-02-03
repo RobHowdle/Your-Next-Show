@@ -26,8 +26,11 @@ class StoreUpdatePackages extends FormRequest
             'packages.*.title' => 'required|string|max:255',
             'packages.*.description' => 'required|string',
             'packages.*.price' => 'required|numeric|min:0',
+            'packages.*.job_type' => 'string',
             'packages.*.items' => 'array',
-            'packages.*.items.*' => 'string|max:255'
+            'packages.*.items.*' => 'string|max:255',
+            'packages.*.lead_time' => 'numeric',
+            'packages.*.lead_time_unit' => 'string',
         ];
     }
 

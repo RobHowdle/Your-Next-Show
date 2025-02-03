@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasVerification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class OtherService extends Model
 {
+    use HasVerification;
     use HasFactory;
     use SoftDeletes;
 
@@ -32,13 +34,17 @@ class OtherService extends Model
         'genre',
         'styles',
         'print',
+        'default_lead_time_value',
+        'default_lead_time_unit',
         'contact_name',
         'contact_number',
         'contact_email',
         'contact_link',
         'portfolio_link',
         'portfolio_images',
-        'services'
+        'services',
+        'is_verified',
+        'verified_at',
     ];
 
     protected $casts = [
@@ -158,13 +164,24 @@ class OtherService extends Model
             ->wherePivot('serviceable_type', '=', Job::class);
     }
 
-    public function review()
-    {
-        return $this->hasMany(OtherServicesReview::class);
-    }
-
     public function apiKeys()
     {
         return $this->morphMany(ApiKey::class, 'serviceable');
+    }
+
+    public function reviews($dashboardType)
+    {
+        switch ($dashboardType) {
+            case 'artist':
+                return $this->hasMany(BandReviews::class, 'other_services_id');
+            case 'designer':
+                return $this->hasMany(DesignerReviews::class, 'other_services_id');
+            case 'photographer':
+                return $this->hasMany(PhotographerReviews::class, 'other_services_id');
+            case 'videographer':
+                return $this->hasMany(VideographyReviews::class, 'other_services_id');
+            default:
+                return null;
+        }
     }
 }

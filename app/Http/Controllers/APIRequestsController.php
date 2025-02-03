@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Venue;
 use App\Models\ApiKeys;
 use App\Models\Promoter;
+use App\Models\ServiceUser;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Models\UserModuleSetting;
@@ -445,55 +446,151 @@ class APIRequestsController extends Controller
         ]);
     }
 
-    public function updatePackages($dashboardType, StoreUpdatePackages $request, $id)
+    public function updatePackages($dashboardType, StoreUpdatePackages $request)
     {
         try {
-            DB::beginTransaction();
+            $user = Auth::user();
 
-            $user = User::findOrFail($id);
-            $userId = $user->id;
-            $validated = $request->validated();
-
-            \Log::info('Updating packages for user:', [
-                'user_id' => $userId,
-                'dashboard_type' => $dashboardType,
-                'packages' => $validated['packages']
-            ]);
-
-            $service = match ($dashboardType) {
-                'designer' => $user->otherService('Designer')->first(),
-                'photographer' => $user->otherService('Photographer')->first(),
-                'videographer' => $user->otherService('Videographer')->first(),
-                default => null
-            };
-
-            if (!$service) {
-                throw new \Exception('Service not found for user');
+            if (!$user) {
+                \Log::error('User not authenticated');
+                return response()->json(['error' => 'Unauthenticated'], 401);
             }
 
-            $service->update([
-                'packages' => json_encode($validated['packages'])
-            ]);
+            $packages = $request->input('packages', []);
 
-            DB::commit();
+            switch ($dashboardType) {
+                case 'venue':
+                    $model = $user->venues()->first();
+                    break;
+                case 'promoter':
+                    $model = $user->promoters()->first();
+                    break;
+                default:
+                    $model = $user->otherService('service')->first();
+            }
+
+            if (!$model) {
+                \Log::error('Model not found for package update', [
+                    'user_id' => $user->id,
+                    'type' => $request->input('type')
+                ]);
+                return response()->json(['error' => 'Service not found'], 404);
+            }
+
+            // Handle empty packages case
+            if (empty($packages)) {
+                $model->packages = json_encode([]);
+            } else {
+                $model->packages = json_encode($packages);
+            }
+
+            try {
+                $model->save();
+                return response()->json(['success' => true]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to save packages:', [
+                    'error' => $e->getMessage(),
+                    'user_id' => $user->id,
+                    'packages' => $packages
+                ]);
+                return response()->json(['error' => 'Failed to save packages: ' . $e->getMessage()], 500);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Package update failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'Update failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function leaveService($dashboardType, Request $request, $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $service = $request->input('service');
+
+            // Delete service user relationship
+            ServiceUser::where('user_id', $id)
+                ->where('serviceable_type', 'like', '%' . $dashboardType . '%')
+                ->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Packages updated successfully'
+                'message' => 'Successfully left service'
             ]);
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            \Log::error('Failed to update packages:', [
+            \Log::error('Error leaving service:', [
                 'error' => $e->getMessage(),
-                'user_id' => $userId ?? null,
-                'dashboard_type' => $dashboardType
+                'user_id' => $id
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update packages: ' . $e->getMessage()
+                'message' => 'Failed to leave service'
             ], 500);
         }
+    }
+
+    public function searchClients(Request $request)
+    {
+        $search = $request->input('query');
+
+        // Search users by first_name and last_name
+        $users = User::where(function ($query) use ($search) {
+            $query->where('first_name', 'LIKE', "%{$search}%")
+                ->orWhere('last_name', 'LIKE', "%{$search}%")
+                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+        })->get(['id', 'first_name', 'last_name'])
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => "{$user->first_name} {$user->last_name}",
+                    'service_type' => 'User'
+                ];
+            });
+
+        // Search venues
+        $venues = Venue::where('name', 'LIKE', "%{$search}%")
+            ->get()
+            ->map(function ($venue) {
+                return [
+                    'id' => $venue->id,
+                    'name' => $venue->name,
+                    'service_type' => 'Venue'
+                ];
+            });
+
+        // Search promoters
+        $promoters = Promoter::where('name', 'LIKE', "%{$search}%")
+            ->get()
+            ->map(function ($promoter) {
+                return [
+                    'id' => $promoter->id,
+                    'name' => $promoter->name,
+                    'service_type' => 'Promoter'
+                ];
+            });
+
+        // Search other services
+        $otherServices = OtherService::where('name', 'LIKE', "%{$search}%")
+            ->with('otherServiceList')
+            ->get()
+            ->map(function ($otherService) {
+                return [
+                    'id' => $otherService->id,
+                    'name' => $otherService->name,
+                    'service_type' => $otherService->otherServiceList->service_name ?? null,
+                ];
+            });
+
+        // Merge all results
+        $clients = collect()
+            ->merge($users)
+            ->merge($venues)
+            ->merge($promoters)
+            ->merge($otherServices);
+
+        return response()->json($clients);
     }
 }

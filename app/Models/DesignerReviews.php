@@ -41,7 +41,7 @@ class DesignerReviews extends Model
         return $this->belongsTo(OtherServiceList::class, 'other_services_list_id');
     }
 
-    public static function getRecentReviewsForDesigner($otherServiceId)
+    public static function getRecentReviews($otherServiceId)
     {
         return self::where('other_services_id', $otherServiceId)
             ->whereNull('deleted_at')
@@ -68,26 +68,29 @@ class DesignerReviews extends Model
 
         // Calculate the total and count of each rating
         $totalCommunication = 0;
-        $totalMusic = 0;
-        $totalPromotion = 0;
-        $totalGigQuality = 0;
+        $totalFlexibility = 0;
+        $totalProfessionalism = 0;
+        $totalQuality = 0;
+        $totalPricing = -0;
         $totalReviews = $reviews->count();
 
         foreach ($reviews as $review) {
             $totalCommunication += intval($review->communication_rating);
-            $totalMusic += intval($review->music_rating);
-            $totalPromotion += intval($review->promotion_rating);
-            $totalGigQuality += intval($review->gig_quality_rating);
+            $totalFlexibility += intval($review->flexibility_rating);
+            $totalProfessionalism += intval($review->professionalism_rating);
+            $totalQuality += intval($review->design_quality_rating);
+            $totalPricing += intval($review->price_rating);
         }
 
         // Calculate the average for each rating
         $averageCommunication = $totalReviews > 0 ? $totalCommunication / $totalReviews : 0;
-        $averageROP = $totalReviews > 0 ? $totalMusic / $totalReviews : 0;
-        $averagePromotion = $totalReviews > 0 ? $totalPromotion / $totalReviews : 0;
-        $averageQuality = $totalReviews > 0 ? $totalGigQuality / $totalReviews : 0;
+        $averageFlexibility = $totalReviews > 0 ? $totalFlexibility / $totalReviews : 0;
+        $averageProfessionalism = $totalReviews > 0 ? $totalProfessionalism / $totalReviews : 0;
+        $averageQuality = $totalReviews > 0 ? $totalQuality / $totalReviews : 0;
+        $averagePricing = $totalReviews > 0 ? $totalPricing / $totalReviews : 0;
 
         // Calculate the overall score
-        $overallScore = $totalReviews > 0 ? ($averageCommunication + $averageROP + $averagePromotion + $averageQuality) / 4 : 0;
+        $overallScore = $totalReviews > 0 ? ($averageCommunication + $averageFlexibility + $averageProfessionalism + $averageQuality + $averagePricing) / 5 : 0;
 
         // Round it 2dp
         $overallScore = round($overallScore, 2);

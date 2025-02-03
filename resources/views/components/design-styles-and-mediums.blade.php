@@ -15,7 +15,7 @@
   @csrf
   @method('PUT')
   @if ($dashboardType === 'designer')
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-1">
+    <div class="grid grid-cols-2 gap-4 md:grid-cols-1">
       <x-input-label-dark>What are your design styles?</x-input-label-dark>
       <div class="grid grid-cols-2 gap-4">
         @foreach ($designStyles as $style)

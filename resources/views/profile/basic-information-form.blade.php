@@ -115,6 +115,13 @@
         class="text-sm text-gray-600 dark:text-gray-400">{{ __('Saved.') }}</p>
     @endif
   </div>
+
+  <div class="flex items-center gap-4">
+    <button type="button" onclick="confirmLeaveCompany()"
+      class="mt-8 rounded-lg border border-red-600 bg-red-600 px-4 py-2 font-heading font-bold text-white transition duration-150 ease-in-out hover:bg-red-700">
+      Leave Company
+    </button>
+  </div>
 </form>
 <script>
   function previewLogo(event) {
@@ -130,7 +137,6 @@
     // Listen for the 'input' event on the address input field
     jQuery('#w3w').on('input', function() {
       var address = jQuery(this).val();
-      console.log(address);
 
       if (address.length >= 7) { // Send request only if at least 3 characters are entered
         setTimeout(function() {
@@ -180,7 +186,6 @@
         processData: false,
         contentType: false,
         success: function(response) {
-          console.log(response);
           if (response.success) {
             showSuccessNotification(response.message);
             setTimeout(() => {
@@ -197,4 +202,38 @@
       });
     });
   });
+
+  function confirmLeaveCompany() {
+    if (confirm('DON\'T PUSH UNLESS YOU REALLY, REALLY, MEAN IT!')) {
+      const service = '{{ $profileData['name'] }}';
+      const userId = '{{ $user->id }}';
+      const dashboardType = '{{ $dashboardType }}';
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+      fetch(`/api/profile/${dashboardType}/${userId}/leave-service`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            service: service,
+            userId: userId
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            window.location.href = '/dashboard';
+          } else {
+            alert(data.message || 'Failed to leave service');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while leaving the service');
+        });
+    }
+  }
 </script>

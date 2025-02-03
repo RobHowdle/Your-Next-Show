@@ -70,7 +70,10 @@ class DesignerJourneyController extends Controller
             ], 400);
         }
 
-        $user->otherService('designer')->attach($designerId);
+        $user->otherService('designer')->attach($designerId, [
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
 
         return response()->json([
             'success' => true,

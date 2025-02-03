@@ -104,123 +104,125 @@ class ServiceDataHelper
     {
         $designer = $user->otherService("Designer")->first();
 
-        $serviceableId = $designer->id;
-        $serviceableType = 'App\Models\OtherService';
+        if ($designer) {
+            $serviceableId = $designer->id;
+            $serviceableType = 'App\Models\OtherService';
 
-        // Basic Information
-        $name = $designer ? $designer->name : '';
-        $location = $designer ? $designer->location : '';
-        $postalTown = $designer ? $designer->postal_town : '';
-        $lat = $designer ? $designer->latitude : '';
-        $long = $designer ? $designer->longitude : '';
-        $logo = $designer && $designer->logo_url
-            ? (filter_var($designer->logo_url, FILTER_VALIDATE_URL) ? $designer->logo_url : Storage::url($designer->logo_url))
-            : asset('images/system/yns_no_image_found.png');
+            // Basic Information
+            $name = $designer ? $designer->name : '';
+            $location = $designer ? $designer->location : '';
+            $postalTown = $designer ? $designer->postal_town : '';
+            $lat = $designer ? $designer->latitude : '';
+            $long = $designer ? $designer->longitude : '';
+            $logo = $designer && $designer->logo_url
+                ? (filter_var($designer->logo_url, FILTER_VALIDATE_URL) ? $designer->logo_url : Storage::url($designer->logo_url))
+                : asset('images/system/yns_no_image_found.png');
 
-        $contact_name = $designer ? $designer->contact_name : '';
-        $contact_email = $designer ? $designer->contact_email : '';
-        $contact_number = $designer ? $designer->contact_number : '';
-        $contactLinks = $designer ? json_decode($designer->contact_link, true) : [];
+            $contact_name = $designer ? $designer->contact_name : '';
+            $contact_email = $designer ? $designer->contact_email : '';
+            $contact_number = $designer ? $designer->contact_number : '';
+            $contactLinks = $designer ? json_decode($designer->contact_link, true) : [];
 
-        $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+            $platforms = [];
+            $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
-        // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
-            $platforms[$platform] = '';  // Set default to empty string
-        }
-
-        // Check if the contactLinks array exists and contains social links
-        if ($contactLinks) {
+            // Initialize the platforms array with empty strings for each platform
             foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
-                    $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                $platforms[$platform] = '';  // Set default to empty string
+            }
+
+            // Check if the contactLinks array exists and contains social links
+            if ($contactLinks) {
+                foreach ($platformsToCheck as $platform) {
+                    // Only add the link if the platform exists in the $contactLinks array
+                    if (isset($contactLinks[$platform])) {
+                        $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                    }
                 }
             }
-        }
 
-        $description = $designer ? $designer->description : '';
+            $description = $designer ? $designer->description : '';
 
-        // Genres
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true) ?? [];
-        $isAllGenres = in_array('All', $data);
-        $genres = $data['genres'];
-        $profileGenres = is_array($designer->genre) ? $designer->genre : json_decode($designer->genre, true);
-        $normalizedProfileGenres = [];
-        if ($profileGenres) {
-            foreach ($profileGenres as $genreName => $genreData) {
-                $normalizedProfileGenres[$genreName] = [
-                    'all' => $genreData['all'] ?? 'false',
-                    'subgenres' => isset($genreData['subgenres'][0])
-                        ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-                        : []
-                ];
-            }
-        }
-
-        $bandTypes = json_decode($designer->band_type) ?? [];
-
-        $groupedEnvironmentTypes = config('environment_types');
-        $environmentTypes = json_decode($designer->environment_type, true);
-        $groupedData = [];
-
-        foreach ($groupedEnvironmentTypes as $groupName => $items) {
-            foreach ($items as $item) {
-                if (in_array($item, $environmentTypes)) {
-                    $groupedData[$groupName][] = $item;
+            // Genres
+            $genreList = file_get_contents(public_path('text/genre_list.json'));
+            $data = json_decode($genreList, true) ?? [];
+            $isAllGenres = in_array('All', $data);
+            $genres = $data['genres'];
+            $profileGenres = is_array($designer->genre) ? $designer->genre : json_decode($designer->genre, true);
+            $normalizedProfileGenres = [];
+            if ($profileGenres) {
+                foreach ($profileGenres as $genreName => $genreData) {
+                    $normalizedProfileGenres[$genreName] = [
+                        'all' => $genreData['all'] ?? 'false',
+                        'subgenres' => isset($genreData['subgenres'][0])
+                            ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
+                            : []
+                    ];
                 }
             }
-        }
 
-        $workingTimes = is_array($designer->working_times) ? $designer->working_times : json_decode($designer->working_times, true);
-        $styles = is_array($designer->styles) ? $designer->styles : json_decode($designer->styles, true);
-        $print = is_array($designer->print) ? $designer->print : json_decode($designer->print, true);
-        $portfolioLink = $designer ? $designer->portfolio_link : '';
-        $waterMarkedPortfolioImages = $designer->portfolio_images;
+            $bandTypes = json_decode($designer->band_type) ?? [];
 
-        if (!is_array($waterMarkedPortfolioImages)) {
-            try {
-                $waterMarkedPortfolioImages = json_decode($waterMarkedPortfolioImages, true);
-            } catch (\Exception $e) {
-                throw new \Exception("Portfolio images could not be converted to an array.");
+            $groupedEnvironmentTypes = config('environment_types');
+            $environmentTypes = json_decode($designer->environment_type, true);
+            $groupedData = [];
+
+            foreach ($groupedEnvironmentTypes as $groupName => $items) {
+                foreach ($items as $item) {
+                    if (in_array($item, $environmentTypes)) {
+                        $groupedData[$groupName][] = $item;
+                    }
+                }
             }
+
+            $workingTimes = is_array($designer->working_times) ? $designer->working_times : json_decode($designer->working_times, true);
+            $styles = is_array($designer->styles) ? $designer->styles : json_decode($designer->styles, true);
+            $print = is_array($designer->print) ? $designer->print : json_decode($designer->print, true);
+            $portfolioLink = $designer ? $designer->portfolio_link : '';
+            $waterMarkedPortfolioImages = $designer->portfolio_images;
+
+            if (!is_array($waterMarkedPortfolioImages)) {
+                try {
+                    $waterMarkedPortfolioImages = json_decode($waterMarkedPortfolioImages, true);
+                } catch (\Exception $e) {
+                    throw new \Exception("Portfolio images could not be converted to an array.");
+                }
+            }
+
+            $packages = $designer ? json_decode($designer->packages) : [];
+
+            return [
+                'designer' => $designer,
+                'designerId'  => $designer->id,
+                'name' => $name,
+                'location' => $location,
+                'postalTown' => $postalTown,
+                'lat' => $lat,
+                'long' => $long,
+                'logo' => $logo,
+                'description' => $description,
+                'contact_name' => $contact_name,
+                'contact_email' => $contact_email,
+                'contact_number' => $contact_number,
+                'platforms' => $platforms,
+                'platformsToCheck' => $platformsToCheck,
+                'genres' => $genres,
+                'profileGenres' => $profileGenres,
+                'isAllGenres' => $isAllGenres,
+                'normalizedProfileGenres' => $normalizedProfileGenres,
+                'bandTypes' => $bandTypes,
+                'portfolio_link' => $portfolioLink,
+                'serviceableId' => $serviceableId,
+                'serviceableType' => $serviceableType,
+                'waterMarkedPortfolioImages' => $waterMarkedPortfolioImages,
+                'environmentTypes' => $environmentTypes,
+                'groups' => $groupedData,
+                'workingTimes' => $workingTimes,
+                'styles' => $styles,
+                'print' => $print,
+                'packages' => $packages
+            ];
         }
-
-        $packages = $designer ? json_decode($designer->packages) : [];
-
-        return [
-            'designer' => $designer,
-            'designerId'  => $designer->id,
-            'name' => $name,
-            'location' => $location,
-            'postalTown' => $postalTown,
-            'lat' => $lat,
-            'long' => $long,
-            'logo' => $logo,
-            'description' => $description,
-            'contact_name' => $contact_name,
-            'contact_email' => $contact_email,
-            'contact_number' => $contact_number,
-            'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
-            'genres' => $genres,
-            'profileGenres' => $profileGenres,
-            'isAllGenres' => $isAllGenres,
-            'normalizedProfileGenres' => $normalizedProfileGenres,
-            'bandTypes' => $bandTypes,
-            'portfolio_link' => $portfolioLink,
-            'serviceableId' => $serviceableId,
-            'serviceableType' => $serviceableType,
-            'waterMarkedPortfolioImages' => $waterMarkedPortfolioImages,
-            'environmentTypes' => $environmentTypes,
-            'groups' => $groupedData,
-            'workingTimes' => $workingTimes,
-            'styles' => $styles,
-            'print' => $print,
-            'packages' => $packages
-        ];
     }
 
     public function getPhotographerData(User $user)
