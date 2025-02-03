@@ -58,6 +58,7 @@ Route::get('/services', [OtherServiceController::class, 'index'])->name('other')
 Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filterCheckboxesSearch'])->name('other.filterCheckboxesSearch');
 Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
 Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService');
+Route::post('/services/{serviceType}/{name}/submitReview', [OtherServiceController::class, 'submitReview'])->name('submit-single-service-review');
 
 // Gig Guide
 Route::get('/gig-guide', [GigGuideController::class, 'index'])->name('gig-guide');
@@ -177,15 +178,14 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
 
     // Reviews
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
-        Route::get('/reviews/{filter?}', [ReviewController::class, 'getPromoterReviews'])->name('admin.dashboard.get-reviews');
+        Route::get('/reviews/{filter?}', [ReviewController::class, 'getReviews'])->name('admin.dashboard.get-reviews');
         Route::get('/filtered-reviews/{filter?}', [ReviewController::class, 'fetchReviews'])->name('admin.dashboard.fetch-reviews');
         Route::get('/reviews/pending', [ReviewController::class, 'showPendingReviews'])->name('admin.dashboard.show-pending-reviews');
         Route::get('/reviews/all', [ReviewController::class, 'showAllReviews'])->name('admin.dashboard.show-all-reviews');
-        Route::post('/approve-display/{reviewId}', [ReviewController::class, 'approveDisplayReview'])->name('admin.dashboard.approve-display-review');
-        Route::post('/hide-display-review/{reviewId}', [ReviewController::class, 'hideReview'])->name('admin.dashboard.hide-display-review');
-        Route::post('/approve/{reviewId}', [ReviewController::class, 'approveReview'])->name('admin.dashboard.approve-pending-review');
-        Route::post('/unapprove-review/{reviewId}', [ReviewController::class, 'unapproveReview'])->name('admin.dashboard.unapprove-review');
-        Route::delete('/delete-review/{reviewId}', [ReviewController::class, 'deleteReview'])->name('admin.dashboard.delete-review');
+        Route::post('/reviews/{reviewId}/approve', [ReviewController::class, 'approveReview'])->name('admin.dashboard.reviews.approve');
+        Route::post('/reviews/{reviewId}/show', [ReviewController::class, 'displayReview'])->name('admin.dashboard.reviews.show');
+        Route::post('/reviews/{reviewId}/hide', [ReviewController::class, 'hideReview'])->name('admin.dashboard.reviews.hide');
+        Route::delete('/reviews/{reviewId}/delete', [ReviewController::class, 'deleteReview'])->name('admin.dashboard.reviews.delete');
     });
 
     // Documents
@@ -272,6 +272,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/{dashboardType}/{user}/add-role', [ProfileController::class, 'addRole'])->name('profile.add-role');
     Route::post('/profile/{dashboardType}/{user}/edit-role', [ProfileController::class, 'editRole'])->name('profile.edit-role');
     Route::delete('/profile/{dashboardType}/{user}/delete-role', [ProfileController::class, 'deleteRole'])->name('profile.delete-role');
+    Route::post('/profile/{dashboardType}/{id}/packages/update', [APIRequestsController::class, 'updatePackages'])->name('settings.updatePackages');
 
     // API Key Routes
     Route::put('/profile/{dashboardType}/update-api-key', [ProfileController::class, 'updateAPI'])->name('profile.update-api');

@@ -235,37 +235,58 @@
       const packages = [];
       const packageForms = document.querySelectorAll('.package-form');
 
-      packageForms.forEach((form, index) => {
-        const formData = new FormData(form);
+      packageForms.forEach((form) => {
+        // Get all form inputs
+        const formInputs = form.elements;
+
+        // Find the actual index from form field names
+        const titleField = form.querySelector('input[name^="packages["]');
+        const indexMatch = titleField.name.match(/packages\[(\d+)\]/);
+        const index = indexMatch ? indexMatch[1] : 0;
 
         const packageData = {
-          title: formData.get(`packages[${index}][title]`),
-          description: formData.get(`packages[${index}][description]`),
-          price: formData.get(`packages[${index}][price]`),
-          job_type: formData.get(`packages[${index}][job_type]`),
-          lead_time: formData.get(`packages[${index}][lead_time]`),
-          lead_time_unit: formData.get(`packages[${index}][lead_time_unit]`),
-          items: Array.from(formData.getAll(`packages[${index}][items][]`))
+          title: formInputs[`packages[${index}][title]`].value,
+          description: formInputs[`packages[${index}][description]`].value,
+          price: formInputs[`packages[${index}][price]`].value,
+          job_type: formInputs[`packages[${index}][job_type]`].value,
+          lead_time: formInputs[`packages[${index}][lead_time]`].value,
+          lead_time_unit: formInputs[`packages[${index}][lead_time_unit]`].value,
+          items: Array.from(form.querySelectorAll(`input[name="packages[${index}][items][]"]`))
+            .map(input => input.value)
+            .filter(item => item.trim() !== '')
         };
 
-        packages.push(packageData);
+        // Only add package if it has required fields
+        if (packageData.title && packageData.job_type) {
+          packages.push(packageData);
+        }
       });
 
-      // Send AJAX request
-      fetch(`/api/profile/${dashboardType}/${userId}/packages/update`, {
+      console.log('Packages to save:', packages);
+
+      fetch(`/profile/${dashboardType}/${userId}/packages/update`, { // Remove 'api' prefix
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
           },
           body: JSON.stringify({
             packages: packages
           })
         })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            return response.text().then(text => {
+              console.error('Raw response:', text);
+              throw new Error('Network response was not ok');
+            });
+          }
+          return response.json();
+        })
         .then(data => {
           if (data.success) {
-            showSuccessNotification(data.message);
+            showSuccessNotification(data.message || 'Packages updated successfully');
             setTimeout(() => {
               window.location.reload();
             }, 3000);
@@ -277,9 +298,7 @@
           showFailureNotification(error.message);
           console.error('Error:', error);
         });
-    }
-
-    // Add save button event listener
+    };
     document.querySelector('#save-packages').addEventListener('click', savePackages);
   });
 </script>

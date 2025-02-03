@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout :dashboardType="$dashboardType" :modules="$modules">
   <x-slot name="header">
     <x-sub-nav :userId="$userId" />
   </x-slot>
@@ -10,7 +10,7 @@
           <p class="mb-10 text-4xl font-bold text-white">New Document</p>
           @include('admin.dashboards.forms.new-document-form', [
               'serviceableId' => $serviceableId,
-              'services' => $services,
+              'service' => $service,
               'serviceableType' => $serviceableType,
               'dashboardType' => $dashboardType,
           ])
@@ -20,9 +20,9 @@
               <div class="dz-message" data-dz-message>
                 <span>Drag and drop files here or click to upload</span>
               </div>
-              <input type="hidden" name="serviceable_id" value="{{ $serviceableId }}">
-              <input type="hidden" name="serviceable_type" value="{{ $serviceableType }}">
-              <input type="hidden" id="uploaded_file_path" name="uploaded_file_path">
+              <x-text-input name="serviceable_id" value="{{ $serviceableId }}" />
+              <x-text-input name="serviceable_type" value="{{ $serviceableType }}" />
+              <x-text-input id="uploaded_file_path" name="uploaded_file_path" />
             </form>
           </div>
         </div>
@@ -138,9 +138,7 @@
           showFailureNotification(errorMessage);
           this.removeFile(file);
         });
-        this.on("removedfile", function(file) {
-          // console.log("File removed: ", file.name);
-        });
+        this.on("removedfile", function(file) {});
       },
     });
 

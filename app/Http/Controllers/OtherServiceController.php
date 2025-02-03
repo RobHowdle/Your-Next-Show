@@ -150,33 +150,22 @@ class OtherServiceController extends Controller
         $data = json_decode($genreList, true);
         $genres = $data['genres'];
 
-        switch (ucfirst($serviceName)) {
-            case 'Artist':
-                $singleArtistData = $this->getArtistData($singleService);
-                break;
-            case 'Photography':
-                $singlePhotographerData = $this->getPhotographerData($singleService);
-                break;
-            case 'Videographer':
-                $singleVideographerData = $this->getVideographerData($singleService);
-                break;
-            case 'Designer':
-                $singleDesignerData = $this->getDesignerData($singleService);
-                break;
-        }
+        $serviceData = match ($singleService->services) {
+            'Artist' => $this->getArtistData($singleService),
+            'Photography' => $this->getPhotographerData($singleService),
+            'Videography' => $this->getVideographerData($singleService),
+            'Designer' => $this->getDesignerData($singleService),
+            default => []
+        };
 
         $overallReviews = [];
         $overallScore = OtherServicesReview::calculateOverallScore($singleService->id);
         $overallReviews[$singleService->id] = $this->renderRatingIcons($overallScore);
-
         return view('single-service', [
             'singleService' => $singleService,
             'genres' => $genres,
             'overallReviews' => $overallReviews,
-            'singleArtistData' => $singleArtistData,
-            'singlePhotographerData' => $singlePhotographerData,
-            'singleVideographerData' => $singleVideographerData,
-            'singleDesignerData' => $singleDesignerData,
+            'serviceData' => $serviceData,
         ]);
     }
 
@@ -366,8 +355,9 @@ class OtherServiceController extends Controller
         $platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
         $service->platforms = $platforms;
         $packages = $service ? json_decode($service->packages) : [];
+        $services = collect($packages)->pluck('job_type')->unique()->values()->toArray();
 
-        $overallScore = OtherServicesReview::calculateOverallScore($serviceId);
+        $overallScore = DesignerReviews::calculateOverallScore($serviceId);
         $overallReviews[$serviceId] = $this->renderRatingIcons($overallScore);
 
         $designerAverageCommunicationRating = DesignerReviews::calculateAverageScore($serviceId, 'communication_rating');
@@ -376,8 +366,11 @@ class OtherServiceController extends Controller
         $designerAverageDesignQualityRating = DesignerReviews::calculateAverageScore($serviceId, 'design_quality_rating');
         $designerAveragePriceRating = DesignerReviews::calculateAverageScore($serviceId, 'price_rating');
         $reviewCount = DesignerReviews::getReviewCount($serviceId);
+        $recentReviews = DesignerReviews::getRecentReviews($serviceId);
 
         return [
+            'serviceType' => $service->services,
+            'serviceId' => $serviceId,
             'description' => $description,
             'packages' => $packages,
             'overallScore' => $overallScore,
@@ -388,9 +381,70 @@ class OtherServiceController extends Controller
             'designerAverageDesignQualityRating' => $designerAverageDesignQualityRating,
             'designerAveragePriceRating' => $designerAveragePriceRating,
             'renderRatingIcons' => [$this, 'renderRatingIcons'],
+            'recentReviews' => $recentReviews,
             'reviewCount' => $reviewCount,
             'portfolioImages' => $portfolioImages,
             'portfolioLink' => $portfolioLink,
+            'platforms' => $service->platforms,
+            'services' => $services,
         ];
+    }
+
+    public function submitReview(Request $request, $serviceName, $name)
+    {
+        $formattedName = Str::title(str_replace('-', ' ', $name));
+        $singleService = OtherService::where('name', $formattedName)->first();
+
+        $serviceId = $singleService->id;
+        $serviceType = $singleService->services;
+
+        $otherServicesListId = $singleService->other_service_id;
+
+        // Process rating arrays to get final values
+        $processRating = function ($ratingArray) {
+            return count($ratingArray); // Count checked boxes for final rating
+        };
+
+        switch ($serviceType) {
+            case 'Artist':
+                $bandReview = new BandReviews();
+                $bandReview->other_services_id = $serviceId;
+                $bandReview->other_services_list_id = $otherServicesListId;
+                $bandReview->music_rating = $request->music_rating;
+                $bandReview->promotion_rating = $request->promotion_rating;
+                $bandReview->gig_quality_rating = $request->gig_quality_rating;
+                $bandReview->save();
+                break;
+            case 'Photography':
+                $photographyReview = new PhotographyReviews();
+                $photographyReview->other_services_id = $serviceId;
+                $photographyReview->other_services_list_id = $otherServicesListId;
+                $photographyReview->photo_quality_rating = $request->photo_quality_rating;
+                $photographyReview->save();
+                break;
+            case 'Videography':
+                $videographyReview = new VideographyReviews();
+                $videographyReview->other_services_id = $serviceId;
+                $videographyReview->other_services_list_id = $otherServicesListId;
+                $videographyReview->video_quality_rating = $request->video_quality_rating;
+                $videographyReview->save();
+                break;
+            case 'Designer':
+                $designerReview = new DesignerReviews();
+                $designerReview->other_services_id = $serviceId;
+                $designerReview->other_services_list_id = $otherServicesListId;
+                $designerReview->reviewer_ip = $request->reviewer_ip;
+                $designerReview->communication_rating = $processRating($request->input('communication-rating', []));
+                $designerReview->flexibility_rating = $processRating($request->input('flexibility-rating', []));
+                $designerReview->professionalism_rating = $processRating($request->input('professionalism-rating', []));
+                $designerReview->design_quality_rating = $processRating($request->input('designer_quality-rating', []));
+                $designerReview->price_rating = $processRating($request->input('price-rating', []));
+                $designerReview->author = $request->review_author;
+                $designerReview->review = $request->review_message;
+                $designerReview->save();
+                break;
+        }
+
+        return response()->json(['success' => true, 'message' => 'Review submitted successfully']);
     }
 }

@@ -17,35 +17,35 @@ class OtherService extends Model
     protected $table = 'other_services';
 
     protected $fillable = [
-            'name',
-            'logo_url',
-            'location',
-            'postal_town',
-            'longitude',
-            'latitude',
-            'other_service_id',
-            'description',
-            'packages',
-            'environment_type',
-            'working_times',
-            'members',
-            'stream_urls',
-            'band_type',
-            'genre',
-            'styles',
-            'print',
-            'default_lead_time_value',
-            'default_lead_time_unit',
-            'contact_name',
-            'contact_number',
-            'contact_email',
-            'contact_link',
-            'portfolio_link',
-            'portfolio_images',
-            'services',
-            'is_verified',
-            'verified_at',
-        ];
+        'name',
+        'logo_url',
+        'location',
+        'postal_town',
+        'longitude',
+        'latitude',
+        'other_service_id',
+        'description',
+        'packages',
+        'environment_type',
+        'working_times',
+        'members',
+        'stream_urls',
+        'band_type',
+        'genre',
+        'styles',
+        'print',
+        'default_lead_time_value',
+        'default_lead_time_unit',
+        'contact_name',
+        'contact_number',
+        'contact_email',
+        'contact_link',
+        'portfolio_link',
+        'portfolio_images',
+        'services',
+        'is_verified',
+        'verified_at',
+    ];
 
     protected $casts = [
         'packages' => 'array',
@@ -164,13 +164,24 @@ class OtherService extends Model
             ->wherePivot('serviceable_type', '=', Job::class);
     }
 
-    public function review()
-    {
-        return $this->hasMany(OtherServicesReview::class);
-    }
-
     public function apiKeys()
     {
         return $this->morphMany(ApiKey::class, 'serviceable');
+    }
+
+    public function reviews($dashboardType)
+    {
+        switch ($dashboardType) {
+            case 'artist':
+                return $this->hasMany(BandReviews::class, 'other_services_id');
+            case 'designer':
+                return $this->hasMany(DesignerReviews::class, 'other_services_id');
+            case 'photographer':
+                return $this->hasMany(PhotographerReviews::class, 'other_services_id');
+            case 'videographer':
+                return $this->hasMany(VideographyReviews::class, 'other_services_id');
+            default:
+                return null;
+        }
     }
 }

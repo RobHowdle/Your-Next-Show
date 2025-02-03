@@ -126,54 +126,54 @@ $(document).ready(function () {
 });
 
 // Review Modal JS
-// document.addEventListener("DOMContentLoaded", function () {
-//     // Function to show the modal
-//     function showModal(modalId) {
-//         const modal = document.getElementById(modalId);
+document.addEventListener("DOMContentLoaded", function () {
+    // Function to show the modal
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
 
-//         if (modal) {
-//             modal.classList.remove("hidden");
-//             modal.classList.add("flex"); // Add 'flex' for display
-//             modal.setAttribute("aria-hidden", "false");
-//             modal.focus();
-//         }
-//     }
+        if (modal) {
+            modal.classList.remove("hidden");
+            modal.classList.add("flex"); // Add 'flex' for display
+            modal.setAttribute("aria-hidden", "false");
+            modal.focus();
+        }
+    }
 
-//     // Function to hide the modal
-//     function hideModal(modalId) {
-//         const modal = document.getElementById(modalId);
+    // Function to hide the modal
+    function hideModal(modalId) {
+        const modal = document.getElementById(modalId);
 
-//         if (modal) {
-//             modal.classList.remove("flex"); // Remove 'flex'
-//             modal.classList.add("hidden");
-//             modal.setAttribute("aria-hidden", "true");
-//         }
-//     }
+        if (modal) {
+            modal.classList.remove("flex"); // Remove 'flex'
+            modal.classList.add("hidden");
+            modal.setAttribute("aria-hidden", "true");
+        }
+    }
 
-//     // Event listener for buttons to show the modal
-//     document.querySelectorAll("[data-modal-toggle]").forEach((button) => {
-//         button.addEventListener("click", function () {
-//             const modalId = this.getAttribute("data-modal-toggle");
-//             showModal(modalId);
-//         });
-//     });
+    // Event listener for buttons to show the modal
+    document.querySelectorAll("[data-modal-toggle]").forEach((button) => {
+        button.addEventListener("click", function () {
+            const modalId = this.getAttribute("data-modal-toggle");
+            showModal(modalId);
+        });
+    });
 
-//     // Event listener for modal close buttons
-//     document.querySelectorAll("[data-modal-hide]").forEach((button) => {
-//         button.addEventListener("click", function () {
-//             const modalId = this.getAttribute("data-modal-hide");
-//             hideModal(modalId);
-//         });
-//     });
+    // Event listener for modal close buttons
+    document.querySelectorAll("[data-modal-hide]").forEach((button) => {
+        button.addEventListener("click", function () {
+            const modalId = this.getAttribute("data-modal-hide");
+            hideModal(modalId);
+        });
+    });
 
-//     // Close modal when clicking outside of it
-//     document.addEventListener("click", function (event) {
-//         const modal = event.target.closest(".fixed"); // Check for modal clicks
-//         if (modal && event.target === modal) {
-//             hideModal(modal.id);
-//         }
-//     });
-// });
+    // Close modal when clicking outside of it
+    document.addEventListener("click", function (event) {
+        const modal = event.target.closest(".fixed"); // Check for modal clicks
+        if (modal && event.target === modal) {
+            hideModal(modal.id);
+        }
+    });
+});
 
 // Ratings
 document.addEventListener("DOMContentLoaded", function () {

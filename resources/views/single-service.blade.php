@@ -33,19 +33,11 @@
               <x-contact-and-social-links :item="$singleService" />
             </div>
             <div class="rating-wrapper flex flex-row justify-center gap-1 md:justify-start xl:gap-2">
-              <p class="h-full place-content-center font-sans md:place-content-end">Overall Rating
-                @if ($singleService->services == 'Artist')
-                  ({{ $singleArtistData['reviewCount'] ?? 0 }})
-                @elseif($singleService->services == 'Photography')
-                  ({{ $singlePhotographerData['reviewCount'] ?? 0 }})
-                @elseif($singleService->services == 'Videographer')
-                  ({{ $singleVideographerData['reviewCount'] ?? 0 }})
-                @elseif($singleService->services == 'Designer')
-                  ({{ $singleDesignerData['reviewCount'] ?? 0 }})
-                @endif
+              <p class="h-full place-content-center font-sans md:place-content-end">
+                Overall Rating ({{ $serviceData['reviewCount'] ?? 0 }})
               </p>
               <div class="ratings flex">
-                {!! $overallReviews[$singleService->id] !!}
+                {!! $serviceData['overallReviews'][$singleService->id] !!}
               </div>
             </div>
             <div class="leave-review">
@@ -58,7 +50,9 @@
 
         <div class="body">
           {{-- Tabs --}}
-          @if ($singleService->services == 'Artist')
+          @include("components.{$singleService->services}-service-tabs")
+
+          {{-- @if ($singleService->services == 'Artist')
             @include('components.artist-service-tabs')
           @elseif ($singleService->services == 'Photography')
             @include('components.photographer-service-tabs')
@@ -66,10 +60,14 @@
             @include('components.videographer-service-tabs')
           @elseif ($singleService->services == 'Designer')
             @include('components.designer-service-tabs')
-          @endif
+          @endif --}}
 
           {{-- Tab Content --}}
-          @if ($singleService->services == 'Artist')
+          @include("components.{$singleService->services}-service-tab-content", [
+              'serviceData' => $serviceData,
+          ])
+
+          {{-- @if ($singleService->services == 'Artist')
             @include('components.artist-service-tab-content')
           @elseif ($singleService->services == 'Photography')
             @include('components.photographer-service-tab-content')
@@ -77,11 +75,11 @@
             @include('components.designer-service-tab-content')
           @elseif ($singleService->services == 'Videography')
             @include('components.videographer-service-tab-content')
-          @endif
+          @endif --}}
           {{-- <x-suggestion-block :promoterWithHighestRating="$promoterWithHighestRating" :photographerWithHighestRating="$photographerWithHighestRating" :videographerWithHighestRating="$videographerWithHighestRating" :bandWithHighestRating="$bandWithHighestRating"
             :designerWithHighestRating="$designerWithHighestRating" /> --}}
-          <x-review-modal title="{{ $singleService->name }}" route="submit-venue-review"
-            profileId="{{ $singleService->id }}" />
+          <x-review-modal title="{{ $singleService->name }}" serviceType="{{ $singleService->services }}"
+            profileId="{{ $singleService->id }}" service="{{ $singleService->name }}" />
         </div>
       </div>
     </div>

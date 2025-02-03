@@ -9,16 +9,18 @@ use Illuminate\View\Component;
 class ReviewModal extends Component
 {
     public $title;
-    public $route;
+    public $serviceType;
     public $profileId;
+    public $service;
     /**
      * Create a new component instance.
      */
-    public function __construct($title, $route, $profileId)
+    public function __construct($title, $serviceType, $profileId, $service)
     {
         $this->title = $title;
-        $this->route = $route;
+        $this->serviceType = $serviceType;
         $this->profileId = $profileId;
+        $this->service = $service;
     }
 
     /**

@@ -446,69 +446,67 @@ class APIRequestsController extends Controller
         ]);
     }
 
-    public function updatePackages($dashboardType, StoreUpdatePackages $request, $id)
+    public function updatePackages($dashboardType, StoreUpdatePackages $request)
     {
         try {
-            DB::beginTransaction();
+            $user = Auth::user();
 
-            $user = User::findOrFail($id);
-            $userId = $user->id;
-            $validated = $request->validated();
-
-            \Log::info('Updating packages for user:', [
-                'user_id' => $userId,
-                'dashboard_type' => $dashboardType,
-                'packages' => $validated['packages']
-            ]);
-
-            $service = match ($dashboardType) {
-                'designer' => $user->otherService('Designer')->first(),
-                'photographer' => $user->otherService('Photographer')->first(),
-                'videographer' => $user->otherService('Videographer')->first(),
-                default => null
-            };
-
-            if (!$service) {
-                throw new \Exception('Service not found for user');
+            if (!$user) {
+                \Log::error('User not authenticated');
+                return response()->json(['error' => 'Unauthenticated'], 401);
             }
 
-            $service->update([
-                'packages' => json_encode($validated['packages'])
-            ]);
+            $packages = $request->input('packages', []);
 
+            switch ($dashboardType) {
+                case 'venue':
+                    $model = $user->venues()->first();
+                    break;
+                case 'promoter':
+                    $model = $user->promoters()->first();
+                    break;
+                default:
+                    $model = $user->otherService('service')->first();
+            }
 
-            DB::commit();
+            if (!$model) {
+                \Log::error('Model not found for package update', [
+                    'user_id' => $user->id,
+                    'type' => $request->input('type')
+                ]);
+                return response()->json(['error' => 'Service not found'], 404);
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Packages updated successfully'
+            // Handle empty packages case
+            if (empty($packages)) {
+                $model->packages = json_encode([]);
+            } else {
+                $model->packages = json_encode($packages);
+            }
 
-            ]);
+            try {
+                $model->save();
+                return response()->json(['success' => true]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to save packages:', [
+                    'error' => $e->getMessage(),
+                    'user_id' => $user->id,
+                    'packages' => $packages
+                ]);
+                return response()->json(['error' => 'Failed to save packages: ' . $e->getMessage()], 500);
+            }
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            \Log::error('Failed to update packages:', [
+            \Log::error('Package update failed:', [
                 'error' => $e->getMessage(),
-                'user_id' => $userId ?? null,
-                'dashboard_type' => $dashboardType
+                'trace' => $e->getTraceAsString()
             ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update packages: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Update failed: ' . $e->getMessage()], 500);
         }
     }
 
     public function leaveService($dashboardType, Request $request, $id)
     {
         try {
-            \Log::info('Leaving service:', [
-                'dashboard' => $dashboardType,
-                'user_id' => $id,
-                'request' => $request->all()
-            ]);
-
             $user = User::findOrFail($id);
             $service = $request->input('service');
 
