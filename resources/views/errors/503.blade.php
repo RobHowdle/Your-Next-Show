@@ -32,55 +32,61 @@
   <div class="pre-overlay o-2"></div>
 
   <div class="flex h-screen w-full flex-col items-center justify-center gap-24 px-2 backdrop-brightness-50">
-    <div class="logo--503 justify-self-center">
-      <img src="{{ asset('images/yns_logo.png') }}" class="mb-4">
-      <a href="https://countdown.yournextshow.co.uk" class="text-white underline">Return To
-        Countdown</a>
+    <div class="flex items-center space-x-3 rtl:space-x-reverse">
+      <img src="{{ asset('images/system/yns_logo.png') }}" class="h-16"
+        alt="{{ config('app.name', 'Laravel') }} Logo" />
+      <span
+        class="hidden self-center whitespace-nowrap text-lg font-semibold text-white sm:block xl:text-2xl">{{ config('app.name') }}</span>
     </div>
 
     <div class="text text-center text-white">
-      <p class="mb-4 text-4xl">Nice Try!</p>
-      <p class="mb-4 text-xl">We're still working on some stuff so things aren't quite ready for you to see yet but...
-      </p>
-      <p class="text-lg">since you made it all this way here is something fun for you to watch - <a
-          href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank"
-          class="underline hover:font-bold">ENJOY!</a></p>
+      <p class="mb-4 text-4xl">Knock Knock...who's there? Not us.</p>
+      <p class="mb-4 text-xl">We'll be back soon! We are currently deploying and testing some big updates to our system.
+        Please check
+        back later.</p>
+      <p class="text-lg">Thank you for your patience!</p>
     </div>
-  </div>
 
-  <script>
-    jQuery(document).ready(function() {
-      var startTime = performance.now(); // Record the start time when the document is ready
+    <div class="flex flex-col items-center space-x-4">
+      <p class="mb-4 text-lg">Keep up to date on our socials for when we will be back up and running</p>
+      <a href="https://linktr.ee/yournextshow" target="_blank" class="hover:text-yns_blue text-white">
+        Linktree
+      </a>
+    </div>
 
-      // Function to hide the loader and overlay
-      function hideLoader() {
-        jQuery("#preloader").delay(100).removeClass("animation").addClass("over");
-        jQuery(".pre-overlay").css({
-          "height": "0%"
-        });
-      }
+    <script>
+      jQuery(document).ready(function() {
+        var startTime = performance.now(); // Record the start time when the document is ready
 
-      // Function to calculate loading time and decide whether to show the loader
-      function checkLoadingTime() {
-        var endTime = performance.now(); // Record the end time after the document is fully loaded
-        var loadingTime = endTime - startTime; // Calculate the loading time in milliseconds
-
-        // Check if the loading time exceeds a threshold (e.g., 1000 milliseconds)
-        if (loadingTime > 1000) {
-          // Show the loader if loading time exceeds the threshold
-          setTimeout(hideLoader, 4000);
-        } else {
-          // Hide the loader if loading time is fast
-          hideLoader();
+        // Function to hide the loader and overlay
+        function hideLoader() {
+          jQuery("#preloader").delay(100).removeClass("animation").addClass("over");
+          jQuery(".pre-overlay").css({
+            "height": "0%"
+          });
         }
-      }
 
-      // Call the function to check loading time when the document is fully loaded
-      jQuery(window).on('load', function() {
-        checkLoadingTime();
+        // Function to calculate loading time and decide whether to show the loader
+        function checkLoadingTime() {
+          var endTime = performance.now(); // Record the end time after the document is fully loaded
+          var loadingTime = endTime - startTime; // Calculate the loading time in milliseconds
+
+          // Check if the loading time exceeds a threshold (e.g., 1000 milliseconds)
+          if (loadingTime > 1000) {
+            // Show the loader if loading time exceeds the threshold
+            setTimeout(hideLoader, 4000);
+          } else {
+            // Hide the loader if loading time is fast
+            hideLoader();
+          }
+        }
+
+        // Call the function to check loading time when the document is fully loaded
+        jQuery(window).on('load', function() {
+          checkLoadingTime();
+        });
       });
-    });
-  </script>
+    </script>
 </body>
 
 </html>
