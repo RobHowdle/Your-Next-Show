@@ -83,6 +83,7 @@ class ProfileController extends Controller
         $photographerData = [];
         $standardUserData = [];
         $designerData = [];
+        $videographerData = [];
 
         // check dashboard type and get the data
         if ($dashboardType === 'promoter') {
@@ -98,7 +99,7 @@ class ProfileController extends Controller
         } elseif ($dashboardType === 'designer') {
             $designerData = $this->getOtherServicData($dashboardType, $user);
         } elseif ($dashboardType === 'videographer') {
-            $designerData = $this->getOtherServicData($dashboardType, $user);
+            $videographerData = $this->getOtherServicData($dashboardType, $user);
         }
 
         $modulesWithSettings = $this->getModulesWithSettings($userId, $dashboardType);
@@ -114,6 +115,7 @@ class ProfileController extends Controller
             'photographerData' => $photographerData,
             'standardUserData' => $standardUserData,
             'designerData' => $designerData,
+            'videographerData' => $videographerData,
             'user' => $user,
             'roles' => $roles,
             'userRole' => $userRole,

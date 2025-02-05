@@ -284,8 +284,6 @@ class ServiceDataHelper
         }
 
         $bandTypes = json_decode($photographer->band_type) ?? [];
-
-
         $portfolioLink = $photographer ? $photographer->portfolio_link : '';
         $waterMarkedPortfolioImages = $photographer->portfolio_images;
 
@@ -332,7 +330,6 @@ class ServiceDataHelper
         $packages = $photographer ? json_decode($photographer->packages) : [];
         $styles = is_array($photographer->styles) ? $photographer->styles : json_decode($photographer->styles, true);
 
-
         return [
             'photographer' => $photographer,
             'photographerId'  => $photographer->id,
@@ -367,118 +364,123 @@ class ServiceDataHelper
 
     public function getVideographerData(User $user)
     {
-        // $photographer = $user->otherService("Photographer")->first();
-        // $serviceableId = $photographer->id;
-        // $serviceableType = 'App\Models\OtherService';
+        $videographer = $user->otherService("Videographer")->first();
 
-        // // Basic Information
-        // $photographerName = $photographer ? $photographer->name : '';
-        // $photographerLocation = $photographer ? $photographer->location : '';
-        // $photographerPostalTown = $photographer ? $photographer->postal_town : '';
-        // $photographerLat = $photographer ? $photographer->latitude : '';
-        // $photographerLong = $photographer ? $photographer->longitude : '';
-        // $logo = $photographer && $photographer->logo_url
-        // ? (filter_var($photographer->logo_url, FILTER_VALIDATE_URL) ? $photographer->logo_url : Storage::url($photographer->logo_url))
-        // : asset('images/system/yns_no_image_found.png');
-        // $contact_name = $photographer ? $photographer->contact_name : '';
-        // $contact_number = $photographer ? $photographer->contact_number : '';
-        // $contact_email = $photographer ? $photographer->contact_email : '';
-        // $contactLinks = $photographer ? json_decode($photographer->contact_link, true) : [];
+        if ($videographer) {
+            $serviceableId = $videographer->id;
+            $serviceableType = 'App\Models\OtherService';
 
-        // $platforms = [];
-        // $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+            // Basic Information
+            $name = $videographer ? $videographer->name : '';
+            $location = $videographer ? $videographer->location : '';
+            $postalTown = $videographer ? $videographer->postal_town : '';
+            $lat = $videographer ? $videographer->latitude : '';
+            $long = $videographer ? $videographer->longitude : '';
+            $logo = $videographer && $videographer->logo_url
+                ? (filter_var($videographer->logo_url, FILTER_VALIDATE_URL) ? $videographer->logo_url : Storage::url($videographer->logo_url))
+                : asset('images/system/yns_no_image_found.png');
+            $contact_name = $videographer ? $videographer->contact_name : '';
+            $contact_number = $videographer ? $videographer->contact_number : '';
+            $contact_email = $videographer ? $videographer->contact_email : '';
+            $contactLinks = $videographer ? json_decode($videographer->contact_link, true) : [];
 
-        // // Initialize the platforms array with empty strings for each platform
-        // foreach ($platformsToCheck as $platform) {
-        //     $platforms[$platform] = '';  // Set default to empty string
-        // }
+            $platforms = [];
+            $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
-        // // Check if the contactLinks array exists and contains social links
-        // if ($contactLinks) {
-        //     foreach ($platformsToCheck as $platform) {
-        //         // Only add the link if the platform exists in the $contactLinks array
-        //         if (isset($contactLinks[$platform])) {
-        //             $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
-        //         }
-        //     }
-        // }
+            // Initialize the platforms array with empty strings for each platform
+            foreach ($platformsToCheck as $platform) {
+                $platforms[$platform] = '';  // Set default to empty string
+            }
 
-        // $description = $photographer ? $photographer->description : '';
-        // $genreList = file_get_contents(public_path('text/genre_list.json'));
-        // $data = json_decode($genreList, true);
-        // $genres = $data['genres'];
-        // $photographerGenres = is_array($photographer->genre) ? $photographer->genre : json_decode($photographer->genre, true);
-        // $portfolioLink = $photographer ? $photographer->portfolio_link : '';
-        // $waterMarkedPortfolioImages = $photographer->portfolio_images;
+            // Check if the contactLinks array exists and contains social links
+            if ($contactLinks) {
+                foreach ($platformsToCheck as $platform) {
+                    // Only add the link if the platform exists in the $contactLinks array
+                    if (isset($contactLinks[$platform])) {
+                        $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                    }
+                }
+            }
 
-        // if (!is_array($waterMarkedPortfolioImages)) {
-        //     try {
-        //         $waterMarkedPortfolioImages = json_decode($waterMarkedPortfolioImages, true);
-        //     } catch (\Exception $e) {
-        //         throw new \Exception("Portfolio images could not be converted to an array.");
-        //     }
-        // }
+            $description = $videographer ? $videographer->description : '';
 
-        // $groupedEnvironmentTypes = config('environment_types');
+            $genreList = file_get_contents(public_path('text/genre_list.json'));
+            $data = json_decode($genreList, true) ?? [];
+            $isAllGenres = in_array('All', $data);
+            $genres = $data['genres'];
+            $profileGenres = is_array($videographer->genre) ? $videographer->genre : json_decode($videographer->genre, true);
+            $normalizedProfileGenres = [];
+            if ($profileGenres) {
+                foreach ($profileGenres as $genreName => $genreData) {
+                    $normalizedProfileGenres[$genreName] = [
+                        'all' => $genreData['all'] ?? 'false',
+                        'subgenres' => isset($genreData['subgenres'][0])
+                            ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
+                            : []
+                    ];
+                }
+            }
 
-        // $environmentTypes = json_decode($photographer->environment_type, true);
-        // $groupedData = [];
+            $bandTypes = json_decode($videographer->band_type) ?? [];
 
-        // foreach ($groupedEnvironmentTypes as $groupName => $items) {
-        //     foreach ($items as $item) {
-        //         if ($environmentTypes && is_array($environmentTypes)) {
-        //             $groupedData[$groupName][] = $item;
-        //         }
-        //     }
-        // }
+            $groupedEnvironmentTypes = config('environment_types');
+            $environmentTypes = json_decode($videographer->environment_type, true);
+            $groupedData = [];
 
-        // $workingTimes = is_array($photographer->working_times) ? $photographer->working_times : json_decode($photographer->working_times, true);
-        // $genreList = file_get_contents(public_path('text/genre_list.json'));
-        // $data = json_decode($genreList, true) ?? [];
-        // $isAllGenres = in_array('All', $data);
-        // $genres = $data['genres'];
-        // $photographerGenres = is_array($photographer->genre) ? $photographer->genre : json_decode($photographer->genre, true);
-        // $normalizedPhotographerGenres = [];
-        // if ($photographerGenres) {
-        //     foreach ($photographerGenres as $genreName => $genreData) {
-        //         $normalizedPhotographerGenres[$genreName] = [
-        //             'all' => $genreData['all'] ?? 'false',
-        //             'subgenres' => isset($genreData['subgenres'][0])
-        //             ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
-        //             : []
-        //         ];
-        //     }
-        // }
+            foreach ($groupedEnvironmentTypes as $groupName => $items) {
+                foreach ($items as $item) {
+                    if ($environmentTypes && is_array($environmentTypes)) {
+                        $groupedData[$groupName][] = $item;
+                    }
+                }
+            }
 
-        // $bandTypes = json_decode($photographer->band_type) ?? [];
+            $workingTimes = is_array($videographer->working_times) ? $videographer->working_times : json_decode($videographer->working_times, true);
+            $styles = is_array($videographer->styles) ? $videographer->styles : json_decode($videographer->styles, true);
+            $portfolioLink = $videographer ? $videographer->portfolio_link : '';
+            $waterMarkedPortfolioImages = $videographer->portfolio_images;
 
-        // return [
-        //     'photographer' => $photographer,
-        //     'photographerName' => $photographerName,
-        //     'photographerLocation' => $photographerLocation,
-        //     'photographerPostalTown' => $photographerPostalTown,
-        //     'photographerLat' => $photographerLat,
-        //     'photographerLong' => $photographerLong,
-        //     'logo' => $logo,
-        //     'contact_name' => $contact_name,
-        //     'contact_email' => $contact_email,
-        //     'contact_number' => $contact_number,
-        //     'platforms' => $platforms,
-        //     'platformsToCheck' => $platformsToCheck,
-        //     'description' => $description,
-        //     'genres' => $genres,
-        //     'photographerGenres' => $photographerGenres,
-        //     'portfolio_link' => $portfolioLink,
-        //     'serviceableId' => $serviceableId,
-        //     'serviceableType' => $serviceableType,
-        //     'waterMarkedPortfolioImages' => $waterMarkedPortfolioImages,
-        //     'environmentTypes' => $environmentTypes,
-        //     'groups' => $groupedData,
-        //     'workingTimes' => $workingTimes,
-        //     'isAllGenres' => $isAllGenres,
-        //     'photographerGenres' => $normalizedPhotographerGenres,
-        //     'bandTypes' => $bandTypes,
-        // ];
+            if (!is_array($waterMarkedPortfolioImages)) {
+                try {
+                    $waterMarkedPortfolioImages = json_decode($waterMarkedPortfolioImages, true);
+                } catch (\Exception $e) {
+                    throw new \Exception("Portfolio images could not be converted to an array.");
+                }
+            }
+
+            $packages = $videographer ? json_decode($videographer->packages) : [];
+
+            return [
+                'videographer' => $videographer,
+                'videographerId'  => $videographer->id,
+                'name' => $name,
+                'location' => $location,
+                'postalTown' => $postalTown,
+                'lat' => $lat,
+                'long' => $long,
+                'logo' => $logo,
+                'description' => $description,
+                'contact_name' => $contact_name,
+                'contact_email' => $contact_email,
+                'contact_number' => $contact_number,
+                'platforms' => $platforms,
+                'platformsToCheck' => $platformsToCheck,
+                'genres' => $genres,
+                'profileGenres' => $profileGenres,
+                'isAllGenres' => $isAllGenres,
+                'normalizedProfileGenres' => $normalizedProfileGenres,
+                'bandTypes' => $bandTypes,
+                'portfolio_link' => $portfolioLink,
+                'serviceableId' => $serviceableId,
+                'serviceableType' => $serviceableType,
+                'waterMarkedPortfolioImages' => $waterMarkedPortfolioImages,
+                'environmentTypes' => $environmentTypes,
+                'groups' => $groupedData,
+                'workingTimes' => $workingTimes,
+                'styles' => $styles,
+                'packages' => $packages
+            ];
+        }
     }
 
     public function getServiceByType(User $user, string $type): ?OtherService

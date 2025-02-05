@@ -34,7 +34,7 @@
     const userId = '{{ $userId }}';
 
     $.ajax({
-      url: `/api/profile/${dashboardType}/settings/update`,
+      url: `/profile/${dashboardType}/settings/update`,
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

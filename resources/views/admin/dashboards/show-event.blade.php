@@ -10,7 +10,11 @@
           <div class="flex flex-row items-center justify-between gap-2">
             <div class="group">
               <h1 class="font-heading text-4xl font-bold">{{ $event->event_name }}</h1>
-              <p class="text-xl">Date: {{ $event->event_date->format('jS F Y') }}</p>
+              <p class="text-xl">Date: {{ $event->event_date->format('jS F Y') }} @ <span
+                  class="fas fa-clock fa-sm mr-2"></span>{{ $eventStartTime }} @if ($eventEndTime)
+                  - {{ $eventEndTime }}
+                @endif
+              </p>
               <div class="socials"></div>
             </div>
             <div class="group flex gap-x-4">
@@ -41,14 +45,14 @@
               @if ($headliner)
                 <div class="group mb-4 text-center">
                   <p class="flex flex-col text-2xl font-bold underline">Headliner</p>
-                  <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $headliner->id]) }}"
+                  <a href="{{ route('singleService', ['serviceType' => 'Artist', 'name' => '$headliner->name']) }}"
                     class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $headliner->name ?? 'No Headliner' }}</a>
                 </div>
               @endif
               @if ($mainSupport)
                 <div class="group mb-4 text-center">
                   <p class="flex flex-col text-xl font-bold underline">Main Support</p>
-                  <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $mainSupport->id]) }}"
+                  <a href="{{ route('singleService', ['serviceType' => 'Artist', 'name' => '$mainSupport->name']) }}"
                     class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $mainSupport->name ?? 'No Main Support' }}</a>
                 </div>
               @endif
@@ -59,7 +63,7 @@
                     <ul class="flex flex-row flex-wrap justify-center">
                       @foreach ($otherBands as $band)
                         <li>
-                          <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $band->id]) }}"
+                          <a href="{{ route('singleService', ['serviceType' => 'Artist', 'name' => '$band->name']) }}"
                             class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $band->name }}{{ !$loop->last ? ', ' : '' }}</a>
                         </li>
                         @if (!$loop->last)
@@ -73,7 +77,7 @@
               @if ($opener)
                 <div class="group mb-4 text-center">
                   <p class="text-md flex flex-col font-bold underline">Opener</p>
-                  <a href="{{ route('singleService', ['serviceName' => 'Artist', 'serviceId' => $opener->id]) }}"
+                  <a href="{{ route('singleService', ['serviceType' => 'Artist', 'name' => '$opener->name']) }}"
                     class="font-normal no-underline transition duration-150 ease-in-out hover:text-yns_yellow">{{ $opener->name ?? 'No Opener' }}</a>
                 </div>
               @endif
@@ -84,9 +88,7 @@
               </div>
             @endif
             <div class="group my-2 flex flex-row items-center justify-center">
-              <span class="fas fa-clock mr-2"></span>{{ $eventStartTime }} @if ($eventEndTime)
-                - {{ $eventEndTime }}
-              @endif
+
             </div>
             <div class="group mb-2 flex flex-row items-start justify-center text-center">
               <span class="fas fa-map-marker-alt mr-2"></span>
