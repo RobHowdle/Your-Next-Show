@@ -52,7 +52,7 @@ class SubNav extends Component
     // Videographer
     public $videographerId;
     public $jobsCountVideographerYtd;
-    public $overallRatingVideographer;
+    public $overallVideographerRating;
     public $totalProfitsVideographerYtd;
 
     // Standard
@@ -201,7 +201,7 @@ class SubNav extends Component
             $this->videographerId = $videographer->id;
             $this->jobsCountVideographerYtd = $this->calculateJobsVideographerYtd($videographer);
             $this->totalProfitsVideographerYtd = $this->calculateTotalProfitsVideographerYtd($videographer);
-            $this->overallRatingVideographer = $this->renderRatingIcons($this->videographerId);
+            $this->overallVideographerRating = $this->renderRatingIcons($this->videographerId);
         }
     }
 
@@ -523,7 +523,7 @@ class SubNav extends Component
         return 0;
     }
 
-    public function calculateOverallRatingVideographer($videographer)
+    public function calculateoverallVideographerRating($videographer)
     {
         //
     }

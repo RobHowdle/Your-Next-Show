@@ -56,6 +56,17 @@
     </div>
   @elseif ($userType === 'standard')
     <div>Events YTD: {{ $eventsCountStandardYtd }}</div>
+  @elseif ($userType === 'videographer')
+    <div>Jobs YTD: {{ $jobsCountVideographerYtd }}</div>
+    <div class="flex">Total Profit YTD:
+      <div id="amountDisplay" class="ml-2">{{ formatCurrency($totalProfitsVideographerYtd) ?? '£0.00' }}</div>
+    </div>
+    <div class="rating-wrapper flex flex-row items-center gap-2">
+      <p class="h-full place-content-end font-sans">Overall Rating:</p>
+      <div class="ratings flex">
+        {!! $overallVideographerRating !!}
+      </div>
+    </div>
   @else
     <div>Invalid user type</div>
   @endif

@@ -55,6 +55,13 @@
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
     </div>
+
+    <div class="flex items-center gap-4">
+      <button type="button" onclick="confirmLeaveCompany()"
+        class="mt-8 rounded-lg border border-red-600 bg-red-600 px-4 py-2 font-heading font-bold text-white transition duration-150 ease-in-out hover:bg-red-700">
+        Leave Company
+      </button>
+    </div>
   </div>
 
   @if (isset($profileData['platformsToCheck']) && is_array($profileData['platformsToCheck']))
@@ -114,13 +121,6 @@
       <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
         class="text-sm text-gray-600 dark:text-gray-400">{{ __('Saved.') }}</p>
     @endif
-  </div>
-
-  <div class="flex items-center gap-4">
-    <button type="button" onclick="confirmLeaveCompany()"
-      class="mt-8 rounded-lg border border-red-600 bg-red-600 px-4 py-2 font-heading font-bold text-white transition duration-150 ease-in-out hover:bg-red-700">
-      Leave Company
-    </button>
   </div>
 </form>
 <script>

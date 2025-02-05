@@ -106,6 +106,7 @@ class EventController extends Controller
         } else {
             // Default case for any other roles (if necessary)
             $upcomingEvents = Event::where('event_date', '>', now())
+                ->where('user_id', $user->id)
                 ->orderBy('event_date', 'asc')
                 ->get();
         }
@@ -203,81 +204,48 @@ class EventController extends Controller
     public function createNewEvent($dashboardType)
     {
         $modules = collect(session('modules', []));
-        $promoterData = [];
 
         $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
+        $serviceData = [
+            'promoter_id' => null,
+            'promoter_name' => null,
+            'venue_id' => null,
+            'venue_name' => null,
+            'id' => null,
+            'name' => null
+        ];
         switch ($dashboardType) {
             case 'promoter':
-                $role = $user->promoters()->first();
-
-                if ($role) {
-                    $promoterData = [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                };
-                break;
-            case 'artist':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $bandData = [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                };
-                break;
-            case 'designer':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $designerData = [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                };
-                break;
-            case 'videographer':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $videographerData = [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                };
-                break;
-            case 'photographer':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $photographerData = [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                };
+                $service = $user->promoters()->first();
+                if ($service) {
+                    $serviceData['promoter_id'] = $service->id;
+                    $serviceData['promoter_name'] = $service->name;
+                }
                 break;
             case 'venue':
-                $role = $user->venues()->first();
-
-                if ($role) {
-                    $venueData = [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                };
+                $service = $user->venues()->first();
+                if ($service) {
+                    $serviceData['venue_id'] = $service->id;
+                    $serviceData['venue_name'] = $service->name;
+                }
                 break;
             default:
-                $role = 'guest';
+                $service = $user->otherService('service')->first();
+                if ($service) {
+                    $serviceData['id'] = $service->id;
+                    $serviceData['name'] = $service->name;
+                }
                 break;
         }
 
+        // dd($serviceData);
+
         return view('admin.dashboards.new-event', [
-            'role' => $role,
-            'promoterData' => $promoterData,
-            'venueData' => $venueData,
-            'photographerData' => $photographerData,
-            'videographerData' => $videographerData,
-            'designerData' => $designerData,
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'modules' => $modules,
+            'service' => $service,
+            'serviceData' => $serviceData,
         ]);
     }
 
@@ -357,9 +325,6 @@ class EventController extends Controller
             if (!empty($validatedData['opener'])) {
                 $bandsArray[] = ['role' => 'Opener', 'band_id' => $validatedData['opener_id']];
             }
-
-            // dd('Bands Array:', $bandsArray);
-
 
             // Correct Event Start Date/Time
             $event_date = Carbon::createFromFormat('d-m-Y H:i:s', $validatedData['event_date'] . ' 00:00:00')->format('Y-m-d H:i:s');

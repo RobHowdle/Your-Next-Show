@@ -217,6 +217,12 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::post('/events/{id}/add-to-calendar', [CalendarController::class, 'addEventToInternalCalendar'])->name('admin.dashboard.add-event-to-calendar');
         Route::get('/events/{user}/check-linked-calendars', [CalendarController::class, 'checkLinkedCalendars']);
         Route::delete('/events/{id}/delete', [EventController::class, 'deleteEvent'])->name('admin.dashboard.delete-event');
+        Route::get('/events/promoters/search', [APIRequestsController::class, 'searchPromoters']);
+        Route::post('/events/promoters/create', [APIRequestsController::class, 'createPromoter']);
+        Route::get('/events/bands/search', [APIRequestsController::class, 'searchBands']);
+        Route::post('/events/bands/create', [APIRequestsController::class, 'createBand']);
+        Route::get('/events/venues/search', [APIRequestsController::class, 'searchVenues']);
+        Route::post('/events/venues/create', [APIRequestsController::class, 'createVenue']);
     });
 
     // To-Do List
@@ -263,6 +269,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/profile/{dashboardType}/photographer-profile-update/{user}', [ProfileController::class, 'updatePhotographer'])->name('photographer.update');
     Route::put('/profile/{dashboardType}/standard-user-update/{user}', [ProfileController::class, 'updateStandardUser'])->name('standard-user.update');
     Route::put('/profile/{dashboardType}/designer-user-update/{user}', [ProfileController::class, 'updateDesigner'])->name('designer.update');
+    Route::put('/profile/{dashboardType}/videographer-user-update/{user}', [ProfileController::class, 'updateVideographer'])->name('videographer.update');
     Route::post('/profile/{dashboardType}/portfolio-image-upload', [ProfileController::class, 'uploadPortfolioImages'])->name('portfolio.upload');
     Route::get('/profile/{dashboardType}/settings', [ProfileController::class, 'settings'])->name('settings.index');
     Route::post('/profile/{dashboardType}/photographer-environment-types', [ProfileController::class, 'updateEnvironmentTypes'])->name('photographer.environment-types');
@@ -273,6 +280,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/{dashboardType}/{user}/edit-role', [ProfileController::class, 'editRole'])->name('profile.edit-role');
     Route::delete('/profile/{dashboardType}/{user}/delete-role', [ProfileController::class, 'deleteRole'])->name('profile.delete-role');
     Route::post('/profile/{dashboardType}/{id}/packages/update', [APIRequestsController::class, 'updatePackages'])->name('settings.updatePackages');
+    Route::post('/profile/{dashboardType}/settings/update', [APIRequestsController::class, 'updateModule'])->name('settings.updateModule');
+    Route::get('/dashboard/{$dashboardType}/finances', [FinanceController::class, 'getFinanceData']);
+    Route::get('/{dashboardType}/jobs/search-clients', [APIRequestsController::class, 'searchClients']);
+    Route::post('/profile/{dashboardType}/{id}/update-api-keys', [APIRequestsController::class, 'updateAPI']);
+    Route::post('/profile/{dashboardType}/{id}/save-styles-and-print', [APIRequestsController::class, 'updateStylesAndPrint'])->name('profile.styles-and-print');
+    Route::post('/profile/{dashboardType}/communications/update', [APIRequestsController::class, 'updateCommunications'])->name('settings.updateCommunications');
+    Route::post('/profile/{dashboardType}/{id}/leave-service', [APIRequestsController::class, 'leaveService'])->name('settings.deleteModule');
+
 
     // API Key Routes
     Route::put('/profile/{dashboardType}/update-api-key', [ProfileController::class, 'updateAPI'])->name('profile.update-api');

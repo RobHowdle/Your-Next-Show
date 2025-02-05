@@ -2,7 +2,6 @@
   <x-slot name="header">
     <x-sub-nav :userId="$userId" />
   </x-slot>
-  {{-- @dd($promoter) --}}
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
@@ -54,12 +53,12 @@
               <div class="group mb-4">
                 <x-input-label-dark>Promoter</x-input-label-dark>
                 <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
-                  :value="old('promoter_name', $promoterData ? $promoterData['name'] : '')"></x-text-input>
+                  :value="old('promoter_name', $serviceData['promoter_name'])"></x-text-input>
                 <ul id="promoter-suggestions"
                   class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                 </ul>
                 <x-input-label-dark>Promoter ID</x-input-label-dark>
-                <x-text-input id="promoter_ids" name="promoter_ids" :value="old('')"></x-text-input>
+                <x-text-input id="promoter_ids" name="promoter_ids" :value="old('promoter_id', $serviceData['promoter_id'] ? $serviceData['promoter_id'] : '')"></x-text-input>
                 <ul id="promoter-suggestions"
                   class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
                 </ul>
@@ -116,12 +115,12 @@
               <div class="group mb-4">
                 <x-input-label-dark :required="true">Venue</x-input-label-dark>
                 <x-text-input id="venue_name" name="venue_name" autocomplete="off" :required="true"
-                  :value="old('')"></x-text-input>
+                  :value="old('venue_name', $serviceData['venue_name'])"></x-text-input>
                 <ul id="venue-suggestions"
                   class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
                 </ul>
                 <x-input-label-dark :required="true">Venue ID</x-input-label-dark>
-                <x-text-input id="venue_id" name="venue_id" :value="old('')" :required="true"></x-text-input>
+                <x-text-input id="venue_id" name="venue_id" :value="old('venue_id', $serviceData['venue_id'])" :required="true"></x-text-input>
                 @error('venue_name')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>
                 @enderror
@@ -197,6 +196,7 @@
 </x-app-layout>
 <script>
   $(document).ready(function() {
+    const dashboardType = "{{ $dashboardType }}";
     // Initialize the date pickers
     flatpickr('#event_date', {
       altInput: true,
@@ -306,7 +306,7 @@
 
       function createNewPromoter(promoterName, inputElement, suggestionsElement, setterCallback, idField) {
         $.ajax({
-          url: '/api/promoters/create',
+          url: `/dashboard/${dashboardType}/events/promoters/create`,
           method: 'POST',
           headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -340,7 +340,7 @@
         if (searchQuery.length >= 3) {
           debounceTimer = setTimeout(() => {
             $.ajax({
-              url: `/api/promoters/search?q=${searchQuery}`,
+              url: `/dashboard/${dashboardType}/events/promoters/search?q=${searchQuery}`,
               method: 'GET',
               success: function(response) {
                 suggestionsElement.empty().removeClass('hidden');
@@ -435,7 +435,7 @@
 
       function createNewVenue(venueName, inputElement, suggestionsElement, setterCallback, idField) {
         $.ajax({
-          url: '/api/venues/create',
+          url: `/dashboard/${dashboardType}/events/venues/create`,
           method: 'POST',
           headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -466,7 +466,7 @@
         if (searchQuery.length >= 3) {
           debounceTimer = setTimeout(() => {
             $.ajax({
-              url: `/api/venues/search?q=${searchQuery}`,
+              url: `/dashboard/${dashboardType}/events/venues/search?q=${searchQuery}`,
               method: 'GET',
               success: function(response) {
                 suggestionsElement.empty().removeClass('hidden');
@@ -593,7 +593,7 @@
 
         if (searchQuery.length >= 3) {
           $.ajax({
-            url: `/api/bands/search?q=${searchQuery}`,
+            url: `/dashboard/${dashboardType}/events/bands/search?q=${searchQuery}`,
             method: 'GET',
             success: function(data) {
               suggestionsElement.empty().removeClass('hidden');
@@ -671,7 +671,7 @@
 
     function createNewBand(bandName, inputElement, suggestionsElement, setterCallback, idField) {
       $.ajax({
-        url: '/api/bands/create',
+        url: `/dashboard/${dashboardType}/events/bands/create`,
         method: 'POST',
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -744,7 +744,7 @@
 
         if (bandName) {
           $.ajax({
-            url: `/api/bands/search?q=${bandName}`,
+            url: `/dashboard/${dashboardType}/events/bands/search?q=${bandName}`,
             method: 'GET',
             success: function(data) {
               if (data.bands.length) {

@@ -73,7 +73,7 @@
                   ])
                 @elseif($dashboardType == 'videographer')
                   @include('profile.partials.videographer-profile', [
-                      'standardUserData' => $standardUserData,
+                      'videographerData' => $videographerData,
                   ])
                 @endif
               </div>
