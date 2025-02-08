@@ -93,4 +93,18 @@ class Venue extends Model
     {
         return $this->morphMany(ApiKey::class, 'serviceable');
     }
+
+    public function performingBands()
+    {
+        return $this->belongsToMany(OtherService::class, 'event_venue')
+            ->join('events', 'event_venue.event_id', '=', 'events.id')
+            ->join('event_band', 'events.id', '=', 'event_band.event_id')
+            ->where('other_services.other_service_id', 4);
+    }
+
+    public function bands()
+    {
+        return $this->belongsToMany(OtherService::class, 'event_band')
+            ->where('other_services.other_service_id', 4);
+    }
 }

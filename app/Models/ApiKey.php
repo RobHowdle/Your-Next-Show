@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-class ApiKeys extends Model
+class ApiKey extends Model
 {
     use HasFactory, SoftDeletes;
 

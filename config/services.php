@@ -33,4 +33,7 @@ return [
     'what3words' => [
         'api_key' => env('W3W_API_KEY'),
     ],
+    'eventbrite' => [
+        'key' => env('EVENTBRITE_PRIVATE_TOKEN'),
+    ],
 ];

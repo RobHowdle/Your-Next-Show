@@ -8,9 +8,6 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class PromoterSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $csvFile = fopen(base_path("database/data/promoters.csv"), "r");
@@ -19,58 +16,69 @@ class PromoterSeeder extends Seeder
             throw new \Exception("Could not open the CSV file.");
         }
 
-        $firstLine = true;
-        while (($data = fgetcsv($csvFile, 2000, ",")) !== FALSE) {
-            if (!$firstLine) {
-                $contactLink = $data[13];
-                $bandType = $data[9];  // Get the band_type field
+        // Skip the header row
+        fgetcsv($csvFile, 2000, ",");
 
-                // Validate if the contact link is valid JSON
-                if ($this->isValidJson($contactLink)) {
-                    $contactLink = json_encode(json_decode($contactLink, true)); // Re-encode to ensure correct format
-                } else {
-                    $contactLink = null;
-                }
+        while (($data = fgetcsv($csvFile, 4096, ",")) !== FALSE) {
+            try {
+                // Pre-process JSON fields with larger buffer
+                $bandType = $this->processJsonField($data[9], '[]');
+                $contactLink = $this->processJsonField($data[13], '{}');
 
-                // Ensure band_type is a valid JSON array if it's not already
-                if (!empty($bandType) && $bandType !== '[]') {
-                    $bandType = json_encode([$bandType]); // Wrap in an array if needed
-                } else {
-                    $bandType = '[]'; // Set to an empty array if it's empty
-                }
-
-                // Create a new venue
-                Promoter::create([
+                $promoter = [
                     "name" => $data[0],
                     "location" => $data[1],
                     "postal_town" => $data[2],
-                    "latitude" => $data[3],
-                    "longitude" => $data[4],
+                    "latitude" => floatval($data[3]),
+                    "longitude" => floatval($data[4]),
                     "logo_url" => $data[5],
-                    "description" => $data[6],
+                    "description" => $data[6] ?: "Description coming soon...",
                     "my_venues" => $data[7],
-                    "genre" => $data[8],
+                    "genre" => '{}',
                     "band_type" => $bandType,
-                    "contact_name" => $data[10],
+                    "contact_name" => $data[10] ?: 'General',
                     "contact_number" => $data[11],
                     "contact_email" => $data[12],
                     "contact_link" => $contactLink,
+                ];
+
+                Promoter::create($promoter);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create promoter:', [
+                    'name' => $data[0] ?? 'unknown',
+                    'error' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
                 ]);
             }
-            $firstLine = false;
         }
         fclose($csvFile);
     }
 
-    /**
-     * Check if a string is a valid JSON.
-     *
-     * @param string $string
-     * @return bool
-     */
-    private function isValidJson(string $string): bool
+    private function processJsonField($value, $default)
     {
-        json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
+        if (empty($value)) {
+            return $default;
+        }
+
+        try {
+            // Handle double-encoded JSON and escaped quotes
+            $cleaned = str_replace('""', '"', $value);
+            $cleaned = preg_replace('/\\\\"/', '\"', $cleaned);
+
+            // Validate JSON structure
+            $decoded = json_decode($cleaned, true);
+
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $cleaned;
+            }
+        } catch (\Exception $e) {
+            \Log::warning('JSON processing failed:', [
+                'value' => $value,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        return $default;
     }
 }

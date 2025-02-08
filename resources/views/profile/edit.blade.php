@@ -280,7 +280,17 @@
               ])
             </div>
             <div x-show="activeTab === 'api'">
-              @include('profile.settings.api-keys')
+              @include('profile.settings.api-keys', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
             </div>
             <div x-show="activeTab === 'communications'">
               @include('profile.partials.communication-settings')

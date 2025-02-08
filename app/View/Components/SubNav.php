@@ -211,8 +211,8 @@ class SubNav extends Component
         if ($venues->isNotEmpty()) {
             $venue = $venues->first();
             $this->venueId = $venue->id;
-            $this->eventsCountVenueYtd = $this->calculateEventsCountPromoterYtd($venue);
-            $this->totalProfitsVenueYtd = $this->calculateTotalProfitsPromoterYtd($venue);
+            $this->eventsCountVenueYtd = $this->calculateEventsCountVenueYtd($venue);
+            $this->totalProfitsVenueYtd = $this->calculateTotalProfitsVenueYtd($venue);
             $this->overallRatingVenue = $this->renderRatingIcons($this->venueId);
         }
     }
@@ -362,19 +362,15 @@ class SubNav extends Component
     public function calculateTotalProfitsVenueYtd($venue)
     {
         if ($venue) {
-            $venueService = $venue->first();
+            $startOfYear = Carbon::now()->startOfYear();
+            $endOfYear = Carbon::now()->endOfYear();
 
-            if ($venueService) {
-                $startOfYear = Carbon::now()->startOfYear();
-                $endOfYear = Carbon::now()->endOfYear();
+            $totalProfitsYTD = Finance::where('serviceable_id', $venue->id)
+                ->where('serviceable_type', 'App\Models\Venue')
+                ->whereBetween('date_to', [$startOfYear, $endOfYear])
+                ->sum('total_profit');
 
-                $totalProfitsYTD = Finance::where('serviceable_id', $venueService->id)
-                    ->where('serviceable_type', 'App\Models\Venue')
-                    ->whereBetween('date_to', [$startOfYear, $endOfYear])
-                    ->sum('total_profit');
-
-                return $totalProfitsYTD;
-            }
+            return $totalProfitsYTD;
         }
 
         return 0;
@@ -383,20 +379,16 @@ class SubNav extends Component
     public function calculateEventsCountVenueYtd($venue)
     {
         if ($venue) {
-            $venueService = $venue->first();
+            $startOfYear = Carbon::now()->startOfYear();
+            $endOfYear = Carbon::now()->endOfYear();
 
-            if ($venueService) {
-                $startOfYear = Carbon::now()->startOfYear();
-                $endOfYear = Carbon::now()->endOfYear();
+            $eventsCountYTD = DB::table('event_venue')
+                ->join('events', 'event_venue.event_id', '=', 'events.id')
+                ->where('venue_id', $venue->id)
+                ->whereBetween('events.event_date', [$startOfYear, $endOfYear])
+                ->count();
 
-                $eventsCountYTD = DB::table('event_venue')
-                    ->join('events', 'event_venue.event_id', '=', 'events.id')
-                    ->where('venue_id', $venueService->id)
-                    ->whereBetween('events.event_date', [$startOfYear, $endOfYear])
-                    ->count();
-
-                return $eventsCountYTD;
-            }
+            return $eventsCountYTD;
         }
 
         return 0;

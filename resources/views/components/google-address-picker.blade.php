@@ -24,12 +24,12 @@
     value="{{ htmlspecialchars(is_array($value) ? $value['location'] ?? '' : $value) }}" data-id="{{ $dataId }}"
     {{ $required ? 'required' : '' }} />
 
-  <input type="" id="postal_town_{{ $dataId }}" name="postal_town" value="{{ $postalTown }}"
+  <input type="hidden" id="postal_town_{{ $dataId }}" name="postal_town" value="{{ $postalTown }}"
     data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
 
-  <input type="" id="latitude_{{ $dataId }}" name="latitude" value="{{ $latitude }}"
+  <input type="hidden" id="latitude_{{ $dataId }}" name="latitude" value="{{ $latitude }}"
     data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
-  <input type="" id="longitude_{{ $dataId }}" name="longitude" value="{{ $longitude }}"
+  <input type="hidden" id="longitude_{{ $dataId }}" name="longitude" value="{{ $longitude }}"
     data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
 </div>
 

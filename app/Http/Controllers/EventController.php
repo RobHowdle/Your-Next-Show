@@ -79,6 +79,7 @@ class EventController extends Controller
                         ->from('event_promoter')
                         ->where('promoter_id', $service->id); // events associated with the promoter
                 })
+                ->whereNull('deleted_at')
                 ->orderBy('event_date', 'asc')
                 ->get();
         } elseif ($role === "artist") {
@@ -90,6 +91,7 @@ class EventController extends Controller
                         ->from('event_band')
                         ->where('band_id', $service->id); // events associated with the promoter
                 })
+                ->whereNull('deleted_at')
                 ->orderBy('event_date', 'asc')
                 ->get();
         } elseif ($role === "venue") {
@@ -101,12 +103,14 @@ class EventController extends Controller
                         ->from('event_venue')
                         ->where('venue_id', $service->id); // events associated with the promoter
                 })
+                ->whereNull('deleted_at')
                 ->orderBy('event_date', 'asc')
                 ->get();
         } else {
             // Default case for any other roles (if necessary)
             $upcomingEvents = Event::where('event_date', '>', now())
                 ->where('user_id', $user->id)
+                ->whereNull('deleted_at')
                 ->orderBy('event_date', 'asc')
                 ->get();
         }
@@ -204,8 +208,8 @@ class EventController extends Controller
     public function createNewEvent($dashboardType)
     {
         $modules = collect(session('modules', []));
-
         $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
+
         $serviceData = [
             'promoter_id' => null,
             'promoter_name' => null,
@@ -214,31 +218,35 @@ class EventController extends Controller
             'id' => null,
             'name' => null
         ];
+
+        // Get the service and API keys based on dashboard type
         switch ($dashboardType) {
             case 'promoter':
                 $service = $user->promoters()->first();
                 if ($service) {
                     $serviceData['promoter_id'] = $service->id;
                     $serviceData['promoter_name'] = $service->name;
+                    $serviceData['apiKeys'] = $this->getServiceApiKeys($service);
                 }
                 break;
+
             case 'venue':
                 $service = $user->venues()->first();
                 if ($service) {
                     $serviceData['venue_id'] = $service->id;
                     $serviceData['venue_name'] = $service->name;
+                    $serviceData['apiKeys'] = $this->getServiceApiKeys($service);
                 }
                 break;
+
             default:
                 $service = $user->otherService('service')->first();
                 if ($service) {
                     $serviceData['id'] = $service->id;
                     $serviceData['name'] = $service->name;
+                    $serviceData['apiKeys'] = $this->getServiceApiKeys($service);
                 }
-                break;
         }
-
-        // dd($serviceData);
 
         return view('admin.dashboards.new-event', [
             'userId' => $this->getUserId(),
@@ -246,7 +254,40 @@ class EventController extends Controller
             'modules' => $modules,
             'service' => $service,
             'serviceData' => $serviceData,
+            'profileData' => [
+                'apiKeys' => $serviceData['apiKeys'] ?? []
+            ]
         ]);
+    }
+
+    /**
+     * Get API keys for a service and filter based on config
+     */
+    private function getServiceApiKeys($service)
+    {
+        // Get enabled ticket platforms from config
+        $enabledPlatforms = collect(config('integrations.ticket_platforms'))
+            ->filter(function ($platform) {
+                return $platform['enabled'] === true;
+            })
+            ->keys()
+            ->toArray();
+
+        // Get and format service API keys
+        return $service->apiKeys()
+            ->where('is_active', true)
+            ->whereIn('name', $enabledPlatforms)
+            ->get()
+            ->map(function ($apiKey) {
+                return [
+                    'id' => $apiKey->id,
+                    'name' => $apiKey->name,
+                    'key_type' => $apiKey->key_type,
+                    'display_name' => config("integrations.ticket_platforms.{$apiKey->name}.name"),
+                    'description' => config("integrations.ticket_platforms.{$apiKey->name}.description")
+                ];
+            })
+            ->toArray();
     }
 
     public function selectVenue($dashboardType, Request $request)
@@ -296,6 +337,7 @@ class EventController extends Controller
 
         try {
             $validatedData = $request->validated();
+            dd($validatedData);
 
             $user = Auth::user()->load('roles');
             $role = $user->getRoleNames()->first();
@@ -368,6 +410,14 @@ class EventController extends Controller
                 'ticket_url' => $validatedData['ticket_url'],
                 'on_the_door_ticket_price' => $validatedData['on_the_door_ticket_price'],
             ]);
+
+            if ($request->filled('ticket_platform')) {
+                $event->ticketPlatforms()->create([
+                    'platform_name' => $request->ticket_platform,
+                    'platform_event_id' => $request->platform_event_id,
+                    'platform_event_url' => $request->platform_event_url,
+                ]);
+            }
 
             // Event Band Creation
             if (!empty($bandsArray)) {

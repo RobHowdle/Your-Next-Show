@@ -88,6 +88,7 @@ class OtherService extends Model
         return self::where('other_service_id', 3);
     }
 
+
     /**
      * Retrieve all bands (other services with `other_service_id` as 4).
      */
@@ -118,6 +119,15 @@ class OtherService extends Model
     {
         return $this->belongsToMany(Event::class, 'event_band', 'band_id', 'event_id');
     }
+
+    public function performedAtVenues()
+    {
+        return $this->belongsToMany(Venue::class,  'event_bands')
+            ->join('events', 'event_bands.event_id', '=', 'events.id')
+            ->join('event_venue', 'events.id', '=', 'event_venue.event_id')
+            ->where('other_services.other_service_id', 4);
+    }
+
 
     /**
      * Get the highest rated service of a specific type in a location.

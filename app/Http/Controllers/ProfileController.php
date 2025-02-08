@@ -91,7 +91,7 @@ class ProfileController extends Controller
         } elseif ($dashboardType === 'artist') {
             $bandData = $this->getOtherServicData($dashboardType, $user);
         } elseif ($dashboardType === 'venue') {
-            $venueData = $this->getvenueData($user);
+            $venueData = $this->getVenueData($user);
         } elseif ($dashboardType === 'photographer') {
             $photographerData = $this->getOtherServicData($dashboardType, $user);
         } elseif ($dashboardType === 'standard') {
@@ -1008,7 +1008,6 @@ class ProfileController extends Controller
         try {
             // Retrieve the user
             $user = User::findOrFail($request->id);
-            // \Log::info('User found: ', [$user]);
 
             // Validate the incoming request
             $request->validate([
@@ -1296,11 +1295,6 @@ class ProfileController extends Controller
      */
     public function saveGenres($dashboardType, Request $request)
     {
-        \Log::info('Save Genres Request:', [
-            'dashboardType' => $dashboardType,
-            'requestData' => $request->all(),
-        ]);
-
         $validated = $request;
         $user = User::where('id', Auth::user()->id)->first();
 

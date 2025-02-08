@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\User;
+use App\Models\ApiKey;
 use Illuminate\Support\Facades\Storage;
 
 class VenueDataHelper
@@ -57,10 +58,12 @@ class VenueDataHelper
 
         // In House Gear
         $inHouseGear = $venue ? $venue->in_house_gear : '';
+        $depositRequired = $venue ? $venue->deposit_required : '';
+        $depositAmont = $venue ? $venue->deposit_amount : '';
 
         // My Events
         $myEvents = $venue ? $venue->events()->with('venues')->get() : collect();
-        $uniqueBands = $this->serviceDataHelper->getBandsData($venue->id);
+        $uniqueBands = $this->serviceDataHelper->getBandsData('Venue', $venue->id);
 
         // Genres
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -82,9 +85,28 @@ class VenueDataHelper
 
         $bandTypes = json_decode($venue->band_type) ?? [];
         $additionalInfo = $venue ? $venue->additional_info : '';
+        $apiProviders = config('api_providers.providers');
+        $apiKeys = ApiKey::where('serviceable_id', $venue->id)->where('serviceable_type', get_class($venue))->get();
 
+        if ($apiKeys) {
+            $apiKeys = $apiKeys->map(function ($apiKey) {
+                if ($apiKey->is_active) {
+                    return [
+                        'id' => $apiKey->id,
+                        'name' => $apiKey->name,
+                        'type' => $apiKey->key_type,
+                        'key' => $apiKey->api_key,
+                        'secret' => $apiKey->api_secret,
+                        'last_used_at' => $apiKey->last_used_at,
+                        'is_active' => $apiKey->is_active,
+                        'expires_at' => $apiKey->expires_at,
+                    ];
+                }
+            });
+        }
         return [
             'venue' => $venue,
+            'venueId' => $venue->id,
             'name' => $name,
             'location' => $location,
             'postalTown' => $postalTown,
@@ -108,6 +130,10 @@ class VenueDataHelper
             'bandTypes' => $bandTypes,
             'capacity' => $capacity,
             'additionalInfo' => $additionalInfo,
+            'depositRequired' => $depositRequired,
+            'depositAmount' => $depositAmont,
+            'apiProviders' => $apiProviders,
+            'apiKeys' => $apiKeys,
         ];
     }
 }

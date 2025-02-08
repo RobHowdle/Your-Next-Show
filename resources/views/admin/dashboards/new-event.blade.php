@@ -10,10 +10,29 @@
         </div>
         <form id="eventForm" method="POST" enctype="multipart/form-data" data-dashboard-type="{{ $dashboardType }}">
           @csrf
-
           <div class="grid grid-cols-3 gap-x-8 px-8 py-8">
             <div class="col">
               <input type="hidden" id="dashboard_type" value="{{ $dashboardType }}">
+              <div class="group mb-4">
+                <x-input-label-dark>Made an event elsewhere? Let's find it!</x-input-label-dark>
+                <div class="flex items-center gap-4">
+                  <select id="ticket_platform" name="ticket_platform"
+                    class="focus:border-yns_pink rounded-md border-gray-300 bg-gray-700 text-white">
+                    <option value="">Select Platform</option>
+                    @foreach ($profileData['apiKeys'] ?? [] as $apiKey)
+                      <option value="{{ $apiKey['name'] }}">
+                        {{ $apiKey['display_name'] }}
+                      </option>
+                    @endforeach
+                  </select>
+                  <button type="button" id="linkPlatformEvent"
+                    class="bg-yns_pink hover:bg-yns_dark_pink hidden rounded-md px-4 py-2 text-white">
+                    Link Platform Event
+                  </button>
+                </div>
+                <input type="" id="platform_event_id" name="platform_event_id">
+                <input type="" id="platform_event_url" name="platform_event_url">
+              </div>
               <div class="group mb-4">
                 <x-input-label-dark :required="true">Event Name</x-input-label-dark>
                 <x-text-input id="event_name" name="event_name" :required="true" :value="old('event_name')"></x-text-input>
@@ -189,6 +208,39 @@
             <button type="submit"
               class="mt-7 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
           </div>
+
+          <div id="platformEventModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+            <div class="flex min-h-screen items-end justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
+              <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+              </div>
+              <div
+                class="inline-block transform overflow-hidden rounded-lg bg-yns_dark_gray text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+                <div class="bg-yns_dark_gray px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                  <div class="sm:flex sm:items-start">
+                    <div class="mt-3 w-full text-center sm:ml-4 sm:mt-0 sm:text-left">
+                      <h3 class="text-lg font-medium leading-6 text-white">
+                        Link Platform Event
+                      </h3>
+                      <div class="mt-4">
+                        <input type="text" id="platformEventSearch"
+                          class="w-full rounded-md border-gray-600 bg-gray-700 text-white"
+                          placeholder="Search events...">
+                      </div>
+                      <div id="platformEventResults" class="max-h-60 mt-4 overflow-y-auto">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-yns_dark_gray px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                  <button type="button"
+                    class="close-modal rounded-md bg-gray-600 px-4 py-2 text-white hover:bg-gray-700">
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -197,8 +249,10 @@
 <script>
   $(document).ready(function() {
     const dashboardType = "{{ $dashboardType }}";
+    const integrationConfig = @json(config('integrations.ticket_platforms'));
+
     // Initialize the date pickers
-    flatpickr('#event_date', {
+    const datePicker = flatpickr('#event_date', {
       altInput: true,
       altFormat: "d-m-Y",
       dateFormat: "d-m-Y",
@@ -236,6 +290,126 @@
       }
     });
 
+    // Platform integration handling
+    const ticketPlatform = $('#ticket_platform');
+    const linkButton = $('#linkPlatformEvent');
+    const modal = $('#platformEventModal');
+    const searchInput = $('#platformEventSearch');
+    const resultsContainer = $('#platformEventResults');
+    const platformEventId = $('#platform_event_id');
+    const platformEventUrl = $('#platform_event_url');
+
+    // Define searchEvents function in the proper scope
+    function searchEvents(query) {
+      $.ajax({
+        url: `/api/platforms/${ticketPlatform.val()}/search`,
+        method: 'GET',
+        data: {
+          query
+        },
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        xhrFields: {
+          withCredentials: true
+        },
+        success: function(response) {
+          resultsContainer.empty();
+          if (response.events && response.events.length > 0) {
+            response.events.forEach(event => {
+              const eventDate = new Date(event.date).toLocaleDateString();
+              const eventElement = $(`
+            <div class="cursor-pointer rounded-lg p-3 text-white hover:bg-gray-600">
+                <p class="font-medium">${event.name}</p>
+                <p class="text-sm text-gray-400">${eventDate} - ${event.venue}</p>
+                <p class="text-xs text-gray-400">${event.tickets_available ? 'Tickets available' : 'Sold out'}</p>
+            </div>
+        `).on('click', function() {
+                console.log(event);
+                // Store Eventbrite IDs
+                platformEventId.val(event.id);
+                platformEventUrl.val(event.url);
+
+                // Populate event details
+                $('#event_name').val(event.name);
+
+                // Set date and times directly (no need for conversion)
+                datePicker.setDate(event.date);
+                $('#event_start_time').val(event.start_time);
+                $('#event_end_time').val(event.end_time);
+
+                // Set ticket URL
+                $('#ticket_url').val(event.url);
+
+                // Set venue if available
+                if (event.venue && event.venue.name) {
+                  $('#venue_name').val(event.venue.name);
+                  // You might want to trigger venue search here to get the venue ID
+                }
+
+                // Set description
+                if (event.description) {
+                  $('#event_description').val(event.description);
+                }
+
+                // Close modal and update button text
+                modal.addClass('hidden');
+                linkButton.text('Change Platform Event').removeClass('hidden');
+              });
+              resultsContainer.append(eventElement);
+            });
+          }
+        },
+        error: function(error) {
+          console.error('Error searching events:', error);
+          resultsContainer.html('<p class="text-red-500 p-3">Error searching events</p>');
+        }
+      });
+    }
+
+    // Platform change handler
+    ticketPlatform.on('change', function() {
+      const platform = $(this).val();
+      if (platform) {
+        linkButton.removeClass('hidden');
+        if (platform === 'eventbrite') {
+          modal.removeClass('hidden');
+          searchInput.val('');
+          resultsContainer.empty();
+
+          // Initial load of events
+          searchEvents('');
+        }
+      } else {
+        linkButton.addClass('hidden');
+      }
+    });
+
+    // Modal controls
+    linkButton.on('click', function() {
+      modal.removeClass('hidden');
+      searchInput.val('');
+      resultsContainer.empty();
+      searchEvents('');
+    });
+
+    $('.close-modal').on('click', function() {
+      modal.addClass('hidden');
+    });
+
+    // Search input handler with debounce
+    let searchTimeout;
+    searchInput.on('input', function() {
+      clearTimeout(searchTimeout);
+      const query = $(this).val();
+
+      searchTimeout = setTimeout(() => {
+        if (query.length >= 3 || query.length === 0) {
+          searchEvents(query);
+        }
+      }, 300);
+    });
+
     // Handle form submission
     $('#eventForm').on('submit', function(event) {
       event.preventDefault(); // Prevent default form submission
@@ -253,9 +427,11 @@
         formData.append('promoter_ids[]', id);
       });
 
-      // Debug log FormData
-      for (var pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
+      // Add platform data to formData
+      if (ticketPlatform.val()) {
+        formData.append('ticket_platform', ticketPlatform.val());
+        formData.append('platform_event_id', platformEventId.val());
+        formData.append('platform_event_url', platformEventUrl.val());
       }
 
       $.ajax({
@@ -531,7 +707,6 @@
     }
 
     handleVenueSearch();
-
 
     const headlinerSearchInput = $('#headliner-search');
     const mainSupportSearchInput = $('#main-support-search');
