@@ -44,8 +44,6 @@ class IntegrationController extends Controller
 
             $apiKey->save();
 
-            Log::info('Integration saved successfully', ['id' => $apiKey->id]);
-
             return response()->json([
                 'message' => 'Integration saved successfully',
                 'data' => $apiKey
@@ -66,12 +64,6 @@ class IntegrationController extends Controller
     public function searchEvents(Request $request, $platform)
     {
         try {
-            Log::info('Search Events Request', [
-                'platform' => $platform,
-                'query' => $request->query('query'),
-                'user' => auth()->user()
-            ]);
-
             // Validate platform is enabled in config
             if (!config("integrations.ticket_platforms.{$platform}.enabled")) {
                 return response()->json(['error' => 'Platform not supported'], 400);

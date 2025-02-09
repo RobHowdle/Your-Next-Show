@@ -30,10 +30,6 @@ class EventbriteService
                 throw new \Exception('No organization ID found');
             }
 
-            Log::debug('Making Eventbrite API request', [
-                'organizationId' => $organizationId,
-                'query' => $query
-            ]);
 
             // Search for events within the organization
             // Note: We're using name_filter instead of q for searching

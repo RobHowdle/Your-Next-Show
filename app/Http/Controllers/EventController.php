@@ -216,7 +216,8 @@ class EventController extends Controller
             'venue_id' => null,
             'venue_name' => null,
             'id' => null,
-            'name' => null
+            'name' => null,
+            'apiKeys' => []
         ];
 
         // Get the service and API keys based on dashboard type
@@ -248,6 +249,9 @@ class EventController extends Controller
                 }
         }
 
+        $hasMultiplePlatforms = count($serviceData['apiKeys']) > 1;
+        $singlePlatform = count($serviceData['apiKeys']) === 1 ? collect($serviceData['apiKeys'])->first() : null;
+
         return view('admin.dashboards.new-event', [
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
@@ -255,7 +259,9 @@ class EventController extends Controller
             'service' => $service,
             'serviceData' => $serviceData,
             'profileData' => [
-                'apiKeys' => $serviceData['apiKeys'] ?? []
+                'apiKeys' => $serviceData['apiKeys'] ?? [],
+                'hasMultiplePlatforms' => $hasMultiplePlatforms,
+                'singlePlatform' => $singlePlatform
             ]
         ]);
     }
@@ -337,7 +343,6 @@ class EventController extends Controller
 
         try {
             $validatedData = $request->validated();
-            dd($validatedData);
 
             $user = Auth::user()->load('roles');
             $role = $user->getRoleNames()->first();
