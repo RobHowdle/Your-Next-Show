@@ -22,9 +22,11 @@
           <select id="provider" name="provider"
             class="focus:border-yns_pink mt-1 w-full rounded-md border-gray-600 bg-gray-700 text-white">
             <option value="">Select Provider</option>
-            <option value="eventbrite">Eventbrite</option>
-            <option value="ticketmaster">Ticketmaster</option>
-            <option value="fatsoma">Fatsoma</option>
+            @foreach (config('integrations.ticket_platforms') as $key => $platform)
+              @if ($platform['enabled'])
+                <option value="{{ $key }}">{{ $platform['name'] }}</option>
+              @endif
+            @endforeach
           </select>
           <p class="mt-1 text-sm text-gray-400" id="provider-description"></p>
         </div>
@@ -88,20 +90,12 @@
 
 <script>
   $(document).ready(function() {
-    const providerInfo = {
-      eventbrite: {
-        description: 'Connect your Eventbrite account to sync ticket sales and event data.',
-        documentation: 'https://www.eventbrite.com/platform/api'
-      },
-      ticketmaster: {
-        description: 'Integrate with Ticketmaster to manage your event listings and sales.',
-        documentation: 'https://developer.ticketmaster.com/products-and-docs/apis/getting-started/'
-      },
-      fatsoma: {
-        description: 'Connect your Fatsoma account to track ticket sales and promotions.',
-        documentation: 'https://fatsoma.com/for-promoters'
-      }
-    };
+    const providerInfo = @json(collect(config('integrations.ticketing'))->map(function ($platform) {
+            return [
+                'description' => $platform['description'],
+                'documentation' => $platform['documentation_url'],
+            ];
+        }));
 
     // Show/Hide Integration Form
     $('#show-new-integration-btn').on('click', function() {

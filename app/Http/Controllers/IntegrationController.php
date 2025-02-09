@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ApiKey;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Services\SkiddleService;
 use App\Services\EventbriteService;
 use Illuminate\Support\Facades\Log;
 
@@ -61,6 +62,7 @@ class IntegrationController extends Controller
         }
     }
 
+    // Eventbrite and Skiddle Event Search
     public function searchEvents(Request $request, $platform)
     {
         try {
@@ -81,6 +83,7 @@ class IntegrationController extends Controller
             // Get the appropriate service
             $service = match ($platform) {
                 'eventbrite' => new EventbriteService($apiKey),
+                'skiddle' => new SkiddleService($apiKey),
                 default => throw new \Exception('Unsupported platform'),
             };
 
@@ -99,5 +102,14 @@ class IntegrationController extends Controller
 
             return response()->json(['error' => 'Failed to search events'], 500);
         }
+    }
+
+    public function handleSkiddleWebhook()
+    {
+        $event = $_POST['event'];
+        $payload = $_POST['payload'];
+
+        $skiddleService = new SkiddleService();
+        $skiddleService->handleWebhook($event, $payload);
     }
 }

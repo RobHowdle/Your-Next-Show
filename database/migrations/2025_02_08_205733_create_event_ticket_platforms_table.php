@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('event_ticket_platforms', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->string('platform_name'); // eventbrite, ticketmaster, etc
-            $table->string('platform_event_id');
+            $table->foreignId('event_id')->constrained()->onDelete('cascade')->nullable();
+            $table->string('platform_name')->nullable(); // eventbrite, ticketmaster, etc
+            $table->string('platform_event_id')->nullable();
             $table->string('platform_event_url')->nullable();
             $table->json('platform_event_data')->nullable(); // Store additional data if needed
             $table->timestamps();

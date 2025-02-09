@@ -41,7 +41,7 @@ class StoreUpdateEventRequest extends FormRequest
             'bands_ids.*' => 'nullable|integer',
             'opener' => 'nullable|string',
             'opener_id' => 'nullable|integer',
-            'ticket_platforms' => 'nullable|array',
+            'ticket_platform' => 'nullable',
         ];
 
         $rules['poster_url'] = [

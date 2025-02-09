@@ -85,7 +85,7 @@ class VenueDataHelper
 
         $bandTypes = json_decode($venue->band_type) ?? [];
         $additionalInfo = $venue ? $venue->additional_info : '';
-        $apiProviders = config('api_providers.providers');
+        $apiProviders = config('integrations.ticket_platforms');
         $apiKeys = ApiKey::where('serviceable_id', $venue->id)->where('serviceable_type', get_class($venue))->get();
 
         if ($apiKeys) {

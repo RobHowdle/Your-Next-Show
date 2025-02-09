@@ -143,6 +143,8 @@
                 @endguest
                 <a href="{{ route('gig-guide') }}" class="block px-4 py-2 text-center hover:text-yns_yellow">Gig
                   Guide</a>
+                <a href="{{ route('public-events') }}"
+                  class="block px-4 py-2 text-center hover:text-yns_yellow">Events</a>
               </div>
             </div>
             <div @click="sidebarOpen = false" class="flex-1 bg-black opacity-50"></div>

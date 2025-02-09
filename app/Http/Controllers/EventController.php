@@ -416,7 +416,7 @@ class EventController extends Controller
                 'on_the_door_ticket_price' => $validatedData['on_the_door_ticket_price'],
             ]);
 
-            if ($request->filled('ticket_platform')) {
+            if (!empty($validatedData['ticket_platform'])) {
                 $event->ticketPlatforms()->create([
                     'platform_name' => $request->ticket_platform,
                     'platform_event_id' => $request->platform_event_id,

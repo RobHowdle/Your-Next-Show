@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\TrackChanges;
+use App\Models\TicketPlatform;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -88,5 +89,10 @@ class Event extends Model
     public function eventBands()
     {
         return $this->hasMany(EventBand::class);
+    }
+
+    public function ticketPlatforms()
+    {
+        return $this->hasMany(TicketPlatform::class);
     }
 }
