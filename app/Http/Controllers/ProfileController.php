@@ -392,6 +392,10 @@ class ProfileController extends Controller
                     $venue->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
+                if (isset($userData['preferred_contact'])) {
+                    $venue->update(['preferred_contact' => $userData['preferred_contact']]);
+                }
+
                 // About
                 if (isset($userData['description']) && $venue->description !== $userData['description']) {
                     $venue->update(['description' => $userData['description']]);

@@ -35,6 +35,7 @@ class Promoter extends Model
         'contact_link',
         'is_verified',
         'verified_at',
+        'preferred_contact',
     ];
 
     protected $casts = [

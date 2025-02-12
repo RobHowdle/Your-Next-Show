@@ -32,37 +32,20 @@
 <body class="guest relative font-sans antialiased" x-data="{ sidebarOpen: false }">
   <div class="absolute inset-0 bg-cover bg-fixed bg-center bg-no-repeat"
     style="background-image: url('{{ asset('storage/images/system/hero-bg.jpg') }}'); z-index: -1;"></div>
-  <div x-data="{
-      startTime: performance.now(),
-      loadingTime: 0,
-      hideLoader() {
-          this.$nextTick(() => {
-              document.querySelector('#preloader').classList.remove('animation');
-              document.querySelector('#preloader').classList.add('over');
-              document.querySelector('.pre-overlay.o-1').style.height = '0%';
-              document.querySelector('.pre-overlay.o-2').style.height = '0%';
-          });
-      },
-      checkLoadingTime() {
-          this.loadingTime = performance.now() - this.startTime;
-          if (this.loadingTime > 1000) {
-              setTimeout(this.hideLoader, 4000); // Delay hiding the loader
-          } else {
-              this.hideLoader(); // Hide immediately if loading is fast
-          }
-      }
-  }" x-init="checkLoadingTime">
-    <!-- Preloader structure -->
-    <div id="preloader" class="animation">
-      <div class="decor">
-        <div class="bar"></div>
+  <div x-data="loader" x-init="init()" x-show="isLoading"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-300"
+    x-transition:enter="ease-out" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="ease-in" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="text-center">
+      <div class="music-loader mb-4">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
       </div>
-      <p>Loading...</p>
+      <p class="text-lg text-white">LOADING...</p>
     </div>
-
-    <!-- Overlay elements -->
-    <div class="pre-overlay o-1" style="height: 100%;"></div>
-    <div class="pre-overlay o-2" style="height: 100%;"></div>
   </div>
   @if (Route::has('login'))
     <nav class="fixed z-10 w-full bg-yns_dark_blue">
@@ -216,18 +199,28 @@
 
   </footer>
   <script>
-    function initialize() {
-      // Your initialization code here
-      console.log('Google Maps API initialized');
-    }
-
-    // Ensure the function is available globally
-    window.initialize = initialize;
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('loader', () => ({
+        isLoading: true,
+        init() {
+          this.handleLoading();
+          document.addEventListener('turbo:visit', () => {
+            this.isLoading = true;
+          });
+          document.addEventListener('turbo:load', () => {
+            this.handleLoading();
+          });
+        },
+        handleLoading() {
+          // Ensure minimum loading time of 500ms for smooth transition
+          setTimeout(() => {
+            this.isLoading = false;
+          }, 250);
+        }
+      }));
+    });
   </script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initialize"
-    async defer></script>
 </body>
 
 </html>

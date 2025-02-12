@@ -53,6 +53,8 @@ class VenueDataHelper
             }
         }
 
+        $preferredContact = $venue ? $venue->preferred_contact : '';
+
         // About Section
         $description = $venue ? $venue->description : '';
 
@@ -120,6 +122,7 @@ class VenueDataHelper
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'platformsToCheck' => $platformsToCheck,
+            'preferred_contact' => $preferredContact,
             'inHouseGear' => $inHouseGear,
             'myEvents' => $myEvents,
             'uniqueBands' => $uniqueBands,

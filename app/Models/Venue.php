@@ -41,6 +41,7 @@ class Venue extends Model
         'logo_url',
         'is_verified',
         'verified_at',
+        'preferred_contact',
     ];
 
     protected $casts = [
@@ -106,5 +107,12 @@ class Venue extends Model
     {
         return $this->belongsToMany(OtherService::class, 'event_band')
             ->where('other_services.other_service_id', 4);
+    }
+
+    public function upcomingEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_venue')
+            ->where('events.event_date', '>=', now())
+            ->orderBy('events.event_date', 'asc');
     }
 }

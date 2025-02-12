@@ -45,6 +45,7 @@ class OtherService extends Model
         'services',
         'is_verified',
         'verified_at',
+        'preferred_contact',
     ];
 
     protected $casts = [

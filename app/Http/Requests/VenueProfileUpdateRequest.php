@@ -38,6 +38,7 @@ class VenueProfileUpdateRequest extends FormRequest
             'contact_number' => ['nullable', 'regex:/^(?:0|\+44)(?:\d\s?){9,10}$/'],
             'contact_email' => 'nullable|email',
             'contact_links.*.*' => 'nullable|url',
+            'preferred_contact' => 'nullable|string',
             'description' => 'nullable|string',
             'additionalInfo' => 'nullable|string',
             'logo_url' => 'nullable|image|mimes:jpeg,jpg,png,webp,svg|max:5120',

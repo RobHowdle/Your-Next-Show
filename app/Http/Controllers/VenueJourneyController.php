@@ -75,6 +75,11 @@ class VenueJourneyController extends Controller
             'updated_at' => Carbon::now()
         ]);
 
+        $venue->update([
+            'is_verified' => 1,
+            'verified_at' => Carbon::now()
+        ]);
+
 
         return response()->json([
             'success' => true,
