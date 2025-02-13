@@ -131,7 +131,7 @@ class VenueController extends Controller
         $averageQualityRating = VenueReview::calculateAverageScore($venueId, 'quality_rating');
         $reviewCount = VenueReview::getReviewCount($venueId);
         $recentReviews = VenueReview::getRecentReviews($venueId);
-        $venue->recentReviews = $recentReviews;
+        $venue->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
         $genres = json_decode($venue->genre);
         $genreNames = collect($genres)->keys()->toArray();

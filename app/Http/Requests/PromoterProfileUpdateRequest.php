@@ -35,7 +35,7 @@ class PromoterProfileUpdateRequest extends FormRequest
             'contact_email' => 'nullable|email',
             'contact_links.*.*' => 'nullable|url',
             'description' => 'nullable|string',
-
+            'preferred_contact' => 'nullable|string',
         ];
     }
 }

@@ -1,356 +1,492 @@
 <x-guest-layout>
-  <x-slot name="header">
-    <h1 class="text-center font-heading text-6xl text-white">Promoters</h1>
-  </x-slot>
+  <!-- Hero Section -->
+  <div class="mx-auto min-h-screen max-w-7xl pb-20">
+    <div class="px-4 pt-36 sm:px-6 lg:px-8">
+      <!-- Hero Section -->
+      <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">
+        <h1 class="mb-4 mt-8 text-center font-heading text-4xl font-bold text-white md:text-5xl lg:text-6xl">
+          Find Your Next <span class="text-yns_yellow">Promoter</span>
+        </h1>
 
-  <x-promoters-table :promoters="$promoters" :genres="$genres" :promoterVenueCount="$promoterVenueCount">
-    @forelse ($promoters as $promoter)
-      <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
-        <th scope="row"
-          class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="{{ route('promoter', $promoter['name']) }}"
-            class="promoter-link transition duration-150 ease-in-out hover:text-yns_yellow">{{ $promoter->name }}</a>
-        </th>
-        <td
-          class="rating-wrapper px:2 py:2 hidden whitespace-nowrap sm:text-base md:px-6 md:py-3 lg:flex lg:px-8 lg:py-4">
-          {!! $overallReviews[$promoter->id] !!}
-        </td>
-        <td
-          class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          {{ $promoter->postal_town }}
-        </td>
-        <td
-          class="hidden whitespace-nowrap px-2 py-2 align-middle text-white md:block md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <x-contact-and-social-links :item="$promoter" />
-        </td>
-        @if ($promoterVenueCount != 0)
-          <td
-            class="{{ $promoters ? 'md:block' : 'hidden' }} whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-            @foreach ($promoters->venues as $venue)
-              <a class="hover:text-yns_yellow" href="{{ url('venues', $venue['name']) }}">{{ $venue['name'] }}</a>
+
+        <!-- Search and Filter Section -->
+        <div class="mt-4 grid gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Search Box -->
+          <div class="col-span-full">
+            <div class="relative">
+              <input type="text" id="promoter-search" placeholder="Search by promoter name or location..."
+                class="w-full rounded-lg border border-gray-700 bg-black/50 p-4 pl-12 text-white placeholder-gray-400 backdrop-blur-sm">
+              <span class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></span>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+            <h3 class="font-heading text-lg font-bold text-white">Promoter Type</h3>
+            <div class="space-y-2">
+              @foreach ($bandTypes as $type)
+                <label class="flex items-center gap-2 text-gray-300">
+                  <input type="checkbox" name="band_type[]" value="{{ $type }}"
+                    class="filter-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow">
+                  <span>{{ Str::title(str_replace('-', ' ', $type)) }}</span>
+                </label>
+              @endforeach
+            </div>
+          </div>
+
+          <!-- Genre Filter -->
+          <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+            <h3 class="font-heading text-lg font-bold text-white">Genres</h3>
+            <div class="max-h-48 grid grid-cols-2 space-y-2 overflow-y-auto">
+              @foreach ($genres as $genre)
+                <label class="flex items-center gap-2 text-gray-300">
+                  <input type="checkbox" name="genres[]" value="{{ $genre['name'] ?? $genre }}"
+                    class="genre-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow">
+                  <span>{{ Str::title(str_replace('-', ' ', $genre['name'] ?? $genre)) }}</span>
+                </label>
+              @endforeach
+            </div>
+          </div>
+
+          <!-- Capacity Filter -->
+          <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+            <h3 class="font-heading text-lg font-bold text-white">Locations</h3>
+            <div class="max-h-48 grid grid-cols-2 space-y-2 overflow-y-auto">
+              <label class="flex items-center">
+                <input type="checkbox" id="all-regions"
+                  class="form-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow">
+                <span class="ml-2 text-white">All Locations</span>
+              </label>
+              @foreach ($locations as $location)
+                <label class="flex items-center">
+                  <input type="checkbox"
+                    class="region-checkbox form-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow"
+                    value="{{ $location }}">
+                  <span class="ml-2 text-white">{{ $location }}</span>
+                </label>
+              @endforeach
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="overflow-hidden rounded-lg border border-gray-800 bg-yns_dark_blue shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-800">
+          <thead>
+            <tr>
+              <th class="sortable px-6 py-3 text-left" data-sort="name">
+                <button
+                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                  Promoter Name
+                  <span class="fas fa-sort"></span>
+                </button>
+              </th>
+              <th class="sortable px-6 py-3 text-left" data-sort="rating">
+                <button
+                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                  Rating
+                  <span class="fas fa-sort"></span>
+                </button>
+              </th>
+              <th class="sortable px-6 py-3 text-left" data-sort="location">
+                <button
+                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                  Location
+                  <span class="fas fa-sort"></span>
+                </button>
+              </th>
+              <th class="sortable px-6 py-3 text-left" data-sort="genres">
+                <button
+                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                  Genres
+                  <span class="fas fa-sort"></span>
+                </button>
+              </th>
+              <th class="px-6 py-3 text-left">
+                <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                  Contact
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="resultsTableBody" class="divide-y divide-gray-800">
+            @foreach ($promoters as $promoter)
+              <tr class="hover:bg-black/20">
+                <td class="px-6 py-4">
+                  <a href="/promoters/{{ Str::slug($promoter['name']) }}"
+                    class="font-medium text-white hover:text-yns_yellow">
+                    {{ $promoter['name'] }}
+                    @if ($promoter['is_verified'])
+                      <span
+                        class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+                        <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                        </svg>
+                        Verified
+                      </span>
+                    @endif
+                  </a>
+                </td>
+                <td class="px-6 py-4 text-gray-300">
+                  {{ $promoter['average_rating'] ?: 'Not rated' }}
+                </td>
+                <td class="px-6 py-4 text-gray-300">
+                  {{ $promoter['postal_town'] ?: 'Location not specified' }}
+                </td>
+                <td class="px-6 py-4 text-gray-300">
+                  {{ $promoter['genres'] ?: 'Not specified' }}
+                </td>
+                <td class="px-6 py-4">
+                  <button
+                    onclick="showContactModal({{ json_encode([
+                        'name' => $promoter['name'],
+                        'preferred_contact' => $promoter['preferred_contact'],
+                        'contact_email' => $promoter['contact_email'],
+                        'contact_number' => $promoter['contact_number'],
+                        'platforms' => $promoter['platforms'],
+                    ]) }})"
+                    class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+                    Contact Options
+                  </button>
+                </td>
+              </tr>
             @endforeach
-          </td>
-        @endif
-      </tr>
-    @empty
-      <tr class="border-b border-white bg-gray-900">
-        <td colspan="4"
-          class="px-2 py-2 text-center text-2xl text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">No
-          promoters found</td>
-      </tr>
-    @endforelse
-  </x-promoters-table>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="px-6 py-4">
+        {{ $promoters->links() }}
+      </div>
+
+      <div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto pt-36">
+        <div class="flex min-h-screen items-end justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
+          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-900 opacity-75"></div>
+          </div>
+          <div
+            class="inline-block transform overflow-hidden rounded-lg bg-yns_dark_blue text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+            <div class="bg-yns_dark_blue px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+              <div class="sm:flex sm:items-start">
+                <div class="mt-3 w-full text-center sm:ml-4 sm:mt-0 sm:text-left">
+                  <h3 class="mb-4 text-2xl font-bold leading-6 text-white" id="modalTitle"></h3>
+                  <div class="mt-4 space-y-4">
+                    <div id="preferredContact" class="rounded-lg border border-yns_yellow bg-yns_yellow/10 p-4">
+                      <!-- Preferred contact will be inserted here -->
+                    </div>
+                    <div id="otherContacts" class="mt-4 space-y-2">
+                      <!-- Other contact methods will be inserted here -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-yns_dark_blue/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+              <button type="button" onclick="closeContactModal()"
+                class="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:mt-0 sm:w-auto">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 </x-guest-layout>
 <script>
-  $(document).ready(function() {
-    // Search Bar
-    function initialize() {
-      jQuery('form').on('keyup keypress', function(e) {
-        var keyCode = e.keyCode || e.which;
-        if (keyCode === 13) {
-          return false;
-        }
-      });
-      const locationInputs = document.getElementsByClassName("map-input");
+  document.addEventListener('DOMContentLoaded', function() {
+    let currentSort = {
+      field: null,
+      direction: 'asc'
+    };
 
-      const autocompletes = [];
-      const geocoder = new google.maps.Geocoder;
-      for (let i = 0; i < locationInputs.length; i++) {
+    let debounceTimeout;
 
-        const input = locationInputs[i];
-        const fieldKey = input.id.replace("-input", "");
-        const isEdit = document.getElementById(fieldKey + "-latitude").value != '' && document.getElementById(
-          fieldKey +
-          "-longitude").value != '';
+    // Initialize filters
+    const filters = {
+      search: '',
+      bandTypes: [],
+      genres: [],
+      minCapacity: null,
+      maxCapacity: null
+    };
 
-        const latitude = parseFloat(document.getElementById(fieldKey + "-latitude").value) || 59.339024834494886;
-        const longitude = parseFloat(document.getElementById(fieldKey + "-longitude").value) || 18.06650573462189;
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = @json($town ?? '');
 
-        const map = new google.maps.Map(document.getElementById(fieldKey + '-map'), {
-          center: {
-            lat: latitude,
-            lng: longitude
-          },
-          zoom: 13
-        });
-        const marker = new google.maps.Marker({
-          map: map,
-          position: {
-            lat: latitude,
-            lng: longitude
-          },
-        });
-
-        marker.setVisible(isEdit);
-
-        const autocomplete = new google.maps.places.Autocomplete(input);
-        autocomplete.key = fieldKey;
-        autocompletes.push({
-          input: input,
-          map: map,
-          marker: marker,
-          autocomplete: autocomplete
-        });
-      }
-
-      for (let i = 0; i < autocompletes.length; i++) {
-        const input = autocompletes[i].input;
-        const autocomplete = autocompletes[i].autocomplete;
-        const map = autocompletes[i].map;
-        const marker = autocompletes[i].marker;
-
-        google.maps.event.addListener(autocomplete, 'place_changed', function() {
-          marker.setVisible(false);
-          const place = autocomplete.getPlace();
-
-          geocoder.geocode({
-            'placeId': place.place_id
-          }, function(results, status) {
-            if (status === google.maps.GeocoderStatus.OK) {
-              const lat = results[0].geometry.location.lat();
-              const lng = results[0].geometry.location.lng();
-              setLocationCoordinates(autocomplete.key, lat, lng);
-            }
-          });
-
-          if (!place.geometry) {
-            window.alert("No details available for input: '" + place.name + "'");
-            input.value = "";
-            return;
-          }
-
-          if (place.geometry.viewport) {
-            map.fitBounds(place.geometry.viewport);
-          } else {
-            map.setCenter(place.geometry.location);
-            map.setZoom(17);
-          }
-          marker.setPosition(place.geometry.location);
-          marker.setVisible(true);
-        });
-      }
+    if (searchQuery) {
+      const searchInput = document.getElementById('promoter-search');
+      searchInput.value = searchQuery;
+      filters.search = searchQuery;
+      applyFilters();
     }
 
-    // Attach event listener for filter checkboxes
-    $('.filter-checkbox').change(function() {
-      applyFilters();
-    });
-
-    // Attach event listener for search input
-    let debounceTimeout;
-    $('#address-input').on('input', function() {
+    // Search Input Handler
+    document.getElementById('promoter-search').addEventListener('input', function(e) {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
+        filters.search = e.target.value;
         applyFilters();
-      }, 300); // Adjust debounce delay as needed
+      }, 300);
     });
 
-    // Event handler for "All Types" checkbox
-    $("#all-bands").change(function() {
-      var isChecked = $(this).prop("checked");
-      $(".filter-checkbox").prop("checked", isChecked);
+    // Capacity Input Handlers
+    document.getElementById('min-capacity').addEventListener('input', function(e) {
+      filters.minCapacity = e.target.value ? parseInt(e.target.value) : null;
       applyFilters();
     });
 
-    // Event handler for "All Genres" checkbox
-    $("#all-genres").change(function() {
-      var isChecked = $(this).prop("checked");
-      $(".genre-checkbox, .subgenre-checkbox").prop("checked", isChecked);
+    document.getElementById('max-capacity').addEventListener('input', function(e) {
+      filters.maxCapacity = e.target.value ? parseInt(e.target.value) : null;
       applyFilters();
     });
 
-    // Attach event listener for genre checkboxes
-    $('.genre-checkbox').change(function() {
-      var genreId = $(this).data('genre-id');
-      var isChecked = $(this).prop('checked');
-      $(`.subgenre-checkbox[data-genre-id="${genreId}"]`).prop('checked', isChecked);
+    // Sorting Handlers
+    document.querySelectorAll('.sortable').forEach(header => {
+      header.addEventListener('click', function() {
+        const field = this.dataset.sort;
 
-      // Uncheck "All Genres" if a single genre is deselected
-      if (!isChecked) {
-        $('#all-genres').prop('checked', false);
-      }
-      applyFilters();
+        // Toggle sort direction
+        if (currentSort.field === field) {
+          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSort.field = field;
+          currentSort.direction = 'asc';
+        }
+
+        // Update sort icons
+        updateSortIcons(this);
+        applyFilters();
+      });
     });
 
-    $('.subgenre-checkbox').change(function() {
-      // Uncheck "All Genres" if any subgenre is deselected
-      $('#all-genres').prop('checked', false);
-      applyFilters();
-    });
+    function updateSortIcons(clickedHeader) {
+      // Reset all icons
+      document.querySelectorAll('.sortable .fas').forEach(icon => {
+        icon.className = 'fas fa-sort';
+      });
+
+      // Update clicked header icon
+      const icon = clickedHeader.querySelector('.fas');
+      icon.className = `fas fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'}`;
+    }
 
     function applyFilters() {
-      var bandTypeValue = [];
-      var selectedGenres = [];
-      var selectedSubgenres = [];
-      var searchQuery = jQuery('#address-input').val();
-
-      // Collect selected band types
-      $('.filter-checkbox:checked').each(function() {
-        bandTypeValue.push($(this).val());
-      });
-
-      // Collect selected genres
-      $('.genre-checkbox:checked').each(function() {
-        selectedGenres.push($(this).val());
-      });
-
-      // Collect selected subgenres
-      $('.subgenre-checkbox:checked').each(function() {
-        selectedSubgenres.push($(this).val());
-      });
-
-      var mergedGenres = [...selectedGenres, ...selectedSubgenres];
-
-      // Send AJAX request to fetch filtered data
       $.ajax({
         url: '/promoters/filter',
         method: 'POST',
         data: {
           _token: $('meta[name="csrf-token"]').attr('content'),
-          search_query: searchQuery,
-          band_type: bandTypeValue,
-          genres: mergedGenres,
+          filters: filters,
+          sort: currentSort
         },
-        success: function(data) {
-          // Update table with filtered data
-          if (data.promoters && Array.isArray(data.promoters)) {
-            updateTable(data);
-          } else {
-            console.error("The 'promoters' field is not an array or is missing:", data.promoters);
-          }
+        success: function(response) {
+          updateResultsTable(response.results);
         },
-        error: function(err) {
-          console.error('Error applying filters:', err);
+        error: function(error) {
+          console.error('Error applying filters:', error);
         }
-
       });
     }
 
-    // Define the updatepromotersTable function outside of the updateTable function
-    function updateResultsTable(filteredPromoters) {
-      if (!Array.isArray(filteredPromoters)) {
-        console.error("filteredPromoters is not an array:", filteredPromoters);
+    function updateResultsTable(promoters) {
+      const tbody = document.getElementById('resultsTableBody');
+      tbody.innerHTML = '';
+
+      if (promoters.length === 0) {
+        tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+          No promoters found matching your criteria
+        </td>
+      </tr>
+    `;
         return;
       }
-      // Generate HTML for the filtered promoters
-      var rowsHtml = filteredPromoters.map(function(promoter) {
-        var promoterRoute = "{{ route('promoter', ':promoterId') }}";
-        var ratingHtml = getRatingHtml(promoter.average_rating);
-        var promoterVenueCount = {{ $promoterVenueCount }};
-        const className = promoterVenueCount > 0 ? 'md:block' : 'hidden';
-        return `
-            <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
-                <th scope="row" class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                    <a href="${promoterRoute.replace(':promoterId', promoter.id)}" class="promoter-link transition duration-150 ease-in-out hover:text-yns_yellow">${promoter.name}</a>
-                </th>
-                <td class="rating-wrapper px:2 py:2 hidden whitespace-nowrap sm:text-base md:px-6 md:py-3 lg:flex lg:px-8 lg:py-4">
-                    ${ratingHtml}
-                </td>
-                <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                    ${promoter.postal_town}
-                </td>
-                <td class="hidden whitespace-nowrap px-2 py-2 align-middle text-white md:block md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                    ${promoter.contact_number ? '<a href="tel:' + promoter.contact_number + '" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out"><span class="fas fa-phone"></span></a>' : ''}
-                    ${promoter.contact_email ? '<a href="mailto:' + promoter.contact_email + '" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out"><span class="fas fa-envelope"></span></a>' : ''}
-                    ${promoter.platforms ? promoter.platforms.map(function(platform) {
-                        switch (platform.platform) {
-                            case 'facebook':
-                                return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-facebook"></span></a>';
-                            case 'twitter':
-                                return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-twitter"></span></a>';
-                            case 'instagram':
-                                return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-instagram"></span></a>';
-                            case 'snapchat':
-                                return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-snapchat-ghost"></span></a>';
-                            case 'tiktok':
-                                return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-tiktok"></span></a>';
-                            case 'youtube':
-                                return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fab fa-youtube"></span></a>';
-                            case 'bluesky':
-                                return '<a class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out" href="' + platform.url + '" target="_blank"><span class="fa-brands fa-bluesky"></span></a>';
-                            default:
-                                return '';
-                        }
-                    }).join('') : ''}
-                </td>
-                <td class="whitespace-nowrap ${className} font-sans  text-white px-2 py-2 md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-                    ${promoter.venues ? promoter.venues.map(function(venue) {
-                        return '<a href="' + venue.url + '">' + venue.name + '</a>';
-                    }).join('') : ''}
-                </td>
-            </tr>
-        `;
-      }).join('');
-      // Replace the existing HTML content with the new HTML
-      jQuery('#promoters tbody').html(rowsHtml);
+
+      promoters.forEach(promoter => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-black/20';
+
+        const rating = promoter.average_rating ? promoter.average_rating : 'Not rated';
+        const capacity = promoter.capacity ? promoter.capacity : 'Not specified';
+
+        const verifiedBadge = promoter.is_verified ? `
+      <span class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+        <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+        </svg>
+        Verified
+      </span>` : '';
+
+        row.innerHTML = `
+      <td class="px-6 py-4">
+        <a href="/promoters/${promoter.name.toLowerCase().replace(/\s+/g, '-')}" 
+           class="font-medium text-white hover:text-yns_yellow">
+          ${promoter.name}
+          ${verifiedBadge}
+        </a>
+      </td>
+      <td class="px-6 py-4 text-gray-300">
+        ${rating}
+      </td>
+      <td class="px-6 py-4 text-gray-300">
+        ${promoter.postal_town || 'Location not specified'}
+      </td>
+      <td class="px-6 py-4 text-gray-300">
+        ${capacity}
+      </td>
+      <td class="px-6 py-4">
+        <button
+          onclick='showContactModal(${JSON.stringify({
+            name: promoter.name,
+            preferred_contact: promoter.preferred_contact,
+            contact_email: promoter.contact_email,
+            contact_number: promoter.contact_number,
+            platforms: promoter.platforms
+          })})'
+          class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+          Contact Options
+        </button>
+      </td>
+    `;
+
+        tbody.appendChild(row);
+      });
     }
 
-    // Function to generate HTML for the rating
-    function getRatingHtml(rating) {
-      if (rating === undefined || rating === null) return '';
+    document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.genres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
 
-      var ratingHtml = '';
-      var totalIcons = 5;
-      var fullIcons = Math.floor(rating);
-      var fraction = rating - fullIcons;
-      var emptyIcon = "{{ asset('storage/images/system/ratings/empty.png') }}";
-      var fullIcon = "{{ asset('storage/images/system/ratings/full.png') }}";
-      var hotIcon = "{{ asset('storage/images/system/ratings/hot.png') }}";
-
-      // Special case: all icons are hot
-      if (rating === totalIcons) {
-        ratingHtml = Array(totalIcons).fill('<img src="' + hotIcon + '" alt="Hot Icon" />').join('');
-      } else {
-        // Add full icons
-        for (var i = 0; i < fullIcons; i++) {
-          ratingHtml += '<img src="' + fullIcon + '" alt="Full Icon" />';
-        }
-
-        // Handle the fractional icon
-        if (fraction > 0) {
-          ratingHtml += '<div class="partially-filled-icon" style="width: ' + (fraction * 48) +
-            'px; overflow: hidden; display:inline-block;">' +
-            '<img src="' + fullIcon + '" alt="Partial Full Icon" />' +
-            '</div>';
-        }
-
-        // Add empty icons to fill the rest
-        var iconsDisplayed = fullIcons + (fraction > 0 ? 1 : 0);
-        var remainingIcons = totalIcons - iconsDisplayed;
-
-        for (var j = 0; j < remainingIcons; j++) {
-          ratingHtml += '<img src="' + emptyIcon + '" alt="Empty Icon" />';
-        }
-      }
-
-      return ratingHtml;
-    }
-
-    // Update the updateTable function to pass the filtered promoters to updatepromotersTable
-    function updateTable(data) {
-      var promoters = data.promoters;
-      var pagination = data.pagination;
-
-      // Check if data is not null or empty array
-      if (data.promoters && data.promoters.length > 0) {
-        // Append new rows based on filtered data
-        updateResultsTable(data.promoters);
-      } else {
-        // Display message if no promoters found
-        var noPromotersRow = `
-            <tr class="border-b border-white bg-gray-900">
-                <td colspan="4" class="text-center text-2xl text-white px-2 py-2 md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">No promoters found</td>
-            </tr>
-        `;
-        jQuery('#promoters tbody').html(noPromotersRow);
-      }
-    }
-
-    function setLocationCoordinates(key, lat, lng) {
-      const latitudeField = document.getElementById(key + "-" + "latitude");
-      const longitudeField = document.getElementById(key + "-" + "longitude");
-      latitudeField.value = lat;
-      longitudeField.value = lng;
-    }
+    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.bandTypes = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
   });
+
+  function showContactModal(promoterData) {
+    const modal = document.getElementById('contactModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const preferredContact = document.getElementById('preferredContact');
+    const otherContacts = document.getElementById('otherContacts');
+
+    modalTitle.textContent = `Contact ${promoterData.name}`;
+
+    // Clear previous content
+    preferredContact.innerHTML = '';
+    otherContacts.innerHTML = '';
+
+    // Helper function to create contact link
+    const createContactLink = (type, value, icon) => {
+      let href = '';
+      let iconClass = '';
+
+      switch (type) {
+        case 'email':
+          href = `mailto:${value}`;
+          iconClass = 'fas fa-envelope';
+          break;
+        case 'phone':
+          href = `tel:${value}`;
+          iconClass = 'fas fa-phone';
+          break;
+        case 'facebook':
+          href = value;
+          iconClass = 'fab fa-facebook';
+          break;
+        case 'twitter':
+          href = value;
+          iconClass = 'fab fa-twitter';
+          break;
+        case 'instagram':
+          href = value;
+          iconClass = 'fab fa-instagram';
+          break;
+        case 'tiktok':
+          href = value;
+          iconClass = 'fab fa-tiktok';
+          break;
+        case 'youtube':
+          href = value;
+          iconClass = 'fab fa-youtube';
+          break;
+        case 'spotify':
+          href = value;
+          iconClass = 'fab fa-spotify';
+          break;
+        case 'website':
+          href = value;
+          iconClass = 'fas fa-globe';
+          break;
+        default:
+          href = value;
+          iconClass = 'fas fa-link';
+      }
+
+      return `<a href="${href}" target="_blank" class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
+    <span class="${iconClass}"></span>
+    ${type.charAt(0).toUpperCase() + type.slice(1)}
+  </a>`;
+    };
+
+    // Add preferred contact method first
+    if (promoterData.preferred_contact) {
+      let preferred;
+      if (promoterData.preferred_contact === 'email') {
+        preferred = createContactLink('email', promoterData.contact_email, 'envelope');
+      } else if (promoterData.preferred_contact === 'phone') {
+        preferred = createContactLink('phone', promoterData.contact_number, 'phone');
+      } else {
+        const platform = promoterData.platforms.find(p => p.platform === promoterData.preferred_contact);
+        if (platform) {
+          preferred = createContactLink(platform.platform, platform.url, platform.platform);
+        }
+      }
+
+      if (preferred) {
+        preferredContact.innerHTML = `
+        <h4 class="mb-2 font-bold text-yns_yellow">Preferred Contact Method</h4>
+        ${preferred}
+      `;
+      }
+    }
+
+    // Add other contact methods
+    let otherContactsHTML =
+      '<h4 class="mb-2 font-bold text-white">Other Contact Methods</h4><div class="grid gap-2">';
+
+    if (promoterData.contact_email && promoterData.preferred_contact !== 'email') {
+      otherContactsHTML += createContactLink('email', promoterData.contact_email, 'envelope');
+    }
+
+    if (promoterData.contact_number && promoterData.preferred_contact !== 'phone') {
+      otherContactsHTML += createContactLink('phone', promoterData.contact_number, 'phone');
+    }
+
+    promoterData.platforms.forEach(platform => {
+      if (platform.platform !== promoterData.preferred_contact) {
+        otherContactsHTML += createContactLink(platform.platform, platform.url, platform.platform);
+      }
+    });
+
+    otherContactsHTML += '</div>';
+    otherContacts.innerHTML = otherContactsHTML;
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeContactModal() {
+    document.getElementById('contactModal').classList.add('hidden');
+  }
 </script>

@@ -4,9 +4,10 @@
     <div class="px-4 pt-36 sm:px-6 lg:px-8">
       <!-- Hero Section -->
       <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">
-        <h1 class="mt-8 text-center font-heading text-4xl font-bold text-white md:text-5xl lg:text-6xl">
-          Find Your Perfect Venue
+        <h1 class="mb-4 mt-8 text-center font-heading text-4xl font-bold text-white md:text-5xl lg:text-6xl">
+          Find Your Next <span class="text-yns_yellow">Venue</span>
         </h1>
+
 
         <!-- Search and Filter Section -->
         <div class="mt-4 grid gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">

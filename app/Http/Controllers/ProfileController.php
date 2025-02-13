@@ -277,6 +277,10 @@ class ProfileController extends Controller
                     $promoter->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
+                if (isset($userData['preferred_contact'])) {
+                    $promoter->update(['preferred_contact' => $userData['preferred_contact']]);
+                }
+
                 // About
                 if (isset($userData['description']) && $promoter->description !== $userData['description']) {
                     $promoter->update(['description' => $userData['description']]);

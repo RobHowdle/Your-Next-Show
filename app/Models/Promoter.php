@@ -78,4 +78,11 @@ class Promoter extends Model
     {
         return $this->morphMany(ApiKey::class, 'serviceable');
     }
+
+    public function upcomingEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_promoter')
+            ->where('events.event_date', '>=', now())
+            ->orderBy('events.event_date', 'asc');
+    }
 }

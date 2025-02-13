@@ -51,7 +51,7 @@ Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue');
 Route::get('/promoter-suggestion', [VenueController::class, 'suggestPromoters'])->name('suggestPromoters');
 
 Route::get('/promoters', [PromoterController::class, 'index'])->name('promoters');
-Route::post('/promoters/filter', [PromoterController::class, 'filterCheckboxesSearch'])->name('promoters.filterCheckboxesSearch');
+Route::post('/promoters/filter', [PromoterController::class, 'filter'])->name('promoters.filter');
 Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter');
 Route::post('/promoters/{slug}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
 
