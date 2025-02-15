@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\User;
-use App\Models\ApiKeys;
+use App\Models\ApiKey;
 use Illuminate\Support\Facades\Storage;
 
 class PromoterDataHelper
@@ -52,6 +52,9 @@ class PromoterDataHelper
             }
         }
 
+        $preferredContact = $promoter ? $promoter->preferred_contact : '';
+
+
         // About Section
         $description = $promoter ? $promoter->description : '';
 
@@ -60,7 +63,6 @@ class PromoterDataHelper
 
         // My Events
         $myEvents = $promoter ? $promoter->events()->with('venues')->get() : collect();
-        $uniqueBands = $this->serviceDataHelper->getBandsData($promoter->id);
 
         // Genres
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -82,7 +84,7 @@ class PromoterDataHelper
 
         $bandTypes = json_decode($promoter->band_type) ?? [];
         $apiProviders = config('api_providers.providers');
-        $apiKeys = ApiKeys::where('serviceable_id', $promoter->id)->where('serviceable_type', get_class($promoter))->get();
+        $apiKeys = ApiKey::where('serviceable_id', $promoter->id)->where('serviceable_type', get_class($promoter))->get();
 
         if ($apiKeys) {
             $apiKeys = $apiKeys->map(function ($apiKey) {
@@ -112,9 +114,10 @@ class PromoterDataHelper
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'platformsToCheck' => $platformsToCheck,
+            'preferred_contact' => $preferredContact,
             'myVenues' => $myVenues,
             'myEvents' => $myEvents,
-            'uniqueBands' => $uniqueBands,
+            // 'uniqueBands' => $uniqueBands,
             'genres' => $genres,
             'profileGenres' => $profileGenres,
             'isAllGenres' => $isAllGenres,

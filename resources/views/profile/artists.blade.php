@@ -3,7 +3,6 @@
     {{ __('Your Artists') }}
   </h2>
 </header>
-
 <div class="group mb-6">
   <x-input-label-dark>Artists you've recently worked with</x-input-label-dark>
   <table class="mt-4 w-full border border-white text-left font-sans text-xl rtl:text-right">
@@ -22,26 +21,26 @@
               (is_array($profileData['uniqueBands']) && empty($profileData['uniqueBands'])) ||
               (is_object($profileData['uniqueBands']) && $profileData['uniqueBands']->isEmpty()))
         <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-          <td class="max-w-md whitespace-normal break-words px-6 py-4 text-center font-sans text-white" colspan="4">
+          <td class="max-w-md whitespace-normal break-words px-6 py-4 text-center font-sans text-white" colspan="5">
             No artists found.
           </td>
         </tr>
       @else
         @foreach ($profileData['uniqueBands'] as $band)
           <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-            <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">{{ $band->name }}</td>
+            <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">{{ $band['name'] }}</td>
             <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">
-              {{ $band->location ?? 'No Location' }}
+              {{ $band['location'] ?? 'No Location' }}
             </td>
             <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">
-              {{ $band->genre ?? 'No Genre Available' }}
+              {{ $band['genre'] ?? 'No Genre Available' }}
             </td>
             <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">
-              {{ $band->average_rating ?? 'No Rating Available' }}
+              {{ $band['average_rating'] ?? 'No Rating Available' }}
             </td>
             <td class="max-w-md whitespace-normal break-words px-6 py-4 text-center font-sans text-white">
-              <a href="{{ route('admin.dashboard.show-band', ['dashboardType' => $dashboardType, 'id' => $band->id]) }}"
-                class="text-blue-500 hover:underline">View</a>
+              <a href="{{ route('singleService', ['serviceType' => $band['services'], 'name' => $band['name']]) }}"
+                target="_blank" class="text-blue-500 hover:underline">View</a>
             </td>
           </tr>
         @endforeach

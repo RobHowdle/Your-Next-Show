@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\User;
+use App\Models\Event;
 use App\Models\OtherService;
 use Illuminate\Support\Facades\Storage;
 
@@ -43,6 +44,8 @@ class ServiceDataHelper
                 }
             }
         }
+
+        $preferredContact = $artist ? $artist->preferred_contact : '';
 
         $description = $artist ? $artist->description : '';
 
@@ -96,7 +99,8 @@ class ServiceDataHelper
             'bandTypes' => $bandTypes,
             'streamLinks' => $streamLinks,
             'streamPlatformsToCheck' => $streamPlatformsToCheck,
-            'members' => $members
+            'members' => $members,
+            'preferred_contact' => $preferredContact
         ];
     }
 
@@ -141,6 +145,7 @@ class ServiceDataHelper
                 }
             }
 
+            $preferredContact = $designer ? $designer->preferred_contact : '';
             $description = $designer ? $designer->description : '';
 
             // Genres
@@ -220,7 +225,8 @@ class ServiceDataHelper
                 'workingTimes' => $workingTimes,
                 'styles' => $styles,
                 'print' => $print,
-                'packages' => $packages
+                'packages' => $packages,
+                'preferred_contact' => $preferredContact
             ];
         }
     }
@@ -264,6 +270,7 @@ class ServiceDataHelper
             }
         }
 
+        $preferredContact = $photographer ? $photographer->preferred_contact : '';
         $description = $photographer ? $photographer->description : '';
 
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -358,7 +365,8 @@ class ServiceDataHelper
             'groups' => $groupedData,
             'workingTimes' => $workingTimes,
             'styles' => $styles,
-            'packages' => $packages
+            'packages' => $packages,
+            'preferred_contact' => $preferredContact
         ];
     }
 
@@ -402,6 +410,7 @@ class ServiceDataHelper
                 }
             }
 
+            $preferredContact = $videographer ? $videographer->preferred_contact : '';
             $description = $videographer ? $videographer->description : '';
 
             $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -478,7 +487,8 @@ class ServiceDataHelper
                 'groups' => $groupedData,
                 'workingTimes' => $workingTimes,
                 'styles' => $styles,
-                'packages' => $packages
+                'packages' => $packages,
+                'preferred_contact' => $preferredContact
             ];
         }
     }
@@ -500,17 +510,66 @@ class ServiceDataHelper
     }
 
     // Unique Bands for Venues and Promoters
-    public function getBandsData(int $promoterId): array
+    public function getBandsData($type, $id)
     {
-        return OtherService::where('other_service_id', 4)
-            ->whereHas('events', function ($query) use ($promoterId) {
-                $query->whereHas('promoters', function ($q) use ($promoterId) {
-                    $q->where('promoter_id', $promoterId);
-                });
-            })
-            ->distinct()
-            ->get()
-            ->toArray();
+        switch ($type) {
+            case 'Venue':
+                $events = Event::whereHas('venues', function ($query) use ($id) {
+                    $query->where('venues.id', $id);
+                })
+                    ->orderBy('event_date', 'desc')
+                    ->take(10)
+                    ->get();
+
+                $bandIds = [];
+                foreach ($events as $event) {
+                    if ($event->band_ids) {
+                        $decodedIds = json_decode($event->band_ids, true);
+                        if (is_array($decodedIds)) {
+                            foreach ($decodedIds as $band) {
+                                if (isset($band['band_id'])) {
+                                    $bandIds[] = $band['band_id'];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return empty($bandIds) ? [] : OtherService::where('other_service_id', 4)
+                    ->whereIn('id', array_values(array_unique($bandIds)))
+                    ->limit(10)
+                    ->get()
+                    ->toArray();
+                break;
+            case 'Promoter':
+                $events = Event::whereHas('promoters', function ($query) use ($id) {
+                    $query->where('promoters.id', $id);
+                })
+                    ->orderBy('event_date', 'desc')
+                    ->take(10)
+                    ->get();
+
+                $bandIds = [];
+                foreach ($events as $event) {
+                    if ($event->band_ids) {
+                        $decodedIds = json_decode($event->band_ids, true);
+                        if (is_array($decodedIds)) {
+                            foreach ($decodedIds as $band) {
+                                if (isset($band['band_id'])) {
+                                    $bandIds[] = $band['band_id'];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return empty($bandIds) ? [] : OtherService::where('other_service_id', 4)
+                    ->whereIn('id', array_values(array_unique($bandIds)))
+                    ->limit(10)
+                    ->get()
+                    ->toArray();
+                break;
+        }
     }
 
     public function getEnvironmentTypes(User $user): ?array

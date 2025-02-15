@@ -23,13 +23,13 @@
     <div class="mt-2 flex gap-4">
       <label class="flex items-center gap-2">
         <input type="radio" name="deposit_required" value="yes" class="form-radio text-yns_cyan"
-          {{ old('deposit_required', $profileData['deposit_required'] ?? '') === 'yes' ? 'checked' : '' }}>
+          {{ old('deposit_required', $profileData['depositRequired'] ?? '') === 'yes' ? 'checked' : '' }}>
         <span class="text-white">Yes</span>
       </label>
 
       <label class="flex items-center gap-2">
         <input type="radio" name="deposit_required" value="no" class="form-radio text-yns_cyan"
-          {{ old('deposit_required', $profileData['deposit_required'] ?? '') === 'no' ? 'checked' : '' }}>
+          {{ old('deposit_required', $profileData['depositRequired'] ?? '') === 'no' ? 'checked' : '' }}>
         <span class="text-white">No</span>
       </label>
     </div>
@@ -38,7 +38,7 @@
   <div id="deposit_amount_wrapper" class="group mb-6" style="display: none;">
     <x-input-label-dark for="deposit_amount">Standard deposit amount (can be adjusted per artist)</x-input-label-dark>
     <x-number-input-pound id="deposit_amount" name="deposit_amount"
-      value="{{ old('deposit_amount', $profileData['deposit_amount'] ?? '') }}">
+      value="{{ old('deposit_amount', $profileData['depositAmount'] ?? '') }}">
     </x-number-input-pound>
     <p class="mt-1 text-sm text-gray-400">Amount may vary based on equipment hired</p>
   </div>
@@ -89,15 +89,32 @@
     const depositAmountWrapper = document.getElementById('deposit_amount_wrapper');
     const dashboardType = '{{ $dashboardType }}';
 
+    const savedDepositRequired = @json(old('deposit_required', $profileData['depositRequired'] ?? ''));
+    console.log('Saved Deposit Required:', savedDepositRequired);
+
     function toggleDepositAmount(value) {
-      depositAmountWrapper.style.display = value === 'yes' ? 'block' : 'none';
+      if (value === 'yes') {
+        depositAmountWrapper.style.display = 'block';
+      } else {
+        depositAmountWrapper.style.display = 'none';
+      }
     }
 
-    const initialValue = document.querySelector('input[name="deposit_required"]:checked')?.value;
-    toggleDepositAmount(initialValue);
+    // Set initial state based on saved data
+    if (savedDepositRequired) {
+      const radioToCheck = document.querySelector(
+        `input[name="deposit_required"][value="${savedDepositRequired}"]`);
+      if (radioToCheck) {
+        radioToCheck.checked = 'yes';
+        toggleDepositAmount(savedDepositRequired);
+      }
+    }
 
+    // Event listeners for radio buttons
     depositRadios.forEach(radio => {
-      radio.addEventListener('change', (e) => toggleDepositAmount(e.target.value));
+      radio.addEventListener('change', (e) => {
+        toggleDepositAmount(e.target.value);
+      });
     });
 
     if (form) {

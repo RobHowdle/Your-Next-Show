@@ -91,7 +91,7 @@ class ProfileController extends Controller
         } elseif ($dashboardType === 'artist') {
             $bandData = $this->getOtherServicData($dashboardType, $user);
         } elseif ($dashboardType === 'venue') {
-            $venueData = $this->getvenueData($user);
+            $venueData = $this->getVenueData($user);
         } elseif ($dashboardType === 'photographer') {
             $photographerData = $this->getOtherServicData($dashboardType, $user);
         } elseif ($dashboardType === 'standard') {
@@ -277,6 +277,10 @@ class ProfileController extends Controller
                     $promoter->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
+                if (isset($userData['preferred_contact'])) {
+                    $promoter->update(['preferred_contact' => $userData['preferred_contact']]);
+                }
+
                 // About
                 if (isset($userData['description']) && $promoter->description !== $userData['description']) {
                     $promoter->update(['description' => $userData['description']]);
@@ -392,6 +396,10 @@ class ProfileController extends Controller
                     $venue->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
+                if (isset($userData['preferred_contact'])) {
+                    $venue->update(['preferred_contact' => $userData['preferred_contact']]);
+                }
+
                 // About
                 if (isset($userData['description']) && $venue->description !== $userData['description']) {
                     $venue->update(['description' => $userData['description']]);
@@ -488,8 +496,6 @@ class ProfileController extends Controller
                 if (isset($userData['contact_name']) && $band->contact_name !== $userData['contact_name']) {
                     $band->update(['contact_name' => $userData['contact_name']]);
                 }
-                // Location
-
 
                 // Contact Email
                 if (isset($userData['contact_email']) && $band->contact_email !== $userData['contact_email']) {
@@ -517,6 +523,10 @@ class ProfileController extends Controller
 
                     // Encode the array back to JSON for storage and update the promoter record
                     $band->update(['contact_link' => json_encode($updatedLinks)]);
+                }
+
+                if (isset($userData['preferred_contact'])) {
+                    $band->update(['preferred_contact' => $userData['preferred_contact']]);
                 }
 
                 if (isset($userData['stream_links'])) {
@@ -666,6 +676,10 @@ class ProfileController extends Controller
                     }
                 }
 
+                if (isset($userData['preferred_contact'])) {
+                    $photographer->update(['preferred_contact' => $userData['preferred_contact']]);
+                }
+
                 // Working Times
                 if (isset($userData['working_times'])) {
                     $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -701,12 +715,14 @@ class ProfileController extends Controller
 
                 DB::commit();
 
-                return redirect()
-                    ->route('profile.edit', [
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Photographer profile updated successfully!',
+                    'redirect' => route('profile.edit', [
                         'dashboardType' => $dashboardType,
                         'id' => $user->id
                     ])
-                    ->with('success', 'Photographer profile updated successfully!');
+                ]);
             } catch (\Exception $e) {
                 DB::rollBack();
                 return response()->json([
@@ -721,6 +737,7 @@ class ProfileController extends Controller
             ], 500);
         }
     }
+
     public function updateDesigner($dashboardType, DesignerProfileUpdateRequest $request, $user)
     {
         $user = User::findOrFail($user);
@@ -1008,7 +1025,6 @@ class ProfileController extends Controller
         try {
             // Retrieve the user
             $user = User::findOrFail($request->id);
-            // \Log::info('User found: ', [$user]);
 
             // Validate the incoming request
             $request->validate([
@@ -1296,11 +1312,6 @@ class ProfileController extends Controller
      */
     public function saveGenres($dashboardType, Request $request)
     {
-        \Log::info('Save Genres Request:', [
-            'dashboardType' => $dashboardType,
-            'requestData' => $request->all(),
-        ]);
-
         $validated = $request;
         $user = User::where('id', Auth::user()->id)->first();
 

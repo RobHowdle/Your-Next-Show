@@ -2,25 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\JobsController;
-use App\Http\Controllers\FinanceController;
-use App\Http\Controllers\APIRequestsController;
+use App\Http\Controllers\IntegrationController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    //
+Route::middleware(['web', 'auth:sanctum'])->group(function () {
+    Route::post('/webhook/eventbrite', [IntegrationController::class, 'webhook']);
+    Route::get('/platforms/{platform}/search', [IntegrationController::class, 'searchEvents']);
 });

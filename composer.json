@@ -18,7 +18,8 @@
         "laravel/tinker": "^2.8",
         "marvinlabs/laravel-discord-logger": "^1.4",
         "spatie/laravel-permission": "^6.9",
-        "what3words/w3w-php-wrapper": "^3.4"
+        "what3words/w3w-php-wrapper": "^3.4",
+        "skiddle/skiddle-php-sdk": "1.0.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.13",

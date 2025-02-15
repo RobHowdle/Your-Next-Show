@@ -15,12 +15,14 @@ return [
             'eventbrite' => [
                 'name' => 'Eventbrite',
                 'description' => 'Event ticketing and registration platform',
+                'documentation_url' => 'https://www.eventbrite.com/platform/docs/introduction',
                 'requires_secret' => true,
                 'required_fields' => ['api_key', 'api_secret']
             ],
             'ticketmaster' => [
                 'name' => 'Ticketmaster',
                 'description' => 'Global ticketing and entertainment platform',
+                'documentation_url' => 'https://developer.ticketmaster.com/products-and-docs/apis/getting-started/',
                 'requires_secret' => true,
                 'required_fields' => ['api_key', 'client_secret']
             ]

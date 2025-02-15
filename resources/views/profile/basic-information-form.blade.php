@@ -56,6 +56,33 @@
       @enderror
     </div>
 
+    <div class="group mb-6">
+      <x-input-label-dark for="preferred_contact">Preferred Contact Method:</x-input-label-dark>
+      <select id="preferred_contact" name="preferred_contact"
+        class="mt-1 block w-full rounded-md border border-gray-700 bg-black/50 p-2 text-white shadow-sm focus:border-yns_yellow focus:ring-yns_yellow">
+        <option value="">Select preferred contact method</option>
+        <option value="email"
+          {{ old('preferred_contact', $profileData['preferred_contact']) === 'email' ? 'selected' : '' }}>Email
+        </option>
+        <option value="phone"
+          {{ old('preferred_contact', $profileData['preferred_contact']) === 'phone' ? 'selected' : '' }}>Phone
+        </option>
+        @if (isset($profileData['platformsToCheck']) && is_array($profileData['platformsToCheck']))
+          @foreach ($profileData['platformsToCheck'] as $platform)
+            @if (isset($profileData['platforms'][$platform]))
+              <option value="{{ $platform }}"
+                {{ old('preferred_contact', $profileData['preferred_contact']) === $platform ? 'selected' : '' }}>
+                {{ ucfirst($platform) }}
+              </option>
+            @endif
+          @endforeach
+        @endif
+      </select>
+      @error('preferred_contact')
+        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+      @enderror
+    </div>
+
     <div class="flex items-center gap-4">
       <button type="button" onclick="confirmLeaveCompany()"
         class="mt-8 rounded-lg border border-red-600 bg-red-600 px-4 py-2 font-heading font-bold text-white transition duration-150 ease-in-out hover:bg-red-700">

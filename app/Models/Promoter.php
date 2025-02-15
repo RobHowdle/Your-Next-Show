@@ -35,6 +35,7 @@ class Promoter extends Model
         'contact_link',
         'is_verified',
         'verified_at',
+        'preferred_contact',
     ];
 
     protected $casts = [
@@ -76,5 +77,12 @@ class Promoter extends Model
     public function apiKeys()
     {
         return $this->morphMany(ApiKey::class, 'serviceable');
+    }
+
+    public function upcomingEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_promoter')
+            ->where('events.event_date', '>=', now())
+            ->orderBy('events.event_date', 'asc');
     }
 }

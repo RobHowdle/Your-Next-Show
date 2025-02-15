@@ -19,21 +19,23 @@
             </div>
             <div class="group flex gap-x-4">
               @if (!$isPastEvent)
-                <a href="{{ $event->ticket_url ? $event->ticket_url : '#' }}" target="_blank"
-                  class="mb-4 rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
-                  Tickets <span class="fas fa-ticket-alt ml-1"></span>
-                </a>
+                @if ($event->ticket_url)
+                  <a href="{{ $event->ticket_url }}" target="_blank"
+                    class="mb-4 rounded-lg bg-white px-2 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
+                    Tickets <span class="fas fa-ticket-alt ml-1"></span>
+                  </a>
+                @endif
                 <a href="#" id="addToCalendarButton"
-                  class="mb-4 rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
+                  class="mb-4 rounded-lg bg-white px-2 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
                   Add To Calendar <span class="fas fa-calendar-alt ml-1"></span>
                 </a>
               @endif
               <a href="{{ route('admin.dashboard.edit-event', ['id' => $event->id, 'dashboardType' => $dashboardType]) }}"
-                class="mb-4 rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
+                class="mb-4 rounded-lg bg-white px-2 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
                 Edit <span class="fas fa-edit ml-1"></span>
               </a>
               <a href="#" data-id="{{ $event->id }}" id="delete-event-btn"
-                class="mb-4 rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
+                class="mb-4 rounded-lg bg-white px-2 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
                 Delete <span class="fas fa-trash ml-1"></span>
               </a>
             </div>

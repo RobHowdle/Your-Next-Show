@@ -14,6 +14,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GigGuideController;
 use App\Http\Controllers\PromoterController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\LinkedUserController;
 use App\Http\Controllers\What3WordsController;
 use App\Http\Controllers\APIRequestsController;
@@ -42,7 +43,7 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::get('/venues', [VenueController::class, 'index'])->name('venues');
-Route::post('/venues/filter', [VenueController::class, 'filterCheckboxesSearch'])->name('venues.filterCheckboxesSearch');
+Route::post('/venues/filter', [VenueController::class, 'filter'])->name('venues.filter');
 Route::get('/venues/filterByCoordinates', [VenueController::class, 'filterByCoordinates'])
     ->name('venues.filterByCoordinates');
 Route::post('/venues/{slug}/submitReview', [VenueController::class, 'submitVenueReview'])->name('submit-venue-review');
@@ -50,12 +51,12 @@ Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue');
 Route::get('/promoter-suggestion', [VenueController::class, 'suggestPromoters'])->name('suggestPromoters');
 
 Route::get('/promoters', [PromoterController::class, 'index'])->name('promoters');
-Route::post('/promoters/filter', [PromoterController::class, 'filterCheckboxesSearch'])->name('promoters.filterCheckboxesSearch');
+Route::post('/promoters/filter', [PromoterController::class, 'filter'])->name('promoters.filter');
 Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter');
 Route::post('/promoters/{slug}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
 
 Route::get('/services', [OtherServiceController::class, 'index'])->name('other');
-Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filterCheckboxesSearch'])->name('other.filterCheckboxesSearch');
+Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filter'])->name('other.filter');
 Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
 Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService');
 Route::post('/services/{serviceType}/{name}/submitReview', [OtherServiceController::class, 'submitReview'])->name('submit-single-service-review');
@@ -289,8 +290,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/{dashboardType}/{id}/leave-service', [APIRequestsController::class, 'leaveService'])->name('settings.deleteModule');
 
 
+    Route::middleware(['auth'])->group(function () {
+        Route::post('/integrations/store', [IntegrationController::class, 'store'])
+            ->name('integrations.store');
+    });
+
     // API Key Routes
-    Route::put('/profile/{dashboardType}/update-api-key', [ProfileController::class, 'updateAPI'])->name('profile.update-api');
+    // Route::put('/profile/{dashboardType}/update-api-key', [ProfileController::class, 'updateAPI'])->name('profile.update-api');
     // Calendar-specific routes
     Route::get('/profile/events/{user}/apple/sync', [CalendarController::class, 'syncAllEventsToAppleCalendar'])->name('apple.sync');
     Route::get('/profile/{dashboardType}/events/{user}', [APIRequestsController::class, 'getUserCalendarEvents']);

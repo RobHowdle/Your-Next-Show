@@ -2,31 +2,33 @@
 
 namespace App\View\Components;
 
-use Closure;
-use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
 class ReviewModal extends Component
 {
-    public $title;
-    public $serviceType;
-    public $profileId;
-    public $service;
-    /**
-     * Create a new component instance.
-     */
-    public function __construct($title, $serviceType, $profileId, $service)
+    public function __construct(
+        public string $title,
+        public string $serviceType,
+        public string $profileId,
+        public string $service
+    ) {}
+
+    public function getFormAction(): string
     {
-        $this->title = $title;
-        $this->serviceType = $serviceType;
-        $this->profileId = $profileId;
-        $this->service = $service;
+        $slug = strtolower(str_replace(' ', '-', $this->service));
+
+        return match ($this->serviceType) {
+            'venue' => route('submit-venue-review', ['slug' => $slug]),
+            'promoter' => route('submit-promoter-review', ['slug' => $slug]),
+            'singleService' => route('submit-single-service-review', [
+                'serviceType' => strtolower($this->serviceType),
+                'name' => $slug
+            ]),
+            default => throw new \InvalidArgumentException("Unknown service type: {$this->serviceType}")
+        };
     }
 
-    /**
-     * Get the view / contents that represent the component.
-     */
-    public function render(): View|Closure|string
+    public function render()
     {
         return view('components.review-modal');
     }

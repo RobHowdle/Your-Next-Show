@@ -20,114 +20,60 @@ class OtherServiceSeeder extends Seeder
 
         $firstLine = true;
         while (($data = fgetcsv($csvFile, 2000, ",")) !== FALSE) {
-            if (!$firstLine) {
-                $packages = $data[8] ?? null;
-                $environmentType = $data[9] ?? null;
-                $workingTimes = $data[10] ?? null;
-                $members = $data[11] ?? null;
-                // $streamUrls = $data[12] ?? null;
-                $bandType = $data[13] ?? null;
-                $genre = $data[14] ?? null;
-                $contactLink = $data[18] ?? null;
-                $portfolioImages = $data[20] ?? null;
+            if ($firstLine) {
+                $firstLine = false;
+                continue;
+            }
 
-                // Validate if the contact link is valid JSON
-                if ($this->isValidJson($contactLink)) {
-                    $contactLink = json_encode(json_decode($contactLink, true)); // Re-encode to ensure correct format
-                } else {
-                    $contactLink = null;
-                }
+            try {
+                $otherService = [
+                    'name' => $data[0] ?? null,
+                    'logo_url' => $data[1] ?? null,
+                    'location' => $data[2] ?? null,
+                    'postal_town' => $data[3] ?? null,
+                    'longitude' => $data[4] ?? null,
+                    'latitude' => $data[5] ?? null,
+                    'other_service_id' => $data[6] ?? null,
+                    'description' => $data[7] ?? "Description coming soon...",
+                    'packages' => $data[8] ?? '[]',
+                    'environment_type' => $data[9] ?? '[]',
+                    'working_times' => $data[10] ?? '[]',
+                    'members' => $data[11] ?? '[]',
+                    'stream_urls' => is_string($data[12]) ? $data[12] : '{}',
+                    'band_type' => is_string($data[13]) ? $data[13] : '[]',
+                    'genre' => is_string($data[14]) ? $data[14] : '{}',
+                    'contact_name' => $data[15] ?? 'General',
+                    'contact_number' => $data[16] ?? null,
+                    'contact_email' => $data[17] ?? null,
+                    'contact_link' => is_string($data[18]) ? $data[18] : '{}',
+                    'portfolio_link' => $data[19] ?? null,
+                    'portfolio_images' => $data[20] ?? '[]',
+                    'services' => $data[21] ?? null,
+                ];
 
-                if (!empty($packages) && $packages !== '[]') {
-                    $packages = json_encode([$packages]); // Wrap in an array if needed
-                } else {
-                    $packages = '[]'; // Set to an empty array if it's empty
-                }
-
-                if (!empty($environmentType) && $environmentType !== '[]') {
-                    $environmentType = json_encode([$environmentType]); // Wrap in an array if needed
-                } else {
-                    $environmentType = '[]'; // Set to an empty array if it's empty
-                }
-                if (!empty($workingTimes) && $workingTimes !== '[]') {
-                    $workingTimes = json_encode([$workingTimes]); // Wrap in an array if needed
-                } else {
-                    $workingTimes = '[]'; // Set to an empty array if it's empty
-                }
-                if (!empty($members) && $members !== '[]') {
-                    $members = json_encode([$members]); // Wrap in an array if needed
-                } else {
-                    $members = '[]'; // Set to an empty array if it's empty
-                }
-                // if (!empty($streamUrls) && $streamUrls !== '[]') {
-                //     $streamUrls = json_encode([$streamUrls]); // Wrap in an array if needed
-                // } else {
-                //     $streamUrls = '[]'; // Set to an empty array if it's empty
-                // }
-                if (!empty($genre) && $genre !== '[]') {
-                    // Decode the JSON string into an associative array
-                    $genres = json_decode($genre, true);
-
-                    // Check for JSON decode errors
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        \Log::warning('Invalid JSON in genre field: ' . $genre);
-                        $genres = []; // Default to an empty array if invalid
+                // Validate JSON fields
+                foreach (['packages', 'environment_type', 'working_times', 'members', 'stream_urls', 'band_type', 'genre', 'contact_link', 'portfolio_images'] as $field) {
+                    if (!$this->isValidJson($otherService[$field])) {
+                        $otherService[$field] = '{}';
                     }
-                } else {
-                    $genres = []; // Set to an empty array if it's empty
-                }
-                // Ensure band_type is a valid JSON array if it's not already
-                if (!empty($bandType) && $bandType !== '[]') {
-                    $bandType = json_encode([$bandType]); // Wrap in an array if needed
-                } else {
-                    $bandType = '[]'; // Set to an empty array if it's empty
-                }
-                if (!empty($portfolioImages) && $portfolioImages !== '[]') {
-                    $portfolioImages = json_encode([$portfolioImages]); // Wrap in an array if needed
-                } else {
-                    $portfolioImages = '[]'; // Set to an empty array if it's empty
                 }
 
-                // Create a new venue
-                OtherService::create([
-                    "name" => $data[0],
-                    "logo_url" => $data[1],
-                    "location" => $data[2],
-                    "postal_town" => $data[3],
-                    "longitude" => $data[4],
-                    "latitude" => $data[5],
-                    "other_service_id" => $data[6],
-                    "description" => $data[7],
-                    "packages" => $packages,
-                    "environment_type" => $environmentType,
-                    "working_times" => $workingTimes,
-                    "members" => $members,
-                    "stream_urls" => $data[12],
-                    "band_type" => $bandType,
-                    "genre" => $genres,
-                    "contact_name" => $data[15],
-                    "contact_number" => $data[16],
-                    "contact_email" => $data[17],
-                    "contact_link" => $contactLink,
-                    "portfolio_link" => $data[19],
-                    "portfolio_images" => $portfolioImages,
-                    "services" => $data[21],
+                OtherService::create($otherService);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create other service:', [
+                    'name' => $data[0] ?? 'unknown',
+                    'error' => $e->getMessage(),
+                    'data' => $data
                 ]);
             }
-            $firstLine = false;
         }
         fclose($csvFile);
     }
 
-    /**
-     * Check if a string is a valid JSON.
-     *
-     * @param string $string
-     * @return bool
-     */
-    private function isValidJson(string $string): bool
+    private function isValidJson($string)
     {
+        if (!is_string($string)) return false;
         json_decode($string);
-        return (json_last_error() == JSON_ERROR_NONE);
+        return (json_last_error() === JSON_ERROR_NONE);
     }
 }

@@ -177,43 +177,97 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Ratings
 document.addEventListener("DOMContentLoaded", function () {
-    const emptyIcon = "{{ asset('storage/images/system/ratings/empty.png') }}";
-    const fullIcon = "{{ asset('storage/images/system/ratings/full.png') }}";
-    const hotIcon = "{{ asset('storage/images/system/ratings/hot.png') }}";
+    const ratingGroups = document.querySelectorAll(".rating");
 
-    const checkboxes = document.querySelectorAll(
-        '.rating input[type="checkbox"]'
-    );
+    ratingGroups.forEach((group) => {
+        const inputs = group.querySelectorAll('input[type="radio"]');
+        const labels = group.querySelectorAll(".rating-label");
 
-    checkboxes.forEach((checkbox) => {
-        checkbox.addEventListener("change", function () {
-            const value = parseInt(this.value);
-            const group = this.name;
+        inputs.forEach((input) => {
+            input.addEventListener("change", function () {
+                const value = parseInt(this.value);
+                const label = this.nextElementSibling;
+                const emptyIcon = label.style.backgroundImage.replace(
+                    "empty.png",
+                    "empty.png"
+                );
+                const fullIcon = emptyIcon.replace("empty.png", "full.png");
+                const hotIcon = emptyIcon.replace("empty.png", "hot.png");
 
-            const checkboxesInGroup = document.querySelectorAll(
-                `input[name="${group}"]`
-            );
-
-            // Check if 5/5 is selected
-            if (value === 5) {
-                checkboxesInGroup.forEach((cb) => {
-                    if (parseInt(cb.value) === 5) {
-                        cb.checked = true;
-                    }
-                    cb.nextElementSibling.style.backgroundImage = `url('${hotIcon}')`;
-                });
-            } else {
-                // Update the checkboxes based on selected value
-                checkboxesInGroup.forEach((cb) => {
-                    if (parseInt(cb.value) <= value) {
-                        cb.checked = true;
-                        cb.nextElementSibling.style.backgroundImage = `url('${fullIcon}')`;
+                // Update all labels up to the selected value
+                labels.forEach((l, index) => {
+                    if (index + 1 <= value) {
+                        // If rating is 5, make all selected icons hot
+                        if (value === 5) {
+                            l.style.backgroundImage = hotIcon;
+                        } else {
+                            l.style.backgroundImage = fullIcon;
+                        }
                     } else {
-                        cb.checked = false;
-                        cb.nextElementSibling.style.backgroundImage = `url('${emptyIcon}')`;
+                        l.style.backgroundImage = emptyIcon;
                     }
                 });
-            }
+            });
+
+            // Add hover effect
+            const label = input.nextElementSibling;
+            label.addEventListener("mouseenter", function () {
+                const value = parseInt(input.value);
+                const emptyIcon = this.style.backgroundImage.replace(
+                    "empty.png",
+                    "empty.png"
+                );
+                const fullIcon = emptyIcon.replace("empty.png", "full.png");
+                const hotIcon = emptyIcon.replace("empty.png", "hot.png");
+
+                labels.forEach((l, index) => {
+                    if (index + 1 <= value) {
+                        // If hovering over 5th star, show all hot
+                        if (value === 5) {
+                            l.style.backgroundImage = hotIcon;
+                        } else {
+                            l.style.backgroundImage = fullIcon;
+                        }
+                    }
+                });
+            });
+
+            label.addEventListener("mouseleave", function () {
+                // Only reset if not actually selected
+                const selectedInput = group.querySelector("input:checked");
+                if (!selectedInput) {
+                    labels.forEach((l) => {
+                        const emptyIcon = l.style.backgroundImage.replace(
+                            /full\.png|hot\.png/,
+                            "empty.png"
+                        );
+                        l.style.backgroundImage = emptyIcon;
+                    });
+                    return;
+                }
+
+                // If there is a selection, restore to proper state
+                const selectedValue = parseInt(selectedInput.value);
+                labels.forEach((l, index) => {
+                    const emptyIcon = l.style.backgroundImage.replace(
+                        /full\.png|hot\.png/,
+                        "empty.png"
+                    );
+                    const fullIcon = emptyIcon.replace("empty.png", "full.png");
+                    const hotIcon = emptyIcon.replace("empty.png", "hot.png");
+
+                    if (index + 1 <= selectedValue) {
+                        // If rating is 5, keep all selected icons hot
+                        if (selectedValue === 5) {
+                            l.style.backgroundImage = hotIcon;
+                        } else {
+                            l.style.backgroundImage = fullIcon;
+                        }
+                    } else {
+                        l.style.backgroundImage = emptyIcon;
+                    }
+                });
+            });
         });
     });
 });
