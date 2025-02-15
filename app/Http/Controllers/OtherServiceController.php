@@ -362,6 +362,8 @@ class OtherServiceController extends Controller
         $overallReviews[$singleService->id] = $this->renderRatingIcons($overallScore);
         $reviewCount = PhotographerReviews::getReviewCount($singleService->id);
         $recentReviews = PhotographerReviews::getRecentReviews($singleService->id);
+        $environmentData = json_decode($singleService->environment_type, true) ?? [];
+
 
         return [
             'description' => $singleService->description ?? '',
@@ -391,6 +393,8 @@ class OtherServiceController extends Controller
             'services' => $services,
             'genres' => $genres,
             'genreNames' => $genreNames,
+            'types' => $environmentData['types'] ?? [], // This will be ["Live Music", "Nature", "Landscapes"]
+            'settings' => $environmentData['settings'] ?? [], // This will be ["Indoor", "Outdoor", "Studio"]
         ];
     }
 

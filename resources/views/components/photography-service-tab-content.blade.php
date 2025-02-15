@@ -7,41 +7,61 @@
           <h3 class="mb-4 font-bold text-white">Description</h3>
           {!! $singleService->description ?? 'We\'re currently working on our description. Check back soon!' !!}
         </div>
-        @if (empty($serviceData['environmentTypes']))
-          <div class="prose-invert prose max-w-none">
-            <h3 class="mb-4 font-bold text-white">Environment Types</h3>
-            <p>We're still working on this! Come back later to read the types of environments we like to work in!
+        @if (!empty($serviceData['types']) || !empty($serviceData['settings']))
+          <div class="mt-8 space-y-8">
+            <h3 class="text-2xl font-bold text-white">Environments & Settings</h3>
+            <p class="text-gray-300">
+              We've listed below the types of environments and settings we like to work in. If you have any questions
+              please feel free to
+              <a href="mailto:{{ $singleService->contact_email }}"
+                class="underline transition duration-150 ease-in-out hover:text-yns_yellow">
+                contact us
+              </a>
             </p>
-          </div>
-        @else
-          @if ($serviceData['types'])
-            <p class="mt-4 text-xl font-bold">Environments & Types</p>
-            <p>We've listed below the types of environments and settings we like to work in. If
-              you have any questions please feel free to <a
-                class="underline transition duration-150 ease-in-out hover:text-yns_yellow"
-                href="mailto:{{ $singleService->contact_email }}">contact
-                us</a></p>
-            <div class="mt-4 grid grid-cols-2 gap-4">
-              <div class="group">
-                <p class="mt-2 underline">Types</p>
-                <ul>
-                  @foreach ($serviceData['types'] as $type)
-                    <li>{{ $type }}</li>
-                  @endforeach
-                </ul>
+
+            <div class="grid gap-6 md:grid-cols-2">
+              <!-- Types Section -->
+              <!-- Types Section -->
+              <div class="rounded-lg border border-gray-700 bg-black/30 p-6 backdrop-blur-sm">
+                <h4 class="mb-4 font-heading text-lg font-semibold text-white">Photography Types</h4>
+                @if (!empty($serviceData['types']))
+                  <ul class="space-y-2">
+                    @foreach ($serviceData['types'] as $type)
+                      <li class="flex items-center gap-2 text-gray-300">
+                        <span class="fas fa-camera text-yns_yellow"></span>
+                        {{ $type }}
+                      </li>
+                    @endforeach
+                  </ul>
+                @else
+                  <p class="text-gray-300">No photography types specified</p>
+                @endif
+              </div>
+
+              <!-- Settings Section -->
+              <div class="rounded-lg border border-gray-700 bg-black/30 p-6 backdrop-blur-sm">
+                <h4 class="mb-4 font-heading text-lg font-semibold text-white">Environment Settings</h4>
+                @if (!empty($serviceData['settings']))
+                  <ul class="space-y-2">
+                    @foreach ($serviceData['settings'] as $setting)
+                      <li class="flex items-center gap-2 text-gray-300">
+                        <span class="fas fa-lightbulb text-yns_yellow"></span>
+                        {{ $setting }}
+                      </li>
+                    @endforeach
+                  </ul>
+                @else
+                  <p class="text-gray-300">No environment settings specified</p>
+                @endif
               </div>
             </div>
-          @endif
-          @if ($serviceData['settings'])
-            <div class="group">
-              <p class="mt-2 underline">Settings</p>
-              <ul>
-                @foreach ($serviceData['settings'] as $setting)
-                  <li>{{ $setting }}</li>
-                @endforeach
-              </ul>
-            </div>
-          @endif
+          </div>
+        @else
+          <div class="mt-8 text-center">
+            <p class="text-gray-300">
+              We're still working on listing our environment types and settings. Check back later!
+            </p>
+          </div>
         @endif
       </div>
 
@@ -121,28 +141,6 @@
             </p>
           @endif
         </div>
-      </div>
-
-      <!-- Other Tab -->
-      <div id="other" class="tab-panel hidden">
-        @if ($singleService->capacity)
-          <p class="bold pb-2 text-center text-xl md:text-left md:text-2xl">Other Information you may want to
-            know about
-            {{ $singleService->name }}.
-          </p>
-          @if ($singleService->contact_name)
-            <p class="text-center md:text-left md:text-base">Person(s) To Speak To:
-              {{ $singleService->contact_name }}
-            </p>
-          @endif
-          @if ($singleService->capacity)
-            <p class="pb-2 text-center md:text-left">Capacity: {{ $singleService->capacity }}</p>
-          @endif
-          <p class="bold pb-2 pt-2 text-center text-2xl md:text-left">More Info:</p>
-          <p class="pb-2 text-center md:text-left">{!! nl2br(e($singleService->additional_info)) !!}</p>
-        @else
-          <p class="text-center md:text-left">No Further Information Avaliable</p>
-        @endif
       </div>
     </div>
   </div>
