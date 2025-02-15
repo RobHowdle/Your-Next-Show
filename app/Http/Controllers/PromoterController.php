@@ -198,7 +198,7 @@ class PromoterController extends Controller
         }
 
         // Apply capacity filters
-        if ($locations = $request->input('filters.locatios')) {
+        if ($locations = $request->input('filters.locations')) {
             $query->where('postal_town', '>=', $locations);
         }
 

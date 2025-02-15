@@ -56,7 +56,7 @@ Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('prom
 Route::post('/promoters/{slug}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
 
 Route::get('/services', [OtherServiceController::class, 'index'])->name('other');
-Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filterCheckboxesSearch'])->name('other.filterCheckboxesSearch');
+Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filter'])->name('other.filter');
 Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
 Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService');
 Route::post('/services/{serviceType}/{name}/submitReview', [OtherServiceController::class, 'submitReview'])->name('submit-single-service-review');

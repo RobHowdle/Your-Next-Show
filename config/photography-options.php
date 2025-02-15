@@ -22,5 +22,37 @@ return [
         'Event',
         'Fashion',
         'Nature',
-    ]
+    ],
+    'conditions' => [
+        'Dark Environments',
+        'Light Environments',
+        'Mixed Lighting',
+        'Backlit Scenes',
+    ],
+    'locations' => [
+        'Outside (Day)',
+        'Outside (Night)',
+        'Inside',
+        'Studio',
+    ],
+    'settings' => [
+        'Forests',
+        'Beaches',
+        'Mountains',
+        'Urban Nature (Parks, Gardens)',
+    ],
+    'times' => [
+        'Golden Hour',
+        'Blue Hour',
+        'Midday',
+        'Twilight',
+    ],
+    'contexts' => [
+        'Fashion and Modeling',
+        'Family Portraits',
+        'Couple Portraits',
+        'Children’s Photography',
+        'Corporate Headshots',
+        'Actors/Models Headshots',
+    ],
 ];

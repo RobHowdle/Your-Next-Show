@@ -20,7 +20,7 @@ class ReviewModal extends Component
         return match ($this->serviceType) {
             'venue' => route('submit-venue-review', ['slug' => $slug]),
             'promoter' => route('submit-promoter-review', ['slug' => $slug]),
-            'service' => route('submit-single-service-review', [
+            'singleService' => route('submit-single-service-review', [
                 'serviceType' => strtolower($this->serviceType),
                 'name' => $slug
             ]),

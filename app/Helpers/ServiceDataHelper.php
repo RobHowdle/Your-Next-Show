@@ -45,6 +45,8 @@ class ServiceDataHelper
             }
         }
 
+        $preferredContact = $artist ? $artist->preferred_contact : '';
+
         $description = $artist ? $artist->description : '';
 
         $myEvents = $artist ? $artist->events()->with('venues')->get() : collect();
@@ -97,7 +99,8 @@ class ServiceDataHelper
             'bandTypes' => $bandTypes,
             'streamLinks' => $streamLinks,
             'streamPlatformsToCheck' => $streamPlatformsToCheck,
-            'members' => $members
+            'members' => $members,
+            'preferred_contact' => $preferredContact
         ];
     }
 
@@ -142,6 +145,7 @@ class ServiceDataHelper
                 }
             }
 
+            $preferredContact = $designer ? $designer->preferred_contact : '';
             $description = $designer ? $designer->description : '';
 
             // Genres
@@ -221,7 +225,8 @@ class ServiceDataHelper
                 'workingTimes' => $workingTimes,
                 'styles' => $styles,
                 'print' => $print,
-                'packages' => $packages
+                'packages' => $packages,
+                'preferred_contact' => $preferredContact
             ];
         }
     }
@@ -265,6 +270,7 @@ class ServiceDataHelper
             }
         }
 
+        $preferredContact = $photographer ? $photographer->preferred_contact : '';
         $description = $photographer ? $photographer->description : '';
 
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -359,7 +365,8 @@ class ServiceDataHelper
             'groups' => $groupedData,
             'workingTimes' => $workingTimes,
             'styles' => $styles,
-            'packages' => $packages
+            'packages' => $packages,
+            'preferred_contact' => $preferredContact
         ];
     }
 
@@ -403,6 +410,7 @@ class ServiceDataHelper
                 }
             }
 
+            $preferredContact = $videographer ? $videographer->preferred_contact : '';
             $description = $videographer ? $videographer->description : '';
 
             $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -479,7 +487,8 @@ class ServiceDataHelper
                 'groups' => $groupedData,
                 'workingTimes' => $workingTimes,
                 'styles' => $styles,
-                'packages' => $packages
+                'packages' => $packages,
+                'preferred_contact' => $preferredContact
             ];
         }
     }

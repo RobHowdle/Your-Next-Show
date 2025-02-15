@@ -45,6 +45,7 @@ class BandProfileUpdateRequest extends FormRequest
             'portfolio_link' => 'nullable|url',
             'services' => 'nullable|string',
             'members' => 'nullable|array',
+            'preferred_contact' => 'nullable|string',
         ];
     }
 }

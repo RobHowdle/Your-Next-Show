@@ -1,399 +1,532 @@
 <x-guest-layout>
-  <x-slot name="header">
-    <h1 class="text-whitel text-center font-heading text-6xl">
-      {{ $serviceName }}</h1>
-  </x-slot>
-  <x-other-service-table :singleServices="$singleServices" :genres="$genres" :serviceName="$serviceName">
-    @forelse ($singleServices as $service)
-      <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
-        <th scope="row"
-          class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="{{ route('singleService', ['serviceType' => lcfirst($service->services), 'name' => Str::slug($service->name)]) }}"
-            class="transition duration-150 ease-in-out hover:text-yns_yellow">{{ $service->name }}</a>
-        </th>
-        <td
-          class="rating-wrapper px:2 py:2 hidden whitespace-nowrap sm:text-base md:px-6 md:py-3 lg:flex lg:px-8 lg:py-4">
-          {!! $overallReviews[$service->id] !!}
-        </td>
-        <td
-          class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          {{ $service->postal_town }}
-        </td>
+  <div class="mx-auto min-h-screen max-w-7xl pb-20">
+    <div class="px-4 pt-36 sm:px-6 lg:px-8">
+      @php
+        switch ($serviceName) {
+            case 'photography':
+                $serviceType = 'Photographer';
+                break;
+            case 'videography':
+                $serviceType = 'Videographer';
+                break;
+            case 'artist':
+                $serviceType = 'Artist';
+                break;
+            case 'designer':
+                $serviceType = 'Designer';
+                break;
+        }
+      @endphp
+      <!-- Hero Section -->
+      <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">
+        <h1 class="mb-4 mt-8 text-center font-heading text-4xl font-bold text-white md:text-5xl lg:text-6xl">
+          Find Your Next <span class="text-yns_yellow">{{ $serviceType }}</span>
+        </h1>
+        <p class="mx-auto mb-8 mt-4 max-w-2xl text-center text-lg text-gray-400">
+          Discover and connect with {{ $serviceName }} to enhance your events
+        </p>
 
-        <td
-          class="hidden whitespace-nowrap px-2 py-2 align-middle text-white md:block md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <x-contact-and-social-links :item="$service" />
-        </td>
-      </tr>
-    @empty
-      <tr class="border-b border-white bg-gray-900">
-        <td colspan="4"
-          class="px-2 py-2 text-center text-2xl text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">No
-          services found</td>
-      </tr>
-    @endforelse
-  </x-other-service-table>
+        <!-- Search and Filter Section -->
+        <div class="mt-4 grid gap-6 p-6 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Search Box -->
+          <div class="col-span-full">
+            <div class="relative">
+              <input type="text" id="services-search" placeholder="Search by service name or location..."
+                class="w-full rounded-lg border border-gray-700 bg-black/50 p-4 pl-12 text-white placeholder-gray-400 backdrop-blur-sm">
+              <span class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></span>
+            </div>
+          </div>
+
+          @if ($serviceName === 'photography')
+            <!-- Genres Filter -->
+            <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+              <h3 class="font-heading text-lg font-semibold text-white">Genres</h3>
+              <div class="max-h-48 grid grid-cols-2 space-y-2 overflow-y-auto">
+                @foreach ($genres as $genre)
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="genres[]" value="{{ $genre }}"
+                      class="filter-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
+                    <span class="text-sm text-gray-300">{{ $genre }}</span>
+                  </label>
+                @endforeach
+              </div>
+            </div>
+
+            <!-- Locations Filter -->
+            <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+              <h3 class="font-heading text-lg font-semibold text-white">Locations</h3>
+              <div class="max-h-48 grid grid-cols-2 space-y-2 overflow-y-auto">
+                @foreach ($locations as $location)
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="locations[]" value="{{ $location }}"
+                      class="filter-checkbox-locations rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
+                    <span class="text-sm text-gray-300">{{ $location }}</span>
+                  </label>
+                @endforeach
+              </div>
+            </div>
+          @endif
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="overflow-hidden rounded-lg border border-gray-800 bg-yns_dark_blue shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="min-w-full table-fixed divide-y divide-gray-700">
+            <thead>
+              <tr>
+                <th class="sortable px-6 py-3 text-left" data-sort="name">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Service Name
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="rating">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Rating
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="location">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Location
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="px-6 py-3 text-left">
+                  <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Contact
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody" class="divide-y divide-gray-700">
+              @foreach ($singleServices as $service)
+                <tr class="hover:bg-black/20">
+                  <td class="px-6 py-4">
+                    <a href="/services/{{ Str::slug($service['service_type']) }}/{{ Str::slug($service['name']) }}"
+                      class="font-medium text-white hover:text-yns_yellow">
+                      {{ $service['name'] }}
+                      @if ($service['is_verified'])
+                        <span
+                          class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+                          <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                          </svg>
+                          Verified
+                        </span>
+                      @endif
+                    </a>
+                  </td>
+                  <td class="px-6 py-4 text-gray-300">
+                    {{ $service['average_rating'] ?: 'Not rated' }}
+                  </td>
+                  <td class="px-6 py-4 text-gray-300">
+                    {{ $service['postal_town'] ?: 'Location not specified' }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <button
+                      onclick="showContactModal({{ json_encode([
+                          'name' => $service['name'],
+                          'preferred_contact' => $service['preferred_contact'],
+                          'contact_email' => $service['contact_email'],
+                          'contact_number' => $service['contact_number'],
+                          'platforms' => $service['platforms'],
+                      ]) }})"
+                      class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+                      Contact Options
+                    </button>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+
+        <div class="px-6 py-4">
+          {{ $singleServices->links() }}
+        </div>
+
+        <div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto pt-36">
+          <div class="flex min-h-screen items-end justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div class="absolute inset-0 bg-gray-900 opacity-75"></div>
+            </div>
+            <div
+              class="inline-block transform overflow-hidden rounded-lg bg-yns_dark_blue text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+              <div class="bg-yns_dark_blue px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                  <div class="mt-3 w-full text-center sm:ml-4 sm:mt-0 sm:text-left">
+                    <h3 class="mb-4 text-2xl font-bold leading-6 text-white" id="modalTitle"></h3>
+                    <div class="mt-4 space-y-4">
+                      <div id="preferredContact" class="rounded-lg border border-yns_yellow bg-yns_yellow/10 p-4">
+                        <!-- Preferred contact will be inserted here -->
+                      </div>
+                      <div id="otherContacts" class="mt-4 space-y-2">
+                        <!-- Other contact methods will be inserted here -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-yns_dark_blue/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                <button type="button" onclick="closeContactModal()"
+                  class="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:mt-0 sm:w-auto">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </x-guest-layout>
-@stack('scripts')
-<script
-  src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initialize"
-  async defer></script>
 <script>
-  // Search Bar
-  function initialize() {
-    jQuery('form').on('keyup keypress', function(e) {
-      var keyCode = e.keyCode || e.which;
-      if (keyCode === 13) {
-        return false;
-      }
-    });
-    const locationInputs = document.getElementsByClassName("map-input");
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('services-search');
+    const serviceType = @json($serviceType);
 
-    const autocompletes = [];
-    const geocoder = new google.maps.Geocoder;
-    for (let i = 0; i < locationInputs.length; i++) {
+    let currentSort = {
+      field: null,
+      direction: 'asc'
+    };
 
-      const input = locationInputs[i];
-      const fieldKey = input.id.replace("-input", "");
-      const isEdit = document.getElementById(fieldKey + "-latitude").value != '' && document.getElementById(fieldKey +
-        "-longitude").value != '';
+    let debounceTimeout;
 
-      const latitude = parseFloat(document.getElementById(fieldKey + "-latitude").value) || 59.339024834494886;
-      const longitude = parseFloat(document.getElementById(fieldKey + "-longitude").value) || 18.06650573462189;
+    // Initialize filters
+    const filters = {
+      search: '',
+      genres: [],
+      selectedLocations: [],
+    };
 
-      const map = new google.maps.Map(document.getElementById(fieldKey + '-map'), {
-        center: {
-          lat: latitude,
-          lng: longitude
-        },
-        zoom: 13
-      });
-      const marker = new google.maps.Marker({
-        map: map,
-        position: {
-          lat: latitude,
-          lng: longitude
-        },
-      });
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = @json($town ?? '');
 
-      marker.setVisible(isEdit);
-
-      const autocomplete = new google.maps.places.Autocomplete(input);
-      autocomplete.key = fieldKey;
-      autocompletes.push({
-        input: input,
-        map: map,
-        marker: marker,
-        autocomplete: autocomplete
-      });
-    }
-
-    for (let i = 0; i < autocompletes.length; i++) {
-      const input = autocompletes[i].input;
-      const autocomplete = autocompletes[i].autocomplete;
-      const map = autocompletes[i].map;
-      const marker = autocompletes[i].marker;
-
-      google.maps.event.addListener(autocomplete, 'place_changed', function() {
-        marker.setVisible(false);
-        const place = autocomplete.getPlace();
-
-        geocoder.geocode({
-          'placeId': place.place_id
-        }, function(results, status) {
-          if (status === google.maps.GeocoderStatus.OK) {
-            const lat = results[0].geometry.location.lat();
-            const lng = results[0].geometry.location.lng();
-            setLocationCoordinates(autocomplete.key, lat, lng);
-          }
-        });
-
-        if (!place.geometry) {
-          window.alert("No details available for input: '" + place.name + "'");
-          input.value = "";
-          return;
-        }
-
-        if (place.geometry.viewport) {
-          map.fitBounds(place.geometry.viewport);
-        } else {
-          map.setCenter(place.geometry.location);
-          map.setZoom(17);
-        }
-        marker.setPosition(place.geometry.location);
-        marker.setVisible(true);
-      });
-    }
-  }
-
-  // Attach event listener for filter checkboxes
-  jQuery('.filter-checkbox').change(function() {
-    applyFilters();
-  });
-
-  // Attach event listener for search input
-  let debounceTimeout;
-  $('#address-input').on('input', function() {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
+    if (searchQuery) {
+      searchInput.value = searchQuery;
+      filters.search = searchQuery;
       applyFilters();
-    }, 300); // Adjust debounce delay as needed
-  });
-
-  // Event handler for "All Types" checkbox
-  $("#all-bands").change(function() {
-    var isChecked = $(this).prop("checked");
-    $(".filter-checkbox").prop("checked", isChecked);
-    applyFilters();
-  });
-
-  $("#all-genres").change(function() {
-    var isChecked = $(this).prop("checked");
-    $(".genre-checkbox, .subgenre-checkbox").prop("checked", isChecked);
-    applyFilters();
-  });
-
-  $('.genre-checkbox').change(function() {
-    var genreId = $(this).data('genre-id');
-    var isChecked = $(this).prop('checked');
-    $(`.subgenre-checkbox[data-genre-id="${genreId}"]`).prop('checked', isChecked);
-
-    // Uncheck "All Genres" if a single genre is deselected
-    if (!isChecked) {
-      $('#all-genres').prop('checked', false);
     }
-    applyFilters();
-  });
 
-  $('.subgenre-checkbox').change(function() {
-    // Uncheck "All Genres" if any subgenre is deselected
-    $('#all-genres').prop('checked', false);
-    applyFilters();
-  });
-
-  function applyFilters() {
-    var bandTypeValue = [];
-    var selectedGenres = [];
-    var selectedSubgenres = [];
-    var searchQuery = $('#address-input').val();
-
-    // Collect selected band types
-    $('.filter-checkbox:checked').each(function() {
-      bandTypeValue.push($(this).val());
+    // Search Input Handler
+    document.getElementById('services-search').addEventListener('input', function(e) {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        filters.search = e.target.value;
+        applyFilters();
+      }, 300);
     });
 
-    // Collect selected genres
-    $('.genre-checkbox:checked').each(function() {
-      selectedGenres.push($(this).val());
-    });
+    // Sorting Handlers
+    document.querySelectorAll('.sortable').forEach(header => {
+      header.addEventListener('click', function() {
+        const field = this.dataset.sort;
 
-    // Collect selected subgenres
-    $('.subgenre-checkbox:checked').each(function() {
-      selectedSubgenres.push($(this).val());
-      console.log(selectedSubgenres);
-    });
-
-    // Combine genres and subgenres
-    var serviceType = '{{ $serviceName }}';
-
-    $('.search').on('change', function() {
-      console.log(serviceType);;
-    });
-
-    // Send AJAX request to fetch filtered data
-    $.ajax({
-      url: `/services/${serviceType}/filter`,
-      method: 'POST',
-      data: {
-        _token: $('meta[name="csrf-token"]').attr('content'),
-        search_query: searchQuery,
-        band_type: bandTypeValue,
-        genres: selectedGenres,
-        subgenres: selectedSubgenres,
-        serviceType: serviceType,
-      },
-      success: function(data) {
-        console.log(Array.isArray(data.results));
-        // Extract venues array and pass it to the function
-        if (data.results && Array.isArray(data.results)) {
-          updateTable(data);
+        // Toggle sort direction
+        if (currentSort.field === field) {
+          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
         } else {
-          console.error("The 'otherServices' field is not an array or is missing:", data.otherServices);
+          currentSort.field = field;
+          currentSort.direction = 'asc';
         }
-      },
-      error: function(err) {
-        console.error('Error applying filters:', err);
-      }
+
+        // Update sort icons
+        updateSortIcons(this);
+        applyFilters();
+      });
     });
-  }
 
-  // Update search input handler
-  $('#address-input').on('input', function() {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      applyFilters();
-    }, 300);
-  });
+    function updateSortIcons(clickedHeader) {
+      // Reset all icons
+      document.querySelectorAll('.sortable .fas').forEach(icon => {
+        icon.className = 'fas fa-sort';
+      });
 
-  function updateResultsTable(filteredOtherServices, pagination) {
-    if (!Array.isArray(filteredOtherServices)) {
-      console.error("filteredOtherServices is not an array:", filteredOtherServices);
-      return;
+      // Update clicked header icon
+      const icon = clickedHeader.querySelector('.fas');
+      icon.className = `fas fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'}`;
     }
 
-    var otherRoute = "{{ route('singleService', [':serviceName', ':serviceId']) }}";
-    var rowsHtml = filteredOtherServices.map(function(otherService) {
-      var finalRoute = otherRoute
-        .replace(':serviceName', otherService.service_type)
-        .replace(':serviceId', otherService.id);
+    // Add event listeners for all filter checkboxes
+    const genreCheckboxes = document.querySelectorAll('input[name="genres[]"]');
+    const locationCheckboxes = document.querySelectorAll('input[name="locations[]"]');
+    const photographyCheckboxes = document.querySelectorAll('input[name^="photography_filters"]');
 
-      var ratingHtml = getRatingHtml(otherService.average_rating);
-      var platformsHtml = '';
+    // Add change listeners
+    genreCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        console.log('Genre changed');
+        applyFilters();
+      });
+    });
 
-      if (otherService.platforms && Array.isArray(otherService.platforms)) {
-        platformsHtml = otherService.platforms.map(function(platform) {
-          try {
-            // Access platform properties directly
-            const platformType = platform.platform;
-            const url = platform.url;
+    locationCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        console.log('Location changed');
+        applyFilters();
+      });
+    });
 
-            let icon = '';
-            switch (platformType.toLowerCase()) {
-              case 'facebook':
-                icon = 'fab fa-facebook';
-                break;
-              case 'instagram':
-                icon = 'fab fa-instagram';
-                break;
-              case 'twitter':
-                icon = 'fab fa-twitter';
-                break;
-              case 'website':
-                icon = 'fas fa-globe';
-                break;
-              case 'snapchat':
-                icon = 'fab fa-snapchat-ghost';
-                break;
-              case 'youtube':
-                icon = 'fab fa-youtube';
-                break;
-              case 'tiktok':
-                icon = 'fab fa-tiktok';
-                break;
-              case 'bluesky':
-                icon = 'fa-brands fa-bluesky';
-                break;
-              default:
-                icon = 'fas fa-link';
-            }
+    photographyCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        console.log('Photography filter changed');
+        applyFilters();
+      });
+    });
 
-            return `<a href="${url}" target="_blank" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
-        <span class="${icon}"></span>
-      </a>`;
-          } catch (e) {
-            console.error('Error processing platform:', platform);
-            return '';
-          }
-        }).join('');
-      }
+    function applyFilters() {
+      const searchQuery = searchInput.value;
 
-      return `
-      <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
-        <th scope="row" class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          <a href="${finalRoute}" class="venue-link transition duration-150 ease-in-out hover:text-yns_yellow">${otherService.name}</a>
-        </th>
-        <td class="rating-wrapper px:2 py:2 hidden whitespace-nowrap sm:text-base md:px-6 md:py-3 lg:flex lg:px-8 lg:py-4">
-          ${ratingHtml}
-        </td>
-        <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          ${otherService.postal_town || ''}
-        </td>
-        <td class="hidden whitespace-nowrap px-2 py-2 align-middle text-white md:block md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-          ${otherService.contact_number ? 
-            `<a href="tel:${otherService.contact_number}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
-              <span class="fas fa-phone"></span>
-            </a>` : ''}
-          ${otherService.contact_email ? 
-            `<a href="mailto:${otherService.contact_email}" class="hover:text-yns_yellow mr-2 transition duration-150 ease-in-out">
-              <span class="fas fa-envelope"></span>
-            </a>` : ''}
-          ${platformsHtml}
-        </td>
-      </tr>`;
-    }).join('');
+      // Get all selected values
+      const selectedGenres = Array.from(document.querySelectorAll('input[name="genres[]"]:checked'))
+        .map(cb => cb.value);
 
-    $('#resultsTableBody').html(rowsHtml);
-  }
+      const selectedLocations = Array.from(document.querySelectorAll('input[name="locations[]"]:checked'))
+        .map(cb => cb.value);
 
-  // Function to generate HTML for the rating
-  function getRatingHtml(rating) {
-    if (rating === undefined || rating === null) return ''; // Return empty if no rating
+      // Get photography specific filters
+      const photographyFilterValues = {
+        conditions: Array.from(document.querySelectorAll(
+            'input[name="photography_filters[Conditions][]"]:checked'))
+          .map(cb => cb.value),
+        locations: Array.from(document.querySelectorAll('input[name="photography_filters[Locations][]"]:checked'))
+          .map(cb => cb.value),
+        times: Array.from(document.querySelectorAll('input[name="photography_filters[Times][]"]:checked'))
+          .map(cb => cb.value)
+      };
 
-    var ratingHtml = '';
-    var totalIcons = 5;
-    var fullIcons = Math.floor(rating);
-    var fraction = rating - fullIcons;
-    var emptyIcon = "{{ asset('storage/images/system/ratings/empty.png') }}";
-    var fullIcon = "{{ asset('storage/images/system/ratings/full.png') }}";
-    var hotIcon = "{{ asset('storage/images/system/ratings/hot.png') }}";
+      console.log('Selected Genres:', selectedGenres);
+      console.log('Selected Locations:', selectedLocations);
+      console.log('Photography Filters:', photographyFilterValues);
 
-    // Special case: all icons are hot
-    if (rating === totalIcons) {
-      ratingHtml = Array(totalIcons).fill('<img src="' + hotIcon + '" alt="Hot Icon" />').join('');
-    } else {
-      // Add full icons
-      for (var i = 0; i < fullIcons; i++) {
-        ratingHtml += '<img src="' + fullIcon + '" alt="Full Icon" />';
-      }
-
-      // Handle the fractional icon
-      if (fraction > 0) {
-        ratingHtml += '<div class="partially-filled-icon" style="width: ' + (fraction * 48) +
-          'px; overflow: hidden; display:inline-block;">' +
-          '<img src="' + fullIcon + '" alt="Partial Full Icon" />' +
-          '</div>';
-      }
-
-      // Add empty icons to fill the rest
-      var iconsDisplayed = fullIcons + (fraction > 0 ? 1 : 0);
-      var remainingIcons = totalIcons - iconsDisplayed;
-
-      for (var j = 0; j < remainingIcons; j++) {
-        ratingHtml += '<img src="' + emptyIcon + '" alt="Empty Icon" />';
-      }
+      // Make the AJAX call
+      $.ajax({
+        url: `/services/${serviceType}/filter`,
+        method: 'POST',
+        data: {
+          _token: $('meta[name="csrf-token"]').attr('content'),
+          search: searchQuery,
+          filters: filters,
+          serviceType: serviceType,
+          sort: currentSort
+        },
+        success: function(response) {
+          console.log('Filter response:', response);
+          updateResultsTable(response.results);
+        },
+        error: function(error) {
+          console.error('Error applying filters:', error);
+        }
+      });
     }
 
-    return ratingHtml;
-  }
+    document.getElementById('services-search').addEventListener('input', function(e) {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        filters.search = e.target.value;
+        applyFilters();
+      }, 300);
+    });
 
-  // Update the updateTable function to pass the filtered venues to updateVenuesTable
-  function updateTable(data) {
-    // If the data doesn't have otherServices, we'll log an error and exit
-    if (!data || !data.results) {
-      console.error("Other services data is missing or undefined.");
-      return; // Exit the function if the data is not structured as expected
-    }
 
-    var otherServices = data.results;
-    var pagination = data.pagination;
+    function updateResultsTable(services) {
+      const tbody = document.getElementById('resultsTableBody');
+      tbody.innerHTML = '';
 
-    // Check if data is not null or empty array
-    if (otherServices && otherServices.length > 0) {
-      updateResultsTable(otherServices, pagination);
-    } else {
-      var noOtherServicesRow = `
-            <tr class=" border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
-                <td colspan="5" class="whitespace-nowrap font-sans text-white sm:px-2 sm:py-3 sm:text-base md:px-6 md:py-2 md:text-lg lg:px-8 lg:py-4 uppercase text-center">No Services Found</td>
-            </tr>
+      if (services.length === 0) {
+        tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+          No services found matching your criteria
+        </td>
+      </tr>
+    `;
+        return;
+      }
+
+      services.forEach(service => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-black/20';
+
+        const rating = service.average_rating ? service.average_rating : 'Not rated';
+
+        const verifiedBadge = service.is_verified ? `
+          <span class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+            <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+            </svg>
+            Verified
+          </span>` : '';
+
+        row.innerHTML = `
+          <td class="px-6 py-4">
+            <a href="/services/${serviceType}/${service.name.toLowerCase().replace(/\s+/g, '-')}" 
+              class="font-medium text-white hover:text-yns_yellow">
+              ${service.name}
+              ${verifiedBadge}
+            </a>
+          </td>
+          <td class="px-6 py-4 text-gray-300">
+            ${rating}
+          </td>
+          <td class="px-6 py-4 text-gray-300">
+            ${service.postal_town || 'Location not specified'}
+          </td>
+          <td class="px-6 py-4">
+            <button
+              onclick='showContactModal(${JSON.stringify({
+                name: service.name,
+                preferred_contact: service.preferred_contact,
+                contact_email: service.contact_email,
+                contact_number: service.contact_number,
+                platforms: service.platforms
+              })})'
+              class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+              Contact Options
+            </button>
+          </td>
         `;
-      jQuery('#resultsTableBody').html(noOtherServicesRow);
+
+        tbody.appendChild(row);
+      });
     }
+
+    document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.genres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
+
+    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.selectedLocations = Array.from(document.querySelectorAll(
+            '.filter-checkbox-locations:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
+  });
+
+  function showContactModal(serviceData) {
+    const modal = document.getElementById('contactModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const preferredContact = document.getElementById('preferredContact');
+    const otherContacts = document.getElementById('otherContacts');
+
+    modalTitle.textContent = `Contact ${serviceData.name}`;
+
+    // Clear previous content
+    preferredContact.innerHTML = '';
+    otherContacts.innerHTML = '';
+
+    // Helper function to create contact link
+    const createContactLink = (type, value, icon) => {
+      let href = '';
+      let iconClass = '';
+
+      switch (type) {
+        case 'email':
+          href = `mailto:${value}`;
+          iconClass = 'fas fa-envelope';
+          break;
+        case 'phone':
+          href = `tel:${value}`;
+          iconClass = 'fas fa-phone';
+          break;
+        case 'facebook':
+          href = value;
+          iconClass = 'fab fa-facebook';
+          break;
+        case 'twitter':
+          href = value;
+          iconClass = 'fab fa-twitter';
+          break;
+        case 'instagram':
+          href = value;
+          iconClass = 'fab fa-instagram';
+          break;
+        case 'tiktok':
+          href = value;
+          iconClass = 'fab fa-tiktok';
+          break;
+        case 'youtube':
+          href = value;
+          iconClass = 'fab fa-youtube';
+          break;
+        case 'spotify':
+          href = value;
+          iconClass = 'fab fa-spotify';
+          break;
+        case 'website':
+          href = value;
+          iconClass = 'fas fa-globe';
+          break;
+        default:
+          href = value;
+          iconClass = 'fas fa-link';
+      }
+
+      return `<a href="${href}" target="_blank" class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
+    <span class="${iconClass}"></span>
+    ${type.charAt(0).toUpperCase() + type.slice(1)}
+  </a>`;
+    };
+
+    // Add preferred contact method first
+    if (serviceData.preferred_contact) {
+      let preferred;
+      if (serviceData.preferred_contact === 'email') {
+        preferred = createContactLink('email', serviceData.contact_email, 'envelope');
+      } else if (serviceData.preferred_contact === 'phone') {
+        preferred = createContactLink('phone', serviceData.contact_number, 'phone');
+      } else {
+        const platform = serviceData.platforms.find(p => p.platform === serviceData.preferred_contact);
+        if (platform) {
+          preferred = createContactLink(platform.platform, platform.url, platform.platform);
+        }
+      }
+
+      if (preferred) {
+        preferredContact.innerHTML = `
+        <h4 class="mb-2 font-bold text-yns_yellow">Preferred Contact Method</h4>
+        ${preferred}
+      `;
+      }
+    }
+
+    // Add other contact methods
+    let otherContactsHTML =
+      '<h4 class="mb-2 font-bold text-white">Other Contact Methods</h4><div class="grid gap-2">';
+
+    if (serviceData.contact_email && serviceData.preferred_contact !== 'email') {
+      otherContactsHTML += createContactLink('email', serviceData.contact_email, 'envelope');
+    }
+
+    if (serviceData.contact_number && serviceData.preferred_contact !== 'phone') {
+      otherContactsHTML += createContactLink('phone', serviceData.contact_number, 'phone');
+    }
+
+    serviceData.platforms.forEach(platform => {
+      if (platform.platform !== serviceData.preferred_contact) {
+        otherContactsHTML += createContactLink(platform.platform, platform.url, platform.platform);
+      }
+    });
+
+    otherContactsHTML += '</div>';
+    otherContacts.innerHTML = otherContactsHTML;
+
+    modal.classList.remove('hidden');
   }
 
-  function setLocationCoordinates(key, lat, lng) {
-    const latitudeField = document.getElementById(key + "-" + "latitude");
-    const longitudeField = document.getElementById(key + "-" + "longitude");
-    latitudeField.value = lat;
-    longitudeField.value = lng;
+  function closeContactModal() {
+    document.getElementById('contactModal').classList.add('hidden');
   }
 </script>
