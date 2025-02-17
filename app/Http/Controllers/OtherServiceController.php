@@ -260,6 +260,17 @@ class OtherServiceController extends Controller
             }
         }
 
+        // Apply genre filters
+        if ($selectedBandTypes = $request->input('filters.bandTypes')) {
+            if (!empty($selectedBandTypes)) {
+                $query->where(function ($q) use ($selectedBandTypes) {
+                    foreach ($selectedBandTypes as $bandType) {
+                        $q->orWhereJsonContains('band_type', $bandType);
+                    }
+                });
+            }
+        }
+
         // Execute query and log results
         $services = $query->get();
 
@@ -307,14 +318,13 @@ class OtherServiceController extends Controller
         $service = $singleService;
         $serviceId = $service->id;
 
-        $members = $service->linkedUsers()->get() ?? [];
+        $members = $singleService['members'] ? json_decode($singleService['members'], true) : [];
         $streamUrls = $service->stream_urls;
         $platforms = SocialLinksHelper::processSocialLinks($service->contact_link);
         $service->platforms = $platforms;
 
         $overallScore = OtherServicesReview::calculateOverallScore($serviceId);
         $overallReviews[$serviceId] = $this->renderRatingIcons($overallScore);
-
         $bandAverageCommunicationRating = BandReviews::calculateAverageScore($serviceId, 'communication_rating');
         $bandAverageMusicRating = BandReviews::calculateAverageScore($serviceId, 'music_rating');
         $bandAveragePromotionRating = BandReviews::calculateAverageScore($serviceId, 'promotion_rating');
@@ -393,8 +403,8 @@ class OtherServiceController extends Controller
             'services' => $services,
             'genres' => $genres,
             'genreNames' => $genreNames,
-            'types' => $environmentData['types'] ?? [], // This will be ["Live Music", "Nature", "Landscapes"]
-            'settings' => $environmentData['settings'] ?? [], // This will be ["Indoor", "Outdoor", "Studio"]
+            'types' => $environmentData['types'] ?? [],
+            'settings' => $environmentData['settings'] ?? [],
         ];
     }
 

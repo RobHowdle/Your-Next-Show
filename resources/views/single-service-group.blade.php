@@ -65,6 +65,47 @@
                 @endforeach
               </div>
             </div>
+          @elseif($serviceName === 'artist')
+            <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+              <h3 class="font-heading text-lg font-semibold text-white">Genres</h3>
+              <div class="max-h-48 grid grid-cols-2 space-y-2 overflow-y-auto">
+                @foreach ($genres as $genre)
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="genres[]" value="{{ $genre }}"
+                      class="filter-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
+                    <span class="text-sm text-gray-300">{{ $genre }}</span>
+                  </label>
+                @endforeach
+              </div>
+            </div>
+
+            <!-- Band Type Filter -->
+            <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+              <h3 class="font-heading text-lg font-semibold text-white">Band Type</h3>
+              <div class="space-y-2">
+                @foreach ($bandTypes as $type)
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="band_types[]" value="{{ $type }}"
+                      class="filter-checkbox-band-type rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
+                    <span class="text-sm text-gray-300">{{ Str::title(str_replace('-', ' ', $type)) }}</span>
+                  </label>
+                @endforeach
+              </div>
+            </div>
+
+            <!-- Location Filter -->
+            <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+              <h3 class="font-heading text-lg font-semibold text-white">Locations</h3>
+              <div class="max-h-48 grid grid-cols-2 space-y-2 overflow-y-auto">
+                @foreach ($locations as $location)
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="locations[]" value="{{ $location }}"
+                      class="filter-checkbox-locations rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
+                    <span class="text-sm text-gray-300">{{ $location }}</span>
+                  </label>
+                @endforeach
+              </div>
+            </div>
           @endif
         </div>
       </div>
@@ -188,233 +229,250 @@
 </x-guest-layout>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Initialize core variables
     const searchInput = document.getElementById('services-search');
     const serviceType = @json($serviceType);
+    let debounceTimeout;
 
+    // Sorting state
     let currentSort = {
       field: null,
       direction: 'asc'
     };
 
-    let debounceTimeout;
-
-    // Initialize filters
-    const filters = {
+    // Filter state
+    let filters = {
       search: '',
       genres: [],
-      selectedLocations: [],
+      locations: [],
+      serviceSpecific: {}
     };
 
+    // Handle initial search from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const searchQuery = @json($town ?? '');
-
     if (searchQuery) {
       searchInput.value = searchQuery;
       filters.search = searchQuery;
       applyFilters();
     }
 
-    // Search Input Handler
-    document.getElementById('services-search').addEventListener('input', function(e) {
+    // Event Listeners Setup
+    initializeEventListeners();
+
+    function initializeEventListeners() {
+      // Search Input
+      searchInput.addEventListener('input', handleSearchInput);
+
+      // Sorting
+      document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', handleSortClick);
+      });
+
+      // Filter Checkboxes
+      setupFilterCheckboxes();
+    }
+
+    function setupFilterCheckboxes() {
+      // Common filters
+      document.querySelectorAll('input[name="genres[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => applyFilters());
+      });
+
+      document.querySelectorAll('input[name="locations[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => applyFilters());
+      });
+
+      // Service-specific filters
+      if (serviceType.toLowerCase() === 'photographer') {
+        document.querySelectorAll('input[name^="photography_filters"]').forEach(checkbox => {
+          checkbox.addEventListener('change', () => applyFilters());
+        });
+      } else if (serviceType.toLowerCase() === 'artist') {
+        document.querySelectorAll('input[name="band_types[]"]').forEach(checkbox => {
+          checkbox.addEventListener('change', () => applyFilters());
+        });
+      } else if (serviceType.toLowerCase() === 'designer') {
+        document.querySelectorAll('input[name="band_types[]"]').forEach(checkbox => {
+          checkbox.addEventListener('change', () => applyFilters());
+        });
+      } else if (serviceType.toLowerCase() === 'videographer') {
+        document.querySelectorAll('input[name="band_types[]"]').forEach(checkbox => {
+          checkbox.addEventListener('change', () => applyFilters());
+        });
+      }
+    }
+
+    function handleSearchInput(e) {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         filters.search = e.target.value;
         applyFilters();
       }, 300);
-    });
-
-    // Sorting Handlers
-    document.querySelectorAll('.sortable').forEach(header => {
-      header.addEventListener('click', function() {
-        const field = this.dataset.sort;
-
-        // Toggle sort direction
-        if (currentSort.field === field) {
-          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-        } else {
-          currentSort.field = field;
-          currentSort.direction = 'asc';
-        }
-
-        // Update sort icons
-        updateSortIcons(this);
-        applyFilters();
-      });
-    });
-
-    function updateSortIcons(clickedHeader) {
-      // Reset all icons
-      document.querySelectorAll('.sortable .fas').forEach(icon => {
-        icon.className = 'fas fa-sort';
-      });
-
-      // Update clicked header icon
-      const icon = clickedHeader.querySelector('.fas');
-      icon.className = `fas fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'}`;
     }
 
-    // Add event listeners for all filter checkboxes
-    const genreCheckboxes = document.querySelectorAll('input[name="genres[]"]');
-    const locationCheckboxes = document.querySelectorAll('input[name="locations[]"]');
-    const photographyCheckboxes = document.querySelectorAll('input[name^="photography_filters"]');
+    function handleSortClick() {
+      const field = this.dataset.sort;
 
-    // Add change listeners
-    genreCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        console.log('Genre changed');
-        applyFilters();
-      });
-    });
+      if (currentSort.field === field) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.field = field;
+        currentSort.direction = 'asc';
+      }
 
-    locationCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        console.log('Location changed');
-        applyFilters();
-      });
-    });
+      updateSortIcons(this);
+      applyFilters();
+    }
 
-    photographyCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        console.log('Photography filter changed');
-        applyFilters();
-      });
-    });
+    function getServiceSpecificFilters() {
+      switch (serviceType.toLowerCase()) {
+        case 'photographer':
+          return {
+            genres: getCheckedValues('genres[]'),
+              conditions: getCheckedValues('photography_filters[Conditions][]'),
+              locations: getCheckedValues('photography_filters[Locations][]'),
+              times: getCheckedValues('photography_filters[Times][]')
+          };
+        case 'artist':
+          return {
+            genres: getCheckedValues('genres[]'),
+              bandTypes: getCheckedValues('band_types[]')
+          };
+        default:
+          return {};
+      }
+    }
+
+    function getCheckedValues(name) {
+      return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+        .map(cb => cb.value);
+    }
 
     function applyFilters() {
       const searchQuery = searchInput.value;
+      const serviceSpecificFilters = getServiceSpecificFilters();
+      const selectedLocations = getCheckedValues('locations[]');
 
-      // Get all selected values
-      const selectedGenres = Array.from(document.querySelectorAll('input[name="genres[]"]:checked'))
-        .map(cb => cb.value);
-
-      const selectedLocations = Array.from(document.querySelectorAll('input[name="locations[]"]:checked'))
-        .map(cb => cb.value);
-
-      // Get photography specific filters
-      const photographyFilterValues = {
-        conditions: Array.from(document.querySelectorAll(
-            'input[name="photography_filters[Conditions][]"]:checked'))
-          .map(cb => cb.value),
-        locations: Array.from(document.querySelectorAll('input[name="photography_filters[Locations][]"]:checked'))
-          .map(cb => cb.value),
-        times: Array.from(document.querySelectorAll('input[name="photography_filters[Times][]"]:checked'))
-          .map(cb => cb.value)
-      };
-
-      console.log('Selected Genres:', selectedGenres);
-      console.log('Selected Locations:', selectedLocations);
-      console.log('Photography Filters:', photographyFilterValues);
-
-      // Make the AJAX call
+      // Update AJAX call to handle locations properly
       $.ajax({
         url: `/services/${serviceType}/filter`,
         method: 'POST',
         data: {
           _token: $('meta[name="csrf-token"]').attr('content'),
-          search: searchQuery,
-          filters: filters,
+          filters: {
+            search: searchQuery,
+            locations: selectedLocations,
+            ...serviceSpecificFilters
+          },
           serviceType: serviceType,
           sort: currentSort
         },
         success: function(response) {
-          console.log('Filter response:', response);
-          updateResultsTable(response.results);
+          const tbody = document.getElementById('resultsTableBody');
+          tbody.innerHTML = '';
+
+          if (!response.results || response.results.length === 0) {
+            tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                            No services found matching your criteria
+                        </td>
+                    </tr>
+                `;
+            return;
+          }
+
+          // Only show results that match the selected locations if any are selected
+          const filteredResults = selectedLocations.length > 0 ?
+            response.results.filter(service => selectedLocations.includes(service.postal_town)) :
+            response.results;
+
+          filteredResults.forEach(service => {
+            tbody.appendChild(createTableRow(service));
+          });
         },
-        error: function(error) {
-          console.error('Error applying filters:', error);
-        }
+        error: (error) => console.error('Error applying filters:', error)
       });
     }
 
-    document.getElementById('services-search').addEventListener('input', function(e) {
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        filters.search = e.target.value;
-        applyFilters();
-      }, 300);
-    });
+    function updateSortIcons(clickedHeader) {
+      document.querySelectorAll('.sortable .fas').forEach(icon => {
+        icon.className = 'fas fa-sort';
+      });
 
+      const icon = clickedHeader.querySelector('.fas');
+      icon.className = `fas fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'}`;
+    }
 
-    function updateResultsTable(services) {
+    function updateResultsTable(response) {
       const tbody = document.getElementById('resultsTableBody');
       tbody.innerHTML = '';
 
-      if (services.length === 0) {
+      if (!response.results || response.results.length === 0) {
         tbody.innerHTML = `
-      <tr>
-        <td colspan="5" class="px-6 py-4 text-center text-gray-400">
-          No services found matching your criteria
-        </td>
-      </tr>
-    `;
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                        No services found matching your criteria
+                    </td>
+                </tr>
+            `;
         return;
       }
 
-      services.forEach(service => {
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-black/20';
-
-        const rating = service.average_rating ? service.average_rating : 'Not rated';
-
-        const verifiedBadge = service.is_verified ? `
-          <span class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
-            <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
-            </svg>
-            Verified
-          </span>` : '';
-
-        row.innerHTML = `
-          <td class="px-6 py-4">
-            <a href="/services/${serviceType}/${service.name.toLowerCase().replace(/\s+/g, '-')}" 
-              class="font-medium text-white hover:text-yns_yellow">
-              ${service.name}
-              ${verifiedBadge}
-            </a>
-          </td>
-          <td class="px-6 py-4 text-gray-300">
-            ${rating}
-          </td>
-          <td class="px-6 py-4 text-gray-300">
-            ${service.postal_town || 'Location not specified'}
-          </td>
-          <td class="px-6 py-4">
-            <button
-              onclick='showContactModal(${JSON.stringify({
-                name: service.name,
-                preferred_contact: service.preferred_contact,
-                contact_email: service.contact_email,
-                contact_number: service.contact_number,
-                platforms: service.platforms
-              })})'
-              class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
-              Contact Options
-            </button>
-          </td>
-        `;
-
-        tbody.appendChild(row);
+      response.results.forEach(service => {
+        tbody.appendChild(createTableRow(service));
       });
     }
 
-    document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        filters.genres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
-          .map(cb => cb.value);
-        applyFilters();
-      });
-    });
+    function createTableRow(service) {
+      const row = document.createElement('tr');
+      row.className = 'hover:bg-black/20';
+      row.innerHTML = generateRowHTML(service);
+      return row;
+    }
 
-    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        filters.selectedLocations = Array.from(document.querySelectorAll(
-            '.filter-checkbox-locations:checked'))
-          .map(cb => cb.value);
-        applyFilters();
-      });
-    });
+    function generateRowHTML(service) {
+      const rating = service.average_rating || 'Not rated';
+      const verifiedBadge = service.is_verified ? generateVerifiedBadge() : '';
+
+      return `
+            <td class="px-6 py-4">
+                <a href="/services/${serviceType}/${service.name.toLowerCase().replace(/\s+/g, '-')}" 
+                   class="font-medium text-white hover:text-yns_yellow">
+                    ${service.name}
+                    ${verifiedBadge}
+                </a>
+            </td>
+            <td class="px-6 py-4 text-gray-300">${rating}</td>
+            <td class="px-6 py-4 text-gray-300">${service.postal_town || 'Location not specified'}</td>
+            <td class="px-6 py-4">
+                <button onclick='showContactModal(${JSON.stringify({
+                    name: service.name,
+                    preferred_contact: service.preferred_contact,
+                    contact_email: service.contact_email,
+                    contact_number: service.contact_number,
+                    platforms: service.platforms
+                })})' class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+                    Contact Options
+                </button>
+            </td>
+        `;
+    }
+
+    function generateVerifiedBadge() {
+      return `
+            <span class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+                <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                </svg>
+                Verified
+            </span>
+        `;
+    }
   });
 
+  // Contact Modal Functions
   function showContactModal(serviceData) {
     const modal = document.getElementById('contactModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -422,108 +480,121 @@
     const otherContacts = document.getElementById('otherContacts');
 
     modalTitle.textContent = `Contact ${serviceData.name}`;
-
-    // Clear previous content
     preferredContact.innerHTML = '';
     otherContacts.innerHTML = '';
 
-    // Helper function to create contact link
-    const createContactLink = (type, value, icon) => {
-      let href = '';
-      let iconClass = '';
-
-      switch (type) {
-        case 'email':
-          href = `mailto:${value}`;
-          iconClass = 'fas fa-envelope';
-          break;
-        case 'phone':
-          href = `tel:${value}`;
-          iconClass = 'fas fa-phone';
-          break;
-        case 'facebook':
-          href = value;
-          iconClass = 'fab fa-facebook';
-          break;
-        case 'twitter':
-          href = value;
-          iconClass = 'fab fa-twitter';
-          break;
-        case 'instagram':
-          href = value;
-          iconClass = 'fab fa-instagram';
-          break;
-        case 'tiktok':
-          href = value;
-          iconClass = 'fab fa-tiktok';
-          break;
-        case 'youtube':
-          href = value;
-          iconClass = 'fab fa-youtube';
-          break;
-        case 'spotify':
-          href = value;
-          iconClass = 'fab fa-spotify';
-          break;
-        case 'website':
-          href = value;
-          iconClass = 'fas fa-globe';
-          break;
-        default:
-          href = value;
-          iconClass = 'fas fa-link';
-      }
-
-      return `<a href="${href}" target="_blank" class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
-    <span class="${iconClass}"></span>
-    ${type.charAt(0).toUpperCase() + type.slice(1)}
-  </a>`;
-    };
-
-    // Add preferred contact method first
     if (serviceData.preferred_contact) {
-      let preferred;
-      if (serviceData.preferred_contact === 'email') {
-        preferred = createContactLink('email', serviceData.contact_email, 'envelope');
-      } else if (serviceData.preferred_contact === 'phone') {
-        preferred = createContactLink('phone', serviceData.contact_number, 'phone');
-      } else {
-        const platform = serviceData.platforms.find(p => p.platform === serviceData.preferred_contact);
-        if (platform) {
-          preferred = createContactLink(platform.platform, platform.url, platform.platform);
-        }
-      }
-
-      if (preferred) {
-        preferredContact.innerHTML = `
-        <h4 class="mb-2 font-bold text-yns_yellow">Preferred Contact Method</h4>
-        ${preferred}
-      `;
-      }
+      renderPreferredContact(serviceData, preferredContact);
     }
 
-    // Add other contact methods
-    let otherContactsHTML =
-      '<h4 class="mb-2 font-bold text-white">Other Contact Methods</h4><div class="grid gap-2">';
+    renderOtherContacts(serviceData, otherContacts);
+    modal.classList.remove('hidden');
+  }
+
+  function renderPreferredContact(serviceData, container) {
+    const preferred = createContactLink(
+      serviceData.preferred_contact,
+      getContactValue(serviceData),
+      serviceData.preferred_contact
+    );
+
+    if (preferred) {
+      container.innerHTML = `
+            <h4 class="mb-2 font-bold text-yns_yellow">Preferred Contact Method</h4>
+            ${preferred}
+        `;
+    }
+  }
+
+  function renderOtherContacts(serviceData, container) {
+    let html = '<h4 class="mb-2 font-bold text-white">Other Contact Methods</h4><div class="grid gap-2">';
 
     if (serviceData.contact_email && serviceData.preferred_contact !== 'email') {
-      otherContactsHTML += createContactLink('email', serviceData.contact_email, 'envelope');
+      html += createContactLink('email', serviceData.contact_email);
     }
 
     if (serviceData.contact_number && serviceData.preferred_contact !== 'phone') {
-      otherContactsHTML += createContactLink('phone', serviceData.contact_number, 'phone');
+      html += createContactLink('phone', serviceData.contact_number);
     }
 
-    serviceData.platforms.forEach(platform => {
-      if (platform.platform !== serviceData.preferred_contact) {
-        otherContactsHTML += createContactLink(platform.platform, platform.url, platform.platform);
+    if (serviceData.platforms) {
+      serviceData.platforms.forEach(platform => {
+        if (platform.platform !== serviceData.preferred_contact) {
+          html += createContactLink(platform.platform, platform.url);
+        }
+      });
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function createContactLink(type, value) {
+    const config = getContactConfig(type, value);
+    return `
+        <a href="${config.href}" target="_blank" 
+           class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
+            <span class="${config.iconClass}"></span>
+            ${config.label}
+        </a>
+    `;
+  }
+
+  function getContactConfig(type, value) {
+    const configs = {
+      email: {
+        href: `mailto:${value}`,
+        iconClass: 'fas fa-envelope'
+      },
+      phone: {
+        href: `tel:${value}`,
+        iconClass: 'fas fa-phone'
+      },
+      facebook: {
+        href: value,
+        iconClass: 'fab fa-facebook'
+      },
+      twitter: {
+        href: value,
+        iconClass: 'fab fa-twitter'
+      },
+      instagram: {
+        href: value,
+        iconClass: 'fab fa-instagram'
+      },
+      tiktok: {
+        href: value,
+        iconClass: 'fab fa-tiktok'
+      },
+      youtube: {
+        href: value,
+        iconClass: 'fab fa-youtube'
+      },
+      spotify: {
+        href: value,
+        iconClass: 'fab fa-spotify'
+      },
+      website: {
+        href: value,
+        iconClass: 'fas fa-globe'
       }
-    });
+    };
 
-    otherContactsHTML += '</div>';
-    otherContacts.innerHTML = otherContactsHTML;
+    return {
+      ...configs[type] || {
+        href: value,
+        iconClass: 'fas fa-link'
+      },
+      label: type.charAt(0).toUpperCase() + type.slice(1)
+    };
+  }
 
-    modal.classList.remove('hidden');
+  function getContactValue(serviceData) {
+    if (serviceData.preferred_contact === 'email') return serviceData.contact_email;
+    if (serviceData.preferred_contact === 'phone') return serviceData.contact_number;
+
+    const platform = serviceData.platforms?.find(p => p.platform === serviceData.preferred_contact);
+    return platform ? platform.url : '';
   }
 
   function closeContactModal() {

@@ -74,7 +74,22 @@ class ServiceDataHelper
         $streamPlatforms = [];
         $streamPlatformsToCheck = ['spotify', 'apple-music', 'youtube-music', 'amazon-music', 'bandcamp', 'soundcloud'];
 
-        $members = is_array($artist->members) ? $artist->members : json_decode($artist->members, true);
+        $membersData = $artist->members;
+        $members = [];
+
+        if (!empty($membersData)) {
+            if (is_string($membersData)) {
+                $decodedMembers = json_decode($membersData, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $members = array_map(function ($member) {
+                        return [
+                            'name' => $member['name'] ?? null,
+                            'role' => $member['role'] ?? null
+                        ];
+                    }, $decodedMembers);
+                }
+            }
+        }
 
         return [
             'artist' => $artist,

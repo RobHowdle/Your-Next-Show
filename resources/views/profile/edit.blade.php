@@ -272,6 +272,18 @@
                 ])
               </div>
             @endif
+
+            @if ($dashboardType === 'venue')
+              <div x-show="activeTab === 'lmlc'">
+                @include('profile.venue.lmlc', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+
             <div x-show="activeTab === 'modules'">
               @include('profile.settings.modules', [
                   'modules' => $modules,
