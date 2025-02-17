@@ -231,36 +231,42 @@
   });
 
   function confirmLeaveCompany() {
-    if (confirm('DON\'T PUSH UNLESS YOU REALLY, REALLY, MEAN IT!')) {
-      const service = '{{ $profileData['name'] }}';
-      const userId = '{{ $user->id }}';
-      const dashboardType = '{{ $dashboardType }}';
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    showConfirmationNotification({
+      title: 'Are you sure?',
+      text: "You're about to leave this company. This action cannot be undone!",
+      onConfirm: () => {
+        const service = '{{ $profileData['name'] }}';
+        const userId = '{{ $user->id }}';
+        const dashboardType = '{{ $dashboardType }}';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-      fetch(`/api/profile/${dashboardType}/${userId}/leave-service`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            service: service,
-            userId: userId
+        fetch(`/profile/${dashboardType}/${userId}/leave-service`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrfToken,
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              service: service,
+              userId: userId
+            })
           })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            window.location.href = '/dashboard';
-          } else {
-            alert(data.message || 'Failed to leave service');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('An error occurred while leaving the service');
-        });
-    }
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showSuccessNotification('Successfully left company').then(() => {
+                window.location.href = '/dashboard';
+              });
+            } else {
+              showFailureNotification(data.message || 'Failed to leave service');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showFailureNotification('An error occurred while leaving the service');
+          });
+      }
+    });
   }
 </script>
