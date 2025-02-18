@@ -93,9 +93,9 @@ class OtherService extends Model
     /**
      * Retrieve all bands (other services with `other_service_id` as 4).
      */
-    public function bands()
+    public static function bands()
     {
-        return $this->hasMany(OtherService::class, 'other_service_id')->where('other_service_id', 4);
+        return self::where('other_service_id', 4);
     }
     /**
      * Belongs to OtherServiceList relation.

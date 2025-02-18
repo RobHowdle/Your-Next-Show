@@ -60,7 +60,7 @@ class RegisteredUserController extends Controller
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
                 ]);
-                \Log::info($request->role);
+
                 $role = Role::findOrFail($request->role);
                 $user->assignRole($role->name);
 

@@ -1329,6 +1329,9 @@ class ProfileController extends Controller
             case 'photography':
                 $userType = $user->otherService('Photography')->first();
                 break;
+            case 'videographer':
+                $userType = $user->otherService('Videography')->first();
+                break;
             default:
                 return response()->json([
                     'success' => false,

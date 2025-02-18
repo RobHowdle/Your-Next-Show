@@ -21,7 +21,6 @@
 
             <div class="grid gap-6 md:grid-cols-2">
               <!-- Types Section -->
-              <!-- Types Section -->
               <div class="rounded-lg border border-gray-700 bg-black/30 p-6 backdrop-blur-sm">
                 <h4 class="mb-4 font-heading text-lg font-semibold text-white">Photography Types</h4>
                 @if (!empty($serviceData['types']))

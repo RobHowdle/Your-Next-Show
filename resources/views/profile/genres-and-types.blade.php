@@ -65,66 +65,45 @@
     }
   @endphp
 
-  <!-- "All Genres" checkbox -->
+  <!-- Master "All Genres" Section -->
   <div class="border-b border-slate-200">
-    <button onclick="toggleAccordion('all-genres')" id="all-genres-btn"
-      class="accordion-btn flex w-full items-center justify-between py-5 text-white">
-      <span class="genre-name">All Genres</span>
-      <div class="group flex items-center gap-4">
-        <span class="status mr-4" data-genre="All Genres"></span>
-        <span id="icon-all-genres" class="accordion-icon text-slate-800 transition-transform duration-300">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#ffffff" class="h-4 w-4">
-            <path
-              d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-          </svg>
-        </span>
-      </div>
-    </button>
-    <div id="subgenres-accordion-all-genres"
-      class="max-h-0 content grid grid-cols-2 overflow-hidden transition-all duration-300 ease-in-out">
-      <div class="all-genre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
-        <x-input-checkbox class="master-all-genres-checkbox" id="master-all-genres" data-type="master-all"
-          name="all-genres-checkbox" value="all-genres">
-        </x-input-checkbox>
-        <x-input-label-dark>All Genres</x-input-label-dark>
-      </div>
+    <div class="flex items-center gap-2 py-5">
+      <x-input-checkbox id="master-all-genres" class="master-all-genres-checkbox" name="master-all-genres"
+        value="all-genres" />
+      <x-input-label-dark>All Genres</x-input-label-dark>
     </div>
   </div>
 
-  <!-- Genres Accordion -->
+  <!-- Individual Genres Sections -->
   @foreach ($profileData['genres'] as $index => $genre)
     <div class="border-b border-slate-200">
       <button onclick="toggleAccordion({{ $index }})" id="genre-{{ $index }}"
         class="accordion-btn flex w-full items-center justify-between py-5 text-white">
         <span class="genre-name">{{ $genre['name'] }}</span>
         <div class="group flex items-center gap-4">
-          <span class="status mr-4" data-genre={{ $genre['name'] }}></span>
+          <span class="status mr-4" data-genre="{{ $genre['name'] }}"></span>
           <span id="icon-{{ $index }}" class="accordion-icon text-slate-800 transition-transform duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#ffffff" class="h-4 w-4">
-              <path
-                d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-            </svg>
+            <!-- Icon SVG -->
           </span>
         </div>
       </button>
+
       <div id="subgenres-accordion-{{ $index }}"
         class="max-h-0 content grid grid-cols-2 overflow-hidden transition-all duration-300 ease-in-out">
+        <!-- All [Genre] checkbox -->
         <div class="all-genre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
-          <x-input-checkbox class="genre-all-checkbox" id="all-{{ strtolower($genre['name']) }}-{{ $index }}"
-            data-type="genre-all" data-genre="{{ $genre['name'] }}"
-            name="all-{{ $genre['name'] }}-{{ $index }}" value="all-{{ strtolower($genre['name']) }}">
-          </x-input-checkbox>
+          <x-input-checkbox class="genre-all-checkbox" id="all-{{ Str::slug($genre['name']) }}"
+            data-genre="{{ $genre['name'] }}" name="genre[{{ $genre['name'] }}][all]" value="true" />
           <x-input-label-dark>All {{ $genre['name'] }}</x-input-label-dark>
         </div>
 
-        @foreach ($genre['subgenres'] as $subIndex => $subgenre)
-          @php
-            $subgenreSlug = strtolower(str_replace(' ', '_', $subgenre));
-          @endphp
+        <!-- Subgenres -->
+        @foreach ($genre['subgenres'] as $subgenre)
           <div class="subgenre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
-            <x-input-checkbox class="subgenre-checkbox" id="subgenre-{{ $subgenreSlug }}"
-              name="subgenre-{{ $subgenreSlug }}" data-parent="{{ $genre['name'] }}"
-              value="{{ $subgenreSlug }}"></x-input-checkbox>
+            <x-input-checkbox class="subgenre-checkbox"
+              id="subgenre-{{ Str::slug($genre['name']) }}-{{ Str::slug($subgenre) }}"
+              data-genre="{{ $genre['name'] }}" data-subgenre="{{ $subgenre }}"
+              name="genre[{{ $genre['name'] }}][subgenres][]" value="{{ $subgenre }}" />
             <x-input-label-dark>{{ $subgenre }}</x-input-label-dark>
           </div>
         @endforeach
@@ -285,5 +264,134 @@
       content.style.maxHeight = content.scrollHeight + 'px'; // Open it
       icon.innerHTML = minusSVG; // Set the icon to Minus when opened
     }
+  }
+
+  // Genres
+  const masterAllGenres = document.getElementById('master-all-genres');
+  const genreAllCheckboxes = document.querySelectorAll('.genre-all-checkbox');
+  const subgenreCheckboxes = document.querySelectorAll('.subgenre-checkbox');
+
+  // Initialize from existing data
+  function initializeGenres(savedData) {
+    if (!savedData) return;
+
+    try {
+      const data = typeof savedData === 'string' ? JSON.parse(savedData) : savedData;
+
+      // Check if all genres are selected
+      const allGenresSelected = Object.values(data).every(genre =>
+        genre.all === true &&
+        genre.subgenres?.length === document.querySelectorAll(`[data-genre="${genre.name}"]`).length
+      );
+
+      if (allGenresSelected) {
+        masterAllGenres.checked = true;
+      }
+
+      // Set individual genres and subgenres
+      Object.entries(data).forEach(([genreName, genreData]) => {
+        const genreCheckbox = document.querySelector(`[data-genre="${genreName}"].genre-all-checkbox`);
+        if (genreCheckbox && genreData.all) {
+          genreCheckbox.checked = true;
+        }
+
+        genreData.subgenres?.forEach(subgenre => {
+          const subgenreCheckbox = document.querySelector(
+            `[data-genre="${genreName}"][data-subgenre="${subgenre}"]`);
+          if (subgenreCheckbox) {
+            subgenreCheckbox.checked = true;
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error initializing genres:', error);
+    }
+  }
+
+  // Master "All Genres" checkbox handler
+  masterAllGenres.addEventListener('change', function() {
+    const isChecked = this.checked;
+    genreAllCheckboxes.forEach(checkbox => checkbox.checked = isChecked);
+    subgenreCheckboxes.forEach(checkbox => checkbox.checked = isChecked);
+    updateGenresState();
+  });
+
+  // Genre "All [Genre]" checkbox handlers
+  genreAllCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const genre = this.dataset.genre;
+      const relatedSubgenres = document.querySelectorAll(`[data-genre="${genre}"].subgenre-checkbox`);
+      relatedSubgenres.forEach(sub => sub.checked = this.checked);
+      updateMasterCheckbox();
+      updateGenresState();
+    });
+  });
+
+  // Individual subgenre checkbox handlers
+  subgenreCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const genre = this.dataset.genre;
+      const genreCheckbox = document.querySelector(`[data-genre="${genre}"].genre-all-checkbox`);
+      const relatedSubgenres = document.querySelectorAll(`[data-genre="${genre}"].subgenre-checkbox`);
+
+      // Update genre "All" checkbox
+      genreCheckbox.checked = Array.from(relatedSubgenres).every(sub => sub.checked);
+
+      updateMasterCheckbox();
+      updateGenresState();
+    });
+  });
+
+  function updateMasterCheckbox() {
+    masterAllGenres.checked = Array.from(genreAllCheckboxes).every(checkbox => checkbox.checked);
+  }
+
+  function updateGenresState() {
+    const state = {};
+
+    genreAllCheckboxes.forEach(genreCheckbox => {
+      const genre = genreCheckbox.dataset.genre;
+      const subgenres = Array.from(document.querySelectorAll(`[data-genre="${genre}"].subgenre-checkbox`))
+        .filter(sub => sub.checked)
+        .map(sub => sub.dataset.subgenre);
+
+      state[genre] = {
+        all: genreCheckbox.checked,
+        subgenres: subgenres
+      };
+    });
+
+    sendGenresUpdate(state);
+  }
+
+  function sendGenresUpdate(state) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch(`/profile/${dashboardType}/save-genres`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrfToken
+        },
+        body: JSON.stringify({
+          genres: state,
+          dashboardType: dashboardType,
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.message || 'Failed to save genres');
+        showSuccessNotification(data.message);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showFailureNotification(error.message || 'An error occurred');
+      });
+  }
+
+  // Initialize with saved data if available
+  if (typeof profileGenres !== 'undefined') {
+    initializeGenres(profileGenres);
   }
 </script>
