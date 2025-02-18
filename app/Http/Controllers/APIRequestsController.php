@@ -508,17 +508,53 @@ class APIRequestsController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            $service = $request->input('service');
 
-            // Delete service user relationship
-            ServiceUser::where('user_id', $id)
-                ->where('serviceable_type', 'like', '%' . $dashboardType . '%')
-                ->delete();
+            switch ($dashboardType) {
+                case 'venue':
+                    $service = $user->venues()->first();
+                    $serviceType = 'App\Models\Venue';
+                    break;
+                case 'promoter':
+                    $service = $user->promoters()->first();
+                    $serviceType = 'App\Models\Promoter';
+                    break;
+                case 'artist':
+                    $service = $user->otherService('Artist')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+                case 'designer':
+                    $service = $user->otherService('Designer')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+                case 'photographer':
+                    $service = $user->otherService('Photographer')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+                case 'videographer':
+                    $service = $user->otherService('Videographer')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Successfully left service'
-            ]);
+            $serviceUser = ServiceUser::where('user_id', $id)
+                ->where('serviceable_type', $serviceType)
+                ->where('serviceable_id', $service->id)
+                ->first();
+
+            if ($serviceUser) {
+                // Delete the found service user relationship
+                $serviceUser->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Successfully left service'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service not found'
+                ], 404);
+            }
         } catch (\Exception $e) {
             \Log::error('Error leaving service:', [
                 'error' => $e->getMessage(),

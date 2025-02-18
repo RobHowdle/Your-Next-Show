@@ -255,9 +255,8 @@
           .then(response => response.json())
           .then(data => {
             if (data.success) {
-              showSuccessNotification('Successfully left company').then(() => {
-                window.location.href = '/dashboard';
-              });
+              showSuccessNotification('Successfully left company');
+              window.location.href = '/dashboard';
             } else {
               showFailureNotification(data.message || 'Failed to leave service');
             }
