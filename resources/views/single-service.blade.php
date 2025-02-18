@@ -69,11 +69,10 @@
       </div>
 
       <!-- Tabs Navigation -->
-      @include("components.{$singleService->services}-service-tabs")
-
+      @include('components.' . Str::lower($singleService->services) . '-service-tabs')
 
       <!-- Tab Contents -->
-      @include("components.{$singleService->services}-service-tab-content", [
+      @include('components.' . Str::lower($singleService->services) . '-service-tab-content', [
           'serviceData' => $serviceData,
       ])
 
