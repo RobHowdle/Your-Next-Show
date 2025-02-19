@@ -24,11 +24,6 @@
         <span class="fas fa-star mr-2"></span>
         Reviews
       </button>
-      <button data-tab="other"
-        class="tabLinks flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white">
-        <span class="fas fa-plus mr-2"></span>
-        Other
-      </button>
     </nav>
   </div>
 </div>
