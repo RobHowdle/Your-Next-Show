@@ -6,9 +6,10 @@
   <!-- Scrollable Content -->
   <div class="relative z-10">
     <!-- Hero/Search Section -->
-    <section class="flex h-screen items-center justify-center px-4 sm:px-6 lg:px-8">
+    <section
+      class="flex min-h-screen items-center justify-center px-4 pb-12 pt-32 sm:px-6 sm:pt-32 md:pt-40 lg:px-8 lg:pt-20">
       <div class="w-full max-w-4xl text-center">
-        <h1 class="font-heading text-4xl font-bold text-white md:text-6xl lg:text-7xl">
+        <h1 class="font-heading text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl">
           Your Next Show
           <span class="mt-2 block text-2xl font-normal text-yns_yellow md:text-3xl">
             Connecting Bands with Venues
@@ -44,7 +45,7 @@
 
 
         <!-- Features Grid -->
-        <div class="mt-16 grid gap-8 px-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-16 grid grid-cols-1 gap-8 px-4 md:grid-cols-2 lg:grid-cols-3">
           <div class="rounded-xl bg-black/30 p-6 backdrop-blur-sm">
             <span class="fas fa-map-marker-alt mb-4 text-3xl text-yns_yellow"></span>
             <h3 class="mb-2 font-heading text-xl font-bold text-white">Find Local Venues</h3>
@@ -55,7 +56,7 @@
             <h3 class="mb-2 font-heading text-xl font-bold text-white">Connect with Promoters</h3>
             <p class="text-gray-300">Link up with local promoters who share your musical interests</p>
           </div>
-          <div class="rounded-xl bg-black/30 p-6 backdrop-blur-sm sm:col-span-2 lg:col-span-1">
+          <div class="rounded-xl bg-black/30 p-6 backdrop-blur-sm md:col-span-2 lg:col-span-1">
             <span class="fas fa-calendar-alt mb-4 text-3xl text-yns_yellow"></span>
             <h3 class="mb-2 font-heading text-xl font-bold text-white">Manage Your Shows</h3>
             <p class="text-gray-300">Keep track of your gigs with our custom dashboard</p>
@@ -65,9 +66,9 @@
     </section>
 
     <!-- About Section -->
-    <section class="flex h-screen items-center justify-center bg-black/30 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+    <section class="flex min-h-screen items-center justify-center bg-black/30 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
       <div class="w-full max-w-7xl">
-        <div class="relative grid gap-12 lg:grid-cols-2">
+        <div class="relative grid lg:grid-cols-2 lg:gap-12">
           <!-- Text Content -->
           <div class="py-12">
             <h2 class="font-heading text-3xl font-bold text-white md:text-4xl">
@@ -115,7 +116,7 @@
           </div>
 
           <!-- Stats/Features -->
-          <div class="relative flex items-center">
+          <div class="relative mb-10 flex items-center lg:mb-0">
             <div class="grid gap-8 sm:grid-cols-2">
               <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">
                 <span class="text-3xl font-bold text-yns_yellow">200+</span>
