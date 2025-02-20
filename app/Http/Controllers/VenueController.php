@@ -258,6 +258,7 @@ class VenueController extends Controller
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
         $searchQuery = $request->input('search_query');
+        $town = null; // Initialize $town variable
 
         $bandTypes = [
             'original-bands',
@@ -280,11 +281,16 @@ class VenueController extends Controller
             });
         } else {
             // Search by town name only
+            $town = $searchQuery; // Set $town to the search query
             $query->where('postal_town', 'LIKE', "%$searchQuery%");
         }
 
-        // Get paginated results
-        $venues = $query->paginate(10);
+        $venues = $query->paginate(10)->appends([
+            'search_query' => $searchQuery,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            '_token' => $request->input('_token')
+        ]);
 
         $overallReviews = [];
 
