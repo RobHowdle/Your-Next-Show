@@ -31,7 +31,7 @@
             <!-- Venue Type Filter -->
             <div class="rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
               <h3 class="flex items-center justify-between font-heading text-lg font-bold text-white">
-                Venue Type
+                Band Type
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
               <div class="filter-content mt-4">
@@ -75,18 +75,16 @@
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
               <div class="filter-content mt-4">
-                <div class="max-h-[300px] overflow-y-auto pr-2 md:max-h-[120px] lg:max-h-[300px]">
-                  <div class="flex flex-col gap-3">
-                    <div class="min-h-0">
-                      <label class="mb-1 block text-sm text-gray-400">Minimum</label>
-                      <input type="number" id="min-capacity"
-                        class="w-full rounded border border-gray-700 bg-black/50 p-2 text-sm text-white" min="0">
-                    </div>
-                    <div class="min-h-0">
-                      <label class="mb-1 block text-sm text-gray-400">Maximum</label>
-                      <input type="number" id="max-capacity"
-                        class="w-full rounded border border-gray-700 bg-black/50 p-2 text-sm text-white" min="0">
-                    </div>
+                <div class="flex flex-col gap-3">
+                  <div class="min-h-0">
+                    <label class="mb-1 block text-sm text-gray-400">Minimum</label>
+                    <input type="number" id="min-capacity"
+                      class="w-full rounded border border-gray-700 bg-black/50 p-2 text-sm text-white" min="0">
+                  </div>
+                  <div class="min-h-0">
+                    <label class="mb-1 block text-sm text-gray-400">Maximum</label>
+                    <input type="number" id="max-capacity"
+                      class="w-full rounded border border-gray-700 bg-black/50 p-2 text-sm text-white" min="0">
                   </div>
                 </div>
               </div>
@@ -157,7 +155,13 @@
                   </a>
                 </td>
                 <td class="px-6 py-4 text-gray-300">
-                  {{ $venue['average_rating'] ?: 'Not rated' }}
+                  @if ($venue['average_rating'])
+                    <div class="rating-wrapper flex items-center">
+                      {!! $venue['rating_icons'] !!}
+                    </div>
+                  @else
+                    Not rated
+                  @endif
                 </td>
                 <td class="px-6 py-4 text-gray-300">
                   {{ $venue['postal_town'] ?: 'Location not specified' }}
@@ -184,7 +188,7 @@
         </table>
       </div>
 
-      <!-- Replace the mobile view section -->
+      <!-- Mobile View Section -->
       <div class="block divide-y divide-gray-800 md:hidden">
         @foreach ($venues as $venue)
           <div class="p-4">
@@ -214,9 +218,13 @@
                   <span class="text-sm text-gray-400">Rating</span>
                   <div class="mt-1 flex items-center">
                     <span class="fas fa-star text-yns_yellow"></span>
-                    <span class="ml-2 text-lg font-bold text-white">
-                      {{ $venue['average_rating'] ?: 'Not rated' }}
-                    </span>
+                    @if ($venue['average_rating'])
+                      <div class="rating-wrapper flex items-center">
+                        {!! $venue['rating_icons'] !!}
+                      </div>
+                    @else
+                      Not rated
+                    @endif
                   </div>
                 </div>
 
@@ -255,8 +263,8 @@
         @endforeach
       </div>
 
-      <div class="px-6 py-4">
-        {{ $venues->links() }}
+      <div class="px-6 py-4" id="pagination-container">
+        {{ $venues->links('components.pagination') }}
       </div>
 
       <div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto pt-36">
@@ -329,7 +337,7 @@
       }, 300);
     });
 
-    // Capacity Input Handlers
+    // Update capacity input handlers
     document.getElementById('min-capacity').addEventListener('input', function(e) {
       filters.minCapacity = e.target.value ? parseInt(e.target.value) : null;
       applyFilters();
@@ -340,12 +348,28 @@
       applyFilters();
     });
 
+    // Add event listeners for each filter type
+    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.bandTypes = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
+
+    document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.genres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
+
     // Sorting Handlers
     document.querySelectorAll('.sortable').forEach(header => {
       header.addEventListener('click', function() {
         const field = this.dataset.sort;
 
-        // Toggle sort direction
         if (currentSort.field === field) {
           currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
         } else {
@@ -353,19 +377,53 @@
           currentSort.direction = 'asc';
         }
 
-        // Update sort icons
         updateSortIcons(this);
         applyFilters();
       });
     });
 
+    // Filter toggle functionality
+    const filterToggle = document.getElementById('filter-toggle');
+    const filtersContainer = document.getElementById('filters-container');
+
+    filterToggle?.addEventListener('click', function() {
+      filtersContainer.classList.toggle('hidden');
+      const buttonText = this.querySelector('span');
+      buttonText.textContent = filtersContainer.classList.contains('hidden') ?
+        'Show Filters' :
+        'Hide Filters';
+    });
+
+    // Accordion functionality for mobile filters
+    const filterHeaders = document.querySelectorAll('.font-heading');
+
+    filterHeaders.forEach(header => {
+      header.addEventListener('click', function() {
+        if (window.innerWidth < 768) {
+          const content = this.nextElementSibling;
+          const icon = this.querySelector('.fas');
+          content.classList.toggle('hidden');
+          icon.classList.toggle('fa-chevron-down');
+          icon.classList.toggle('fa-chevron-up');
+        }
+      });
+    });
+
+    // Reset layout on screen resize
+    window.addEventListener('resize', function() {
+      if (window.innerWidth >= 768) {
+        filtersContainer.classList.remove('hidden');
+        document.querySelectorAll('.filter-content').forEach(content => {
+          content.classList.remove('hidden');
+        });
+      }
+    });
+
     function updateSortIcons(clickedHeader) {
-      // Reset all icons
       document.querySelectorAll('.sortable .fas').forEach(icon => {
         icon.className = 'fas fa-sort';
       });
 
-      // Update clicked header icon
       const icon = clickedHeader.querySelector('.fas');
       icon.className = `fas fa-sort-${currentSort.direction === 'asc' ? 'up' : 'down'}`;
     }
@@ -374,38 +432,82 @@
       const tbody = document.getElementById('resultsTableBody');
       const mobileView = document.querySelector('.block.md\\:hidden');
       const loadingHTML = `
-    <div class="px-6 py-4 text-center text-gray-400">
-      <span class="fas fa-spinner fa-spin mr-2"></span>
-      Loading...
-    </div>
-  `;
+        <div class="px-6 py-4 text-center text-gray-400">
+          <span class="fas fa-spinner fa-spin mr-2"></span>
+          Loading...
+        </div>
+      `;
 
       tbody.innerHTML = `<tr><td colspan="5">${loadingHTML}</td></tr>`;
       mobileView.innerHTML = loadingHTML;
+
+      const activeFilters = {
+        search: filters.search,
+        bandTypes: filters.bandTypes.length > 0 ? filters.bandTypes : null,
+        genres: filters.genres.length > 0 ? filters.genres : null,
+        minCapacity: filters.minCapacity,
+        maxCapacity: filters.maxCapacity
+      };
 
       $.ajax({
         url: '/venues/filter',
         method: 'POST',
         data: {
           _token: $('meta[name="csrf-token"]').attr('content'),
-          filters: filters,
+          filters: activeFilters,
           sort: currentSort
         },
         success: function(response) {
           updateResultsTable(response.results);
-          document.querySelector('.px-6.py-4').innerHTML = response.pagination;
-        }
+          document.getElementById('pagination-container').innerHTML = response.pagination;
+
+          attachPaginationHandlers();
+        },
         error: function(error) {
           console.error('Error applying filters:', error);
           const errorHTML = `
-    <div class="px-6 py-4 text-center text-red-400">
-      <span class="fas fa-exclamation-circle mr-2"></span>
-      An error occurred while loading venues. Please try again.
-    </div>
-  `;
+            <div class="px-6 py-4 text-center text-red-400">
+              <span class="fas fa-exclamation-circle mr-2"></span>
+              An error occurred while loading venues. Please try again.
+            </div>
+          `;
           tbody.innerHTML = `<tr><td colspan="5">${errorHTML}</td></tr>`;
           mobileView.innerHTML = errorHTML;
         }
+      });
+    }
+
+    function attachPaginationHandlers() {
+      document.querySelectorAll('#pagination-container a').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const url = new URL(this.href);
+          const page = url.searchParams.get('page');
+
+          $.ajax({
+            url: '/venues/filter',
+            method: 'POST',
+            data: {
+              _token: $('meta[name="csrf-token"]').attr('content'),
+              filters: filters,
+              sort: currentSort,
+              page: page
+            },
+            success: function(response) {
+              updateResultsTable(response.results);
+              document.getElementById('pagination-container').innerHTML = response.pagination;
+              attachPaginationHandlers();
+
+              // Scroll to top of results
+              document.querySelector('.mx-2.overflow-hidden').scrollIntoView({
+                behavior: 'smooth'
+              });
+            },
+            error: function(error) {
+              console.error('Error fetching page:', error);
+            }
+          });
+        });
       });
     }
 
@@ -416,7 +518,6 @@
       tbody.innerHTML = '';
       mobileView.innerHTML = '';
 
-
       if (venues.length === 0) {
         const noResults =
           `<div class="px-6 py-4 text-center text-gray-400">No venues found matching your criteria</div>`;
@@ -425,16 +526,15 @@
         mobileView.innerHTML = noResults;
         return;
       }
-    }
 
-    venues.forEach(venue => {
-      const row = document.createElement('tr');
-      row.className = 'hover:bg-black/20';
+      venues.forEach(venue => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-black/20';
 
-      const rating = venue.average_rating ? venue.average_rating : 'Not rated';
-      const capacity = venue.capacity ? venue.capacity : 'Not specified';
+        const rating = venue.average_rating ? venue.average_rating : 'Not rated';
+        const capacity = venue.capacity ? venue.capacity : 'Not specified';
 
-      const verifiedBadge = venue.is_verified ? `
+        const verifiedBadge = venue.is_verified ? `
           <span class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
             <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
               <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
@@ -442,7 +542,7 @@
             Verified
           </span>` : '';
 
-      row.innerHTML = `
+        row.innerHTML = `
           <td class="px-6 py-4">
             <a href="/venues/${venue.name.toLowerCase().replace(/\s+/g, '-')}" 
               class="font-medium text-white hover:text-yns_yellow">
@@ -474,77 +574,98 @@
           </td>
         `;
 
-      tbody.appendChild(row);
+        tbody.appendChild(row);
 
-      // Add mobile card
-      const mobileCard = document.createElement('div');
-      mobileCard.className = 'p-4';
-      mobileCard.innerHTML = `
-  <div class="relative rounded-lg bg-black/20 p-4 backdrop-blur-sm">
-    <div class="mb-4">
-      <a href="/venues/${venue.name.toLowerCase().replace(/\s+/g, '-')}" 
-        class="block font-heading text-xl font-bold text-white hover:text-yns_yellow">
-        ${venue.name}
-        ${verifiedBadge}
-      </a>
-    </div>
+        // Add mobile card
+        const mobileCard = document.createElement('div');
+        mobileCard.className = 'p-4';
+        mobileCard.innerHTML = `
+        <div class="relative rounded-lg bg-black/20 p-4 backdrop-blur-sm">
+          <div class="mb-4">
+            <a href="/venues/${venue.name.toLowerCase().replace(/\s+/g, '-')}" 
+              class="block font-heading text-xl font-bold text-white hover:text-yns_yellow">
+              ${venue.name}
+              ${verifiedBadge}
+            </a>
+          </div>
 
-    <div class="mb-4 grid grid-cols-2 gap-4">
-      <div class="rounded-lg bg-black/20 p-3">
-        <span class="text-sm text-gray-400">Rating</span>
-        <div class="mt-1 flex items-center">
-          <span class="fas fa-star text-yns_yellow"></span>
-          <span class="ml-2 text-lg font-bold text-white">${rating}</span>
+          <div class="mb-4 grid grid-cols-2 gap-4">
+            <div class="rounded-lg bg-black/20 p-3">
+              <span class="text-sm text-gray-400">Rating</span>
+              <div class="mt-1 flex items-center">
+                <span class="fas fa-star text-yns_yellow"></span>
+                <span class="ml-2 text-lg font-bold text-white">${rating}</span>
+              </div>
+            </div>
+
+            <div class="rounded-lg bg-black/20 p-3">
+              <span class="text-sm text-gray-400">Capacity</span>
+              <div class="mt-1 flex items-center">
+                <span class="fas fa-users text-yns_yellow"></span>
+                <span class="ml-2 text-lg font-bold text-white">${capacity}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4 flex items-center rounded-lg bg-black/20 p-3">
+            <span class="fas fa-map-marker-alt text-yns_yellow"></span>
+            <span class="ml-2 text-white">${venue.postal_town || 'Location not specified'}</span>
+          </div>
+
+          <button
+            onclick='showContactModal(${JSON.stringify({
+              name: venue.name,
+              preferred_contact: venue.preferred_contact,
+              contact_email: venue.contact_email,
+              contact_number: venue.contact_number,
+              platforms: venue.platforms
+            })})'
+            class="w-full rounded-lg bg-yns_yellow py-3 text-center font-medium text-black transition-all hover:bg-yellow-400">
+            <span class="fas fa-envelope mr-2"></span>
+            Contact Venue
+          </button>
         </div>
-      </div>
+      `;
+        mobileView.appendChild(mobileCard);
+      });
+    }
+  });
+  // Filter toggle functionality
+  const filterToggle = document.getElementById('filter-toggle');
+  const filtersContainer = document.getElementById('filters-container');
 
-      <div class="rounded-lg bg-black/20 p-3">
-        <span class="text-sm text-gray-400">Capacity</span>
-        <div class="mt-1 flex items-center">
-          <span class="fas fa-users text-yns_yellow"></span>
-          <span class="ml-2 text-lg font-bold text-white">${capacity}</span>
-        </div>
-      </div>
-    </div>
+  filterToggle?.addEventListener('click', function() {
+    filtersContainer.classList.toggle('hidden');
+    const buttonText = this.querySelector('span');
+    buttonText.textContent = filtersContainer.classList.contains('hidden') ?
+      'Show Filters' :
+      'Hide Filters';
+  });
 
-    <div class="mb-4 flex items-center rounded-lg bg-black/20 p-3">
-      <span class="fas fa-map-marker-alt text-yns_yellow"></span>
-      <span class="ml-2 text-white">${venue.postal_town || 'Location not specified'}</span>
-    </div>
+  // Accordion functionality for mobile filters
+  const filterHeaders = document.querySelectorAll('.font-heading');
 
-    <button
-      onclick='showContactModal(${JSON.stringify({
-        name: venue.name,
-        preferred_contact: venue.preferred_contact,
-        contact_email: venue.contact_email,
-        contact_number: venue.contact_number,
-        platforms: venue.platforms
-      })})'
-      class="w-full rounded-lg bg-yns_yellow py-3 text-center font-medium text-black transition-all hover:bg-yellow-400">
-      <span class="fas fa-envelope mr-2"></span>
-      Contact Venue
-    </button>
-  </div>
-`;
-      mobileView.appendChild(mobileCard);
-    });
-  }
+  filterHeaders.forEach(header => {
+    header.addEventListener('click', function() {
+      if (window.innerWidth < 768) { // Only on mobile
+        const content = this.nextElementSibling;
+        const icon = this.querySelector('.fas');
 
-  document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      filters.genres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
-        .map(cb => cb.value);
-      applyFilters();
+        content.classList.toggle('hidden');
+        icon.classList.toggle('fa-chevron-down');
+        icon.classList.toggle('fa-chevron-up');
+      }
     });
   });
 
-  document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      filters.bandTypes = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
-        .map(cb => cb.value);
-      applyFilters();
-    });
-  });
+  // Reset layout on screen resize
+  window.addEventListener('resize', function() {
+    if (window.innerWidth >= 768) {
+      filtersContainer.classList.remove('hidden');
+      document.querySelectorAll('.filter-content').forEach(content => {
+        content.classList.remove('hidden');
+      });
+    }
   });
 
   function showContactModal(venueData) {
@@ -554,8 +675,6 @@
     const otherContacts = document.getElementById('otherContacts');
 
     modalTitle.textContent = `Contact ${venueData.name}`;
-
-    // Clear previous content
     preferredContact.innerHTML = '';
     otherContacts.innerHTML = '';
 
@@ -607,9 +726,9 @@
       }
 
       return `<a href="${href}" target="_blank" class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
-    <span class="${iconClass}"></span>
-    ${type.charAt(0).toUpperCase() + type.slice(1)}
-  </a>`;
+        <span class="${iconClass}"></span>
+        ${type.charAt(0).toUpperCase() + type.slice(1)}
+      </a>`;
     };
 
     // Add preferred contact method first
@@ -661,45 +780,4 @@
   function closeContactModal() {
     document.getElementById('contactModal').classList.add('hidden');
   }
-
-  // Add this to your existing script section
-  document.addEventListener('DOMContentLoaded', function() {
-    // Filter toggle functionality
-    const filterToggle = document.getElementById('filter-toggle');
-    const filtersContainer = document.getElementById('filters-container');
-
-    filterToggle?.addEventListener('click', function() {
-      filtersContainer.classList.toggle('hidden');
-      const buttonText = this.querySelector('span');
-      buttonText.textContent = filtersContainer.classList.contains('hidden') ?
-        'Show Filters' :
-        'Hide Filters';
-    });
-
-    // Accordion functionality for mobile filters
-    const filterHeaders = document.querySelectorAll('.font-heading');
-
-    filterHeaders.forEach(header => {
-      header.addEventListener('click', function() {
-        if (window.innerWidth < 768) { // Only on mobile
-          const content = this.nextElementSibling;
-          const icon = this.querySelector('.fas');
-
-          content.classList.toggle('hidden');
-          icon.classList.toggle('fa-chevron-down');
-          icon.classList.toggle('fa-chevron-up');
-        }
-      });
-    });
-
-    // Reset layout on screen resize
-    window.addEventListener('resize', function() {
-      if (window.innerWidth >= 768) {
-        filtersContainer.classList.remove('hidden');
-        document.querySelectorAll('.filter-content').forEach(content => {
-          content.classList.remove('hidden');
-        });
-      }
-    });
-  });
 </script>
