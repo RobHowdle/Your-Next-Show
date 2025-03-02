@@ -242,7 +242,7 @@
             <!-- Reviews Tab -->
             <div id="reviews" class="tab-panel hidden">
               <div class="space-y-6">
-                @if ($promoter->recentReviews && $promoter->recentReviews > 0)
+                @if ($promoter->recentReviews && $promoter->recentReviews->count() > 0)
                   <p class="text-center">Want to know what we're like? Check out our reviews!</p>
 
                   <!-- Detailed Ratings -->

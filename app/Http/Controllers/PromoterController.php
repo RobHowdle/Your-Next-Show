@@ -126,9 +126,6 @@ class PromoterController extends Controller
         $platforms = SocialLinksHelper::processSocialLinks($promoter->contact_link);
         $promoter->platforms = $platforms;
 
-        // Add the processed data to the venue
-        $recentReviews = PromoterReview::getRecentReviews($promoterId);
-
         $overallScore = PromoterReview::calculateOverallScore($promoterId);
         $overallReviews[$promoterId] = $this->renderRatingIcons($overallScore);
 
@@ -170,15 +167,16 @@ class PromoterController extends Controller
             'recentReviews',
             'platforms',
             'upcomingEvents',
-        ))->with([
-            'venueWithHighestRating' => $suggestions['venue'],
-            'photographerWithHighestRating' => $suggestions['photographer'],
-            'videographerWithHighestRating' => $suggestions['videographer'],
-            'bandWithHighestRating' => $suggestions['artist'],
-            'designerWithHighestRating' => $suggestions['designer'],
-            'existingVenues' => $existingVenues,
-            'renderRatingIcons' => [$this, 'renderRatingIcons']
-        ]);
+        ))
+            ->with([
+                'venueWithHighestRating' => $suggestions['venue'],
+                'photographerWithHighestRating' => $suggestions['photographer'],
+                'videographerWithHighestRating' => $suggestions['videographer'],
+                'bandWithHighestRating' => $suggestions['artist'],
+                'designerWithHighestRating' => $suggestions['designer'],
+                'existingVenues' => $existingVenues,
+                'renderRatingIcons' => [$this, 'renderRatingIcons']
+            ]);
     }
 
     public function filter(Request $request)
