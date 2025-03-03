@@ -25,12 +25,11 @@ return [
         'Midday',
         'Twilight',
     ],
-    'People, Photography Contexts' => [
+    'Events' => [
         'Fashion and Modeling',
         'Family Portraits',
-        'Couple Portraits',
-        'Children’s Photography',
         'Corporate Headshots',
         'Actors/Models Headshots',
+        'Live Music',
     ],
 ];

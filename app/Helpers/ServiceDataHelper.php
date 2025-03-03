@@ -14,6 +14,9 @@ class ServiceDataHelper
     {
         $artist = $user->otherService("Artist")->first();
 
+        $serviceableId = $artist->id;
+        $serviceableType = 'App\Models\OtherService';
+
         $name = $artist ? $artist->name : '';
         $location = $artist ? $artist->location : '';
         $postalTown = $artist ? $artist->postal_town : '';
@@ -115,7 +118,9 @@ class ServiceDataHelper
             'streamLinks' => $streamLinks,
             'streamPlatformsToCheck' => $streamPlatformsToCheck,
             'members' => $members,
-            'preferred_contact' => $preferredContact
+            'preferred_contact' => $preferredContact,
+            'serviceableId' => $serviceableId,
+            'serviceableType' => $serviceableType,
         ];
     }
 
@@ -318,7 +323,6 @@ class ServiceDataHelper
         }
 
         $groupedEnvironmentTypes = config('environment_types');
-
         $environmentTypes = json_decode($photographer->environment_type, true);
         $groupedData = [];
 

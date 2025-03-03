@@ -10,13 +10,16 @@ class DesignStylesAndMediums extends Component
 {
     public $styles;
     public $print;
+    public $environments;
+
     /**
      * Create a new component instance.
      */
-    public function __construct($styles = null, $print = null)
+    public function __construct($styles = null, $print = null, $environments = null)
     {
         $this->styles = $styles;
         $this->print = $print;
+        $this->environments = $environments;
     }
 
     /**
