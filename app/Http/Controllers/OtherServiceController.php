@@ -64,6 +64,24 @@ class OtherServiceController extends Controller
      */
     public function index(Request $request)
     {
+        $bandTypes = [
+            'original-bands',
+            'cover-bands',
+            'tribute-bands',
+            'all'
+        ];
+
+        $genresPath = file_get_contents(public_path('text/genre_list.json'));
+        $data = json_decode($genresPath, true);
+        $genres = $data['genres'];
+
+        $genres = $genres['genres'] ?? $genres;
+
+        // Convert to simple array if needed
+        if (isset($genres[0]['name'])) {
+            $genres = array_column($genres, 'name');
+        }
+
         $searchQuery = $request->input('search_query');
 
         // Retrieve all services with their counts
@@ -112,15 +130,7 @@ class OtherServiceController extends Controller
             $genres = array_column($genres, 'name');
         }
 
-        $photographyCondions = config('photography-options.conditions');
-        $photographyLocations = config('photography-options.locations');
-        $photographyTimes = config('photography-options.times');
-
-        $photographyFilters = [
-            'conditions' => $photographyCondions,
-            'locations' => $photographyLocations,
-            'times' => $photographyTimes,
-        ];
+        $photographyEnvironments = config('environment_types');
 
         $locations = OtherService::whereIn('other_service_id', $otherServiceIds)
             ->whereNotNull('postal_town')
@@ -136,10 +146,10 @@ class OtherServiceController extends Controller
             ->through(function ($service) use ($serviceName) {
                 // Get the appropriate review model based on service type
                 $reviewScore = match ($serviceName) {
-                    'Artist' => BandReviews::calculateOverallScore($service->id),
-                    'Photography' => PhotographyReviews::calculateOverallScore($service->id),
-                    'Videography' => VideographyReviews::calculateOverallScore($service->id),
-                    'Designer' => DesignerReviews::calculateOverallScore($service->id),
+                    'artist' => BandReviews::calculateOverallScore($service->id),
+                    'photography' => PhotographyReviews::calculateOverallScore($service->id),
+                    'videography' => VideographyReviews::calculateOverallScore($service->id),
+                    'designer' => DesignerReviews::calculateOverallScore($service->id),
                     default => 0
                 };
 
@@ -155,6 +165,7 @@ class OtherServiceController extends Controller
                     'preferred_contact' => $service->preferred_contact,
                     'platforms' => SocialLinksHelper::processSocialLinks($service->contact_link),
                     'average_rating' => $reviewScore,
+                    'rating_icons' => $this->renderRatingIcons($reviewScore),
                     'service_type' => $serviceName,
                     'genres' => json_decode($service->genre ?? '{}', true)
                 ];
@@ -170,7 +181,7 @@ class OtherServiceController extends Controller
             'singleServices' => $singleServices,
             'genres' => $genres,
             'bandTypes' => $bandTypes,
-            'photographyFilters' => $photographyFilters,
+            'photographyEnvironments' => $photographyEnvironments,
             'locations' => $locations,
             'overallReviews' => $overallReviews,
             'serviceName' => $serviceName
@@ -195,7 +206,8 @@ class OtherServiceController extends Controller
             default => []
         };
 
-        $reviewCount = match ($singleService->services) {
+        // Calculate review score based on service type
+        $reviewScore = match ($singleService->services) {
             'Artist' => BandReviews::calculateOverallScore($singleService->id),
             'Photography' => PhotographyReviews::calculateOverallScore($singleService->id),
             'Videography' => VideographyReviews::calculateOverallScore($singleService->id),
@@ -204,16 +216,15 @@ class OtherServiceController extends Controller
         };
 
         $overallReviews = [];
-        $overallScore = OtherServicesReview::calculateOverallScore($singleService->id);
-        $overallReviews[$singleService->id] = $this->renderRatingIcons($overallScore);
+        $overallReviews[$singleService->id] = $this->renderRatingIcons($reviewScore);
 
         return view('single-service', [
             'singleService' => $singleService,
             'genres' => $genres,
             'overallReviews' => $overallReviews,
-            'reviewCount' => $reviewCount,
+            'reviewCount' => $reviewScore,
             'serviceData' => $serviceData,
-            'genreNames' => $serviceData['genreNames'] ?? [], // Add this line
+            'genreNames' => $serviceData['genreNames'] ?? [],
         ]);
     }
 
@@ -271,6 +282,22 @@ class OtherServiceController extends Controller
             }
         }
 
+        if ($selectedEnvironments = $request->input('filters.environments')) {
+            if (!empty($selectedEnvironments)) {
+                $query->where(function ($q) use ($selectedEnvironments) {
+                    foreach ($selectedEnvironments as $category => $environments) {
+                        foreach ($environments as $environment) {
+                            // Check both types and settings arrays in the JSON
+                            $q->orWhere(function ($subQ) use ($environment) {
+                                $subQ->whereJsonContains('environment_type->types', $environment)
+                                    ->orWhereJsonContains('environment_type->settings', $environment);
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
         // Execute query and log results
         $services = $query->get();
 
@@ -302,6 +329,8 @@ class OtherServiceController extends Controller
                 'preferred_contact' => $service->preferred_contact,
                 'platforms' => SocialLinksHelper::processSocialLinks($service->contact_link),
                 'average_rating' => $serviceReview,
+                'rating_icons' => $this->renderRatingIcons($serviceReview)
+
             ];
         });
 

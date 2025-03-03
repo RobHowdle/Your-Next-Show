@@ -15,17 +15,17 @@
       Types</label>
   </div>
   <div class="flex items-center">
-    <input id="original" name="original" type="checkbox" value="original"
+    <input id="original" name="original" type="checkbox" value="original-bands"
       class="filter-checkbox band-type-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" />
     <label for="original" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Original</label>
   </div>
   <div class="flex items-center">
-    <input id="cover" name="cover" type="checkbox" value="cover"
+    <input id="cover" name="cover" type="checkbox" value="cover-bands"
       class="filter-checkbox band-type-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" />
     <label for="cover" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Covers</label>
   </div>
   <div class="flex items-center">
-    <input id="tribute" name="tribute" type="checkbox" value="tribute"
+    <input id="tribute" name="tribute" type="checkbox" value="tribute-bands"
       class="filter-checkbox band-type-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" />
     <label for="tribute" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Tributes</label>
   </div>

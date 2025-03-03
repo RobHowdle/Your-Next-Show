@@ -17,6 +17,14 @@
                 break;
         }
       @endphp
+
+      @props([
+          'styles' => null,
+          'print' => null,
+          'environments' => null,
+          'dashboardType',
+          'user',
+      ])
       <!-- Hero Section -->
       <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">
         <h1 class="mb-4 mt-8 text-center font-heading text-4xl font-bold text-white md:text-5xl lg:text-6xl">
@@ -64,6 +72,26 @@
                   </label>
                 @endforeach
               </div>
+            </div>
+
+            <!-- Conditions Filter -->
+            <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
+              <h3 class="font-heading text-lg font-semibold text-white">Environment Types</h3>
+              @foreach ($photographyEnvironments as $category => $environments)
+                <div class="mt-4">
+                  <h4 class="mb-2 text-sm font-bold text-gray-400">{{ $category }}</h4>
+                  <div class="grid grid-cols-2 gap-2">
+                    @foreach ($environments as $environment)
+                      <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="photography_filters[{{ $category }}][]"
+                          value="{{ $environment }}"
+                          class="environment-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
+                        <span class="text-sm text-gray-300">{{ $environment }}</span>
+                      </label>
+                    @endforeach
+                  </div>
+                </div>
+              @endforeach
             </div>
           @elseif($serviceName === 'artist')
             <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
@@ -164,7 +192,13 @@
                     </a>
                   </td>
                   <td class="px-6 py-4 text-gray-300">
-                    {{ $service['average_rating'] ?: 'Not rated' }}
+                    @if ($service['average_rating'])
+                      <div class="rating-wrapper flex items-center">
+                        {!! $service['rating_icons'] !!}
+                      </div>
+                    @else
+                      Not rated
+                    @endif
                   </td>
                   <td class="px-6 py-4 text-gray-300">
                     {{ $service['postal_town'] ?: 'Location not specified' }}
@@ -245,6 +279,7 @@
       search: '',
       genres: [],
       locations: [],
+      environments: {},
       serviceSpecific: {}
     };
 
@@ -328,11 +363,21 @@
     function getServiceSpecificFilters() {
       switch (serviceType.toLowerCase()) {
         case 'photographer':
+          const environmentFilters = {};
+          document.querySelectorAll('input[name^="photography_filters"]').forEach(checkbox => {
+            if (checkbox.checked) {
+              const category = checkbox.name.match(/\[(.*?)\]/)[1];
+              if (!environmentFilters[category]) {
+                environmentFilters[category] = [];
+              }
+              environmentFilters[category].push(checkbox.value);
+            }
+          });
+
           return {
             genres: getCheckedValues('genres[]'),
-              conditions: getCheckedValues('photography_filters[Conditions][]'),
-              locations: getCheckedValues('photography_filters[Locations][]'),
-              times: getCheckedValues('photography_filters[Times][]')
+              environments: environmentFilters,
+              locations: getCheckedValues('locations[]')
           };
         case 'artist':
           return {
@@ -437,14 +482,23 @@
       const verifiedBadge = service.is_verified ? generateVerifiedBadge() : '';
 
       return `
-            <td class="px-6 py-4">
-                <a href="/services/${serviceType}/${service.name.toLowerCase().replace(/\s+/g, '-')}" 
-                   class="font-medium text-white hover:text-yns_yellow">
-                    ${service.name}
-                    ${verifiedBadge}
-                </a>
-            </td>
-            <td class="px-6 py-4 text-gray-300">${rating}</td>
+          <td class="px-6 py-4">
+              <a href="/services/${serviceType}/${service.name.toLowerCase().replace(/\s+/g, '-')}" 
+                class="font-medium text-white hover:text-yns_yellow">
+                  ${service.name}
+                  ${verifiedBadge}
+              </a>
+          </td>
+          <td class="px-6 py-4 text-gray-300">
+              <div class="flex items-center">
+                  ${service.rating_icons ? 
+                      `<div class="rating-wrapper flex items-center">
+                          ${service.rating_icons}
+                      </div>` : 
+                      'Not rated'
+                  }
+              </div>
+          </td>
             <td class="px-6 py-4 text-gray-300">${service.postal_town || 'Location not specified'}</td>
             <td class="px-6 py-4">
                 <button onclick='showContactModal(${JSON.stringify({
@@ -470,6 +524,14 @@
             </span>
         `;
     }
+
+    document.querySelectorAll('.environment-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.environments = Array.from(document.querySelectorAll('.environment-checkbox:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
   });
 
   // Contact Modal Functions

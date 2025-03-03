@@ -83,6 +83,7 @@ class VenueController extends Controller
         $venues = Venue::orderBy('name')
             ->paginate(10)
             ->through(function ($venue) {
+                $overallScore = VenueReview::calculateOverallScore($venue->id);
                 return [
                     'id' => $venue->id,
                     'name' => $venue->name,
@@ -91,11 +92,11 @@ class VenueController extends Controller
                     'contact_email' => $venue->contact_email,
                     'location' => $venue->location,
                     'capacity' => $venue->capacity,
-
                     'is_verified' => $venue->is_verified,
                     'preferred_contact' => $venue->preferred_contact,
                     'platforms' => SocialLinksHelper::processSocialLinks($venue->contact_link),
-                    'average_rating' => VenueReview::calculateOverallScore($venue->id)
+                    'average_rating' => $overallScore,
+                    'rating_icons' => $this->renderRatingIcons($overallScore)
                 ];
             });
 
@@ -175,9 +176,27 @@ class VenueController extends Controller
 
     public function filter(Request $request)
     {
-        $query = Venue::query();
+        $query = Venue::query()->with(['review']);
 
-        // Apply search filter with detailed logging
+        $filters = $request->input('filters', []);
+
+        if (!empty($filters['bandTypes'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['bandTypes'] as $type) {
+                    $q->orWhereJsonContains('band_type', $type);
+                }
+            });
+        }
+
+        if (!empty($filters['genres'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['genres'] as $genre) {
+                    $q->orWhere('genre', 'LIKE', '%"' . $genre . '"%');
+                }
+            });
+        }
+
+        // Apply search filter
         if ($search = $request->input('filters.search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -189,57 +208,36 @@ class VenueController extends Controller
         if ($minCapacity = $request->input('filters.minCapacity')) {
             $query->where('capacity', '>=', $minCapacity);
         }
+
         if ($maxCapacity = $request->input('filters.maxCapacity')) {
             $query->where('capacity', '<=', $maxCapacity);
         }
 
-        // Apply band type filters
-        if ($bandTypes = $request->input('filters.bandTypes')) {
-            if (!empty($bandTypes)) {
-                $query->where(function ($q) use ($bandTypes) {
-                    foreach ($bandTypes as $type) {
-                        if ($type !== 'all') {
-                            $q->orWhereJsonContains('band_type', $type);
-                        }
-                    }
-                });
+        // Apply sorting
+        if ($sort = $request->input('sort')) {
+            $field = $sort['field'] ?? 'name';
+            $direction = $sort['direction'] ?? 'asc';
+
+            switch ($field) {
+                case 'rating':
+                    $query->orderBy('average_rating', $direction);
+                    break;
+                case 'capacity':
+                    $query->orderBy('capacity', $direction);
+                    break;
+                case 'location':
+                    $query->orderBy('postal_town', $direction);
+                    break;
+                default:
+                    $query->orderBy('name', $direction);
             }
         }
 
-        // Apply genre filters
-        if ($selectedGenres = $request->input('filters.genres')) {
-            if (!empty($selectedGenres)) {
-                $query->where(function ($q) use ($selectedGenres) {
-                    foreach ($selectedGenres as $genre) {
-                        $q->orWhereJsonContains('genre', $genre);
-                    }
-                });
-            }
-        }
-
-        // Execute query and log results
-        $venues = $query->get();
-
-        // Map results
-        $venues = $venues->map(function ($venue) {
-            return [
-                'id' => $venue->id,
-                'name' => $venue->name,
-                'postal_town' => $venue->postal_town,
-                'contact_number' => $venue->contact_number,
-                'contact_email' => $venue->contact_email,
-                'location' => $venue->location,
-                'capacity' => $venue->capacity,
-
-                'is_verified' => $venue->is_verified,
-                'preferred_contact' => $venue->preferred_contact,
-                'platforms' => SocialLinksHelper::processSocialLinks($venue->contact_link),
-                'average_rating' => VenueReview::calculateOverallScore($venue->id),
-            ];
-        });
+        $venues = $query->paginate(10);
 
         return response()->json([
-            'results' => $venues
+            'results' => $venues->items(),
+            'pagination' => view('components.pagination', ['paginator' => $venues])->render()
         ]);
     }
 
@@ -258,6 +256,7 @@ class VenueController extends Controller
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
         $searchQuery = $request->input('search_query');
+        $town = null; // Initialize $town variable
 
         $bandTypes = [
             'original-bands',
@@ -280,11 +279,16 @@ class VenueController extends Controller
             });
         } else {
             // Search by town name only
+            $town = $searchQuery; // Set $town to the search query
             $query->where('postal_town', 'LIKE', "%$searchQuery%");
         }
 
-        // Get paginated results
-        $venues = $query->paginate(10);
+        $venues = $query->paginate(10)->appends([
+            'search_query' => $searchQuery,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            '_token' => $request->input('_token')
+        ]);
 
         $overallReviews = [];
 
