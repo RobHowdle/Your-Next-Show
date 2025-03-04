@@ -5,7 +5,7 @@
 @endphp
 <x-design-styles-and-mediums :styles="$styles" :print="$print" :dashboardType="$dashboardType"
   :user="$user"></x-design-styles-and-mediums>
-<x-working-times :workingTimes="$workingTimes" :dashboardType="$dashboardType" :user="$user"></x-working-times>
+{{-- <x-working-times :workingTimes="$workingTimes" :dashboardType="$dashboardType" :user="$user"></x-working-times> --}}
 
 <script>
   jQuery(document).ready(function() {
