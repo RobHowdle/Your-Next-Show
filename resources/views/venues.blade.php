@@ -267,31 +267,33 @@
         {{ $venues->links('components.pagination') }}
       </div>
 
-      <div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto pt-36">
-        <div class="flex min-h-screen items-end justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
-          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div class="absolute inset-0 bg-gray-900 opacity-75"></div>
-          </div>
+      {{-- Contact Modal --}}
+      <div id="contactModal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+          {{-- Background overlay --}}
+          <div class="fixed inset-0 bg-black bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+          {{-- Modal panel --}}
           <div
-            class="inline-block transform overflow-hidden rounded-lg bg-yns_dark_blue text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
-            <div class="bg-yns_dark_blue px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-black text-left shadow-xl transition-all">
+            <div class="bg-black px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
               <div class="sm:flex sm:items-start">
                 <div class="mt-3 w-full text-center sm:ml-4 sm:mt-0 sm:text-left">
-                  <h3 class="mb-4 text-2xl font-bold leading-6 text-white" id="modalTitle"></h3>
+                  <h3 class="mb-4 font-heading text-2xl font-bold text-white" id="modalTitle"></h3>
                   <div class="mt-4 space-y-4">
-                    <div id="preferredContact" class="rounded-lg border border-yns_yellow bg-yns_yellow/10 p-4">
-                      <!-- Preferred contact will be inserted here -->
+                    <div id="preferredContact" class="rounded-lg border border-yns_yellow bg-black/40 p-4">
+                      {{-- Preferred contact will be inserted here --}}
                     </div>
                     <div id="otherContacts" class="mt-4 space-y-2">
-                      <!-- Other contact methods will be inserted here -->
+                      {{-- Other contact methods will be inserted here --}}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="bg-yns_dark_blue/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <div class="bg-black/40 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               <button type="button" onclick="closeContactModal()"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:mt-0 sm:w-auto">
+                class="inline-flex w-full justify-center rounded-lg border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white transition duration-150 ease-in-out hover:bg-gray-900 sm:ml-3 sm:w-auto">
                 Close
               </button>
             </div>
@@ -678,70 +680,17 @@
     preferredContact.innerHTML = '';
     otherContacts.innerHTML = '';
 
-    // Helper function to create contact link
-    const createContactLink = (type, value, icon) => {
-      let href = '';
-      let iconClass = '';
-
-      switch (type) {
-        case 'email':
-          href = `mailto:${value}`;
-          iconClass = 'fas fa-envelope';
-          break;
-        case 'phone':
-          href = `tel:${value}`;
-          iconClass = 'fas fa-phone';
-          break;
-        case 'facebook':
-          href = value;
-          iconClass = 'fab fa-facebook';
-          break;
-        case 'twitter':
-          href = value;
-          iconClass = 'fab fa-twitter';
-          break;
-        case 'instagram':
-          href = value;
-          iconClass = 'fab fa-instagram';
-          break;
-        case 'tiktok':
-          href = value;
-          iconClass = 'fab fa-tiktok';
-          break;
-        case 'youtube':
-          href = value;
-          iconClass = 'fab fa-youtube';
-          break;
-        case 'spotify':
-          href = value;
-          iconClass = 'fab fa-spotify';
-          break;
-        case 'website':
-          href = value;
-          iconClass = 'fas fa-globe';
-          break;
-        default:
-          href = value;
-          iconClass = 'fas fa-link';
-      }
-
-      return `<a href="${href}" target="_blank" class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
-        <span class="${iconClass}"></span>
-        ${type.charAt(0).toUpperCase() + type.slice(1)}
-      </a>`;
-    };
-
-    // Add preferred contact method first
+    // Create preferred contact section
     if (venueData.preferred_contact) {
-      let preferred;
-      if (venueData.preferred_contact === 'email') {
-        preferred = createContactLink('email', venueData.contact_email, 'envelope');
-      } else if (venueData.preferred_contact === 'phone') {
-        preferred = createContactLink('phone', venueData.contact_number, 'phone');
-      } else {
+      let preferred = '';
+      if (venueData.preferred_contact === 'email' && venueData.contact_email) {
+        preferred = createContactLink('email', venueData.contact_email);
+      } else if (venueData.preferred_contact === 'phone' && venueData.contact_number) {
+        preferred = createContactLink('phone', venueData.contact_number);
+      } else if (venueData.platforms) {
         const platform = venueData.platforms.find(p => p.platform === venueData.preferred_contact);
         if (platform) {
-          preferred = createContactLink(platform.platform, platform.url, platform.platform);
+          preferred = createContactLink(platform.platform, platform.url);
         }
       }
 
@@ -753,28 +702,71 @@
       }
     }
 
-    // Add other contact methods
-    let otherContactsHTML =
-      '<h4 class="mb-2 font-bold text-white">Other Contact Methods</h4><div class="grid gap-2">';
+    // Create other contacts section
+    let otherContactsHTML = '<h4 class="mb-2 font-bold text-white">Other Contact Methods</h4><div class="grid gap-2">';
 
+    // Add email if not preferred
     if (venueData.contact_email && venueData.preferred_contact !== 'email') {
-      otherContactsHTML += createContactLink('email', venueData.contact_email, 'envelope');
+      otherContactsHTML += createContactLink('email', venueData.contact_email);
     }
 
+    // Add phone if not preferred
     if (venueData.contact_number && venueData.preferred_contact !== 'phone') {
-      otherContactsHTML += createContactLink('phone', venueData.contact_number, 'phone');
+      otherContactsHTML += createContactLink('phone', venueData.contact_number);
     }
 
-    venueData.platforms.forEach(platform => {
-      if (platform.platform !== venueData.preferred_contact) {
-        otherContactsHTML += createContactLink(platform.platform, platform.url, platform.platform);
-      }
-    });
+    // Add platforms if not preferred
+    if (venueData.platforms) {
+      venueData.platforms.forEach(platform => {
+        if (platform.platform !== venueData.preferred_contact) {
+          otherContactsHTML += createContactLink(platform.platform, platform.url);
+        }
+      });
+    }
 
     otherContactsHTML += '</div>';
     otherContacts.innerHTML = otherContactsHTML;
 
     modal.classList.remove('hidden');
+  }
+
+  function createContactLink(type, value) {
+    let href = '';
+    let iconClass = '';
+
+    switch (type) {
+      case 'email':
+        href = `mailto:${value}`;
+        iconClass = 'fas fa-envelope';
+        break;
+      case 'phone':
+        href = `tel:${value}`;
+        iconClass = 'fas fa-phone';
+        break;
+      case 'facebook':
+        href = value;
+        iconClass = 'fab fa-facebook';
+        break;
+      case 'twitter':
+        href = value;
+        iconClass = 'fab fa-twitter';
+        break;
+      case 'instagram':
+        href = value;
+        iconClass = 'fab fa-instagram';
+        break;
+      default:
+        href = value;
+        iconClass = 'fas fa-link';
+    }
+
+    return `
+    <a href="${href}" target="_blank" 
+       class="flex items-center gap-2 rounded-lg bg-black/40 px-4 py-2 text-white transition-colors hover:bg-black/60">
+      <span class="${iconClass}"></span>
+      ${type.charAt(0).toUpperCase() + type.slice(1)}
+    </a>
+  `;
   }
 
   function closeContactModal() {

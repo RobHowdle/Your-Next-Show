@@ -30,6 +30,15 @@
                   </span>
                 </div>
               </div>
+              <div class="mt-4 flex items-center">
+                <span class="fas fa-bullhorn mr-2"></span>
+                @forelse($event->promoters as $promoter)
+                  <a class="transition duration-150 ease-in-out hover:text-yns_yellow"
+                    href="{{ route('promoters', $promoter->id) }}">{{ $promoter->name }}</a>
+                @empty
+                  No Promoter Assigned
+                @endforelse
+              </div>
             </div>
 
             @if (!$isPastEvent)
@@ -42,11 +51,15 @@
                     <span class="text-sm">({{ formatCurrency($event->on_the_door_ticket_price) }} on the door)</span>
                   </a>
                 @endif
-                <button id="addToCalendarButton"
-                  class="inline-flex items-center gap-2 rounded-lg border border-gray-600 bg-black/30 px-6 py-3 font-medium text-white backdrop-blur-sm transition-all hover:bg-black/50">
-                  <span class="fas fa-calendar-plus"></span>
-                  Add to Calendar
-                </button>
+                @auth
+                  @if (auth()->user()->apple_calendar_sync == 1 || auth()->user()->google_access_token != null)
+                    <button id="addToCalendarButton"
+                      class="group inline-flex items-center gap-2 rounded-lg border border-gray-600 bg-black/30 px-6 py-3 font-medium text-white backdrop-blur-sm transition-all hover:border-yns_yellow hover:bg-yns_yellow hover:text-black">
+                      <span class="fas fa-calendar-plus transition-transform group-hover:scale-110"></span>
+                      Add to Calendar
+                    </button>
+                  @endif
+                @endauth
               </div>
             @endif
           </div>
@@ -63,7 +76,7 @@
       </div>
 
       <!-- Event Content -->
-      <div class="grid gap-8 lg:grid-cols-3">
+      <div class="grid gap-8 pb-8 lg:grid-cols-3">
         <!-- Line Up Section -->
         <div class="lg:col-span-2">
           <div class="rounded-xl border border-gray-800 bg-yns_dark_blue/50 p-6 backdrop-blur-sm">
@@ -126,36 +139,49 @@
         </div>
 
         <!-- Venue & Details Section -->
-        <div class="space-y-8">
+        <div class="flex h-full flex-col gap-8">
           <div class="rounded-xl border border-gray-800 bg-yns_dark_blue/50 p-6 backdrop-blur-sm">
             <h2 class="mb-6 font-heading text-2xl font-bold text-white">Venue</h2>
-            @forelse($event->venues as $venue)
-              <div class="space-y-4">
-                <h3 class="text-lg font-medium text-white"><a href="{{ route('venue', ['slug' => $venue->name]) }}"
-                    class="transition duration-150 ease-in-out hover:text-yns_yellow">{{ $venue->name }}</a></h3>
-                <div class="flex items-start gap-3 text-gray-300">
-                  <span class="fas fa-map-marker-alt mt-1"></span>
-                  <div>
-                    <p>{{ $venue->location }}</p>
-                    <p class="mt-2">
-                      <a href="https://maps.google.com/?q={{ urlencode($venue->location) }}" target="_blank"
-                        class="inline-flex items-center gap-2 text-sm text-yns_yellow hover:underline">
-                        <span class="fas fa-directions"></span>
-                        Get Directions
-                      </a>
-                    </p>
+            <div
+              class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500 overflow-y-auto pr-2">
+              @forelse($event->venues as $venue)
+                <div class="space-y-4">
+                  <h3 class="text-lg font-medium text-white"><a href="{{ route('venue', ['slug' => $venue->name]) }}"
+                      class="transition duration-150 ease-in-out hover:text-yns_yellow">{{ $venue->name }}</a></h3>
+                  <div class="flex items-start gap-3 text-gray-300">
+                    <span class="fas fa-map-marker-alt mt-1"></span>
+                    <div class="space-y-2">
+                      <p>{{ $venue->location }}</p>
+                      <div class="flex flex-wrap gap-2">
+                        <a href="https://maps.google.com/?q={{ urlencode($venue->location) }}" target="_blank"
+                          class="inline-flex items-center gap-2 text-sm text-yns_yellow hover:underline">
+                          <span class="fas fa-directions"></span>
+                          Get Directions
+                        </a>
+                        @if ($venue->w3w)
+                          <a href="https://what3words.com/{{ $venue->w3w }}" target="_blank"
+                            class="inline-flex items-center gap-2 text-sm text-yns_yellow hover:underline">
+                            <span class="fas fa-map-marker"></span>
+                            what3words
+                          </a>
+                        @endif
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            @empty
-              <p class="text-gray-400">Venue to be announced</p>
-            @endforelse
+              @empty
+                <p class="text-gray-400">Venue to be announced</p>
+              @endforelse
+            </div>
           </div>
 
           @if ($event->event_description)
             <div class="rounded-xl border border-gray-800 bg-yns_dark_blue/50 p-6 backdrop-blur-sm">
               <h2 class="mb-6 font-heading text-2xl font-bold text-white">About</h2>
-              <p class="text-gray-300">{{ $event->event_description }}</p>
+              <div
+                class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-500 max-h-[170px] overflow-y-auto pr-2">
+                <p class="text-gray-300">{{ $event->event_description }}</p>
+              </div>
             </div>
           @endif
         </div>
@@ -164,30 +190,43 @@
   </div>
 
   <!-- Modal for poster -->
-  <div id="posterModal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-sm transition-opacity duration-300">
-    <div class="flex min-h-screen items-center justify-center p-4">
-      <div class="relative max-h-[90vh] max-w-4xl">
-        <button onclick="closeModal()"
-          class="absolute -right-4 -top-4 rounded-full bg-black p-2 text-white hover:bg-gray-900">
-          <span class="fas fa-times"></span>
-        </button>
-        <img src="{{ asset($event->poster_url) }}" alt="{{ $event->event_name }}"
-          class="h-auto max-h-[85vh] w-auto rounded-lg">
-      </div>
+  <div id="posterModal"
+    class="fixed inset-0 z-50 -mt-72 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300"
+    style="display: none;">
+    <div class="relative mx-auto flex items-center justify-center">
+      <button onclick="closeModal()"
+        class="absolute -right-2 -top-2 z-10 rounded-full bg-black p-2 text-white transition-colors hover:bg-gray-900">
+        <span class="fas fa-times"></span>
+      </button>
+      <img src="{{ asset($event->poster_url) }}" alt="{{ $event->event_name }}"
+        class="max-h-[70vh] w-auto rounded-lg object-contain" id="modalImage">
     </div>
   </div>
-
-  <script>
-    function openModal() {
-      const modal = document.getElementById('posterModal');
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('posterModal');
-      modal.classList.add('hidden');
-      document.body.style.overflow = 'auto';
-    }
-  </script>
 </x-guest-layout>
+<script>
+  function openModal() {
+    const modal = document.getElementById('posterModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('posterModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+
+  // Close modal when clicking outside the image
+  document.getElementById('posterModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+
+  // Close modal on escape key press
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('posterModal').style.display === 'flex') {
+      closeModal();
+    }
+  });
+</script>

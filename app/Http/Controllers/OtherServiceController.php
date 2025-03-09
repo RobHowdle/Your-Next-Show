@@ -450,6 +450,7 @@ class OtherServiceController extends Controller
         $service->platforms = $platforms;
         $environmentTypes = $service ? json_decode($service->environment_type, true) : [];
         $types = $environmentTypes ? $environmentTypes['types'] : [];
+        $styles = $service ? json_decode($service->styles, true) : [];
         $settings = $environmentTypes ? $environmentTypes['settings'] : [];
         $workingTimes = $service ? json_decode($service->working_times, true) : [];
 
@@ -472,6 +473,8 @@ class OtherServiceController extends Controller
             'portfolioLink' => $portfolioLink,
             'environmentTypes' => $environmentTypes,
             'types' => $types,
+            'styles' => $styles,
+            'workingTimes' => $workingTimes,
             'settings' => $settings,
             'workingTimes' => $workingTimes,
             'overallScore' => $overallScore,
