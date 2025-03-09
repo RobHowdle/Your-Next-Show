@@ -598,6 +598,11 @@ class EventController extends Controller
             $openerId = null;
             $bands = [];
 
+            // Load and decode genres JSON
+            $genreList = file_get_contents(public_path('text/genre_list.json'));
+            $data = json_decode($genreList, true) ?? [];
+            $genres = collect($data['genres'] ?? [])->pluck('name')->toArray();
+
             foreach ($bandRoles as $band) {
                 switch ($band['role']) {
                     case 'Headliner':
@@ -684,6 +689,7 @@ class EventController extends Controller
                     'hasPoster' => $hasPoster,
                     'promoterData' => $promoterData,
                     'role' => $role,
+                    'genres' => $genres
                 ]
             );
         } catch (\Exception $e) {
@@ -694,7 +700,6 @@ class EventController extends Controller
 
     public function updateEvent($dashboardType, StoreUpdateEventRequest $request, $eventId)
     {
-
         $existingEvent = Event::find($eventId);
         $changes = CompareHelper::showEventChanges($existingEvent, $request->all());
 
@@ -734,9 +739,6 @@ class EventController extends Controller
                 $bandsArray[] = ['role' => 'Opener', 'band_id' => $validatedData['opener_id']];
             }
 
-            // \Log::info('Bands array:', $bandsArray);
-
-
             // Poster Upload
             $posterUrl = $event->poster_url;
             if ($request->hasFile('poster_url')) {
@@ -774,11 +776,9 @@ class EventController extends Controller
                 'facebook_event_url' => $validatedData['facebook_event_url'],
                 'ticket_url' => $validatedData['ticket_url'],
                 'on_the_door_ticket_price' => $validatedData['on_the_door_ticket_price'],
-                'band_ids' => json_encode($bandsArray)
+                'band_ids' => json_encode($bandsArray),
+                'genre' => json_encode($validatedData['genres'] ?? [])
             ];
-
-            // \Log::info('Update data:', $updateData);
-
 
             // Update the event
             $event->update($updateData);
@@ -855,9 +855,40 @@ class EventController extends Controller
         ], 404);
     }
 
-    public function getPublicEvents()
+    public function getPublicEvents(Request $request)
     {
-        //
+        // Load and decode genres JSON
+        $genreList = file_get_contents(public_path('text/genre_list.json'));
+        $data = json_decode($genreList, true) ?? [];
+
+        // Extract genre names from the structure
+        $genres = collect($data['genres'] ?? [])->pluck('name')->toArray();
+
+        // Get events query
+        $events = Event::query()
+            ->with('venues', 'bands', 'promoters', 'services')
+            ->where('event_date', '>=', now())
+            ->orderBy('event_date', 'asc');
+
+        // Apply filters
+        if ($request->filled('genre')) {
+            $events->where('genre', $request->genre);
+        }
+
+        if ($request->filled('type')) {
+            $events->where('band_type', $request->band_type);
+        }
+
+        if ($request->filled('location')) {
+            $events->whereHas('venue', function ($q) use ($request) {
+                $q->where('city', 'like', '%' . $request->location . '%')
+                    ->orWhere('postcode', 'like', '%' . $request->location . '%');
+            });
+        }
+
+        $events = $events->paginate(12)->withQueryString();
+
+        return view('events', compact('events', 'genres'));
     }
 
     public function getSinglePublicEvent($eventId)
@@ -908,5 +939,26 @@ class EventController extends Controller
             'eventStartTime' => $eventStartTime,
             'eventEndTime' => $eventEndTime,
         ]);
+    }
+
+    public function filter(Request $request)
+    {
+        $events = Event::query()
+            ->with(['venues'])
+            ->when($request->filled('genre'), function ($query) use ($request) {
+                $query->whereJsonContains('genre', $request->genre);
+            })
+            ->when($request->filled('band_type') && $request->band_type !== 'all', function ($query) use ($request) {
+                $query->where('band_type', $request->band_type);
+            })
+            ->when($request->filled('location'), function ($query) use ($request) {
+                $query->whereHas('venues', function ($q) use ($request) {
+                    $q->where('location', 'like', '%' . $request->location . '%');
+                });
+            })
+            ->orderBy('event_date')
+            ->paginate(9);
+
+        return view('partials.event-grid', compact('events'))->render();
     }
 }

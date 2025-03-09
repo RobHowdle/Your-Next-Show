@@ -77,15 +77,15 @@
     ])
 
     @if (isset($header))
-      <header class="bg-white shadow dark:bg-gray-800">
+      <header class="bg-yns_dark_blue">
         <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           {{ $header }}
         </div>
       </header>
     @endif
 
-    <div class="{{ request()->routeIs('profile.*') ? '' : 'px-2' }} flex min-h-screen flex-col">
-      <div class="flex-grow backdrop-brightness-50">
+    <div class="flex min-h-screen flex-col">
+      <div class="{{ request()->routeIs('profile.*') ? '' : 'px-2' }} flex-grow backdrop-brightness-50">
         {{ $slot }}
       </div>
       <x-notes></x-notes>

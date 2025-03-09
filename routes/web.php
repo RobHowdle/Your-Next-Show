@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobsController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TodoController;
@@ -14,11 +15,11 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GigGuideController;
 use App\Http\Controllers\PromoterController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\LinkedUserController;
 use App\Http\Controllers\What3WordsController;
 use App\Http\Controllers\APIRequestsController;
 use App\Http\Controllers\BandJourneyController;
+use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\OtherServiceController;
 use App\Http\Controllers\VenueJourneyController;
 use App\Http\Controllers\DesignerJourneyController;
@@ -38,9 +39,7 @@ use App\Http\Controllers\VideographerJourneyController;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+Route::get('/', [HomeController::class, 'index'])->name('welcome');
 
 Route::get('/venues', [VenueController::class, 'index'])->name('venues');
 Route::post('/venues/filter', [VenueController::class, 'filter'])->name('venues.filter');
@@ -70,6 +69,7 @@ Route::view('/credits', 'credits');
 Route::view('/contact', 'contact');
 
 Route::get('/events', [EventController::class, 'getPublicEvents'])->name('public-events');
+Route::get('/events/filter', [EventController::class, 'filter'])->name('events.filter');
 Route::get('/events/{eventId}', [EventController::class, 'getSinglePublicEvent'])->name('public-event');
 
 

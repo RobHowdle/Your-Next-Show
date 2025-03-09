@@ -3,200 +3,234 @@
     <x-sub-nav :userId="$userId" />
   </x-slot>
 
-  <div class="mx-auto w-full max-w-screen-2xl py-16">
-    <div class="relative mb-8 shadow-md sm:rounded-lg">
-      <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
-        <div class="header px-8 pt-8">
-          <h1 class="mb-8 font-heading text-4xl font-bold">Editing Event #{{ $event->id }}</h1>
-        </div>
-        <form id="eventForm" method="POST" enctype="multipart/form-data" data-dashboard-type="{{ $dashboardType }}">
-          @csrf
-          @method('PUT')
-          <div class="grid grid-cols-3 gap-x-8 px-8 py-8">
-            <div class="col">
-              <input type="hidden" id="dashboard_type" value="{{ $dashboardType }}">
-              <div class="group mb-4">
-                <x-input-label-dark :required="true">Event Name</x-input-label-dark>
-                <x-text-input id="event_name" name="event_name" :required="true" :value="old('event_name', $event->event_name)"></x-text-input>
-                @error('event_name')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-              <div class="group mb-4">
-                <x-input-label-dark :required="true">Event Date</x-input-label-dark>
-                <x-date-input id="event_date" name="event_date"
-                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
-                  :required="true" value="{{ old('event_date', $eventDate) }}"></x-date-input>
-                @error('event_date')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
+  {{-- Main Container with Background --}}
+  <div class="relative min-h-screen">
 
-              <div class="group mb-4">
-                <x-input-label-dark :required="true">Event Start Time</x-input-label-dark>
-                <x-time-input id="event_start_time" name="event_start_time"
-                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
-                  :required="true" value="{{ old('event_start_time', $event->event_start_time) }}"></x-time-input>
-                @error('event_start_time')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
+    <div class="relative mx-auto w-full max-w-screen-2xl py-8">
+      <div class="px-4">
+        {{-- Header Section --}}
+        <div class="relative mb-8">
+          {{-- Background with overlay --}}
+          <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-gray-900 via-black to-gray-900 opacity-75"></div>
 
-              <div class="group mb-4">
-                <x-input-label-dark>Event End Time</x-input-label-dark>
-                <x-time-input id="event_end_time" name="event_end_time"
-                  class="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
-                  value="{{ old('event_end_time', $event->event_end_time) }}"></x-time-input>
-                @error('event_end_time')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4">
-                <x-input-label-dark>Promoter</x-input-label-dark>
-                <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
-                  :value="old(
-                      'promoter_name',
-                      $promoters->isNotEmpty() ? $promoters->pluck('name')->join(', ') : '',
-                  )"></x-text-input>
-                <ul id="promoter-suggestions"
-                  class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
-                </ul>
-                <x-input-label-dark>Promoter ID</x-input-label-dark>
-                <x-text-input id="promoter_ids" name="promoter_ids" :value="old('promoter_id', $promoters->isNotEmpty() ? $promoters->pluck('id')->join(', ') : '')"></x-text-input>
-                <ul id="promoter-suggestions"
-                  class="absolute z-10 mt-1 hidden rounded-md border border-gray-300 bg-white shadow-lg">
-                </ul>
-                @error('promoter_name')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4">
-                <x-input-label-dark :required="true">Description</x-input-label-dark>
-                <x-textarea-input id="event_description" name="event_description" class="w-full" :required="true"
-                  :value="old('event_description', $event->event_description)">{{ $event->event_description }}</x-textarea-input>
-                @error('event_description')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-
-              <div class="group mb-4">
-                <x-input-label-dark>Facebook Event Link</x-input-label-dark>
-                <x-text-input id="facebook_event_url" name="facebook_event_url" :value="old('facebook_event_url', $event->facebook_event_url)"></x-text-input>
-                @error('facebook_event_url')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-              <div class="group mb-4">
-                <x-input-label-dark>Pre Sale Ticket Link</x-input-label-dark>
-                <x-text-input id="ticket_url" name="ticket_url" :value="old('ticket_url', $event->ticket_url)"></x-text-input>
-                @error('ticket_url')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-              <div class="group mb-4">
-                <x-input-label-dark>Door Ticket Price</x-input-label-dark>
-                <x-number-input-pound id="on_the_door_ticket_price" name="on_the_door_ticket_price"
-                  :value="old('on_the_door_ticket_price', $event->on_the_door_ticket_price ?? '')" />
-                @error('on_the_door_ticket_price')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
+          {{-- Content --}}
+          <div class="relative px-4 py-6 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-7xl">
+              <h1 class="font-heading text-3xl font-bold text-white md:text-4xl">
+                Editing Event <span class="text-yns_yellow">#{{ $event->id }}</span>
+              </h1>
+              <p class="mt-2 text-gray-400">Update your event details and configuration</p>
             </div>
-            <div class="col">
-              <div class="group">
-                <x-input-label-dark>Event Poster</x-input-label-dark>
-                <x-input-file id="poster_url" name="poster_url" accept="image/*" :value="old('poster_url', $event->poster_url)"></x-input-file>
-                @if ($event->poster_url)
-                  <div class="mt-4">
-                    <img src="{{ asset($event->poster_url) }}" alt="Current Event Poster" class="h-auto w-400">
-                  </div>
-                @endif
-                @error('poster_url')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-            </div>
-            <div class="col">
-              <div class="group mb-4">
-                <x-input-label-dark :required="true">Venue</x-input-label-dark>
-                <x-text-input id="venue_name" name="venue_name" autocomplete="off" :required="true"
-                  :value="old('venue_name', optional($event->venues->first())->name ?? '')"></x-text-input>
-                <ul id="venue-suggestions"
-                  class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white">
-                </ul>
-                <x-input-label-dark :required="true">Venue ID</x-input-label-dark>
-                <x-text-input id="venue_id" name="venue_id" :value="old('venue_id', optional($event->venues->first())->id ?? '')" :required="true"></x-text-input>
-                @error('venue_name')
-                  <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                @enderror
-              </div>
-              <div class="group" id="band-rows-container">
-                <!-- Headline Band -->
-                <div class="group mb-4">
-                  <x-input-label-dark :required="true">Headline Band</x-input-label-dark>
-                  <x-text-input id="headliner-search" name="headliner" autocomplete="off" :required="true"
-                    :value="old('headliner', optional($headliner)->name ?? '')"></x-text-input>
-                  <ul id="headliner-suggestions"
-                    class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-input-label-dark :required="true">Headliner Band ID</x-input-label-dark>
-                  <x-text-input id="headliner_id" name="headliner_id" :value="old('headliner_id', optional($headliner)->id ?? '')"
-                    :required="true"></x-text-input>
-                  @error('headliner')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-
-                <!-- Main Support -->
-                <div class="group mb-4">
-                  <x-input-label-dark>Main Support</x-input-label-dark>
-                  <x-text-input id="main-support-search" name="main_support" autocomplete="off"
-                    :value="old('main_support', optional($mainSupport)->name ?? '')"></x-text-input>
-                  <ul id="main-support-suggestions"
-                    class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-input-label-dark>Main Support Band ID</x-input-label-dark>
-                  <x-text-input id="main_support_id" name="main_support_id" :value="old('main_support_id', optional($mainSupport)->id ?? '')"></x-text-input>
-                  @error('mainSupport')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-
-                <!-- Bands (Comma-Separated Input) -->
-                <div class="group mb-4" id="bandsContainer">
-                  <x-input-label-dark>Bands</x-input-label-dark>
-                  <x-text-input id="bands-search" name="bands" class="band-input" autocomplete="off"
-                    placeholder="Type band name and press Enter, separated by commas"
-                    :value="collect($bandObjects)->pluck('name')->join(', ')"></x-text-input>
-                  <ul id="bands-suggestions"
-                    class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-input-label-dark>Bands IDs</x-input-label-dark>
-                  <x-text-input id="bands_ids" name="bands_ids" :value="collect($bandObjects)->pluck('id')->join(',')" />
-                  @error('bands')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-
-                <!-- Opening Band -->
-                <div class="group mb-4">
-                  <x-input-label-dark>Opening Band</x-input-label-dark>
-                  <x-text-input id="opener-search" name="opener" autocomplete="off"
-                    :value="old('opener', optional($opener)->name ?? '')"></x-text-input>
-                  <ul id="opener-suggestions"
-                    class="max-h-60 absolute z-10 hidden overflow-auto border border-gray-300 bg-white"></ul>
-                  <x-input-label-dark>Opening Band ID</x-input-label-dark>
-                  <x-text-input id="opener_id" name="opener_id" :value="old('opener_id', optional($opener)->id ?? '')"></x-text-input>
-                  @error('opener')
-                    <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-                  @enderror
-                </div>
-              </div>
-            </div>
-
-            <button type="submit"
-              class="mt-7 rounded-lg border border-white bg-white px-4 py-2 font-heading text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
           </div>
-        </form>
+        </div>
+
+        {{-- Main Form Container --}}
+        <div class="rounded-xl border border-gray-800 bg-gray-900/60 backdrop-blur-md backdrop-saturate-150">
+          <form id="eventForm" method="POST" enctype="multipart/form-data" data-dashboard-type="{{ $dashboardType }}">
+            @csrf
+            @method('PUT')
+            <input type="hidden" id="dashboard_type" value="{{ $dashboardType }}">
+
+            <div class="grid gap-8 p-6 lg:grid-cols-2 lg:p-8">
+              {{-- Left Column: Core Event Information --}}
+              <div class="space-y-6">
+                {{-- Basic Event Details --}}
+                <div class="rounded-lg border border-gray-800 bg-black/50 p-6">
+                  <h2 class="mb-6 font-heading text-xl font-bold text-white">Event Information</h2>
+                  <div class="space-y-6">
+                    {{-- Event Name --}}
+                    <div>
+                      <x-input-label-dark :required="true">Event Name</x-input-label-dark>
+                      <x-text-input id="event_name" name="event_name" :required="true" :value="old('event_name', $event->event_name)"
+                        class="mt-1 block w-full"></x-text-input>
+                    </div>
+
+                    {{-- Date and Time Section --}}
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <div class="col-span-2">
+                        <x-input-label-dark :required="true">Event Date</x-input-label-dark>
+                        <x-date-input id="event_date" name="event_date" :required="true"
+                          value="{{ old('event_date', $eventDate) }}" class="mt-1 block w-full"></x-date-input>
+                      </div>
+                      <div>
+                        <x-input-label-dark :required="true">Start Time</x-input-label-dark>
+                        <x-time-input id="event_start_time" name="event_start_time" :required="true"
+                          value="{{ old('event_start_time', $event->event_start_time) }}"
+                          class="mt-1 block w-full"></x-time-input>
+                      </div>
+                      <div>
+                        <x-input-label-dark>End Time</x-input-label-dark>
+                        <x-time-input id="event_end_time" name="event_end_time"
+                          value="{{ old('event_end_time', $event->event_end_time) }}"
+                          class="mt-1 block w-full"></x-time-input>
+                      </div>
+                      <div class="col-span-2">
+                        <x-input-label-dark :required="true">Event Genres</x-input-label-dark>
+                        <div class="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                          @foreach ($genres as $genre)
+                            <label class="flex items-center space-x-2">
+                              <input type="checkbox" name="genres[]" value="{{ $genre }}"
+                                @if (in_array($genre, old('genres', $event->genres ?? []))) checked @endif
+                                class="rounded border-gray-700 bg-gray-800 text-yns_yellow focus:ring-yns_yellow">
+                              <span class="text-sm text-white">{{ $genre }}</span>
+                            </label>
+                          @endforeach
+                        </div>
+                      </div>
+                    </div>
+
+                    {{-- Description --}}
+                    <div>
+                      <x-input-label-dark :required="true">Description</x-input-label-dark>
+                      <x-textarea-input id="event_description" name="event_description" :required="true"
+                        class="mt-1 block w-full"
+                        rows="4">{{ old('event_description', $event->event_description) }}</x-textarea-input>
+                    </div>
+                  </div>
+                </div>
+
+                {{-- Venue Section --}}
+                <div class="rounded-lg border border-gray-800 bg-black/50 p-6">
+                  <h2 class="mb-6 font-heading text-xl font-bold text-white">Venue Details</h2>
+                  <div>
+                    <x-input-label-dark :required="true">Venue Name</x-input-label-dark>
+                    <x-text-input id="venue_name" name="venue_name" autocomplete="off" :required="true"
+                      :value="old('venue_name', optional($event->venues->first())->name ?? '')" class="mt-1 block w-full"></x-text-input>
+                    <ul id="venue-suggestions"
+                      class="absolute z-10 mt-1 hidden w-full rounded-lg border border-gray-700 bg-gray-800"></ul>
+                    <x-text-input id="venue_id" name="venue_id" :required="true" :value="old('venue_id', optional($event->venues->first())->id ?? '')"
+                      class="hidden"></x-text-input>
+                  </div>
+                </div>
+
+                {{-- Pricing & Links --}}
+                <div class="rounded-lg border border-gray-800 bg-black/50 p-6">
+                  <h2 class="mb-6 font-heading text-xl font-bold text-white">Tickets & Links</h2>
+                  <div class="space-y-6">
+                    <div>
+                      <x-input-label-dark>Door Price (£)</x-input-label-dark>
+                      <x-number-input-pound id="on_the_door_ticket_price" name="on_the_door_ticket_price"
+                        :value="old('on_the_door_ticket_price', $event->on_the_door_ticket_price ?? '')" class="mt-1 block w-full" />
+                    </div>
+                    <div>
+                      <x-input-label-dark>Pre-sale Link</x-input-label-dark>
+                      <x-text-input id="ticket_url" name="ticket_url" type="url" :value="old('ticket_url', $event->ticket_url)"
+                        placeholder="https://" class="mt-1 block w-full"></x-text-input>
+                    </div>
+                    <div>
+                      <x-input-label-dark>Facebook Event</x-input-label-dark>
+                      <x-text-input id="facebook_event_url" name="facebook_event_url" type="url" :value="old('facebook_event_url', $event->facebook_event_url)"
+                        placeholder="https://facebook.com/events/" class="mt-1 block w-full"></x-text-input>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {{-- Right Column: Media and Lineup --}}
+              <div class="space-y-6">
+                {{-- Event Poster --}}
+                <div class="rounded-lg border border-gray-800 bg-black/50 p-6">
+                  <h2 class="mb-6 font-heading text-xl font-bold text-white">Event Poster <span
+                      class="text-yns_red">*</span>
+                  </h2>
+                  <div class="space-y-4">
+                    @if ($event->poster_url)
+                      <img src="{{ url($event->poster_url) }}" alt="Current Event Poster"
+                        class="mb-4 h-auto w-full rounded-lg border border-gray-800 object-cover">
+                    @endif
+                    <x-input-file id="poster_url" name="poster_url" accept="image/*" class="mt-1 block w-full"
+                      :value="old('poster_url', $event->poster_url)"></x-input-file>
+                  </div>
+                </div>
+
+                {{-- Promoter Section --}}
+                <div class="rounded-lg border border-gray-800 bg-black/50 p-6">
+                  <h2 class="mb-6 font-heading text-xl font-bold text-white">Event Promoter</h2>
+                  <div class="space-y-4">
+                    <div>
+                      <x-input-label-dark>Promoter Name</x-input-label-dark>
+                      <x-text-input id="promoter_name" name="promoter_name" autocomplete="off" :value="old(
+                          'promoter_name',
+                          $promoters->isNotEmpty() ? $promoters->pluck('name')->join(', ') : '',
+                      )"
+                        placeholder="Type promoter name and press Enter" class="mt-1 block w-full"></x-text-input>
+                      <ul id="promoter-suggestions"
+                        class="absolute z-10 mt-1 hidden w-full rounded-lg border border-gray-700 bg-gray-800"></ul>
+                      <x-text-input id="promoter_ids" name="promoter_ids" :value="old(
+                          'promoter_ids',
+                          $promoters->isNotEmpty() ? $promoters->pluck('id')->join(',') : '',
+                      )"
+                        class="hidden"></x-text-input>
+                    </div>
+                  </div>
+                </div>
+
+                {{-- Event Lineup --}}
+                <div class="rounded-lg border border-gray-800 bg-black/50 p-6">
+                  <h2 class="mb-6 font-heading text-xl font-bold text-white">Event Lineup</h2>
+                  <div class="space-y-6">
+                    {{-- Headliner --}}
+                    <div>
+                      <x-input-label-dark :required="true">Headliner</x-input-label-dark>
+                      <x-text-input id="headliner-search" name="headliner" autocomplete="off" :required="true"
+                        :value="old('headliner', optional($headliner)->name ?? '')" class="mt-1 block w-full"></x-text-input>
+                      <ul id="headliner-suggestions"
+                        class="absolute z-10 mt-1 hidden w-full rounded-lg border border-gray-700 bg-gray-800"></ul>
+                      <x-text-input id="headliner_id" name="headliner_id" :required="true" :value="old('headliner_id', optional($headliner)->id ?? '')"
+                        class="hidden"></x-text-input>
+                    </div>
+
+                    {{-- Support Acts --}}
+                    <div class="grid gap-6 sm:grid-cols-2">
+                      <div>
+                        <x-input-label-dark>Main Support</x-input-label-dark>
+                        <x-text-input id="main-support-search" name="main_support" autocomplete="off"
+                          :value="old('main_support', optional($mainSupport)->name ?? '')" class="mt-1 block w-full"></x-text-input>
+                        <ul id="main-support-suggestions"
+                          class="absolute z-10 mt-1 hidden w-full rounded-lg border border-gray-700 bg-gray-800"></ul>
+                        <x-text-input id="main_support_id" name="main_support_id" :value="old('main_support_id', optional($mainSupport)->id ?? '')"
+                          class="hidden"></x-text-input>
+                      </div>
+
+                      {{-- Additional Bands --}}
+                      <div>
+                        <x-input-label-dark>Additional Support Acts</x-input-label-dark>
+                        <x-text-input id="bands-search" name="bands" class="band-input" autocomplete="off"
+                          placeholder="Type band name and press Enter" :value="collect($bandObjects)->pluck('name')->join(', ')"
+                          class="mt-1 block w-full"></x-text-input>
+                        <ul id="bands-suggestions"
+                          class="absolute z-10 mt-1 hidden w-full rounded-lg border border-gray-700 bg-gray-800"></ul>
+                        <x-text-input id="bands_ids" name="bands_ids" :value="collect($bandObjects)->pluck('id')->join(',')"
+                          class="hidden"></x-text-input>
+                      </div>
+                    </div>
+
+                    {{-- Opening Act --}}
+                    <div>
+                      <x-input-label-dark>Opening Act</x-input-label-dark>
+                      <x-text-input id="opener-search" name="opener" autocomplete="off" :value="old('opener', optional($opener)->name ?? '')"
+                        class="mt-1 block w-full"></x-text-input>
+                      <ul id="opener-suggestions"
+                        class="absolute z-10 mt-1 hidden w-full rounded-lg border border-gray-700 bg-gray-800"></ul>
+                      <x-text-input id="opener_id" name="opener_id" :value="old('opener_id', optional($opener)->id ?? '')" class="hidden"></x-text-input>
+                    </div>
+                  </div>
+                </div>
+
+                {{-- Save Button --}}
+                <div class="flex justify-end pt-4">
+                  <button type="submit"
+                    class="inline-flex items-center rounded-lg bg-yns_yellow px-6 py-3 font-heading text-sm font-semibold text-black transition duration-150 ease-in-out hover:bg-yns_yellow/90">
+                    <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -267,8 +301,6 @@
       const bandIds = $('#bands_ids').val().split(',').filter(id => id.trim());
       const promoterIds = $('#promoter_ids').val().split(',').filter(id => id.trim());
 
-      console.log('Promoter IDs before submit:', promoterIds); // Debug log
-
       const formData = new FormData(this); // Get form data
       formData.delete('bands_ids');
       bandIds.forEach(id => {
@@ -277,11 +309,6 @@
       promoterIds.forEach(id => {
         formData.append('promoter_ids[]', id);
       });
-
-      // Debug log FormData
-      for (var pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
-      }
 
       $.ajax({
         url: "{{ route('admin.dashboard.update-event', ['dashboardType' => ':dashboardType', 'id' => ':id']) }}"
@@ -515,7 +542,6 @@
         suggestionsList.classList.add('hidden');
       }
     });
-
 
     const headlinerSearchInput = $('#headliner-search');
     const mainSupportSearchInput = $('#main-support-search');

@@ -1,15 +1,19 @@
 <x-guest-layout>
-  <div class="min-h-screen pt-32">
+  <div class="min-h-screen pt-16 md:pt-24 lg:pt-28 xl:pt-32">
     <div class="mx-auto max-w-screen-2xl px-4 py-12 sm:px-6 lg:px-8">
       <!-- Hero Section with existing background -->
-      <div class="relative mb-16 overflow-hidden rounded-2xl bg-yns_dark_blue p-8 shadow-2xl">
+      <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue p-4 shadow-2xl xl:mb-16 xl:p-8">
         <div class="relative z-10">
-          <h1 class="mb-4 font-heading text-5xl font-bold text-white sm:text-6xl lg:text-7xl">Andy's Gig Guide</h1>
+          <h1
+            class="mb-4 text-center font-heading text-3xl font-bold text-white md:text-left md:text-4xl lg:text-5xl xl:text-7xl">
+            Andy's Gig Guide</h1>
           <div class="max-w-3xl space-y-4">
-            <p class="text-lg text-gray-300">Back in the day, Andy C Jennings would create a Gig Guide on his Facebook
+            <p class="text-center text-base text-gray-300 md:text-left md:text-lg">Back in the day, Andy C Jennings would
+              create a Gig Guide on his Facebook
               page,
               helping promote local music across the country.</p>
-            <p class="text-sm text-gray-400">We've dedicated this digital version to Andy, bringing his legacy into the
+            <p class="text-center text-sm text-gray-400 md:text-left">We've dedicated this digital version to Andy,
+              bringing his legacy into the
               modern age.</p>
           </div>
         </div>
@@ -31,7 +35,7 @@
               </select>
             </div>
             <div id="locationStatus"
-              class="animate-fade-in hidden rounded-full bg-gradient-to-r from-green-600 to-green-500 px-4 py-2 text-sm text-white shadow-lg">
+              class="animate-fade-in hidden w-full rounded-full bg-gradient-to-r from-green-600 to-green-500 px-4 py-2 text-sm text-white shadow-lg sm:w-auto">
               <div class="flex items-center gap-2">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -56,7 +60,7 @@
       <!-- Enhanced Results Section -->
       <div class="overflow-hidden rounded-xl border border-gray-800 bg-yns_dark_blue/50 backdrop-blur-sm">
         <table class="w-full border-collapse text-left">
-          <thead>
+          <thead class="hidden md:table-header-group">
             <tr class="border-b border-gray-800 bg-yns_dark_blue/50">
               <th class="px-6 py-4 text-sm font-medium text-gray-400">DATE & TIME</th>
               <th class="px-6 py-4 text-sm font-medium text-gray-400">EVENT</th>
@@ -95,30 +99,41 @@
     const loadingElement = document.getElementById('loading');
     const tableBody = document.getElementById('gigsTableBody');
     const distanceSelect = document.getElementById('distance');
+    const isProfile = false;
 
     // Check for profile location
     const userLocation = @json($userLocation);
 
-    function updateLocationStatus() {
+    function updateLocationStatus(isProfile) {
       const statusElement = document.getElementById('locationStatus');
       if (userLatitude && userLongitude) {
+        const locationText = isProfile ? 'Using Profile Location' : 'Using Device Location';
+        statusElement.querySelector('div').innerHTML = `
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          </svg>
+          ${locationText}
+        `;
         statusElement.classList.remove('hidden');
         statusElement.classList.add('animate-fade-in');
       }
     }
 
     async function initializeLocation() {
-      if (userLocation) {
+      if (userLocation && userLocation.latitude && userLocation.longitude) {
         userLatitude = userLocation.latitude;
         userLongitude = userLocation.longitude;
-        updateLocationStatus();
+        // Pass true to indicate profile location is being used
+        updateLocationStatus(true);
         await fetchGigs(distanceSelect.value);
       } else {
         try {
           const position = await getCurrentPosition();
           userLatitude = position.coords.latitude;
           userLongitude = position.coords.longitude;
-          updateLocationStatus();
+          // Pass false to indicate device location is being used
+          updateLocationStatus(false);
           await fetchGigs(distanceSelect.value);
         } catch (error) {
           console.error('Geolocation error:', error);
@@ -196,25 +211,29 @@
       }
 
       tableBody.innerHTML = events.map(event => `
-        <tr class="border-gray-700 odd:bg-black even:bg-gray-900">
-          <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-            ${formatDate(event.date, event.start_time)}
-          </td>
-          <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-            <a href="/events/${event.id}" target="_blank" class="hover:text-yns_yellow">
-              ${escapeHtml(event.name)}<br>
-              <span class="text-sm text-gray-400">${escapeHtml(event.headliner || '')}</span>
-            </a>
-          </td>
-          <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-            ${escapeHtml(event.venue_name)}<br>
-            <span class="text-sm text-gray-400">${escapeHtml(event.venue_town)}</span>
-          </td>
-          <td class="whitespace-nowrap px-2 py-2 font-sans text-white md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
-            ${event.distance} miles
-          </td>
-        </tr>
-      `).join('');
+    <tr class="block border-gray-700 md:table-row">
+      <td class="block px-4 pt-4 font-sans text-white md:table-cell md:whitespace-nowrap md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+        <span class="text-xs text-gray-400 md:hidden">DATE & TIME:</span>
+        ${formatDate(event.date, event.start_time)}
+      </td>
+      <td class="block px-4 pt-2 font-sans text-white md:table-cell md:whitespace-nowrap md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+        <span class="text-xs text-gray-400 md:hidden">EVENT:</span>
+        <a href="/events/${event.id}" target="_blank" class="hover:text-yns_yellow">
+          ${escapeHtml(event.name)}
+          ${event.headliner ? `<br><span class="text-sm text-gray-400">${escapeHtml(event.headliner)}</span>` : ''}
+        </a>
+      </td>
+      <td class="block px-4 pt-2 font-sans text-white md:table-cell md:whitespace-nowrap md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+        <span class="text-xs text-gray-400 md:hidden">VENUE:</span>
+        ${escapeHtml(event.venue_name)}
+        <br><span class="text-sm text-gray-400">${escapeHtml(event.venue_town)}</span>
+      </td>
+      <td class="block px-4 pb-4 pt-2 font-sans text-white md:table-cell md:whitespace-nowrap md:px-6 md:py-3 md:text-base lg:px-8 lg:py-4 lg:text-lg">
+        <span class="text-xs text-gray-400 md:hidden">DISTANCE:</span>
+        ${event.distance} miles
+      </td>
+    </tr>
+  `).join('');
     }
 
     function formatDate(date, time) {
@@ -224,7 +243,12 @@
         month: '2-digit',
         year: '2-digit'
       });
-      return `${formattedDate} ${time}`;
+
+      // Format time to show only hours and minutes
+      const [hours, minutes] = time.split(':');
+      const formattedTime = `${hours}:${minutes}`;
+
+      return `${formattedDate} ${formattedTime}`;
     }
 
     function escapeHtml(str) {

@@ -119,11 +119,11 @@
           <div class="relative mb-10 flex items-center lg:mb-0">
             <div class="grid gap-8 sm:grid-cols-2">
               <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">
-                <span class="text-3xl font-bold text-yns_yellow">200+</span>
-                <p class="mt-2 text-sm text-gray-400">Active Venues</p>
+                <span class="text-3xl font-bold text-yns_yellow">{{ $venues }}</span>
+                <p class="mt-2 text-sm text-gray-400">Venues</p>
               </div>
               <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">
-                <span class="text-3xl font-bold text-yns_yellow">1000+</span>
+                <span class="text-3xl font-bold text-yns_yellow">{{ $artists }}</span>
                 <p class="mt-2 text-sm text-gray-400">Registered Artists</p>
               </div>
               <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">

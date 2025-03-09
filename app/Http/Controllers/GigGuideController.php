@@ -45,10 +45,6 @@ class GigGuideController extends Controller
             // Calculate distance for each event and filter
             $filteredEvents = $events->map(function ($event) use ($validated) {
                 $venue = $event->venues->first();
-                // if (!$venue) {
-                //     \Log::info('Event has no venue', ['event_id' => $event->id]);
-                //     return null;
-                // }
 
                 $distance = $this->calculateDistance(
                     $validated['latitude'],
