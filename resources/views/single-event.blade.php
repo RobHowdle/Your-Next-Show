@@ -1,5 +1,5 @@
 <x-guest-layout>
-  <div class="relative min-h-screen pt-36">
+  <div class="relative min-h-screen pt-32 lg:pt-36">
     <!-- Event Hero Section -->
     <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
       <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">

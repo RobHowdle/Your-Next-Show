@@ -91,9 +91,13 @@ class PromoterDataHelper
                 if ($apiKey->is_active) {
                     return [
                         'id' => $apiKey->id,
+                        'name' => $apiKey->name,
                         'type' => $apiKey->key_type,
                         'key' => $apiKey->api_key,
                         'secret' => $apiKey->api_secret,
+                        'last_used_at' => $apiKey->last_used_at,
+                        'is_active' => $apiKey->is_active,
+                        'expires_at' => $apiKey->expires_at
                     ];
                 }
             });

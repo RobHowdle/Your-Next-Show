@@ -1,14 +1,13 @@
 <x-guest-layout>
   <!-- Hero Section -->
   <div class="mx-auto min-h-screen max-w-7xl pb-20">
-    <div class="px-4 pt-36 sm:px-6 lg:px-8">
+    <div class="px-2 pt-28 md:px-4 md:pt-36 lg:px-8">
       <!-- Hero Section -->
-      <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">
+      <div class="relative mb-4 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl md:mb-8">
         <h1 class="mb-4 mt-8 text-center font-heading text-4xl font-bold text-white md:text-5xl lg:text-6xl">
           Find Your Next <span class="text-yns_yellow">Venue</span>
         </h1>
 
-        <!-- Replace the existing Search and Filter Section with this -->
         <div class="mt-4 space-y-4 p-6">
           <!-- Search Box - Full width on all screens -->
           <div class="w-full">
@@ -34,7 +33,7 @@
                 Band Type
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
-              <div class="filter-content mt-4">
+              <div class="filter-content mt-4 hidden md:block">
                 <div class="max-h-[300px] space-y-2 overflow-y-auto pr-2 md:max-h-[120px] lg:max-h-[300px]">
                   @foreach ($bandTypes as $type)
                     <label class="flex items-center gap-2 text-gray-300">
@@ -53,7 +52,7 @@
                 Genres
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
-              <div class="filter-content mt-4">
+              <div class="filter-content mt-4 hidden md:block">
                 <div class="max-h-[300px] overflow-y-auto pr-2 md:max-h-[120px] lg:max-h-[300px]">
                   <div class="grid grid-cols-1 gap-y-2">
                     @foreach ($genres as $genre)
@@ -74,7 +73,7 @@
                 Capacity
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
-              <div class="filter-content mt-4">
+              <div class="filter-content mt-4 hidden md:block">
                 <div class="flex flex-col gap-3">
                   <div class="min-h-0">
                     <label class="mb-1 block text-sm text-gray-400">Minimum</label>
@@ -95,107 +94,109 @@
     </div>
 
     <!-- Results Section -->
-    <div class="mx-2 overflow-hidden rounded-lg border border-gray-800 bg-yns_dark_blue shadow-xl">
-      <div class="hidden overflow-x-auto md:block">
-        <table class="min-w-full divide-y divide-gray-800">
-          <thead>
-            <tr>
-              <th class="sortable px-6 py-3 text-left" data-sort="name">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Venue Name
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="sortable px-6 py-3 text-left" data-sort="rating">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Rating
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="sortable px-6 py-3 text-left" data-sort="location">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Location
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="sortable px-6 py-3 text-left" data-sort="capacity">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Capacity
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="px-6 py-3 text-left">
-                <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Contact
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody id="resultsTableBody" class="divide-y divide-gray-800">
-            @foreach ($venues as $venue)
-              <tr class="hover:bg-black/20">
-                <td class="px-6 py-4">
-                  <a href="/venues/{{ Str::slug($venue['name']) }}"
-                    class="font-medium text-white hover:text-yns_yellow">
-                    {{ $venue['name'] }}
-                    @if ($venue['is_verified'])
-                      <span
-                        class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
-                        <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-                        </svg>
-                        Verified
-                      </span>
-                    @endif
-                  </a>
-                </td>
-                <td class="px-6 py-4 text-gray-300">
-                  @if ($venue['average_rating'])
-                    <div class="rating-wrapper flex items-center">
-                      {!! $venue['rating_icons'] !!}
-                    </div>
-                  @else
-                    Not rated
-                  @endif
-                </td>
-                <td class="px-6 py-4 text-gray-300">
-                  {{ $venue['postal_town'] ?: 'Location not specified' }}
-                </td>
-                <td class="px-6 py-4 text-gray-300">
-                  {{ $venue['capacity'] ?: 'Not specified' }}
-                </td>
-                <td class="px-6 py-4">
+    <div class="mx-2 overflow-hidden rounded-lg shadow-xl">
+      <div class="border border-gray-800 bg-yns_dark_blue">
+        <div class="hidden overflow-x-auto md:block">
+          <table class="min-w-full divide-y divide-gray-800">
+            <thead>
+              <tr>
+                <th class="sortable px-6 py-3 text-left" data-sort="name">
                   <button
-                    onclick="showContactModal({{ json_encode([
-                        'name' => $venue['name'],
-                        'preferred_contact' => $venue['preferred_contact'],
-                        'contact_email' => $venue['contact_email'],
-                        'contact_number' => $venue['contact_number'],
-                        'platforms' => $venue['platforms'],
-                    ]) }})"
-                    class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
-                    Contact Options
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Venue Name
+                    <span class="fas fa-sort"></span>
                   </button>
-                </td>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="rating">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Rating
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="location">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Location
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="capacity">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Capacity
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="px-6 py-3 text-left">
+                  <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Contact
+                  </span>
+                </th>
               </tr>
-            @endforeach
-          </tbody>
-        </table>
+            </thead>
+            <tbody id="resultsTableBody" class="divide-y divide-gray-800">
+              @foreach ($venues as $venue)
+                <tr class="hover:bg-black/20">
+                  <td class="px-6 py-4">
+                    <a href="/venues/{{ Str::slug($venue['name']) }}"
+                      class="font-medium text-white hover:text-yns_yellow">
+                      {{ $venue['name'] }}
+                      @if ($venue['is_verified'])
+                        <span
+                          class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+                          <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                          </svg>
+                          Verified
+                        </span>
+                      @endif
+                    </a>
+                  </td>
+                  <td class="px-6 py-4 text-gray-300">
+                    @if ($venue['average_rating'])
+                      <div class="rating-wrapper flex items-center">
+                        {!! $venue['rating_icons'] !!}
+                      </div>
+                    @else
+                      Not rated
+                    @endif
+                  </td>
+                  <td class="px-6 py-4 text-gray-300">
+                    {{ $venue['postal_town'] ?: 'Location not specified' }}
+                  </td>
+                  <td class="px-6 py-4 text-gray-300">
+                    {{ $venue['capacity'] ?: 'Not specified' }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <button
+                      onclick="showContactModal({{ json_encode([
+                          'name' => $venue['name'],
+                          'preferred_contact' => $venue['preferred_contact'],
+                          'contact_email' => $venue['contact_email'],
+                          'contact_number' => $venue['contact_number'],
+                          'platforms' => $venue['platforms'],
+                      ]) }})"
+                      class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+                      Contact Options
+                    </button>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Mobile View Section -->
-      <div class="block divide-y divide-gray-800 md:hidden">
+      <div class="block md:hidden">
         @foreach ($venues as $venue)
-          <div class="p-4">
+          <div class="pt-4 first:pt-0">
             <!-- Main Card Content -->
-            <div class="relative rounded-lg bg-black/20 p-4 backdrop-blur-sm">
+            <div class="relative rounded-lg bg-yns_dark_blue/90 p-4 backdrop-blur-sm">
               <!-- Venue Name and Verified Badge -->
-              <div class="mb-4">
+              <div class="mb-4 flex items-center gap-4">
                 <a href="/venues/{{ Str::slug($venue['name']) }}"
                   class="block font-heading text-xl font-bold text-white hover:text-yns_yellow">
                   {{ $venue['name'] }}
@@ -217,7 +218,6 @@
                 <div class="rounded-lg bg-black/20 p-3">
                   <span class="text-sm text-gray-400">Rating</span>
                   <div class="mt-1 flex items-center">
-                    <span class="fas fa-star text-yns_yellow"></span>
                     @if ($venue['average_rating'])
                       <div class="rating-wrapper flex items-center">
                         {!! $venue['rating_icons'] !!}
@@ -231,8 +231,7 @@
                 <div class="rounded-lg bg-black/20 p-3">
                   <span class="text-sm text-gray-400">Capacity</span>
                   <div class="mt-1 flex items-center">
-                    <span class="fas fa-users text-yns_yellow"></span>
-                    <span class="ml-2 text-lg font-bold text-white">
+                    <span class="text-lg font-bold text-white">
                       {{ $venue['capacity'] ?: 'Not specified' }}
                     </span>
                   </div>
@@ -240,8 +239,8 @@
               </div>
 
               <!-- Location -->
-              <div class="mb-4 flex items-center rounded-lg bg-black/20 p-3">
-                <span class="fas fa-map-marker-alt text-yns_yellow"></span>
+              <div class="mb-4 rounded-lg bg-black/20 p-3">
+                <span class="text-sm text-gray-400">Location</span>
                 <span class="ml-2 text-white">{{ $venue['postal_town'] ?: 'Location not specified' }}</span>
               </div>
 
@@ -263,8 +262,19 @@
         @endforeach
       </div>
 
-      <div class="px-6 py-4" id="pagination-container">
-        {{ $venues->links('components.pagination') }}
+      <div class="mt-4 bg-yns_dark_blue px-6 py-4" id="pagination-container">
+        <!-- Mobile Pagination (hidden on desktop) -->
+        <div class="block md:hidden">
+          <div class="text-center text-sm text-gray-400">
+            {{ $venues->firstItem() }} - {{ $venues->lastItem() }} of {{ $venues->total() }} venues
+          </div>
+          {{ $venues->links('components.mobile-pagination') }}
+        </div>
+
+        <!-- Desktop Pagination (hidden on mobile) -->
+        <div class="hidden md:block">
+          {{ $venues->links('components.pagination') }}
+        </div>
       </div>
 
       {{-- Contact Modal --}}
@@ -382,18 +392,6 @@
         updateSortIcons(this);
         applyFilters();
       });
-    });
-
-    // Filter toggle functionality
-    const filterToggle = document.getElementById('filter-toggle');
-    const filtersContainer = document.getElementById('filters-container');
-
-    filterToggle?.addEventListener('click', function() {
-      filtersContainer.classList.toggle('hidden');
-      const buttonText = this.querySelector('span');
-      buttonText.textContent = filtersContainer.classList.contains('hidden') ?
-        'Show Filters' :
-        'Hide Filters';
     });
 
     // Accordion functionality for mobile filters
@@ -631,41 +629,20 @@
         mobileView.appendChild(mobileCard);
       });
     }
-  });
-  // Filter toggle functionality
-  const filterToggle = document.getElementById('filter-toggle');
-  const filtersContainer = document.getElementById('filters-container');
 
-  filterToggle?.addEventListener('click', function() {
-    filtersContainer.classList.toggle('hidden');
-    const buttonText = this.querySelector('span');
-    buttonText.textContent = filtersContainer.classList.contains('hidden') ?
-      'Show Filters' :
-      'Hide Filters';
-  });
+    // Filter toggle functionality
+    const filterToggle = document.getElementById('filter-toggle');
+    const filtersContainer = document.getElementById('filters-container');
 
-  // Accordion functionality for mobile filters
-  const filterHeaders = document.querySelectorAll('.font-heading');
-
-  filterHeaders.forEach(header => {
-    header.addEventListener('click', function() {
-      if (window.innerWidth < 768) { // Only on mobile
-        const content = this.nextElementSibling;
-        const icon = this.querySelector('.fas');
-
-        content.classList.toggle('hidden');
-        icon.classList.toggle('fa-chevron-down');
-        icon.classList.toggle('fa-chevron-up');
-      }
-    });
-  });
-
-  // Reset layout on screen resize
-  window.addEventListener('resize', function() {
-    if (window.innerWidth >= 768) {
-      filtersContainer.classList.remove('hidden');
-      document.querySelectorAll('.filter-content').forEach(content => {
-        content.classList.remove('hidden');
+    if (filterToggle && filtersContainer) {
+      filterToggle.addEventListener('click', function() {
+        filtersContainer.classList.toggle('hidden');
+        const buttonText = this.querySelector('span');
+        if (buttonText) {
+          buttonText.textContent = filtersContainer.classList.contains('hidden') ?
+            'Show Filters' :
+            'Hide Filters';
+        }
       });
     }
   });

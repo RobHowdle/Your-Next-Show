@@ -1,8 +1,8 @@
 <x-guest-layout>
-  <div class="relative min-h-screen pb-20 pt-36">
-    <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+  <div class="relative min-h-screen pb-6 pt-28 md:pb-20 md:pt-36">
+    <div class="mx-auto max-w-screen-2xl px-2 md:px-4 lg:px-8">
       <!-- Hero Section -->
-      <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">
+      <div class="relative mb-4 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl md:mb-8">
         <div class="absolute inset-0">
           <div class="absolute inset-0 bg-gradient-to-r from-black to-transparent"></div>
           @if ($venue->logo_url && file_exists(public_path($venue->logo_url)))
@@ -11,7 +11,7 @@
           @endif
         </div>
 
-        <div class="relative z-10 grid gap-8 px-6 py-12 lg:grid-cols-2 lg:gap-12 lg:px-8">
+        <div class="relative z-10 grid gap-8 px-6 py-6 md:py-12 lg:grid-cols-2 lg:gap-12 lg:px-8">
           <!-- Left Column: Venue Info -->
           <div class="space-y-6">
             <div class="space-y-4">
@@ -46,7 +46,7 @@
                   </a>
                 @endif
 
-                <div class="rating-wrapper flex h-full items-center justify-center gap-2 md:justify-start">
+                <div class="rating-wrapper flex h-full items-center justify-start gap-2">
                   <span class="flex h-full items-center text-gray-300">Overall Rating ({{ $reviewCount }}):</span>
                   <div class="flex h-full items-center">
                     {!! $overallReviews[$venue->id] !!}
@@ -54,13 +54,17 @@
                 </div>
               </div>
 
-              <div class="flex flex-wrap items-center gap-4">
-                <button data-modal-toggle="review-modal"
-                  class="group inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-6 py-3 font-medium text-black transition-all hover:bg-yellow-400">
-                  <span class="fas fa-star"></span>
-                  Leave a Review
-                </button>
-                <x-contact-and-social-links :item="$venue" class="flex gap-4" />
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-2 xl:gap-4">
+                <div class="order-2 flex-none lg:order-1">
+                  <button data-modal-toggle="review-modal"
+                    class="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-yns_yellow px-6 py-3 font-medium text-black transition-all hover:bg-yellow-400 lg:w-auto">
+                    <span class="fas fa-star"></span>
+                    Leave a Review
+                  </button>
+                </div>
+                <div class="order-1 lg:order-2">
+                  <x-contact-and-social-links :item="$venue" class="flex flex-row flex-wrap gap-4" />
+                </div>
               </div>
             </div>
           </div>
@@ -76,37 +80,57 @@
         </div>
       </div>
 
+      <div class="mb-4 space-y-8 lg:hidden">
+        <div class="rounded-xl border border-gray-800 bg-yns_dark_blue/75 p-6 backdrop-blur-sm">
+          <h2 class="mb-6 font-heading text-xl font-bold text-white">Quick Facts</h2>
+          <div class="space-y-4">
+            @if ($venue->contact_name)
+              <div class="flex items-center gap-3 text-gray-300">
+                <span class="fas fa-user text-yns_yellow"></span>
+                <span>Contact: {{ $venue->contact_name }}</span>
+              </div>
+            @endif
+            @if ($venue->capacity)
+              <div class="flex items-center gap-3 text-gray-300">
+                <span class="fas fa-users text-yns_yellow"></span>
+                <span>Capacity: {{ number_format($venue->capacity) }}</span>
+              </div>
+            @endif
+          </div>
+        </div>
+      </div>
+
       <!-- Tabs Navigation -->
-      <div class="mb-8">
+      <div class="mb-4 md:mb-8">
         <div class="rounded-xl bg-yns_dark_blue/75 p-2 backdrop-blur-sm">
-          <nav class="flex flex-wrap gap-2" aria-label="Tabs">
+          <nav class="grid grid-cols-2 gap-2 md:flex md:flex-wrap" aria-label="Tabs">
             <button data-tab="about"
-              class="tabLinks flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white">
+              class="tabLinks flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white md:w-auto md:justify-start">
               <span class="fas fa-info-circle mr-2"></span>
               About
             </button>
             <button data-tab="gear"
-              class="tabLinks flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white">
+              class="tabLinks flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white md:w-auto md:justify-start">
               <span class="fas fa-cogs mr-2"></span>
               In House Gear
             </button>
             <button data-tab="genres"
-              class="tabLinks flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white">
+              class="tabLinks flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white md:w-auto md:justify-start">
               <span class="fas fa-guitar mr-2"></span>
               Genre & Types
             </button>
             <button data-tab="events"
-              class="tabLinks flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white">
+              class="tabLinks flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white md:w-auto md:justify-start">
               <span class="fas fa-calendar mr-2"></span>
-              Upcoming Events
+              Events
             </button>
             <button data-tab="reviews"
-              class="tabLinks flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white">
+              class="tabLinks flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white md:w-auto md:justify-start">
               <span class="fas fa-star mr-2"></span>
               Reviews
             </button>
             <button data-tab="other"
-              class="tabLinks flex items-center rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white">
+              class="tabLinks flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:bg-black/20 hover:text-white md:w-auto md:justify-start">
               <span class="fas fa-plus mr-2"></span>
               Other
             </button>
@@ -118,7 +142,7 @@
       <div class="grid gap-8 lg:grid-cols-3">
         <div class="lg:col-span-2">
           <div
-            class="min-h-[400px] rounded-b-xl rounded-r-xl border border-gray-800 bg-yns_dark_blue/75 p-8 backdrop-blur-sm">
+            class="min-h-[400px] rounded-xl rounded-r-xl border border-gray-800 bg-yns_dark_blue/75 p-8 backdrop-blur-sm">
             <!-- About Tab -->
             <div id="about" class="tab-panel hidden">
               <div class="prose-invert prose max-w-none">
@@ -141,7 +165,7 @@
                 $bandTypes = json_decode($venue->band_type ?? '[]');
               @endphp
               @if ($bandTypes == [])
-                <p class="text-center md:text-left">We don't have any specific band types listed, please <a
+                <p class="text-left">We don't have any specific band types listed, please <a
                     class="underline hover:text-yns_yellow" href="mailto:{{ $venue->contact_email }}">contact us.</a>
                   if you would like to enquire about
                   booking
@@ -173,7 +197,7 @@
                     @endswitch
                   @endforeach
                 </ul>
-                <p class="mt-2 text-center md:text-left">If you would like to enquire about a show, please <a
+                <p class="mt-2 text-left">If you would like to enquire about a show, please <a
                     class="underline hover:text-yns_yellow" href="mailto:{{ $venue->email }}">contact us.</a></p>
               @endif
 
@@ -244,7 +268,7 @@
                     @endforeach
                   </div>
                 @else
-                  <p class="text-center text-lg text-gray-300">
+                  <p class="text-left text-lg text-gray-300">
                     No upcoming events scheduled at {{ $venue->name }} in the next month.
                   </p>
                 @endif
@@ -259,25 +283,25 @@
 
                   <!-- Detailed Ratings -->
                   <div class="ratings-block mt-4 flex flex-col items-center gap-4">
-                    <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
+                    <p class="grid grid-cols-1 text-left md:grid-cols-2">
                       Communication:
                       <span class="rating-wrapper flex flex-row gap-3">
                         {!! $renderRatingIcons($averageCommunicationRating) !!}
                       </span>
                     </p>
-                    <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
+                    <p class="grid grid-cols-1 text-left md:grid-cols-2">
                       Rate Of Pay:
                       <span class="rating-wrapper flex flex-row gap-3">
                         {!! $renderRatingIcons($averageRopRating) !!}
                       </span>
                     </p>
-                    <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
+                    <p class="grid grid-cols-1 text-left md:grid-cols-2">
                       Promotion:
                       <span class="rating-wrapper flex flex-row gap-3">
                         {!! $renderRatingIcons($averagePromotionRating) !!}
                       </span>
                     </p>
-                    <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
+                    <p class="grid grid-cols-1 text-left md:grid-cols-2">
                       Gig Quality:
                       <span class="rating-wrapper flex flex-row gap-3">
                         {!! $renderRatingIcons($averageQualityRating) !!}
@@ -288,7 +312,7 @@
                   <!-- Review Comments -->
                   <div class="reviews-block mt-8 flex flex-col gap-4">
                     @foreach ($venue->recentReviews as $review)
-                      <div class="review text-center font-sans">
+                      <div class="review text-left font-sans">
                         <p class="flex flex-col">
                           "{{ $review->review }}"
                           <span>- {{ $review->author }}</span>
@@ -297,7 +321,7 @@
                     @endforeach
                   </div>
                 @else
-                  <p class="mt-4 text-center">
+                  <p class="mt-4 text-left">
                     No reviews available for {{ $venue->name }} yet. Be the first to leave a review!
                   </p>
                 @endif
@@ -307,27 +331,27 @@
             <!-- Other Tab -->
             <div id="other" class="tab-panel hidden">
               @if ($venue->capacity)
-                <p class="bold pb-2 text-center text-xl md:text-left md:text-2xl">Other Information you may want to
+                <p class="bold pb-2 text-left text-xl md:text-2xl">Other Information you may want to
                   know about
                   {{ $venue->name }}.</p>
                 @if ($venue->contact_name)
-                  <p class="text-center md:text-left md:text-base">Person(s) To Speak To: {{ $venue->contact_name }}
+                  <p class="text-left md:text-base">Person(s) To Speak To: {{ $venue->contact_name }}
                   </p>
                 @endif
                 @if ($venue->capacity)
-                  <p class="pb-2 text-center md:text-left">Capacity: {{ $venue->capacity }}</p>
+                  <p class="pb-2 text-left">Capacity: {{ $venue->capacity }}</p>
                 @endif
-                <p class="bold pb-2 pt-2 text-center text-2xl md:text-left">More Info:</p>
-                <p class="pb-2 text-center md:text-left">{!! nl2br(e($venue->additional_info)) !!}</p>
+                <p class="bold pb-2 pt-2 text-left text-2xl">More Info:</p>
+                <p class="pb-2 text-left">{!! nl2br(e($venue->additional_info)) !!}</p>
               @else
-                <p class="text-center md:text-left">No Further Information Avaliable</p>
+                <p class="text-left">No Further Information Avaliable</p>
               @endif
             </div>
           </div>
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-8">
+        <div class="hidden space-y-8 lg:block">
           <div class="rounded-xl border border-gray-800 bg-yns_dark_blue/75 p-6 backdrop-blur-sm">
             <h2 class="mb-6 font-heading text-xl font-bold text-white">Quick Facts</h2>
             <div class="space-y-4">
