@@ -4,11 +4,25 @@
       activeTab: 'profile',
       settingsOpen: false,
       publicProfileOpen: false,
+      loading: true,
       init() {
           this.$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))
+          // Set loading to false after a brief delay to ensure everything is initialized
+          setTimeout(() => {
+              this.loading = false
+              // Ensure we're at the top of the page
+              window.scrollTo(0, 0)
+          }, 100)
       }
   }" class="from-yns_pink min-h-screen bg-gradient-to-br to-yns_purple">
-    <div class="relative h-full">
+    <!-- Loading overlay -->
+    <div x-show="loading" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="rounded-lg bg-white p-6 text-center">
+        <div class="border-yns_pink mb-4 h-12 w-12 animate-spin rounded-full border-4 border-t-transparent"></div>
+        <p class="text-gray-700">Loading...</p>
+      </div>
+    </div>
+    <div x-show="!loading" x-cloak class="relative h-full">
       {{-- Grid Container --}}
       <div class="grid transition-all duration-300"
         :class="sidebarOpen ? 'grid-cols-[300px,1fr]' : 'grid-cols-[80px,1fr]'">

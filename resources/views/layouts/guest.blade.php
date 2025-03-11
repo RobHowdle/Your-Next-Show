@@ -100,7 +100,7 @@
             x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" x-cloak>
             <!-- Sidebar Content -->
             <div
-              class="relative w-screen bg-gradient-to-br from-yns_dark_blue via-black to-yns_dark_blue backdrop-blur-md md:w-80">
+              class="relative w-screen bg-gradient-to-br from-yns_dark_blue via-black to-yns_dark_blue backdrop-blur-md md:w-full">
               <!-- Close Button -->
               <button @click="sidebarOpen = false"
                 class="absolute right-4 top-6 rounded-full bg-black/50 px-0 py-2 text-gray-400 transition-colors hover:text-yns_yellow">

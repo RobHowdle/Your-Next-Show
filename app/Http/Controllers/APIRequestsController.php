@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Event;
 use App\Models\Venue;
+use App\Models\ApiKey;
 use App\Models\ApiKeys;
 use App\Models\Promoter;
 use App\Models\ServiceUser;
@@ -350,13 +351,12 @@ class APIRequestsController extends Controller
             ]);
 
             $modelClass = $this->getModelClass($dashboardType);
-            // dd($modelClass);
 
             if (!$modelClass) {
                 return response()->json(['success' => false, 'message' => 'Invalid dashboard type'], 400);
             }
 
-            $newApiKey = ApiKeys::create([
+            $newApiKey = ApiKey::create([
                 'serviceable_type' => $modelClass,
                 'serviceable_id' => $validated['id'],
                 'name' => 'API Key',

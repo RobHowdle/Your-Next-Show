@@ -75,7 +75,6 @@ class ProfileController extends Controller
         $roles = Role::where('name', '!=', 'administrator')->get();
         $userRole = $user->roles;
 
-
         // Initialize promoter variables
         $promoterData = [];
         $bandData = [];
@@ -85,7 +84,7 @@ class ProfileController extends Controller
         $designerData = [];
         $videographerData = [];
 
-        // check dashboard type and get the data
+        // Check dashboard type and get the data
         if ($dashboardType === 'promoter') {
             $promoterData = $this->getPromoterData($user);
         } elseif ($dashboardType === 'artist') {

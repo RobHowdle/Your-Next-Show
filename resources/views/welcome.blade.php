@@ -7,7 +7,7 @@
   <div class="relative z-10">
     <!-- Hero/Search Section -->
     <section
-      class="flex min-h-screen items-center justify-center px-2 pb-12 pt-28 sm:pt-32 md:px-4 md:pt-40 lg:px-8 lg:pt-20">
+      class="lg:pt-42 flex min-h-screen items-center justify-center px-2 pb-12 pt-28 sm:pt-32 md:px-4 md:pt-40 lg:px-8">
       <div class="w-full max-w-4xl text-center">
         <h1 class="font-heading text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl">
           Your Next Show

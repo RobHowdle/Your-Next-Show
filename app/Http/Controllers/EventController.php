@@ -210,6 +210,10 @@ class EventController extends Controller
         $modules = collect(session('modules', []));
         $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
 
+        $genreList = file_get_contents(public_path('text/genre_list.json'));
+        $data = json_decode($genreList, true) ?? [];
+        $genres = collect($data['genres'] ?? [])->pluck('name')->toArray();
+
         $serviceData = [
             'promoter_id' => null,
             'promoter_name' => null,
@@ -257,6 +261,7 @@ class EventController extends Controller
             'dashboardType' => $dashboardType,
             'modules' => $modules,
             'service' => $service,
+            'genres' => $genres,
             'serviceData' => $serviceData,
             'profileData' => [
                 'apiKeys' => $serviceData['apiKeys'] ?? [],
