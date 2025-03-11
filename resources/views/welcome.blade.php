@@ -7,7 +7,7 @@
   <div class="relative z-10">
     <!-- Hero/Search Section -->
     <section
-      class="flex min-h-screen items-center justify-center px-4 pb-12 pt-32 sm:px-6 sm:pt-32 md:pt-40 lg:px-8 lg:pt-20">
+      class="flex min-h-screen items-center justify-center px-2 pb-12 pt-28 sm:pt-32 md:px-4 md:pt-40 lg:px-8 lg:pt-20">
       <div class="w-full max-w-4xl text-center">
         <h1 class="font-heading text-4xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl">
           Your Next Show
@@ -18,7 +18,7 @@
         </h1>
 
         <!-- Search Form -->
-        <div class="mt-8 sm:mt-12">
+        <div class="mt-6 md:mt-12">
           <form action="{{ route('venues.filterByCoordinates') }}" method="GET" class="mx-auto max-w-3xl transform">
             @csrf
             <div class="group relative">
@@ -45,18 +45,19 @@
 
 
         <!-- Features Grid -->
-        <div class="mt-16 grid grid-cols-1 gap-8 px-4 md:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-xl bg-black/30 p-6 backdrop-blur-sm">
+        <div class="mt-6 grid grid-cols-1 gap-6 px-0 md:mt-16 md:grid-cols-2 md:gap-8 md:px-4 lg:grid-cols-3">
+          <div class="rounded-xl bg-black/30 p-6 shadow-[0_8px_25px_-5px_rgba(255,255,255,0.15)] backdrop-blur-sm">
             <span class="fas fa-map-marker-alt mb-4 text-3xl text-yns_yellow"></span>
             <h3 class="mb-2 font-heading text-xl font-bold text-white">Find Local Venues</h3>
             <p class="text-gray-300">Discover perfect venues in your area for your next performance</p>
           </div>
-          <div class="rounded-xl bg-black/30 p-6 backdrop-blur-sm">
+          <div class="rounded-xl bg-black/30 p-6 shadow-[0_8px_25px_-5px_rgba(255,255,255,0.15)] backdrop-blur-sm">
             <span class="fas fa-users mb-4 text-3xl text-yns_yellow"></span>
             <h3 class="mb-2 font-heading text-xl font-bold text-white">Connect with Promoters</h3>
             <p class="text-gray-300">Link up with local promoters who share your musical interests</p>
           </div>
-          <div class="rounded-xl bg-black/30 p-6 backdrop-blur-sm md:col-span-2 lg:col-span-1">
+          <div
+            class="rounded-xl bg-black/30 p-6 shadow-[0_8px_25px_-5px_rgba(255,255,255,0.15)] backdrop-blur-sm md:col-span-2 lg:col-span-1">
             <span class="fas fa-calendar-alt mb-4 text-3xl text-yns_yellow"></span>
             <h3 class="mb-2 font-heading text-xl font-bold text-white">Manage Your Shows</h3>
             <p class="text-gray-300">Keep track of your gigs with our custom dashboard</p>
@@ -66,11 +67,15 @@
     </section>
 
     <!-- About Section -->
-    <section class="flex min-h-screen items-center justify-center bg-black/30 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
-      <div class="w-full max-w-7xl">
+    <section class="relative flex min-h-screen items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div class="absolute inset-0">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-transparent backdrop-blur-sm">
+        </div>
+      </div>
+      <div class="relative w-full max-w-7xl">
         <div class="relative grid lg:grid-cols-2 lg:gap-12">
           <!-- Text Content -->
-          <div class="py-12">
+          <div class="py-12 text-center md:text-left">
             <h2 class="font-heading text-3xl font-bold text-white md:text-4xl">
               About <span class="text-yns_yellow">Your Next Show</span>
             </h2>
@@ -107,7 +112,7 @@
               </div>
               <div class="mt-8">
                 <a href="{{ route('register') }}"
-                  class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-6 py-3 font-medium text-black transition-all hover:bg-yellow-400">
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-yns_yellow px-6 py-3 font-medium text-black transition-all hover:bg-yellow-400 md:w-auto md:justify-start">
                   Join Our Community
                   <span class="fas fa-arrow-right"></span>
                 </a>
@@ -118,19 +123,23 @@
           <!-- Stats/Features -->
           <div class="relative mb-10 flex items-center lg:mb-0">
             <div class="grid gap-8 sm:grid-cols-2">
-              <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">
+              <div
+                class="rounded-xl border border-white/10 bg-black/30 p-6 shadow-[0_8px_25px_-5px_rgba(255,255,255,0.15)] backdrop-blur-sm">
                 <span class="text-3xl font-bold text-yns_yellow">{{ $venues }}</span>
                 <p class="mt-2 text-sm text-gray-400">Venues</p>
               </div>
-              <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">
+              <div
+                class="rounded-xl border border-white/10 bg-black/30 p-6 shadow-[0_8px_25px_-5px_rgba(255,255,255,0.15)] backdrop-blur-sm">
                 <span class="text-3xl font-bold text-yns_yellow">{{ $artists }}</span>
                 <p class="mt-2 text-sm text-gray-400">Registered Artists</p>
               </div>
-              <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">
+              <div
+                class="rounded-xl border border-white/10 bg-black/30 p-6 shadow-[0_8px_25px_-5px_rgba(255,255,255,0.15)] backdrop-blur-sm">
                 <span class="text-3xl font-bold text-yns_yellow">50+</span>
                 <p class="mt-2 text-sm text-gray-400">Cities Covered</p>
               </div>
-              <div class="rounded-xl border border-white/10 bg-black/30 p-6 backdrop-blur-sm">
+              <div
+                class="rounded-xl border border-white/10 bg-black/30 p-6 shadow-[0_8px_25px_-5px_rgba(255,255,255,0.15)] backdrop-blur-sm">
                 <span class="text-3xl font-bold text-yns_yellow">24/7</span>
                 <p class="mt-2 text-sm text-gray-400">Support Available</p>
               </div>
