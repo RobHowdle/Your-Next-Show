@@ -236,7 +236,7 @@ class PromoterController extends Controller
 
         $promoters = $query->paginate(10);
 
-        $processedResults = collect($promoters->items())->map(function ($promoter) {
+        $processedResults = $promoters->through(function ($promoter) {
             $overallScore = PromoterReview::calculateOverallScore($promoter->id);
             return [
                 'id' => $promoter->id,
@@ -255,7 +255,7 @@ class PromoterController extends Controller
 
 
         return response()->json([
-            'results' => $processedResults,
+            'results' => $processedResults->items(),
             'pagination' => view('components.pagination', ['paginator' => $promoters])->render()
         ]);
     }

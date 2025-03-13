@@ -235,8 +235,27 @@ class VenueController extends Controller
 
         $venues = $query->paginate(10);
 
+        // Transform the venues to include rating icons
+        $transformedVenues = $venues->through(function ($venue) {
+            $overallScore = VenueReview::calculateOverallScore($venue->id);
+            return [
+                'id' => $venue->id,
+                'name' => $venue->name,
+                'postal_town' => $venue->postal_town,
+                'contact_number' => $venue->contact_number,
+                'contact_email' => $venue->contact_email,
+                'location' => $venue->location,
+                'capacity' => $venue->capacity,
+                'is_verified' => $venue->is_verified,
+                'preferred_contact' => $venue->preferred_contact,
+                'platforms' => SocialLinksHelper::processSocialLinks($venue->contact_link),
+                'average_rating' => $overallScore,
+                'rating_icons' => $this->renderRatingIcons($overallScore)
+            ];
+        });
+
         return response()->json([
-            'results' => $venues->items(),
+            'results' => $transformedVenues->items(),
             'pagination' => view('components.pagination', ['paginator' => $venues])->render()
         ]);
     }
@@ -378,5 +397,11 @@ class VenueController extends Controller
             'venueId' => $venueId,
             'promotersByLocation' => $promotersByLocation
         ]);
+    }
+
+    // Admin Functions
+    public function edit(Venue $venue)
+    {
+        return view('admin.venues.edit', compact('venue'));
     }
 }
