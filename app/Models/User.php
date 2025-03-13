@@ -61,6 +61,7 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
+        'date_of_birth' => 'date',
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'last_logged_in' => 'datetime',
@@ -87,6 +88,11 @@ class User extends Authenticatable
                 ];
             }
         });
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->email === env('ADMIN_EMAIL');
     }
 
     public function hasActiveModule($user, $module)

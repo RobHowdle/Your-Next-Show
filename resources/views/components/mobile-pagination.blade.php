@@ -1,7 +1,7 @@
 @if ($paginator->hasPages())
-  <nav class="flex items-center justify-between px-4 py-3 sm:px-6">
+  <nav class="flex items-center justify-center px-4 py-3 sm:px-6">
     {{-- Mobile view --}}
-    <div class="flex flex-1 justify-between sm:hidden">
+    <div class="flex flex-1 justify-center sm:hidden">
       @if ($paginator->onFirstPage())
         <span
           class="relative inline-flex cursor-default items-center rounded-md bg-black/20 px-4 py-2 text-sm font-medium text-gray-400">

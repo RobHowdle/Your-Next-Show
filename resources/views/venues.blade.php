@@ -531,7 +531,6 @@
         const row = document.createElement('tr');
         row.className = 'hover:bg-black/20';
 
-        const rating = venue.average_rating ? venue.average_rating : 'Not rated';
         const capacity = venue.capacity ? venue.capacity : 'Not specified';
 
         const verifiedBadge = venue.is_verified ? `
@@ -551,7 +550,9 @@
             </a>
           </td>
           <td class="px-6 py-4 text-gray-300">
-            ${rating}
+            <div class="rating-wrapper flex items-center">
+                ${venue.rating_icons || 'Not rated'}
+            </div>
           </td>
           <td class="px-6 py-4 text-gray-300">
             ${venue.postal_town || 'Location not specified'}
@@ -580,7 +581,7 @@
         const mobileCard = document.createElement('div');
         mobileCard.className = 'p-4';
         mobileCard.innerHTML = `
-        <div class="relative rounded-lg bg-black/20 p-4 backdrop-blur-sm">
+        <div class="relative rounded-lg bg-yns_dark_blue p-4 backdrop-blur-sm">
           <div class="mb-4">
             <a href="/venues/${venue.name.toLowerCase().replace(/\s+/g, '-')}" 
               class="block font-heading text-xl font-bold text-white hover:text-yns_yellow">
@@ -591,24 +592,22 @@
 
           <div class="mb-4 grid grid-cols-2 gap-4">
             <div class="rounded-lg bg-black/20 p-3">
-              <span class="text-sm text-gray-400">Rating</span>
-              <div class="mt-1 flex items-center">
-                <span class="fas fa-star text-yns_yellow"></span>
-                <span class="ml-2 text-lg font-bold text-white">${rating}</span>
-              </div>
+                <span class="text-sm text-gray-400">Rating</span>
+                <div class="mt-1 rating-wrapper flex items-center">
+                    ${venue.rating_icons || 'Not rated'}
+                </div>
             </div>
 
             <div class="rounded-lg bg-black/20 p-3">
               <span class="text-sm text-gray-400">Capacity</span>
               <div class="mt-1 flex items-center">
-                <span class="fas fa-users text-yns_yellow"></span>
                 <span class="ml-2 text-lg font-bold text-white">${capacity}</span>
               </div>
             </div>
           </div>
 
           <div class="mb-4 flex items-center rounded-lg bg-black/20 p-3">
-            <span class="fas fa-map-marker-alt text-yns_yellow"></span>
+            <span class="text-sm text-gray-400">Location</span>
             <span class="ml-2 text-white">${venue.postal_town || 'Location not specified'}</span>
           </div>
 
@@ -731,6 +730,22 @@
       case 'instagram':
         href = value;
         iconClass = 'fab fa-instagram';
+        break;
+      case 'tiktok':
+        href = value;
+        iconClass = 'fab fa-tiktok';
+        break;
+      case 'youtube':
+        href = value;
+        iconClass = 'fab fa-youtube';
+        break;
+      case 'spotify':
+        href = value;
+        iconClass = 'fab fa-spotify';
+        break;
+      case 'website':
+        href = value;
+        iconClass = 'fas fa-globe';
         break;
       default:
         href = value;

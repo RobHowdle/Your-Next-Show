@@ -106,7 +106,7 @@ class DashboardController extends Controller
                 return redirect("/dashboard/{$dashboardType}")->with(['dashboardType', $dashboardType, 'modules', $modules]);
                 break;
             case 'administrator':
-                return redirect()->route('admin.dashboard', ['dashboardType' => 'administrator']);
+                return redirect()->route('admin.dashboard');
             default:
                 Log::warning("Unauthorized access attempt for role: {$roleName}");
                 return abort(403); // Forbidden access if role is not recognized

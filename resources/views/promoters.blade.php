@@ -1,14 +1,13 @@
 <x-guest-layout>
   <!-- Hero Section -->
   <div class="mx-auto min-h-screen max-w-7xl pb-20">
-    <div class="px-4 pt-36 sm:px-6 lg:px-8">
+    <div class="px-2 pt-28 md:px-4 md:pt-36 lg:px-8">
       <!-- Hero Section -->
-      <div class="relative mb-8 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl">
+      <div class="relative mb-4 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl md:mb-8">
         <h1 class="mb-4 mt-8 text-center font-heading text-4xl font-bold text-white md:text-5xl lg:text-6xl">
           Find Your Next <span class="text-yns_yellow">Promoter</span>
         </h1>
 
-        <!-- Replace the Search and Filter Section -->
         <div class="mt-4 space-y-4 p-6">
           <!-- Search Box - Full width on all screens -->
           <div class="w-full">
@@ -34,7 +33,7 @@
                 Band Type
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
-              <div class="filter-content mt-4">
+              <div class="filter-content mt-4 hidden md:block">
                 <div class="max-h-[300px] space-y-2 overflow-y-auto pr-2 md:max-h-[120px] lg:max-h-[300px]">
                   @foreach ($bandTypes as $type)
                     <label class="flex items-center gap-2 text-gray-300">
@@ -53,7 +52,7 @@
                 Genres
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
-              <div class="filter-content mt-4">
+              <div class="filter-content mt-4 hidden md:block">
                 <div class="max-h-[300px] overflow-y-auto pr-2 md:max-h-[120px] lg:max-h-[300px]">
                   <div class="grid grid-cols-1 gap-y-2">
                     @foreach ($genres as $genre)
@@ -74,7 +73,7 @@
                 Locations
                 <span class="fas fa-chevron-down text-sm md:hidden"></span>
               </h3>
-              <div class="filter-content mt-4">
+              <div class="filter-content mt-4 hidden md:block">
                 <div class="max-h-[300px] overflow-y-auto pr-2 md:max-h-[120px] lg:max-h-[300px]">
                   @foreach ($locations as $location)
                     <label class="location-item flex items-center gap-2 py-1 text-gray-300">
@@ -92,111 +91,113 @@
     </div>
 
     <!-- Results Section -->
-    <div class="overflow-hidden rounded-lg border border-gray-800 bg-yns_dark_blue shadow-xl">
+    <div class="mx-2 overflow-hidden rounded-lg shadow-xl">
       <div class="hidden overflow-x-auto md:block">
-        <table class="min-w-full divide-y divide-gray-800">
-          <thead>
-            <tr>
-              <th class="sortable px-6 py-3 text-left" data-sort="name">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Promoter Name
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="sortable px-6 py-3 text-left" data-sort="rating">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Rating
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="sortable px-6 py-3 text-left" data-sort="location">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Location
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="sortable px-6 py-3 text-left" data-sort="genres">
-                <button
-                  class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Genres
-                  <span class="fas fa-sort"></span>
-                </button>
-              </th>
-              <th class="px-6 py-3 text-left">
-                <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                  Contact
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody id="resultsTableBody" class="divide-y divide-gray-800">
-            @foreach ($promoters as $promoter)
-              <tr class="hover:bg-black/20">
-                <td class="px-6 py-4">
-                  <a href="/promoters/{{ Str::slug($promoter['name']) }}"
-                    class="font-medium text-white hover:text-yns_yellow">
-                    {{ $promoter['name'] }}
-                    @if ($promoter['is_verified'])
-                      <span
-                        class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
-                        <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-                        </svg>
-                        Verified
-                      </span>
-                    @endif
-                  </a>
-                </td>
-                <td class="px-6 py-4 text-gray-300">
-                  @if ($promoter['average_rating'])
-                    <div class="rating-wrapper flex items-center">
-                      {!! $promoter['rating_icons'] !!}
-                    </div>
-                  @else
-                    Not rated
-                  @endif
-                </td>
-                <td class="px-6 py-4 text-gray-300">
-                  {{ $promoter['postal_town'] ?: 'Location not specified' }}
-                </td>
-                <td class="px-6 py-4">
-                  <button onclick="showGenresModal({{ json_encode(array_keys((array) $promoter['genres'])) }})"
-                    class="inline-flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm text-gray-300 hover:bg-black/40">
-                    <span class="fas fa-music"></span>
-                    View Genres
-                  </button>
-                </td>
-                <td class="px-6 py-4">
+        <div class="hidden overflow-x-auto md:block">
+          <table class="min-w-full divide-y divide-gray-800">
+            <thead>
+              <tr>
+                <th class="sortable px-6 py-3 text-left" data-sort="name">
                   <button
-                    onclick="showContactModal({{ json_encode([
-                        'name' => $promoter['name'],
-                        'preferred_contact' => $promoter['preferred_contact'],
-                        'contact_email' => $promoter['contact_email'],
-                        'contact_number' => $promoter['contact_number'],
-                        'platforms' => $promoter['platforms'],
-                    ]) }})"
-                    class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
-                    Contact Options
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Promoter Name
+                    <span class="fas fa-sort"></span>
                   </button>
-                </td>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="rating">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Rating
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="location">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Location
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="sortable px-6 py-3 text-left" data-sort="genres">
+                  <button
+                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Genres
+                    <span class="fas fa-sort"></span>
+                  </button>
+                </th>
+                <th class="px-6 py-3 text-left">
+                  <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                    Contact
+                  </span>
+                </th>
               </tr>
-            @endforeach
-          </tbody>
-        </table>
+            </thead>
+            <tbody id="resultsTableBody" class="divide-y divide-gray-800">
+              @foreach ($promoters as $promoter)
+                <tr class="hover:bg-black/20">
+                  <td class="px-6 py-4">
+                    <a href="/promoters/{{ Str::slug($promoter['name']) }}"
+                      class="font-medium text-white hover:text-yns_yellow">
+                      {{ $promoter['name'] }}
+                      @if ($promoter['is_verified'])
+                        <span
+                          class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+                          <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                          </svg>
+                          Verified
+                        </span>
+                      @endif
+                    </a>
+                  </td>
+                  <td class="px-6 py-4 text-gray-300">
+                    @if ($promoter['average_rating'])
+                      <div class="rating-wrapper flex items-center">
+                        {!! $promoter['rating_icons'] !!}
+                      </div>
+                    @else
+                      Not rated
+                    @endif
+                  </td>
+                  <td class="px-6 py-4 text-gray-300">
+                    {{ $promoter['postal_town'] ?: 'Location not specified' }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <button onclick="showGenresModal({{ json_encode(array_keys((array) $promoter['genres'])) }})"
+                      class="inline-flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm text-gray-300 hover:bg-black/40">
+                      <span class="fas fa-music"></span>
+                      View Genres
+                    </button>
+                  </td>
+                  <td class="px-6 py-4">
+                    <button
+                      onclick="showContactModal({{ json_encode([
+                          'name' => $promoter['name'],
+                          'preferred_contact' => $promoter['preferred_contact'],
+                          'contact_email' => $promoter['contact_email'],
+                          'contact_number' => $promoter['contact_number'],
+                          'platforms' => $promoter['platforms'],
+                      ]) }})"
+                      class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+                      Contact Options
+                    </button>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Mobile View Section -->
-      <div class="block divide-y divide-gray-800 md:hidden">
+      <div class="block md:hidden">
         @foreach ($promoters as $promoter)
-          <div class="p-4">
+          <div class="pt-4 first:pt-0">
             <!-- Main Card Content -->
-            <div class="relative rounded-lg bg-black/20 p-4 backdrop-blur-sm">
+            <div class="relative rounded-lg bg-yns_dark_blue/90 p-4 backdrop-blur-sm">
               <!-- Promoter Name and Verified Badge -->
-              <div class="mb-4">
+              <div class="mb-4 flex items-center gap-4">
                 <a href="/promoters/{{ Str::slug($promoter['name']) }}"
                   class="block font-heading text-xl font-bold text-white hover:text-yns_yellow">
                   {{ $promoter['name'] }}
@@ -218,8 +219,7 @@
                 <div class="rounded-lg bg-black/20 p-3">
                   <span class="text-sm text-gray-400">Rating</span>
                   <div class="mt-1 flex items-center">
-                    <span class="fas fa-star text-yns_yellow"></span>
-                    <span class="ml-2 text-lg font-bold text-white">
+                    <span class="text-lg font-bold text-white">
                       @if ($promoter['average_rating'])
                         <div class="rating-wrapper flex items-center">
                           {!! $promoter['rating_icons'] !!}
@@ -233,10 +233,9 @@
 
                 <div class="rounded-lg bg-black/20 p-3">
                   <span class="text-sm text-gray-400">Genres</span>
-                  <div class="mt-1">
+                  <div>
                     <button onclick="showGenresModal({{ json_encode(array_keys((array) $promoter['genres'])) }})"
                       class="inline-flex items-center gap-2 rounded-lg bg-black/40 px-3 py-1.5 text-white hover:bg-black/60">
-                      <span class="fas fa-music text-yns_yellow"></span>
                       View Genres
                     </button>
                   </div>
@@ -244,8 +243,8 @@
               </div>
 
               <!-- Location -->
-              <div class="mb-4 flex items-center rounded-lg bg-black/20 p-3">
-                <span class="fas fa-map-marker-alt text-yns_yellow"></span>
+              <div class="mb-4 rounded-lg bg-black/20 p-3">
+                <span class="text-sm text-gray-400">Location</span>
                 <span class="ml-2 text-white">{{ $promoter['postal_town'] ?: 'Location not specified' }}</span>
               </div>
 
@@ -267,35 +266,48 @@
         @endforeach
       </div>
 
-      <div class="px-6 py-4" id="pagination-container">
-        {{ $promoters->links('components.pagination') }}
+      <div class="mt-4 bg-yns_dark_blue px-6 py-4" id="pagination-container">
+        <!-- Mobile Pagination (hidden on desktop) -->
+        <div class="block md:hidden">
+          <div class="text-center text-sm text-gray-400">
+            {{ $promoters->firstItem() }} - {{ $promoters->lastItem() }} of {{ $promoters->total() }} promoters
+          </div>
+          {{ $promoters->links('components.mobile-pagination') }}
+        </div>
+
+        <!-- Desktop Pagination (hidden on mobile) -->
+        <div class="hidden md:block">
+          {{ $promoters->links('components.pagination') }}
+        </div>
       </div>
 
-      <div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto pt-36">
-        <div class="flex min-h-screen items-end justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
-          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div class="absolute inset-0 bg-gray-900 opacity-75"></div>
-          </div>
+      {{-- Contact Modal --}}
+      <div id="contactModal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+          {{-- Background overlay --}}
+          <div class="fixed inset-0 bg-black bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+          {{-- Modal panel --}}
           <div
-            class="inline-block transform overflow-hidden rounded-lg bg-yns_dark_blue text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
-            <div class="bg-yns_dark_blue px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            class="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-black text-left shadow-xl transition-all">
+            <div class="bg-black px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
               <div class="sm:flex sm:items-start">
                 <div class="mt-3 w-full text-center sm:ml-4 sm:mt-0 sm:text-left">
-                  <h3 class="mb-4 text-2xl font-bold leading-6 text-white" id="modalTitle"></h3>
+                  <h3 class="mb-4 font-heading text-2xl font-bold text-white" id="modalTitle"></h3>
                   <div class="mt-4 space-y-4">
-                    <div id="preferredContact" class="rounded-lg border border-yns_yellow bg-yns_yellow/10 p-4">
-                      <!-- Preferred contact will be inserted here -->
+                    <div id="preferredContact" class="rounded-lg border border-yns_yellow bg-black/40 p-4">
+                      {{-- Preferred contact will be inserted here --}}
                     </div>
                     <div id="otherContacts" class="mt-4 space-y-2">
-                      <!-- Other contact methods will be inserted here -->
+                      {{-- Other contact methods will be inserted here --}}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="bg-yns_dark_blue/50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <div class="bg-black/40 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               <button type="button" onclick="closeContactModal()"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:mt-0 sm:w-auto">
+                class="inline-flex w-full justify-center rounded-lg border border-gray-800 bg-black px-4 py-2 text-sm font-medium text-white transition duration-150 ease-in-out hover:bg-gray-900 sm:ml-3 sm:w-auto">
                 Close
               </button>
             </div>
@@ -369,19 +381,6 @@
       }, 300);
     });
 
-    const locationSearch = document.getElementById('location-search');
-    if (locationSearch) {
-      locationSearch.addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const locationItems = document.querySelectorAll('.location-item');
-
-        locationItems.forEach(item => {
-          const locationText = item.querySelector('span').textContent.toLowerCase();
-          item.style.display = locationText.includes(searchTerm) ? '' : 'none';
-        });
-      });
-    }
-
     // Add event listeners for each filter type
     document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
       checkbox.addEventListener('change', function() {
@@ -424,16 +423,19 @@
       });
     });
 
-    // Filter toggle functionality
-    const filterToggle = document.getElementById('filter-toggle');
-    const filtersContainer = document.getElementById('filters-container');
+    // Accordion functionality for mobile filters
+    const filterHeaders = document.querySelectorAll('.font-heading');
 
-    filterToggle?.addEventListener('click', function() {
-      filtersContainer.classList.toggle('hidden');
-      const buttonText = this.querySelector('span');
-      buttonText.textContent = filtersContainer.classList.contains('hidden') ?
-        'Show Filters' :
-        'Hide Filters';
+    filterHeaders.forEach(header => {
+      header.addEventListener('click', function() {
+        if (window.innerWidth < 768) {
+          const content = this.nextElementSibling;
+          const icon = this.querySelector('.fas');
+          content.classList.toggle('hidden');
+          icon.classList.toggle('fa-chevron-down');
+          icon.classList.toggle('fa-chevron-up');
+        }
+      });
     });
 
     // Reset layout on screen resize
@@ -572,23 +574,17 @@
                     ${verifiedBadge}
                 </a>
             </td>
-            <td class="px-6 py-4 text-gray-300">
-                <div class="flex items-center">
-                    ${promoter.average_rating ? 
-                        `<div class="rating-wrapper flex items-center">
-                            ${promoter.rating_icons}
-                        </div>` : 
-                        'Not rated'
-                    }
-                </div>
-            </td>
+          <td class="px-6 py-4 text-gray-300">
+            <div class="rating-wrapper flex items-center">
+                ${promoter.rating_icons || 'Not rated'}
+            </div>
+          </td>
             <td class="px-6 py-4 text-gray-300">
                 ${promoter.postal_town || 'Location not specified'}
             </td>
             <td class="px-6 py-4">
                 <button onclick="showGenresModal(${JSON.stringify(Array.isArray(promoter.genres) ? promoter.genres : Object.keys(promoter.genres || {}))})"
                     class="inline-flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm text-gray-300 hover:bg-black/40">
-                    <span class="fas fa-music"></span>
                     View Genres
                 </button>
             </td>
@@ -611,7 +607,7 @@
         const mobileCard = document.createElement('div');
         mobileCard.className = 'p-4';
         mobileCard.innerHTML = `
-            <div class="relative rounded-lg bg-black/20 p-4 backdrop-blur-sm">
+            <div class="relative rounded-lg bg-yns_dark_blue p-4 backdrop-blur-sm">
                 <div class="mb-4">
                     <a href="/promoters/${promoter.name.toLowerCase().replace(/\s+/g, '-')}" 
                         class="block font-heading text-xl font-bold text-white hover:text-yns_yellow">
@@ -621,24 +617,18 @@
                 </div>
 
                 <div class="mb-4 grid grid-cols-2 gap-4">
-                    <div class="rounded-lg bg-black/20 p-3">
-                        <span class="text-sm text-gray-400">Rating</span>
-                        <div class="mt-1 flex items-center">
-                            ${promoter.average_rating ? 
-                                `<div class="rating-wrapper flex items-center">
-                                    ${promoter.rating_icons}
-                                </div>` : 
-                                '<span class="text-lg font-bold text-white">Not rated</span>'
-                            }
-                        </div>
-                    </div>
+                  <div class="rounded-lg bg-black/20 p-3">
+                      <span class="text-sm text-gray-400">Rating</span>
+                      <div class="mt-1 rating-wrapper flex items-center">
+                          ${promoter.rating_icons || 'Not rated'}
+                      </div>
+                  </div>
 
                     <div class="rounded-lg bg-black/20 p-3">
                         <span class="text-sm text-gray-400">Genres</span>
                         <div class="mt-1">
                             <button onclick="showGenresModal(${JSON.stringify(Array.isArray(promoter.genres) ? promoter.genres : Object.keys(promoter.genres || {}))})"
                                 class="inline-flex items-center gap-2 rounded-lg bg-black/40 px-3 py-1.5 text-white hover:bg-black/60">
-                                <span class="fas fa-music text-yns_yellow"></span>
                                 View Genres
                             </button>
                         </div>
@@ -646,7 +636,7 @@
                 </div>
 
                 <div class="mb-4 flex items-center rounded-lg bg-black/20 p-3">
-                    <span class="fas fa-map-marker-alt text-yns_yellow"></span>
+                    <span class="text-sm text-gray-400">Location</span>
                     <span class="ml-2 text-white">${promoter.postal_town || 'Location not specified'}</span>
                 </div>
 
@@ -666,18 +656,22 @@
         mobileView.appendChild(mobileCard);
       });
     }
-  });
 
-  // Filter toggle functionality
-  const filterToggle = document.getElementById('filter-toggle');
-  const filtersContainer = document.getElementById('filters-container');
+    // Filter toggle functionality
+    const filterToggle = document.getElementById('filter-toggle');
+    const filtersContainer = document.getElementById('filters-container');
 
-  filterToggle?.addEventListener('click', function() {
-    filtersContainer.classList.toggle('hidden');
-    const buttonText = this.querySelector('span');
-    buttonText.textContent = filtersContainer.classList.contains('hidden') ?
-      'Show Filters' :
-      'Hide Filters';
+    if (filterToggle && filtersContainer) {
+      filterToggle.addEventListener('click', function() {
+        filtersContainer.classList.toggle('hidden');
+        const buttonText = this.querySelector('span');
+        if (buttonText) {
+          buttonText.textContent = filtersContainer.classList.contains('hidden') ?
+            'Show Filters' :
+            'Hide Filters';
+        }
+      });
+    }
   });
 
   function showContactModal(promoterData) {
@@ -687,75 +681,20 @@
     const otherContacts = document.getElementById('otherContacts');
 
     modalTitle.textContent = `Contact ${promoterData.name}`;
-
-    // Clear previous content
     preferredContact.innerHTML = '';
     otherContacts.innerHTML = '';
 
-    // Helper function to create contact link
-    const createContactLink = (type, value, icon) => {
-      let href = '';
-      let iconClass = '';
-
-      switch (type) {
-        case 'email':
-          href = `mailto:${value}`;
-          iconClass = 'fas fa-envelope';
-          break;
-        case 'phone':
-          href = `tel:${value}`;
-          iconClass = 'fas fa-phone';
-          break;
-        case 'facebook':
-          href = value;
-          iconClass = 'fab fa-facebook';
-          break;
-        case 'twitter':
-          href = value;
-          iconClass = 'fab fa-twitter';
-          break;
-        case 'instagram':
-          href = value;
-          iconClass = 'fab fa-instagram';
-          break;
-        case 'tiktok':
-          href = value;
-          iconClass = 'fab fa-tiktok';
-          break;
-        case 'youtube':
-          href = value;
-          iconClass = 'fab fa-youtube';
-          break;
-        case 'spotify':
-          href = value;
-          iconClass = 'fab fa-spotify';
-          break;
-        case 'website':
-          href = value;
-          iconClass = 'fas fa-globe';
-          break;
-        default:
-          href = value;
-          iconClass = 'fas fa-link';
-      }
-
-      return `<a href="${href}" target="_blank" class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
-        <span class="${iconClass}"></span>
-        ${type.charAt(0).toUpperCase() + type.slice(1)}
-      </a>`;
-    };
-
     // Add preferred contact method first
     if (promoterData.preferred_contact) {
-      let preferred;
-      if (promoterData.preferred_contact === 'email') {
-        preferred = createContactLink('email', promoterData.contact_email, 'envelope');
-      } else if (promoterData.preferred_contact === 'phone') {
-        preferred = createContactLink('phone', promoterData.contact_number, 'phone');
-      } else {
+      let preferred = '';
+      if (promoterData.preferred_contact === 'email' && promoterData.contact_email) {
+        preferred = createContactLink('email', promoterData.contact_email);
+      } else if (promoterData.preferred_contact === 'phone' && promoterData.contact_number) {
+        preferred = createContactLink('phone', promoterData.contact_number);
+      } else if (promoterData.platforms) {
         const platform = promoterData.platforms.find(p => p.platform === promoterData.preferred_contact);
         if (platform) {
-          preferred = createContactLink(platform.platform, platform.url, platform.platform);
+          preferred = createContactLink(platform.platform, platform.url);
         }
       }
 
@@ -779,17 +718,19 @@
       otherContactsHTML += createContactLink('phone', promoterData.contact_number, 'phone');
     }
 
-    promoterData.platforms.forEach(platform => {
-      if (platform.platform !== promoterData.preferred_contact) {
-        otherContactsHTML += createContactLink(platform.platform, platform.url, platform.platform);
-      }
-    });
+    if (promoterData.platforms) {
+      promoterData.platforms.forEach(platform => {
+        if (platform.platform !== promoterData.preferred_contact) {
+          otherContactsHTML += createContactLink(platform.platform, platform.url, platform.platform);
+        }
+      });
 
-    otherContactsHTML += '</div>';
-    otherContacts.innerHTML = otherContactsHTML;
+      otherContactsHTML += '</div>';
+      otherContacts.innerHTML = otherContactsHTML;
 
-    modal.classList.remove('hidden');
-  }
+      modal.classList.remove('hidden');
+    };
+  };
 
   function showGenresModal(genres) {
     const modal = document.getElementById('genresModal');
@@ -820,6 +761,59 @@
     modal.classList.remove('hidden');
   }
 
+  // Helper function to create contact link
+  const createContactLink = (type, value) => {
+    let href = '';
+    let iconClass = '';
+
+    switch (type) {
+      case 'email':
+        href = `mailto:${value}`;
+        iconClass = 'fas fa-envelope';
+        break;
+      case 'phone':
+        href = `tel:${value}`;
+        iconClass = 'fas fa-phone';
+        break;
+      case 'facebook':
+        href = value;
+        iconClass = 'fab fa-facebook';
+        break;
+      case 'twitter':
+        href = value;
+        iconClass = 'fab fa-twitter';
+        break;
+      case 'instagram':
+        href = value;
+        iconClass = 'fab fa-instagram';
+        break;
+      case 'tiktok':
+        href = value;
+        iconClass = 'fab fa-tiktok';
+        break;
+      case 'youtube':
+        href = value;
+        iconClass = 'fab fa-youtube';
+        break;
+      case 'spotify':
+        href = value;
+        iconClass = 'fab fa-spotify';
+        break;
+      case 'website':
+        href = value;
+        iconClass = 'fas fa-globe';
+        break;
+      default:
+        href = value;
+        iconClass = 'fas fa-link';
+    }
+
+    return `<a href="${href}" target="_blank" class="flex items-center gap-2 rounded-lg bg-black/20 px-4 py-2 text-white transition-colors hover:bg-black/40">
+        <span class="${iconClass}"></span>
+        ${type.charAt(0).toUpperCase() + type.slice(1)}
+      </a>`;
+  };
+
   function closeGenresModal() {
     document.getElementById('genresModal').classList.add('hidden');
   }
@@ -828,44 +822,29 @@
     document.getElementById('contactModal').classList.add('hidden');
   }
 
-  // Add this to your existing script section
-  document.addEventListener('DOMContentLoaded', function() {
-    // Filter toggle functionality
-    const filterToggle = document.getElementById('filter-toggle');
-    const filtersContainer = document.getElementById('filters-container');
+  // Add this helper function to generate rating icons
+  function generateRatingIcons(rating) {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - Math.ceil(rating);
 
-    filterToggle?.addEventListener('click', function() {
-      filtersContainer.classList.toggle('hidden');
-      const buttonText = this.querySelector('span');
-      buttonText.textContent = filtersContainer.classList.contains('hidden') ?
-        'Show Filters' :
-        'Hide Filters';
-    });
+    let icons = '';
 
-    // Accordion functionality for mobile filters
-    const filterHeaders = document.querySelectorAll('.font-heading');
+    // Add full stars
+    for (let i = 0; i < fullStars; i++) {
+      icons += '<i class="fas fa-star text-yns_yellow"></i>';
+    }
 
-    filterHeaders.forEach(header => {
-      header.addEventListener('click', function() {
-        if (window.innerWidth < 768) { // Only on mobile
-          const content = this.nextElementSibling;
-          const icon = this.querySelector('.fas');
+    // Add half star if needed
+    if (hasHalfStar) {
+      icons += '<i class="fas fa-star-half-alt text-yns_yellow"></i>';
+    }
 
-          content.classList.toggle('hidden');
-          icon.classList.toggle('fa-chevron-down');
-          icon.classList.toggle('fa-chevron-up');
-        }
-      });
-    });
+    // Add empty stars
+    for (let i = 0; i < emptyStars; i++) {
+      icons += '<i class="far fa-star text-yns_yellow"></i>';
+    }
 
-    // Reset layout on screen resize
-    window.addEventListener('resize', function() {
-      if (window.innerWidth >= 768) {
-        filtersContainer.classList.remove('hidden');
-        document.querySelectorAll('.filter-content').forEach(content => {
-          content.classList.remove('hidden');
-        });
-      }
-    });
-  });
+    return icons;
+  }
 </script>
