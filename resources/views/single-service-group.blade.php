@@ -32,7 +32,7 @@
         </h1>
 
         <!-- Search and Filter Section -->
-        <div class="mt-4 space-y-4 p-6">
+        <div class="mt-4 space-y-4 p-4 lg:p-6">
           <!-- Search Box -->
           <div class="w-full">
             <div class="relative">
@@ -95,59 +95,11 @@
             </div>
 
             @if ($serviceName === 'photography')
-              <!-- Conditions Filter -->
-              <div class="rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
-                <h3 class="flex items-center justify-between font-heading text-lg font-bold text-white">
-                  Environment Types
-                  <span class="fas fa-chevron-down text-sm md:hidden"></span>
-                </h3>
-                <div class="filter-content mt-4 hidden md:block">
-                  @foreach ($photographyEnvironments as $category => $environments)
-                    <div class="max-h-[300px] overflow-y-auto pr-2 md:max-h-[120px] lg:max-h-[300px]">
-                      <h4 class="mb-2 mt-4 text-sm font-bold text-gray-400">{{ $category }}</h4>
-                      <div class="grid grid-cols-2 gap-y-2">
-                        @foreach ($environments as $environment)
-                          <label class="flex items-center gap-2 py-1 text-gray-300">
-                            <input type="checkbox" name="photography_filters[{{ $category }}][]"
-                              value="{{ $environment }}"
-                              class="environment-checkbox rounded border-gray-600 bg-gray-700 text-yns_yellow">
-                            <span
-                              class="truncate">{{ Str::title(str_replace('-', ' ', $environment['name'] ?? $environment)) }}</span>
-                          </label>
-                        @endforeach
-                      </div>
-                    </div>
-                  @endforeach
-                </div>
-              </div>
+              @include('components.photography-group-filters', [
+                  'photographyEnvironments' => $photographyEnvironments,
+              ])
             @elseif($serviceName === 'artist')
-              <!-- Location Filter -->
-              <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
-                <h3 class="font-heading text-lg font-semibold text-white">Locations</h3>
-                <div class="max-h-48 grid grid-cols-2 space-y-2 overflow-y-auto">
-                  @foreach ($locations as $location)
-                    <label class="flex items-center space-x-2">
-                      <input type="checkbox" name="locations[]" value="{{ $location }}"
-                        class="filter-checkbox-locations rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
-                      <span class="text-sm text-gray-300">{{ $location }}</span>
-                    </label>
-                  @endforeach
-                </div>
-              </div>
-
-              <!-- Band Type Filter -->
-              <div class="space-y-4 rounded-lg border border-gray-700 bg-black/50 p-4 backdrop-blur-sm">
-                <h3 class="font-heading text-lg font-semibold text-white">Band Type</h3>
-                <div class="space-y-2">
-                  @foreach ($bandTypes as $type)
-                    <label class="flex items-center space-x-2">
-                      <input type="checkbox" name="band_types[]" value="{{ $type }}"
-                        class="filter-checkbox-band-type rounded border-gray-600 bg-gray-700 text-yns_yellow focus:ring-yns_yellow">
-                      <span class="text-sm text-gray-300">{{ Str::title(str_replace('-', ' ', $type)) }}</span>
-                    </label>
-                  @endforeach
-                </div>
-              </div>
+              @include('components.artist-group-filters', ['bandTypes' => $bandTypes])
             @endif
           </div>
         </div>
@@ -182,72 +134,82 @@
                 <div class="rounded-lg bg-black/20 p-3">
                   <span class="text-sm text-gray-400">Rating</span>
                   <div class="mt-1 flex items-center">
-                    @if ($service['average_rating'])
-                      <div class="rating-wrapper flex items-center">
-                        {!! $service['rating_icons'] !!}
-                      </div>
-                    @else
-                      Not rated
-                    @endif
+                    <span class="text-lg font-bold text-white">
+                      @if ($service['average_rating'])
+                        <div class="rating-wrapper flex items-center">
+                          {!! $service['rating_icons'] !!}
+                        </div>
+                      @else
+                        Not rated
+                      @endif
+                    </span>
                   </div>
                 </div>
 
-                <!-- Location -->
-                <div class="mb-4 rounded-lg bg-black/20 p-3">
-                  <span class="text-sm text-gray-400">Location</span>
-                  <span class="ml-2 text-white">{{ $service['postal_town'] ?: 'Location not specified' }}</span>
+                @if ($service['genres'] || $service['environments'])
+                  <!-- Additional Info -->
+                  <div class="space-y-4">
+                    <!-- Genres row -->
+                    @if ($service['genres'])
+                      <div class="rounded-lg bg-black/20 p-3">
+                        <span class="text-sm text-gray-400">Genres</span>
+                        <div class="mt-1 text-sm text-gray-300">
+                          {{ implode(', ', array_slice($service['genres'], 0, 2)) }}
+                          @if (count($service['genres']) > 2)
+                            <span class="text-gray-400">+{{ count($service['genres']) - 2 }} more</span>
+                          @endif
+                        </div>
+                      </div>
+                    @endif
+
+                    <!-- Environments row -->
+                    @if ($service['environments'])
+                      <div class="rounded-lg bg-black/20 p-3">
+                        <span class="text-sm text-gray-400">Environment</span>
+                        <div class="mt-1 text-sm text-gray-300">
+                          @php
+                            $environmentList = [];
+                            foreach ($service['environments'] as $category => $environments) {
+                                if (is_array($environments)) {
+                                    $environmentList = array_merge($environmentList, $environments);
+                                }
+                            }
+                            $displayEnvironments = array_slice($environmentList, 0, 2);
+                          @endphp
+                          {{ implode(', ', $displayEnvironments) }}
+                          @if (count($environmentList) > 2)
+                            <span class="text-gray-400">+{{ count($environmentList) - 2 }} more</span>
+                          @endif
+                        </div>
+                      </div>
+                    @endif
+                  </div>
+                @endif
+
+              </div>
+
+              <!-- Location -->
+              <div class="mb-4 rounded-lg bg-black/20 p-3">
+                <span class="text-sm text-gray-400">Location</span>
+                <div class="mt-1 flex items-center">
+                  <span class="text-white">{{ $service['postal_town'] ?: 'Location not specified' }}</span>
                 </div>
               </div>
 
-              @if ($service['genres'] || $service['environments'])
-                <!-- Additional Info -->
-                <div class="grid grid-cols-2 gap-4">
-                  @if ($service['genres'])
-                    <div class="rounded-lg bg-black/20 p-3">
-                      <span class="text-sm text-gray-400">Genres</span>
-                      <div class="mt-1 text-sm text-gray-300">
-                        {{ implode(', ', array_slice($service['genres'], 0, 2)) }}
-                        @if (count($service['genres']) > 2)
-                          <span class="text-gray-400">+{{ count($service['genres']) - 2 }} more</span>
-                        @endif
-                      </div>
-                    </div>
-                  @endif
 
-                  @if ($service['environments'])
-                    <div class="rounded-lg bg-black/20 p-3">
-                      <span class="text-sm text-gray-400">Environment</span>
-                      <div class="mt-1 text-sm text-gray-300">
-                        @php
-                          $environmentList = [];
-                          foreach ($service['environments'] as $category => $environments) {
-                              if (is_array($environments)) {
-                                  $environmentList = array_merge($environmentList, $environments);
-                              }
-                          }
-                          $displayEnvironments = array_slice($environmentList, 0, 2);
-                        @endphp
-                        {{ implode(', ', $displayEnvironments) }}
-                        @if (count($environmentList) > 2)
-                          <span class="text-gray-400">+{{ count($environmentList) - 2 }} more</span>
-                        @endif
-                      </div>
-                    </div>
-                  @endif
-
-                  <button
-                    onclick='showContactModal({{ json_encode([
-                        'name' => $service['name'],
-                        'preferred_contact' => $service['preferred_contact'],
-                        'contact_email' => $service['contact_email'],
-                        'contact_number' => $service['contact_number'],
-                        'platforms' => $service['platforms'],
-                    ]) }})'
-                    class="rounded-lg bg-yns_yellow px-3 py-1.5 text-sm font-medium text-black hover:bg-yellow-400">
-                    Contact
-                  </button>
-                </div>
-              @endif
+              <!-- Contact button row -->
+              <button
+                onclick="showContactModal({{ json_encode([
+                    'name' => $service['name'],
+                    'preferred_contact' => $service['preferred_contact'],
+                    'contact_email' => $service['contact_email'],
+                    'contact_number' => $service['contact_number'],
+                    'platforms' => $service['platforms'],
+                ]) }})"
+                class="w-full rounded-lg bg-yns_yellow py-3 text-center font-medium text-black transition-all hover:bg-yellow-400">
+                <span class="fas fa-envelope mr-2"></span>
+                Contact {{ ucfirst($serviceType) }}
+              </button>
             </div>
           </div>
         @endforeach
@@ -337,8 +299,20 @@
         </div>
       </div>
 
-      <div class="px-6 py-4">
-        {{ $singleServices->links() }}
+      <div class="mt-4 bg-yns_dark_blue px-6 py-4" id="pagination-container">
+        <!-- Mobile Pagination (hidden on desktop) -->
+        <div class="block md:hidden">
+          <div class="text-center text-sm text-gray-400">
+            {{ $singleServices->firstItem() }} - {{ $singleServices->lastItem() }} of {{ $singleServices->total() }}
+            {{ ucfirst($serviceName) }}s {{-- Use the $serviceName variable passed from the controller --}}
+          </div>
+          {{ $singleServices->links('components.mobile-pagination') }}
+        </div>
+
+        <!-- Desktop Pagination (hidden on mobile) -->
+        <div class="hidden md:block">
+          {{ $singleServices->links('components.pagination') }}
+        </div>
       </div>
 
       <div id="contactModal" class="fixed inset-0 z-50 hidden overflow-y-auto pt-36">
@@ -436,8 +410,8 @@
       }
     }
 
-    // Search Input Handler
-    document.getElementById('services-search').addEventListener('input', function(e) {
+    // Search Input Handler with debounce
+    searchInput.addEventListener('input', function(e) {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         filters.search = e.target.value;
@@ -445,18 +419,46 @@
       }, 300);
     });
 
-    // Add event listeners for each filter type
-    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+    // Genre filter handlers
+    document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
       checkbox.addEventListener('change', function() {
-        filters.bandTypes = Array.from(document.querySelectorAll('.filter-checkbox:checked'))
+        filters.genres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
           .map(cb => cb.value);
         applyFilters();
       });
     });
 
-    document.querySelectorAll('.genre-checkbox').forEach(checkbox => {
+    // Location filter handlers
+    document.querySelectorAll('.filter-checkbox-locations').forEach(checkbox => {
       checkbox.addEventListener('change', function() {
-        filters.genres = Array.from(document.querySelectorAll('.genre-checkbox:checked'))
+        filters.locations = Array.from(document.querySelectorAll('.filter-checkbox-locations:checked'))
+          .map(cb => cb.value);
+        applyFilters();
+      });
+    });
+
+    // Environment filter handlers (for photography)
+    document.querySelectorAll('.environment-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const category = checkbox.name.match(/\[(.*?)\]/)[1];
+        if (!filters.environments[category]) {
+          filters.environments[category] = [];
+        }
+
+        if (checkbox.checked) {
+          filters.environments[category].push(checkbox.value);
+        } else {
+          filters.environments[category] = filters.environments[category]
+            .filter(value => value !== checkbox.value);
+        }
+        applyFilters();
+      });
+    });
+
+    // Band type filter handlers (for artists)
+    document.querySelectorAll('.filter-checkbox-band-type').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        filters.bandTypes = Array.from(document.querySelectorAll('.filter-checkbox-band-type:checked'))
           .map(cb => cb.value);
         applyFilters();
       });
@@ -518,45 +520,75 @@
       const mobileView = document.querySelector('.block.md\\:hidden');
       const loadingHTML = `
         <div class="px-6 py-4 text-center text-gray-400">
-          <span class="fas fa-spinner fa-spin mr-2"></span>
-          Loading...
+            <span class="fas fa-spinner fa-spin mr-2"></span>
+            Loading...
         </div>
-      `;
+    `;
 
       tbody.innerHTML = `<tr><td colspan="5">${loadingHTML}</td></tr>`;
       mobileView.innerHTML = loadingHTML;
 
-      const activeFilters = {
-        search: filters.search,
-        genres: filters.genres.length > 0 ? filters.genres : null,
-        locations: filters.locations.length > 0 ? filters.locations : null,
-        environments: filters.environmnts.length > 0 ? filters.environments : null,
+      // Get all filter values
+      const filterData = {
+        search: filters.search || '',
+        genres: Array.from(document.querySelectorAll('.genre-checkbox:checked')).map(cb => cb.value),
+        locations: Array.from(document.querySelectorAll('.filter-checkbox-locations:checked')).map(cb => cb
+          .value),
+        environments: {},
+        bandTypes: Array.from(document.querySelectorAll('.filter-checkbox-band-type:checked')).map(cb => cb.value)
       };
 
-      // Update AJAX call to handle locations properly
+      // Handle environment filters for photography
+      if (serviceType.toLowerCase() === 'photographer') {
+        document.querySelectorAll('.environment-checkbox:checked').forEach(checkbox => {
+          const category = checkbox.name.match(/\[(.*?)\]/)[1];
+          if (!filterData.environments[category]) {
+            filterData.environments[category] = [];
+          }
+          filterData.environments[category].push(checkbox.value);
+        });
+      }
+
       $.ajax({
-        url: `/services/${serviceType}/filter`,
+        url: `/services/${serviceType.toLowerCase()}/filter`,
         method: 'POST',
         data: {
           _token: $('meta[name="csrf-token"]').attr('content'),
-          filters: activeFilters,
-          sort: currentSort
+          serviceType: serviceType,
+          filters: {
+            search: filterData.search,
+            genres: filterData.genres.length > 0 ? filterData.genres : null,
+            locations: filterData.locations.length > 0 ? filterData.locations : null,
+            environments: Object.keys(filterData.environments).length > 0 ? filterData.environments : null,
+            bandTypes: filterData.bandTypes.length > 0 ? filterData.bandTypes : null,
+            sort: currentSort
+          }
         },
         success: function(response) {
-          updateResultsTable(response.results);
-          document.getElementById('pagination-container').innerHTML = response.pagination;
-
-          attachPaginationHandlers();
-
+          if (response && response.results) {
+            updateResultsTable(response.results);
+            if (response.pagination) {
+              document.getElementById('pagination-container').innerHTML = response.pagination;
+              attachPaginationHandlers();
+            }
+          } else {
+            const noResultsHTML = `
+                    <div class="px-6 py-4 text-center text-gray-400">
+                        No services found matching your criteria
+                    </div>
+                `;
+            tbody.innerHTML = `<tr><td colspan="5">${noResultsHTML}</td></tr>`;
+            mobileView.innerHTML = noResultsHTML;
+          }
         },
         error: function(error) {
           console.error('Error applying filters:', error);
           const errorHTML = `
-            <div class="px-6 py-4 text-center text-red-400">
-              <span class="fas fa-exclamation-circle mr-2"></span>
-              An error occurred while loading venues. Please try again.
-            </div>
-          `;
+                <div class="px-6 py-4 text-center text-red-400">
+                    <span class="fas fa-exclamation-circle mr-2"></span>
+                    An error occurred while loading services. Please try again.
+                </div>
+            `;
           tbody.innerHTML = `<tr><td colspan="5">${errorHTML}</td></tr>`;
           mobileView.innerHTML = errorHTML;
         }
@@ -571,23 +603,30 @@
           const page = url.searchParams.get('page');
 
           $.ajax({
-            url: '/venues/filter',
+            url: `/services/${serviceType.toLowerCase()}/filter`, // Fixed URL
             method: 'POST',
             data: {
               _token: $('meta[name="csrf-token"]').attr('content'),
-              filters: filters,
-              sort: currentSort,
+              serviceType: serviceType, // Added serviceType
+              filters: {
+                search: filters.search,
+                genres: filters.genres.length > 0 ? filters.genres : null,
+                locations: filters.locations.length > 0 ? filters.locations : null,
+                environments: Object.keys(filters.environments).length > 0 ? filters.environments :
+                  null,
+                bandTypes: filters.bandTypes.length > 0 ? filters.bandTypes : null,
+                sort: currentSort
+              },
               page: page
             },
             success: function(response) {
-              updateResultsTable(response.results);
-              document.getElementById('pagination-container').innerHTML = response.pagination;
-              attachPaginationHandlers();
-
-              // Scroll to top of results
-              document.querySelector('.mx-2.overflow-hidden').scrollIntoView({
-                behavior: 'smooth'
-              });
+              if (response && response.results) {
+                updateResultsTable(response.results);
+                if (response.pagination) {
+                  document.getElementById('pagination-container').innerHTML = response.pagination;
+                  attachPaginationHandlers();
+                }
+              }
             },
             error: function(error) {
               console.error('Error fetching page:', error);
@@ -597,15 +636,23 @@
       });
     }
 
-    function updateResultsTable(response) {
+    function updateResultsTable(results) {
+      // Get table body and mobile view containers
       const tbody = document.getElementById('resultsTableBody');
-      const mobileView = document.querySelector('.grid.gap-4.lg\\:hidden');
+      const mobileView = document.querySelector('.block.md\\:hidden');
 
-      // Clear both views
+      // Ensure both containers exist
+      if (!tbody || !mobileView) {
+        console.error('Required containers not found');
+        return;
+      }
+
+      // Clear existing content
       tbody.innerHTML = '';
       mobileView.innerHTML = '';
 
-      if (!response.results || response.results.length === 0) {
+      // Handle no results case
+      if (!results || results.length === 0) {
         const noResultsHTML = `
             <div class="px-6 py-4 text-center text-gray-400">
                 No services found matching your criteria
@@ -616,23 +663,28 @@
         return;
       }
 
-      // Update table view
-      response.results.forEach(service => {
+      // Generate verified badge helper function
+      function generateVerifiedBadge() {
+        return `
+            <span class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+                <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                </svg>
+                Verified
+            </span>
+        `;
+      }
+
+      // Update desktop table view
+      results.forEach(service => {
+        const verifiedBadge = service.is_verified ? generateVerifiedBadge() : '';
+
         const row = document.createElement('tr');
         row.className = 'hover:bg-black/20';
-
-        const verifiedBadge = venue.is_verified ? `
-          <span class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
-            <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
-            </svg>
-            Verified
-          </span>` : '';
-
         row.innerHTML = `
             <td class="px-6 py-4">
                 <a href="/services/${service.service_type}/${service.name.toLowerCase().replace(/\s+/g, '-')}" 
-                    class="font-medium text-white hover:text-yns_yellow">
+                   class="font-medium text-white hover:text-yns_yellow">
                     ${service.name}
                     ${verifiedBadge}
                 </a>
@@ -653,73 +705,56 @@
                     contact_number: service.contact_number,
                     platforms: service.platforms
                 })})'
-                    class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+                class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
                     Contact Options
                 </button>
             </td>
         `;
         tbody.appendChild(row);
 
-        // Create mobile card
+        // Update mobile view
         const mobileCard = document.createElement('div');
-        mobileCard.className = 'rounded-lg border border-gray-700 bg-black/50 p-4';
+        mobileCard.className = 'pt-4 first:pt-0';
         mobileCard.innerHTML = `
-        <div class="relative rounded-lg bg-yns_dark_blue p-4 backdrop-blur-sm">
-          <div class="mb-4">
-                        <a href="/services/${service.service_type}/${service.name.toLowerCase().replace(/\s+/g, '-')}"
-              class="block font-heading text-xl font-bold text-white hover:text-yns_yellow">
-                            ${service.name}
-                            ${verifiedBadge}
-                        </a>
+            <div class="relative rounded-lg bg-yns_dark_blue/90 p-4 backdrop-blur-sm">
+                <div class="mb-4 flex items-center justify-between">
+                    <a href="/services/${service.service_type}/${service.name.toLowerCase().replace(/\s+/g, '-')}"
+                       class="font-medium text-white hover:text-yns_yellow">
+                        ${service.name}
+                        ${verifiedBadge}
+                    </a>
                 </div>
-
-          <div class="mb-4 grid grid-cols-2 gap-4">
-                    <div class="rounded-lg bg-black/20 p-3">
-                        <span class="text-sm text-gray-400">Rating</span>
-                <div class="mt-1 rating-wrapper flex items-center">
-                    ${service.rating_icons || 'Not rated'}
-                </div>
-                    </div>
-
-          <div class="mb-4 flex items-center rounded-lg bg-black/20 p-3">
-                        <span class="text-sm text-gray-400">Location</span>
-            <span class="ml-2 text-white">${service.postal_town || 'Location not specified'}</span>
-
-                    </div>
-                </div>
-
-                ${(service.genres || service.environments) ? `
+                
+                <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        ${service.genres ? `
-                            <div class="rounded-lg bg-black/20 p-3">
-                                <span class="text-sm text-gray-400">Genres</span>
-                                <div class="mt-1 text-sm text-gray-300">
-                                    ${generateGenresList(service.genres)}
+                        <div class="rounded-lg bg-black/20 p-3">
+                            <span class="text-sm text-gray-400">Rating</span>
+                            <div class="mt-1">
+                                <div class="rating-wrapper flex items-center">
+                                    ${service.rating_icons || '<span class="text-sm text-gray-300">Not rated</span>'}
                                 </div>
                             </div>
-                        ` : ''}
-                        
-                        ${service.environments ? `
-                            <div class="rounded-lg bg-black/20 p-3">
-                                <span class="text-sm text-gray-400">Environment</span>
-                                <div class="mt-1 text-sm text-gray-300">
-                                    ${generateEnvironmentsList(service.environments)}
-                                </div>
+                        </div>
+                        <div class="rounded-lg bg-black/20 p-3">
+                            <span class="text-sm text-gray-400">Location</span>
+                            <div class="mt-1 text-sm text-gray-300">
+                                ${service.postal_town || 'Location not specified'}
                             </div>
-                        ` : ''}
+                        </div>
                     </div>
-                ` : ''}
-                                <button
-                        onclick='showContactModal(${JSON.stringify({
-                            name: service.name,
-                            preferred_contact: service.preferred_contact,
-                            contact_email: service.contact_email,
-                            contact_number: service.contact_number,
-                            platforms: service.platforms
-                        })})'
-                        class="rounded-lg bg-yns_yellow px-3 py-1.5 text-sm font-medium text-black hover:bg-yellow-400">
+
+                    <button onclick='showContactModal(${JSON.stringify({
+                        name: service.name,
+                        preferred_contact: service.preferred_contact,
+                        contact_email: service.contact_email,
+                        contact_number: service.contact_number,
+                        platforms: service.platforms
+                    })})'
+                    class="w-full rounded-lg bg-yns_yellow py-3 text-center font-medium text-black transition-all hover:bg-yellow-400">
+                        <span class="fas fa-envelope mr-2"></span>
                         Contact
                     </button>
+                </div>
             </div>
         `;
         mobileView.appendChild(mobileCard);

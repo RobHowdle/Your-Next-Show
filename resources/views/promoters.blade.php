@@ -345,6 +345,7 @@
       </div>
     </div>
 </x-guest-layout>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     let currentSort = {

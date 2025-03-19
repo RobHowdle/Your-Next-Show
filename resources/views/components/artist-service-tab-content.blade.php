@@ -4,7 +4,6 @@
       <!-- About Tab -->
       <div id="about" class="tab-panel hidden">
         <div class="prose-invert prose mb-4 max-w-none">
-          <h3 class="mb-4 font-bold text-white">Description</h3>
           {!! $singleService->description ?? 'We\'re currently working on our description. Check back soon!' !!}
         </div>
       </div>
@@ -210,7 +209,7 @@
   </div>
 
   <!-- Sidebar -->
-  <div class="space-y-8">
+  <div class="hidden space-y-8 lg:block">
     <div class="rounded-xl border border-gray-800 bg-yns_dark_blue/75 p-6 backdrop-blur-sm">
       <h2 class="mb-6 font-heading text-xl font-bold text-white">Quick Facts</h2>
       <div class="space-y-4">

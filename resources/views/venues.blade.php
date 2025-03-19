@@ -218,13 +218,15 @@
                 <div class="rounded-lg bg-black/20 p-3">
                   <span class="text-sm text-gray-400">Rating</span>
                   <div class="mt-1 flex items-center">
-                    @if ($venue['average_rating'])
-                      <div class="rating-wrapper flex items-center">
-                        {!! $venue['rating_icons'] !!}
-                      </div>
-                    @else
-                      Not rated
-                    @endif
+                    <span class="text-lg font-bold text-white">
+                      @if ($venue['average_rating'])
+                        <div class="rating-wrapper flex items-center">
+                          {!! $venue['rating_icons'] !!}
+                        </div>
+                      @else
+                        Not rated
+                      @endif
+                    </span>
                   </div>
                 </div>
 

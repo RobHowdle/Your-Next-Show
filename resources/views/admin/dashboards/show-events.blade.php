@@ -68,145 +68,223 @@
             <button id="load-more-upcoming" class="hidden"></button>
           @endif
         </div>
+        <div id="loading-spinner"
+          class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" aria-hidden="true"
+          role="progressbar">
+          <div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-yns_yellow"></div>
+        </div>
       </div>
     </div>
   </div>
-  </div>
 </x-app-layout>
+<style>
+  .fade-out {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .event-card {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+</style>
 <script>
-  let upcomingPage = 1;
+  class AdminEventManager {
+    constructor() {
+      // Initialize state
+      this.upcomingPage = 1;
+      this.pastPage = 1;
+      this.currentTab = 'upcoming';
+      this.dashboardType = '{{ $dashboardType }}';
+      this.isLoading = false;
 
-  document.getElementById('upcoming-tab').classList.add('border-b-yns_yellow', 'text-yns_yellow');
-  document.getElementById('past-tab').classList.add('text-white');
+      // Cache DOM elements
+      this.elements = {
+        upcomingTab: document.getElementById('upcoming-tab'),
+        pastTab: document.getElementById('past-tab'),
+        upcomingEvents: document.getElementById('upcoming-events'),
+        pastEvents: document.getElementById('past-events'),
+        loadMoreUpcoming: document.getElementById('load-more-upcoming'),
+        loadMorePast: document.getElementById('load-more-past'),
+        loadingSpinner: document.getElementById('loading-spinner')
+      };
 
-  document.getElementById('upcoming-tab').addEventListener('click', function() {
-    document.getElementById('upcoming-events').classList.remove('hidden');
-    document.getElementById('past-events').classList.add('hidden');
+      this.initializeEventListeners();
+    }
 
-    // Add active styles to Upcoming tab
-    this.classList.add('border-b-yns_yellow', 'text-yns_yellow');
-    this.classList.remove('text-white');
+    initializeEventListeners() {
+      // Tab switching
+      this.elements.upcomingTab?.addEventListener('click', () => this.switchTab('upcoming'));
+      this.elements.pastTab?.addEventListener('click', () => this.switchTab('past'));
 
-    // Remove active styles from Past tab
-    document.getElementById('past-tab').classList.remove('border-b-yns_yellow', 'text-yns_yellow');
-    document.getElementById('past-tab').classList.add('text-white');
-  });
+      // Load more buttons
+      this.elements.loadMoreUpcoming?.addEventListener('click', (e) => this.loadMore(e, 'upcoming'));
+      this.elements.loadMorePast?.addEventListener('click', (e) => this.loadMore(e, 'past'));
 
-  document.getElementById('past-tab').addEventListener('click', function() {
-    document.getElementById('past-events').classList.remove('hidden');
-    document.getElementById('upcoming-events').classList.add('hidden');
-
-    // Add active styles to Past tab
-    this.classList.add('border-b-yns_yellow', 'text-yns_yellow');
-    this.classList.remove('text-white');
-
-    // Remove active styles from Upcoming tab
-    document.getElementById('upcoming-tab').classList.remove('border-b-yns_yellow', 'text-yns_yellow');
-    document.getElementById('upcoming-tab').classList.add('text-white');
-  });
-
-  // Load more past events
-  jQuery('#past-tab').on('click', function() {
-    jQuery('#load-more-upcoming').addClass('hidden');
-    jQuery('#load-more-past').removeClass('hidden');
-  });
-
-  jQuery('#upcoming-tab').on('click', function() {
-    jQuery('#load-more-past').addClass('hidden');
-    jQuery('#load-more-upcoming').removeClass('hidden');
-  });
-
-  // Load More Upcoming Events
-  jQuery('#load-more-upcoming').on('click', function(e) {
-    e.preventDefault(); // Prevent the default button action if it's a button
-
-    upcomingPage++; // Increment the page number for the next load
-
-    $.ajaxSetup({
-      headers: {
-        'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content')
-      }
-    });
-
-    $.ajax({
-      url: "{{ route('admin.dashboard.load-more-upcoming-events', ['dashboardType' => $dashboardType]) }}",
-      type: "GET",
-      data: {
-        page: upcomingPage
-      },
-      success: function(data) {
-        jQuery('#upcoming-events .grid').append(data.html);
-        if (!data.hasMorePages) {
-          jQuery('#load-more-upcoming').hide();
+      // Delete event delegation
+      document.addEventListener('click', async (e) => {
+        if (e.target.closest('.delete-event')) {
+          e.preventDefault();
+          const eventId = e.target.closest('.delete-event').dataset.id;
+          await this.deleteEvent(eventId);
         }
-      },
-      error: function(xhr) {
-        showFailureNotification("An error occurred while loading events.");
-      }
-    });
-  });
+      });
+    }
 
-  // Load More Past Events
-  jQuery('#load-more-past').on('click', function(e) {
-    e.preventDefault();
-    upcomingPage++;
+    async loadMore(e, type) {
+      if (this.isLoading) return;
+      e.preventDefault();
 
-    $.ajaxSetup({
-      headers: {
-        'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content')
-      }
-    });
+      const page = type === 'upcoming' ? ++this.upcomingPage : ++this.pastPage;
+      await this.loadEvents(type, page);
+    }
 
-    $.ajax({
-      url: "{{ route('admin.dashboard.load-more-past-events', ['dashboardType' => $dashboardType]) }}",
-      type: "GET",
-      data: {
-        page: upcomingPage
-      },
-      success: function(data) {
-        jQuery('#upcoming-events .grid').append(data.html);
+    async loadEvents(type, page = 1) {
+      this.toggleLoading(true);
+      const container = type === 'upcoming' ?
+        this.elements.upcomingEvents :
+        this.elements.pastEvents;
 
-        if (!data.hasMorePages) {
-          jQuery('#load-more-past').hide();
-        }
-      },
-      error: function(xhr) {
-        showFailureNotification("An error occurred while loading events.");
-      }
-    });
-  });
+      try {
+        const endpoint = type === 'upcoming' ?
+          `/dashboard/${this.dashboardType}/events/load-more-upcoming` :
+          `/dashboard/${this.dashboardType}/events/load-more-past`;
 
-
-
-  // Delete Event
-  jQuery(document).on('click', '.delete-event', function() {
-    const eventId = jQuery(this).data('id'); // Get event ID from data attribute
-    // Show confirmation notification
-    showConfirmationNotification({
-      text: 'Are you sure you want to delete this event?'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        $.ajax({
-          url: `/dashboard/promoter/events/${eventId}`, // Your delete route
-          type: 'DELETE',
+        const response = await fetch(`${endpoint}?page=${page}`, {
           headers: {
-            'X-CSRF-TOKEN': jQuery('meta[name="csrf-token"]').attr('content')
-          },
-          success: function(response) {
-            showSuccessNotification(response.message); // Assuming response has a message property
-            jQuery(`.event-card[data-id="${eventId}"]`)
-              .remove(); // This line should work if the ID matches
-          },
-          error: function(xhr) {
-            showFailureNotification(xhr.responseJSON.message ||
-              'An error occurred while deleting the event.');
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
           }
         });
 
-        jQuery(`.event-card[data-id="${eventId}"]`).fadeOut(300, function() {
-          jQuery(this).remove(); // Remove the element after the fade-out effect
-        });
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+
+        if (page === 1) {
+          container.innerHTML = `
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    ${data.html}
+                </div>
+            `;
+        } else {
+          const gridContainer = container.querySelector('.grid');
+          if (gridContainer) {
+            gridContainer.insertAdjacentHTML('beforeend', data.html);
+          }
+        }
+
+        // Update load more button visibility
+        const loadMoreButton = type === 'upcoming' ?
+          this.elements.loadMoreUpcoming :
+          this.elements.loadMorePast;
+
+        if (loadMoreButton) {
+          loadMoreButton.classList.toggle('hidden', !data.hasMorePages);
+        }
+
+      } catch (error) {
+        console.error('Error loading events:', error);
+        this.showError('Failed to load events. Please try again.');
+      } finally {
+        this.toggleLoading(false);
       }
-    });
+    }
+
+    async deleteEvent(eventId) {
+      if (!eventId || this.isLoading) return;
+
+      try {
+        const confirmed = await Swal.fire({
+          title: 'Are you sure?',
+          text: 'This event will be permanently deleted.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#FFB800',
+          cancelButtonColor: '#ef4444',
+          confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (confirmed.isConfirmed) {
+          const response = await fetch(`/dashboard/${this.dashboardType}/events/${eventId}/delete`, {
+            method: 'DELETE',
+            headers: {
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!response.ok) throw new Error('Failed to delete event');
+
+          const eventCard = document.querySelector(`.event-card[data-id="${eventId}"]`);
+          if (eventCard) {
+            eventCard.classList.add('fade-out');
+            setTimeout(() => eventCard.remove(), 300);
+          }
+
+          await Swal.fire(
+            'Deleted!',
+            'Event has been deleted.',
+            'success'
+          );
+        }
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        this.showError('Failed to delete event. Please try again.');
+      }
+    }
+
+    toggleLoading(show) {
+      this.isLoading = show;
+      if (this.elements.loadingSpinner) {
+        if (show) {
+          this.elements.loadingSpinner.classList.remove('hidden');
+          document.body.style.overflow = 'hidden'; // Prevent scrolling while loading
+        } else {
+          this.elements.loadingSpinner.classList.add('hidden');
+          document.body.style.overflow = ''; // Restore scrolling
+        }
+      }
+    }
+
+    showError(message) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: message,
+        confirmButtonColor: '#FFB800'
+      });
+    }
+
+    switchTab(tab) {
+      if (this.isLoading || this.currentTab === tab) return;
+
+      this.currentTab = tab;
+      const isUpcoming = tab === 'upcoming';
+
+      // Update UI
+      this.elements.upcomingEvents.classList.toggle('hidden', !isUpcoming);
+      this.elements.pastEvents.classList.toggle('hidden', isUpcoming);
+
+      // Update tab styles
+      this.elements.upcomingTab.classList.toggle('border-b-yns_yellow', isUpcoming);
+      this.elements.pastTab.classList.toggle('border-b-yns_yellow', !isUpcoming);
+
+      // Reset page number when switching tabs
+      if (isUpcoming) {
+        this.upcomingPage = 1;
+      } else {
+        this.pastPage = 1;
+      }
+
+      // Load initial data if needed
+      this.loadEvents(tab, 1);
+    }
+  }
+
+  // Initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    window.adminEventManager = new AdminEventManager();
   });
 </script>
