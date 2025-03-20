@@ -1,4 +1,5 @@
-<div class="event-card bg-yns_light_gray1 font-sans text-black shadow-md" data-id={{ $event->id }}>
+<div class="event-card bg-yns_light_gray1 font-sans text-black shadow-md" data-id="{{ $event->id }}"
+  data-dashboard-type="{{ $dashboardType }}">
   <img class="h-52 w-full object-cover"
     src="{{ asset($event->poster_url) ? asset($event->poster_url) : asset('images/system/yns_logo.png') }}"
     alt="{{ $event->event_name }}">

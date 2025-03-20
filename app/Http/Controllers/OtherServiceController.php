@@ -20,6 +20,27 @@ use App\Models\PhotographerReviews;
 
 class OtherServiceController extends Controller
 {
+    private function extractGenres($genresJson)
+    {
+        if (empty($genresJson)) {
+            return [];
+        }
+
+        $genres = json_decode($genresJson, true);
+        if (!$genres) {
+            return [];
+        }
+
+        $selectedGenres = [];
+        foreach ($genres as $genre => $data) {
+            if ($data['all'] || !empty($data['subgenres'])) {
+                $selectedGenres[] = $genre;
+            }
+        }
+
+        return array_unique($selectedGenres);
+    }
+
     /**
      * Helper function to render rating icons
      */
@@ -145,7 +166,6 @@ class OtherServiceController extends Controller
 
         // Transform the services to include all necessary data
         $transformedServices = $singleServices->through(function ($service) use ($serviceName) {
-            // Get the appropriate review model based on service type
             $reviewScore = match ($serviceName) {
                 'artist' => BandReviews::calculateOverallScore($service->id),
                 'photography' => PhotographyReviews::calculateOverallScore($service->id),
@@ -168,7 +188,7 @@ class OtherServiceController extends Controller
                 'average_rating' => $reviewScore,
                 'rating_icons' => $this->renderRatingIcons($reviewScore),
                 'service_type' => $serviceName,
-                'genres' => json_decode($service->genre ?? '{}', true),
+                'genres' => $this->extractGenres($service->genre),
                 'environments' => json_decode($service->environment_type ?? '{}', true)
             ];
         });
@@ -235,94 +255,113 @@ class OtherServiceController extends Controller
 
     public function filter(Request $request)
     {
-        switch ($request->serviceType) {
-            case 'Photographer':
-                $serviceType = 'Photography';
-                break;
-            case 'Videographer':
-                $serviceType = 'Videography';
-                break;
-            case 'Designer':
-                $serviceType = 'Designer';
-                break;
-            case 'Artist':
-                $serviceType = 'Artist';
-                break;
-        }
-        $query = OtherService::query()->where('services', $serviceType);
+        // Log incoming request
+        \Log::info('Filter request received:', [
+            'service_type' => $request->serviceType,
+            'filters' => $request->input('filters')
+        ]);
 
-        // Apply search filter with detailed logging
-        if ($search = $request->input('filters.search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('postal_town', 'like', "%{$search}%");
+        // Normalize service type
+        $serviceType = match ($request->serviceType) {
+            'Photographer' => 'Photography',
+            'Videographer' => 'Videography',
+            'Designer' => 'Designer',
+            'Artist' => 'Artist',
+            default => $request->serviceType
+        };
+
+        \Log::info('Normalized service type:', ['type' => $serviceType]);
+
+        $query = OtherService::query()->where('services', $serviceType);
+        $filters = $request->input('filters', []);
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            \Log::info('Applying search filter:', ['search' => $filters['search']]);
+            $query->where(function ($q) use ($filters) {
+                $q->where('name', 'like', "%{$filters['search']}%")
+                    ->orWhere('postal_town', 'like', "%{$filters['search']}%");
             });
         }
 
-        // Apply capacity filters
-        if ($locations = $request->input('filters.locations')) {
-            $query->where('postal_town', '>=', $locations);
+        // Apply location filter
+        if (!empty($filters['locations'])) {
+            \Log::info('Applying location filter:', ['locations' => $filters['locations']]);
+            $query->whereIn('postal_town', $filters['locations']);
         }
 
+        // Service-specific filters
+        switch ($serviceType) {
+            case 'Photography':
+                if (!empty($filters['environments'])) {
+                    \Log::info('Applying photography environment filters:', [
+                        'environments' => $filters['environments']
+                    ]);
 
-        // Apply genre filters
-        if ($selectedGenres = $request->input('filters.genres')) {
-            if (!empty($selectedGenres)) {
-                $query->where(function ($q) use ($selectedGenres) {
-                    foreach ($selectedGenres as $genre) {
-                        $q->orWhereJsonContains('genre', $genre);
-                    }
-                });
-            }
-        }
-
-        // Apply genre filters
-        if ($selectedBandTypes = $request->input('filters.bandTypes')) {
-            if (!empty($selectedBandTypes)) {
-                $query->where(function ($q) use ($selectedBandTypes) {
-                    foreach ($selectedBandTypes as $bandType) {
-                        $q->orWhereJsonContains('band_type', $bandType);
-                    }
-                });
-            }
-        }
-
-        if ($selectedEnvironments = $request->input('filters.environments')) {
-            if (!empty($selectedEnvironments)) {
-                $query->where(function ($q) use ($selectedEnvironments) {
-                    foreach ($selectedEnvironments as $category => $environments) {
-                        foreach ($environments as $environment) {
-                            // Check both types and settings arrays in the JSON
-                            $q->orWhere(function ($subQ) use ($environment) {
-                                $subQ->whereJsonContains('environment_type->types', $environment)
-                                    ->orWhereJsonContains('environment_type->settings', $environment);
-                            });
+                    $query->where(function ($q) use ($filters) {
+                        foreach ($filters['environments'] as $category => $environments) {
+                            if (!empty($environments)) {
+                                foreach ($environments as $environment) {
+                                    // Modified JSON query to handle array structure
+                                    $q->orWhere(function ($subQ) use ($environment) {
+                                        $subQ->whereRaw('JSON_CONTAINS(JSON_EXTRACT(environment_type, "$.types"), ?)', ['"' . $environment . '"'])
+                                            ->orWhereRaw('JSON_CONTAINS(JSON_EXTRACT(environment_type, "$.settings"), ?)', ['"' . $environment . '"']);
+                                    });
+                                }
+                            }
                         }
-                    }
-                });
-            }
+                    });
+                }
+                break;
+
+            case 'Artist':
+                if (!empty($filters['genres'])) {
+                    \Log::info('Applying artist genre filters:', ['genres' => $filters['genres']]);
+                    $query->where(function ($q) use ($filters) {
+                        foreach ($filters['genres'] as $genre) {
+                            $q->orWhereRaw("JSON_EXTRACT(genre, '$." . $genre . ".all') = true")
+                                ->orWhereRaw("JSON_EXTRACT(genre, '$." . $genre . ".subgenres') != '[]'");
+                        }
+                    });
+                }
+
+                if (!empty($filters['bandTypes'])) {
+                    \Log::info('Applying band type filters:', ['bandTypes' => $filters['bandTypes']]);
+                    $query->where(function ($q) use ($filters) {
+                        foreach ($filters['bandTypes'] as $type) {
+                            $q->orWhereJsonContains('band_type', $type);
+                        }
+                    });
+                }
+                break;
         }
 
-        // Execute query and log results
-        $services = $query->get();
+        // Log the final SQL query
+        \Log::info('Generated SQL query:', [
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
 
-        // Map results
-        $services = $services->map(function ($service) {
-            $serviceReview = null;
-            switch ($service) {
-                case 'Artist':
-                    $serviceReview = BandReviews::calculateOverallScore($service->id);
-                    break;
-                case 'Photography':
-                    $serviceReview = PhotographyReviews::calculateOverallScore($service->id);
-                    break;
-                case 'Videography':
-                    $serviceReview = VideographyReviews::calculateOverallScore($service->id);
-                    break;
-                case 'Designer':
-                    $serviceReview = DesignerReviews::calculateOverallScore($service->id);
-                    break;
-            }
+        // Get results and transform
+        $services = $query->paginate(10);
+
+        \Log::info('Query results:', [
+            'total_results' => $services->total(),
+            'current_page' => $services->currentPage(),
+            'per_page' => $services->perPage()
+        ]);
+
+        // Get results and transform
+        $services = $query->paginate(10);
+        $transformedServices = $services->through(function ($service) use ($serviceType) {
+            $reviewScore = match ($serviceType) {
+                'Artist' => BandReviews::calculateOverallScore($service->id),
+                'Photography' => PhotographyReviews::calculateOverallScore($service->id),
+                'Videography' => VideographyReviews::calculateOverallScore($service->id),
+                'Designer' => DesignerReviews::calculateOverallScore($service->id),
+                default => 0
+            };
+
             return [
                 'id' => $service->id,
                 'name' => $service->name,
@@ -333,14 +372,20 @@ class OtherServiceController extends Controller
                 'is_verified' => $service->is_verified,
                 'preferred_contact' => $service->preferred_contact,
                 'platforms' => SocialLinksHelper::processSocialLinks($service->contact_link),
-                'average_rating' => $serviceReview,
-                'rating_icons' => $this->renderRatingIcons($serviceReview)
-
+                'average_rating' => $reviewScore,
+                'rating_icons' => $this->renderRatingIcons($reviewScore),
+                'service_type' => strtolower($serviceType),
+                'genres' => $this->extractGenres($service->genre),
+                'environments' => json_decode($service->environment_type ?? '{}', true),
+                'band_types' => json_decode($service->band_type ?? '{}', true),
+                'styles' => json_decode($service->styles ?? '{}', true),
+                'design_types' => json_decode($service->design_type ?? '{}', true)
             ];
         });
 
         return response()->json([
-            'results' => $services
+            'results' => $transformedServices->items(),
+            'pagination' => $services->links()->render()
         ]);
     }
 

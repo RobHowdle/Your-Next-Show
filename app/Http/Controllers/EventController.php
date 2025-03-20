@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use App\Jobs\SyncGoogleCalendarEvents;
 use App\Http\Requests\StoreUpdateEventRequest;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 
 class EventController extends Controller
 {
@@ -141,67 +142,45 @@ class EventController extends Controller
         ]);
     }
 
-    public function loadMoreUpcomingEvents($dashboardType, Request $request)
+    public function loadMorePastEvents(Request $request, $dashboardType)
     {
-        $modules = collect(session('modules', []));
-
-        $user = Auth::user()->load('roles');
-        $role = $user->getRoleNames()->first();
-
-        $userPromoter = $user->promoters()->first();
-
-        $currentPage = $request->input('page', 1);
-
-        $upcomingEvents = Event::where('event_date', '>', now())
-            ->where(function ($query) use ($user, $userPromoter) {
-                if ($userPromoter) {
-                    $query->where('user_id', $user->id)
-                        ->orWhereIn('user_id', function ($subquery) use ($userPromoter) {
-                            $subquery->select('id')->from('users')
-                                ->where('promoter_id', $userPromoter->id);
-                        });
-                } else {
-                    $query->where('user_id', $user->id);
-                }
-            })
-            ->orderBy('event_date')
-            ->paginate(3, ['*'], 'page', $currentPage);
-
-        $hasMorePages = $upcomingEvents->hasMorePages();
-
-        $html = '';
-        foreach ($upcomingEvents as $event) {
-            $html .= view('admin.dashboards.partials.event_card', ['promoter' => $userPromoter, 'event' => $event])->render();
-        }
-
-        return response()->json([
-            'html' => $html,
-            'hasMorePages' => $hasMorePages
-        ]);
-    }
-
-    public function loadMorePastEvents(Request $request)
-    {
-        $modules = collect(session('modules', []));
-
-        $promoter = Auth::user()->promoters()->first();
-
-        $currentPage = $request->input('page', 1);
-
-        $pastEvents = Event::where('event_date', '<', now())
-            ->orderBy('event_date')
-            ->paginate(3, ['*'], 'page', $currentPage);
-
-        $hasMorePages = $pastEvents->hasMorePages();
+        $page = $request->get('page', 1);
+        $pastEvents = Event::where('event_date', '<=', now())
+            ->orderBy('event_date', 'desc')
+            ->paginate(3, ['*'], 'page', $page);
 
         $html = '';
         foreach ($pastEvents as $event) {
-            $html .= view('admin.dashboards.partials.event_card', ['promoter' => $promoter, 'event' => $event])->render();
+            $html .= view('admin.dashboards.partials.event_card', [
+                'event' => $event,
+                'dashboardType' => $dashboardType
+            ])->render();
         }
 
         return response()->json([
             'html' => $html,
-            'hasMorePages' => $hasMorePages
+            'hasMorePages' => $pastEvents->hasMorePages()
+        ]);
+    }
+
+    public function loadMoreUpcomingEvents(Request $request, $dashboardType)
+    {
+        $page = $request->get('page', 1);
+        $upcomingEvents = Event::where('event_date', '>', now())
+            ->orderBy('event_date', 'asc')
+            ->paginate(3, ['*'], 'page', $page);
+
+        $html = '';
+        foreach ($upcomingEvents as $event) {
+            $html .= view('admin.dashboards.partials.event_card', [
+                'event' => $event,
+                'dashboardType' => $dashboardType
+            ])->render();
+        }
+
+        return response()->json([
+            'html' => $html,
+            'hasMorePages' => $upcomingEvents->hasMorePages()
         ]);
     }
 

@@ -6,6 +6,7 @@ use App\TrackChanges;
 use App\Models\TicketPlatform;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Event extends Model
@@ -96,5 +97,23 @@ class Event extends Model
     public function ticketPlatforms()
     {
         return $this->hasMany(TicketPlatform::class);
+    }
+
+    /**
+     * Scope a query to only include past events
+     */
+    public function scopePast(Builder $query): Builder
+    {
+        return $query->where('event_date', '<', now())
+            ->orderBy('event_date', 'desc');
+    }
+
+    /**
+     * Scope a query to only include upcoming events
+     */
+    public function scopeUpcoming(Builder $query): Builder
+    {
+        return $query->where('event_date', '>=', now())
+            ->orderBy('event_date', 'asc');
     }
 }

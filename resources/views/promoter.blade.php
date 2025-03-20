@@ -123,7 +123,7 @@
       <div class="grid gap-8 lg:grid-cols-3">
         <div class="lg:col-span-2">
           <div
-            class="min-h-[400px] rounded-b-xl rounded-r-xl border border-gray-800 bg-yns_dark_blue/75 p-8 backdrop-blur-sm">
+            class="min-h-[400px] rounded-xl rounded-r-xl border border-gray-800 bg-yns_dark_blue/75 p-4 backdrop-blur-sm lg:rounded-b-xl lg:p-8">
             <!-- About Tab -->
             <div id="about" class="tab-panel hidden">
               <div class="prose-invert prose max-w-none">
@@ -146,7 +146,7 @@
                 $bandTypes = json_decode($promoter->band_type ?? '[]');
               @endphp
               @if ($bandTypes == [])
-                <p class="text-center md:text-left">We don't have any specific band types listed, please <a
+                <p class="text-left">We don't have any specific band types listed, please <a
                     class="underline hover:text-yns_yellow" href="mailto:{{ $promoter->contact_email }}">contact us.</a>
                   if you would like to enquire about
                   booking
@@ -178,7 +178,7 @@
                     @endswitch
                   @endforeach
                 </ul>
-                <p class="mt-2 text-center md:text-left">If you would like to enquire about a show, please <a
+                <p class="mt-2 text-left">If you would like to enquire about a show, please <a
                     class="underline hover:text-yns_yellow" href="mailto:{{ $promoter->email }}">contact us.</a></p>
               @endif
 
@@ -250,8 +250,8 @@
                     @endforeach
                   </div>
                 @else
-                  <p class="text-center text-lg text-gray-300">
-                    No upcoming events scheduled at {{ $promoter->name }} in the next month.
+                  <p class="text-left text-lg text-gray-300">
+                    No upcoming events scheduled with {{ $promoter->name }} in the next month.
                   </p>
                 @endif
               </div>
@@ -303,7 +303,7 @@
                     @endforeach
                   </div>
                 @else
-                  <p class="mt-4 text-center">
+                  <p class="mt-4 text-left">
                     No reviews available for {{ $promoter->name }} yet. Be the first to leave a review!
                   </p>
                 @endif
