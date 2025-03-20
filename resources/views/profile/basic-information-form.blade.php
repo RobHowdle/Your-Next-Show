@@ -10,7 +10,7 @@
   <div class="col-start-1 col-end-2">
     <div class="group mb-6">
       <x-input-label-dark for="name">{{ ucfirst($dashboardType) }} Name:</x-input-label-dark>
-      <x-text-input id="name" name="name" value="{{ old('name', $profileData['name']) }}"></x-text-input>
+      <x-text-input id="name" name="name" value="{{ old('name', $profileData['name'] ?? '') }}"></x-text-input>
       @error('name')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -19,7 +19,7 @@
     <div class="group mb-6">
       <x-input-label-dark for="contact_name">Contact Name:</x-input-label-dark>
       <x-text-input id="contact_name" name="contact_name"
-        value="{{ old('contact_name', $profileData['contact_name']) }}"></x-text-input>
+        value="{{ old('contact_name', $profileData['contact_name'] ?? '') }}"></x-text-input>
       @error('contact_name')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -41,7 +41,7 @@
     <div class="group mb-6">
       <x-input-label-dark for="email">Email:</x-input-label-dark>
       <x-text-input id="contact_email" name="contact_email"
-        value="{{ old('contact_email', $profileData['contact_email']) }}"></x-text-input>
+        value="{{ old('contact_email', $profileData['contact_email'] ?? '') }}"></x-text-input>
       @error('contact_email')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -50,7 +50,7 @@
     <div class="group mb-6">
       <x-input-label-dark for="contact_number">Contact Phone:</x-input-label-dark>
       <x-text-input id="contact_number" name="contact_number"
-        value="{{ old('contact_number', $profileData['contact_number']) }}"></x-text-input>
+        value="{{ old('contact_number', $profileData['contact_number'] ?? '') }}"></x-text-input>
       @error('contact_number')
         <p class="yns_red mt-1 text-sm">{{ $message }}</p>
       @enderror
@@ -62,16 +62,16 @@
         class="mt-1 block w-full rounded-md border border-gray-700 bg-black/50 p-2 text-white shadow-sm focus:border-yns_yellow focus:ring-yns_yellow">
         <option value="">Select preferred contact method</option>
         <option value="email"
-          {{ old('preferred_contact', $profileData['preferred_contact']) === 'email' ? 'selected' : '' }}>Email
+          {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === 'email' ? 'selected' : '' }}>Email
         </option>
         <option value="phone"
-          {{ old('preferred_contact', $profileData['preferred_contact']) === 'phone' ? 'selected' : '' }}>Phone
+          {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === 'phone' ? 'selected' : '' }}>Phone
         </option>
         @if (isset($profileData['platformsToCheck']) && is_array($profileData['platformsToCheck']))
           @foreach ($profileData['platformsToCheck'] as $platform)
             @if (isset($profileData['platforms'][$platform]))
               <option value="{{ $platform }}"
-                {{ old('preferred_contact', $profileData['preferred_contact']) === $platform ? 'selected' : '' }}>
+                {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === $platform ? 'selected' : '' }}>
                 {{ ucfirst($platform) }}
               </option>
             @endif
@@ -207,7 +207,7 @@
       const formData = new FormData(this);
 
       $.ajax({
-        url: '{{ route($dashboardType . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
+        url: '{{ route(strtolower($dashboardType) . '.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
         method: 'POST',
         data: formData,
         processData: false,

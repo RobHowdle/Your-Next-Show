@@ -84,7 +84,7 @@
           </x-slot>
 
           <x-slot name="content">
-            <x-dropdown-link :href="route('profile.edit', ['dashboardType' => $dashboardType, 'id' => Auth::user()->id])">
+            <x-dropdown-link :href="route('profile.edit', ['dashboardType' => lcfirst($dashboardType), 'id' => Auth::user()->id])">
               {{ __('Profile') }}
             </x-dropdown-link>
             <x-dropdown-link :href="route('logout')"
