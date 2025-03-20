@@ -476,9 +476,75 @@ class FinanceController extends Controller
     public function exportSingleFinance($dashboardType, $id)
     {
         $finance = Finance::findOrFail($id);
+        $user = Auth::user();
+        $service = null;
+        $serviceType = null;
+
+        // Get the correct service and type based on dashboard
+        switch ($dashboardType) {
+            case 'promoter':
+                $service = $user->promoters()->first();
+                $serviceType = 'App\Models\Promoter';
+                break;
+            case 'artist':
+            case 'designer':
+            case 'photographer':
+            case 'videographer':
+                $service = $user->otherService(ucfirst($dashboardType))->first();
+                $serviceType = 'App\Models\OtherService';
+                break;
+            case 'venue':
+                $service = $user->venues()->first();
+                $serviceType = 'App\Models\Venue';
+                break;
+            default:
+                abort(404, 'Invalid dashboard type');
+        }
+
+        // Verify the finance record belongs to the correct service
+        if ($finance->serviceable_id !== $service->id || $finance->serviceable_type !== $serviceType) {
+            abort(403, 'Unauthorized access to finance record');
+        }
+
+        // Decode JSON strings into arrays
+        $incoming = json_decode($finance->incoming, true) ?? [];
+        $otherIncoming = json_decode($finance->other_incoming, true) ?? [];
+        $outgoing = json_decode($finance->outgoing, true) ?? [];
+        $otherOutgoing = json_decode($finance->other_outgoing, true) ?? [];
+
+        // Transform incoming data into associative array
+        $incomingData = [];
+        foreach ($incoming as $item) {
+            $incomingData[$item['field']] = $item['value'];
+        }
+
+        // Transform outgoing data into associative array
+        $outgoingData = [];
+        foreach ($outgoing as $item) {
+            $outgoingData[$item['field']] = $item['value'];
+        }
+
+        // Merge the data with the finance model
+        $finance = $finance->toArray();
+        $finance['income_presale'] = $incomingData['income_presale'] ?? 0;
+        $finance['income_otd'] = $incomingData['income_otd'] ?? 0;
+        $finance['other_income_items'] = $otherIncoming;
+
+        $finance['outgoing_venue'] = $outgoingData['outgoing_venue'] ?? 0;
+        $finance['outgoing_band'] = $outgoingData['outgoing_band'] ?? 0;
+        $finance['outgoing_promotion'] = $outgoingData['outgoing_promotion'] ?? 0;
+        $finance['outgoing_rider'] = $outgoingData['outgoing_rider'] ?? 0;
+        $finance['other_outgoing_items'] = $otherOutgoing;
+
+        // Add company details to the finance array
+        $finance['service_name'] = $service->name ?? '';
+        $finance['service_type'] = $dashboardType;
+        $finance['service_address'] = $service->location ?? '';
+        $finance['service_phone'] = $service->contact_number ?? '';
+        $finance['service_email'] = $service->contact_email ?? '';
 
         // Generate the PDF
-        $pdf = Pdf::loadView('pdf.single_finance', compact('finance'));
+        $pdf = Pdf::loadView('pdf.finances-single', ['finance' => $finance]);
         $pdfContent = $pdf->output();
 
         // Return the PDF to the browser
