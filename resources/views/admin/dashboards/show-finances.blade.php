@@ -1,4 +1,8 @@
 <x-app-layout :dashboardType="$dashboardType" :modules="$modules">
+  <x-slot name="header">
+    <x-sub-nav :userId="$userId" />
+  </x-slot>
+
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="relative mb-8 shadow-md sm:rounded-lg">
       <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg bg-yns_dark_gray text-white">

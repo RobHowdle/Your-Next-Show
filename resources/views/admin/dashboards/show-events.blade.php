@@ -3,89 +3,181 @@
     <x-sub-nav :userId="$userId" />
   </x-slot>
 
-  <div class="mx-auto w-full max-w-screen-2xl py-16">
-    <div class="relative mb-8 shadow-md sm:rounded-lg">
-      <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg border border-white bg-yns_dark_gray text-white">
-        <div class="header border-b border-b-white px-8 pt-8">
-          <div class="flex flex-row justify-between">
-            <h1 class="font-heading text-4xl font-bold">My Events</h1>
+  <div class="min-h-screen py-8">
+    <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+      <div class="relative overflow-hidden rounded-xl border border-gray-800 bg-gray-800 backdrop-blur-xl">
+        <div class="p-6 md:p-8">
+          <!-- Header Section -->
+          <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 class="text-2xl font-bold text-white">My Events</h1>
+              <p class="mt-1 text-sm text-gray-400">Manage and monitor all your events</p>
+            </div>
             @if ($dashboardType != 'standard')
               <a href="{{ route('admin.dashboard.create-new-event', ['dashboardType' => $dashboardType]) }}"
-                class="rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">New
-                Event</a>
+                class="inline-flex items-center justify-center rounded-lg bg-yns_yellow px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition duration-200 hover:bg-yns_dark_orange hover:text-white">
+                <span class="fas fa-plus mr-2"></span>
+                New Event
+              </a>
             @else
               <a href="{{ route('gig-guide') }}"
-                class="rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">Find
-                Events</a>
+                class="inline-flex items-center justify-center rounded-lg bg-yns_yellow px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition duration-200 hover:bg-yns_dark_orange hover:text-white">
+                <span class="fas fa-search mr-2"></span>
+                Find Events
+              </a>
             @endif
           </div>
 
-          <div class="mt-8 flex gap-x-8">
-            <p id="upcoming-tab"
-              class="cursor-pointer border-b-2 border-b-transparent pb-2 text-white transition duration-150 ease-in-out hover:border-b-yns_yellow hover:text-yns_yellow">
-              Upcoming
-              Events</p>
-            <p id="past-tab"
-              class="cursor-pointer border-b-2 border-b-transparent pb-2 text-white transition duration-150 ease-in-out hover:border-b-yns_yellow hover:text-yns_yellow">
-              Past
-              Events</p>
+          <!-- Tabs Navigation -->
+          <div class="mb-6 border-b border-gray-700">
+            <nav class="-mb-px flex gap-x-8" aria-label="Tabs">
+              <button id="upcoming-tab"
+                class="group inline-flex items-center border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-400 transition duration-200 hover:border-yns_yellow hover:text-yns_yellow"
+                aria-current="page">
+                <span class="fas fa-calendar mr-2"></span>
+                Upcoming Events
+                <span
+                  class="ml-3 rounded-full bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-300 group-hover:bg-yns_yellow group-hover:text-gray-900">
+                  {{ $initialUpcomingEvents->count() }}
+                </span>
+              </button>
+              <button id="past-tab"
+                class="group inline-flex items-center border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-400 transition duration-200 hover:border-yns_yellow hover:text-yns_yellow">
+                <span class="fas fa-history mr-2"></span>
+                Past Events
+                <span
+                  class="ml-3 rounded-full bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-300 group-hover:bg-yns_yellow group-hover:text-gray-900">
+                  {{ $pastEvents->count() }}
+                </span>
+              </button>
+            </nav>
           </div>
-        </div>
 
-        <div id="tab-content" class="px-8 pt-8">
-          <div id="upcoming-events" class="event-grid">
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              @if ($initialUpcomingEvents && $initialUpcomingEvents->isNotEmpty())
-                @foreach ($initialUpcomingEvents as $event)
-                  @include('admin.dashboards.partials.event_card', ['event' => $event])
-                @endforeach
-              @else
-                <p>No Upcoming Events Found</p>
-              @endif
+          <!-- Events Grid -->
+          <div id="tab-content" class="relative">
+            <div id="upcoming-events" class="event-grid">
+              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                @if ($initialUpcomingEvents && $initialUpcomingEvents->isNotEmpty())
+                  @foreach ($initialUpcomingEvents as $event)
+                    <div
+                      class="event-card group relative overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 p-6 shadow-sm transition duration-200 hover:border-yns_yellow hover:bg-gray-800"
+                      data-id="{{ $event->id }}">
+                      <div class="flex items-center gap-4">
+                        <div class="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-700">
+                          <img src="{{ asset($event->poster_url) }}" alt="{{ $event->event_name }}"
+                            class="h-full w-full object-cover transition duration-200 group-hover:scale-110">
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                          <h3 class="truncate text-lg font-medium text-white">
+                            <a href="{{ route('admin.dashboard.show-event', ['id' => $event->id, 'dashboardType' => $dashboardType]) }}"
+                              class="hover:text-yns_yellow">
+                              {{ $event->event_name }}
+                            </a>
+                          </h3>
+                          <p class="mt-1 flex items-center text-sm text-gray-400">
+                            <span class="fas fa-calendar-day mr-1.5"></span>
+                            {{ $event->event_date->format('D, j M, Y') }}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="mt-4 border-t border-gray-700 pt-4">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center space-x-4">
+                            @if ($event->venues->isNotEmpty())
+                              <span class="inline-flex items-center text-sm text-gray-400">
+                                <span class="fas fa-map-marker-alt mr-1.5 text-yns_yellow"></span>
+                                {{ $event->venues->first()->location }}
+                              </span>
+                            @endif
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <a href="{{ route('admin.dashboard.edit-event', ['id' => $event->id, 'dashboardType' => $dashboardType]) }}"
+                              class="rounded-full p-1.5 text-gray-400 transition duration-200 hover:bg-gray-700 hover:text-yns_yellow">
+                              <span class="fas fa-edit"></span>
+                            </a>
+                            <button
+                              class="delete-event rounded-full p-1.5 text-gray-400 transition duration-200 hover:bg-gray-700 hover:text-red-500"
+                              data-id="{{ $event->id }}">
+                              <span class="fas fa-trash"></span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      @if ($event->ticket_url)
+                        <div class="absolute right-4 top-4">
+                          <span
+                            class="inline-flex items-center rounded-full bg-yns_yellow/20 px-2.5 py-0.5 text-xs font-medium text-yns_yellow">
+                            Tickets Available
+                          </span>
+                        </div>
+                      @endif
+                    </div>
+                  @endforeach
+                @else
+                  <div class="col-span-full rounded-lg border border-gray-700 bg-gray-800/50 p-12 text-center">
+                    <span class="fas fa-calendar-plus mb-4 text-4xl text-gray-600"></span>
+                    <h3 class="mt-2 text-sm font-medium text-white">No upcoming events</h3>
+                    <p class="mt-1 text-sm text-gray-400">Get started by creating a new event.</p>
+                  </div>
+                @endif
+              </div>
             </div>
           </div>
 
-          <div id="past-events" class="event-grid hidden">
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              @if ($pastEvents && $pastEvents->isNotEmpty())
-                @foreach ($pastEvents as $event)
-                  @include('admin.dashboards.partials.event_card', ['event' => $event])
-                @endforeach
-              @else
-                <p>No Past Events Found</p>
-              @endif
-            </div>
+          <!-- Load More Button -->
+          <div class="mt-8 flex justify-center">
+            @if ($showLoadMoreUpcoming)
+              <button id="load-more-upcoming"
+                class="inline-flex items-center rounded-md bg-gray-800 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-700 transition duration-200 hover:bg-gray-700 hover:ring-yns_yellow">
+                <span class="fas fa-spinner mr-2"></span>
+                Load More Events
+              </button>
+            @endif
           </div>
-        </div>
-
-        <div class="mt-6 text-center">
-          @if ($showLoadMoreUpcoming)
-            <button id="load-more-upcoming"
-              class="mb-4 rounded-lg bg-white px-4 py-2 text-black transition duration-300 hover:bg-gradient-to-t hover:from-yns_dark_orange hover:to-yns_yellow">
-              Load More
-            </button>
-          @else
-            <button id="load-more-upcoming" class="hidden"></button>
-          @endif
-        </div>
-        <div id="loading-spinner"
-          class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm" aria-hidden="true"
-          role="progressbar">
-          <div class="h-32 w-32 animate-spin rounded-full border-b-2 border-t-2 border-yns_yellow"></div>
         </div>
       </div>
     </div>
   </div>
 </x-app-layout>
+
 <style>
-  .fade-out {
-    opacity: 0;
-    transform: scale(0.95);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+  .event-card {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-in-out;
   }
 
-  .event-card {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+  .event-card.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  /* Tab Indicator Animation */
+  #upcoming-tab.active,
+  #past-tab.active {
+    @apply border-indigo-600 text-indigo-600;
+    position: relative;
+  }
+
+  #upcoming-tab.active::after,
+  #past-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: currentColor;
+    transform: scaleX(0);
+    animation: slideIn 0.3s ease forwards;
+  }
+
+  @keyframes slideIn {
+    to {
+      transform: scaleX(1);
+    }
   }
 </style>
 <script>
@@ -268,8 +360,8 @@
       this.elements.pastEvents.classList.toggle('hidden', isUpcoming);
 
       // Update tab styles
-      this.elements.upcomingTab.classList.toggle('border-b-yns_yellow', isUpcoming);
-      this.elements.pastTab.classList.toggle('border-b-yns_yellow', !isUpcoming);
+      this.elements.upcomingTab.classList.toggle('active', isUpcoming);
+      this.elements.pastTab.classList.toggle('active', !isUpcoming);
 
       // Reset page number when switching tabs
       if (isUpcoming) {

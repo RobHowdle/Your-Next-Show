@@ -508,6 +508,31 @@ class EventController extends Controller
         $role = $user->roles->first()->name;
         $event = Event::with(['bands', 'promoters', 'venues', 'services'])->findOrFail($id);
 
+        // Generate mock stats data if user is event creator
+        $mockStats = null;
+        if ($event->user_id === Auth::id()) {
+            $mockStats = [
+                'ticketsSold' => rand(50, 150),
+                'ticketsAvailable' => 200,
+                'totalRevenue' => rand(500, 2000),
+                'pageViews' => rand(100, 1000),
+                'clickThroughRate' => rand(20, 80) . '%',
+                'hasNewStats' => (bool)rand(0, 1),
+                'salesData' => collect([
+                    ['date' => '2024-03-01', 'count' => rand(5, 15)],
+                    ['date' => '2024-03-08', 'count' => rand(10, 25)],
+                    ['date' => '2024-03-15', 'count' => rand(15, 35)],
+                    ['date' => '2024-03-22', 'count' => rand(20, 45)],
+                ]),
+                'trafficSources' => collect([
+                    ['source' => 'Direct', 'count' => rand(100, 300)],
+                    ['source' => 'Social Media', 'count' => rand(150, 400)],
+                    ['source' => 'Search', 'count' => rand(50, 200)],
+                    ['source' => 'Referral', 'count' => rand(25, 100)],
+                ])
+            ];
+        }
+
         $bandRolesArray = json_decode($event->band_ids, true);
 
         $headliner = null;
@@ -554,6 +579,7 @@ class EventController extends Controller
             'opener' => $opener,
             'eventStartTime' => $eventStartTime,
             'eventEndTime' => $eventEndTime,
+            'stats' => $mockStats
         ]);
     }
 
