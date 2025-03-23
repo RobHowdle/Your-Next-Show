@@ -203,7 +203,6 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     });
 
     // Events
-    // TODO - Finish
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/events', [EventController::class, 'showEvents'])->name('admin.dashboard.show-events');
         Route::get('/events/load-more-upcoming', [EventController::class, 'loadMoreUpcomingEvents'])->name('admin.dashboard.load-more-upcoming-events');
@@ -227,21 +226,13 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     });
 
     // To-Do List
-    Route::prefix('/dashboard/{dashboardType}/todo-list')->group(function () {
-        // View Routes
-        Route::get('/', [TodoController::class, 'showTodos'])->name('admin.dashboard.todo-list');
-        Route::get('/completed', [TodoController::class, 'showCompletedTodoItems'])->name('admin.dashboard.completed-todos');
-        Route::get('/uncompleted', [TodoController::class, 'showUncompletedTodoItems'])->name('admin.dashboard.uncompleted-todos');
-        Route::get('/load-more', [TodoController::class, 'loadMoreTodos'])->name('admin.dashboard.load-more-todos');
-
-        Route::post('/new', [TodoController::class, 'newTodoItem'])->name('admin.dashboard.new-todo');
-        Route::post('/{id}/complete', [TodoController::class, 'completeTodoItem'])->name('admin.dashboard.complete-todo');
-        Route::post('/{id}/uncomplete', [TodoController::class, 'uncompleteTodoItem'])->name('admin.dashboard.uncomplete-todo');
-        Route::delete('/{id}', [TodoController::class, 'deleteTodoItem'])->name('admin.dashboard.delete-todo');
-
-        // Status Check Routes
-        Route::get('/has-completed', [TodoController::class, 'hasCompletedTodos'])->name('admin.dashboard.has-completed-todos');
-        Route::get('/has-uncompleted', [TodoController::class, 'hasUncompletedTodos'])->name('admin.dashboard.has-cunompleted-todos');
+    Route::prefix('dashboard/{dashboardType}')->middleware(['auth'])->group(function () {
+        Route::get('todo-list', [TodoController::class, 'index'])->name('admin.dashboard.todo-list');
+        Route::get('todo-list/counts', [TodoController::class, 'getCounts']);
+        Route::post('todo-list/new', [TodoController::class, 'store']);
+        Route::get('todo-list/load-more', [TodoController::class, 'loadMore']);
+        Route::post('todo-list/{id}/complete', [TodoController::class, 'complete']);
+        Route::delete('todo-list/{id}', [TodoController::class, 'destroy']);
     });
 
     // Jobs

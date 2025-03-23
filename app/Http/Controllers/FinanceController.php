@@ -349,128 +349,122 @@ class FinanceController extends Controller
         }
     }
 
-    public function exportFinances(Request $request)
+    public function exportFinances($dashboardType, Request $request)
     {
         $validator = Validator::make($request->all(), [
             'date' => 'required|string',
             'filter' => 'required|string',
-            'totalIncome' => 'required|string',
-            'totalOutgoing' => 'required|string',
-            'totalProfit' => 'required|string',
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation failed:', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Retrieve the data from the request
-        $dateRange = $request->input('date');
-        $filterValue = $request->input('filter');
-        $totalIncome = $request->input('totalIncome');
-        $totalOutgoing = $request->input('totalOutgoing');
-        $totalProfit = $request->input('totalProfit');
+        try {
+            // Get the user's linked company
+            $user = Auth::user();
+            $linkedCompany = $user->linkedCompany();
+            $serviceableId = $linkedCompany->id;
+            $serviceableType = get_class($linkedCompany);
 
-        // Convert inputs to arrays if necessary
-        $totalIncome = is_array($totalIncome) ? $totalIncome : [$totalIncome];
-        $totalOutgoing = is_array($totalOutgoing) ? $totalOutgoing : [$totalOutgoing];
-        $totalProfit = is_array($totalProfit) ? $totalProfit : [$totalProfit];
+            // Initialize query
+            $query = Finance::where('serviceable_type', $serviceableType)
+                ->where('serviceable_id', $serviceableId);
 
-        // Prepare the data for the PDF
-        $data = [];
+            // Apply date filtering based on filter type
+            $filter = $request->input('filter');
+            $dateInput = $request->input('date');
 
-        if ($filterValue === 'day') {
-            // Handle single day case
-            $data[] = [
-                'date' => $dateRange,
-                'totalIncome' => $totalIncome[0],
-                'totalOutgoing' => $totalOutgoing[0],
-                'totalProfit' => $totalProfit[0],
-            ];
-        } elseif ($filterValue === 'week') {
-            // Handle week case
-            $dates = explode(' to ', $dateRange);
+            switch ($filter) {
+                case 'day':
+                    $query->whereDate('date_from', Carbon::parse($dateInput)->toDateString());
+                    break;
 
-            if (count($dates) !== 2) {
-                return response()->json(['errors' => ['Invalid date range format']], 422);
+                case 'week':
+                    $dates = explode(' to ', $dateInput);
+                    if (count($dates) === 2) {
+                        $query->whereBetween('date_from', [
+                            Carbon::parse($dates[0])->startOfDay(),
+                            Carbon::parse($dates[1])->endOfDay()
+                        ]);
+                    }
+                    break;
+
+                case 'month':
+                    $date = Carbon::parse($dateInput);
+                    $query->whereBetween('date_from', [
+                        $date->copy()->startOfMonth(),
+                        $date->copy()->endOfMonth()
+                    ]);
+                    break;
+
+                case 'year':
+                    $date = Carbon::parse($dateInput);
+                    $query->whereBetween('date_from', [
+                        $date->copy()->startOfYear(),
+                        $date->copy()->endOfYear()
+                    ]);
+                    break;
             }
 
-            list($startDate, $endDate) = $dates;
+            // Get the records and calculate totals
+            $records = $query->get();
 
-            // Validate the dates
-            if (!strtotime($startDate) || !strtotime($endDate)) {
-                return response()->json(['errors' => ['Invalid date format']], 422);
-            }
-
-            $currentDate = strtotime($startDate);
-            $endDateTimestamp = strtotime($endDate);
-
-            while ($currentDate <= $endDateTimestamp) {
-                $formattedDate = date('Y-m-d', $currentDate);
-                $data[] = [
-                    'date' => $formattedDate,
-                    'totalIncome' => $totalIncome[0],
-                    'totalOutgoing' => $totalOutgoing[0],
-                    'totalProfit' => $totalProfit[0],
-                ];
-                $currentDate = strtotime('+1 day', $currentDate);
-            }
-        } elseif ($filterValue === 'month') {
-            // Handle month case
-            $month = $dateRange; // This should be in 'YYYY-MM' format
-            $year = substr($month, 0, 4);
-            $monthNumber = substr($month, 5, 2);
-
-            // Get the total days in the month
-            $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $monthNumber, $year);
-
-            for ($day = 1; $day <= $daysInMonth; $day++) {
-                $formattedDate = sprintf('%04d-%02d-%02d', $year, $monthNumber, $day);
-                $data[] = [
-                    'date' => $formattedDate,
-                    'totalIncome' => $totalIncome[0],
-                    'totalOutgoing' => $totalOutgoing[0],
-                    'totalProfit' => $totalProfit[0],
-                ];
-            }
-        } elseif ($filterValue === 'year') {
-            // Handle year case
-            $year = $dateRange; // This should be a year in 'YYYY' format
-
-            // Validate the year
-            if (!preg_match('/^\d{4}$/', $year)) {
-                return response()->json(['errors' => ['Invalid year format']], 422);
-            }
-
-            // Loop through each month of the year
-            for ($month = 1; $month <= 12; $month++) {
-                $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-                $totalIncomeForMonth = $totalIncome[0]; // Adjust if you want to calculate per month
-                $totalOutgoingForMonth = $totalOutgoing[0]; // Adjust if you want to calculate per month
-                $totalProfitForMonth = $totalProfit[0]; // Adjust if you want to calculate per month
-
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $formattedDate = sprintf('%04d-%02d-%02d', $year, $month, $day);
-                    $data[] = [
-                        'date' => $formattedDate,
-                        'totalIncome' => $totalIncomeForMonth,
-                        'totalOutgoing' => $totalOutgoingForMonth,
-                        'totalProfit' => $totalProfitForMonth,
+            $data = [
+                'filter' => $filter,
+                'date_range' => [
+                    'start' => $records->min('date_from'),
+                    'end' => $records->max('date_from')
+                ],
+                'records' => $records->map(function ($record) {
+                    return [
+                        'name' => $record->name,
+                        'date' => $record->date_from,
+                        'income' => $record->total_incoming,
+                        'outgoing' => $record->total_outgoing,
+                        'profit' => $record->total_profit
                     ];
-                }
-            }
+                }),
+                'totals' => [
+                    'income' => $records->sum('total_incoming'),
+                    'outgoing' => $records->sum('total_outgoing'),
+                    'profit' => $records->sum('total_profit')
+                ],
+                'company' => [
+                    'name' => $linkedCompany->name,
+                    'type' => $dashboardType,
+                    'address' => $linkedCompany->location ?? '',
+                    'phone' => $linkedCompany->contact_number ?? '',
+                    'email' => $linkedCompany->contact_email ?? ''
+                ]
+            ];
+
+            // Generate the PDF
+            $pdf = Pdf::loadView('pdf.finances', compact('data'));
+
+            return response()->stream(
+                function () use ($pdf) {
+                    echo $pdf->output();
+                },
+                200,
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="finances_report.pdf"'
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error('Error generating finance report:', [
+                'message' => $e->getMessage(),
+                'filter' => $request->input('filter'),
+                'date' => $request->input('date')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating finance report.'
+            ], 500);
         }
-
-        // Generate the PDF
-        $pdf = Pdf::loadView('pdf.finances', compact('data'));
-        $pdfContent = $pdf->output();
-
-        // Return the PDF to the browser
-        return response()->stream(function () use ($pdfContent) {
-            echo $pdfContent;
-        }, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="finances_graph_data.pdf"',
-        ]);
     }
 
     public function exportSingleFinance($dashboardType, $id)
