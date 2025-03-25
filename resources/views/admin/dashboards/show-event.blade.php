@@ -5,9 +5,9 @@
 
   <div class="mx-auto w-full max-w-screen-2xl py-16">
     <div class="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-      <div class="overflow-hidden rounded-xl border border-yns_yellow bg-yns_dark_gray/50 backdrop-blur-xl">
+      <div class="overflow-hidden rounded-xl border border-gray-800 bg-yns_dark_gray/50 backdrop-blur-xl">
         <!-- Header Section -->
-        <div class="border-b border-yns_yellow px-6 py-8">
+        <div class="border-b border-gray-800 px-6 py-8">
           <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div class="space-y-2">
               <h1 class="font-heading text-3xl font-bold text-white sm:text-4xl">{{ $event->event_name }}</h1>
@@ -32,11 +32,12 @@
                     Get Tickets
                   </a>
                 @endif
-                <button id="addToCalendarButton"
+                {{-- Unfinished code --}}
+                {{-- <button id="addToCalendarButton"
                   class="inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
                   <span class="fas fa-calendar-plus mr-2"></span>
                   Add To Calendar
-                </button>
+                </button> --}}
               @endif
               <a href="{{ route('admin.dashboard.edit-event', ['id' => $event->id, 'dashboardType' => $dashboardType]) }}"
                 class="inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
@@ -54,7 +55,7 @@
 
         <!-- Tabs Navigation -->
         @if ($event->user_id === Auth::id())
-          <div class="mt-8 border-b border-yns_yellow">
+          <div class="mt-8 border-b border-gray-800">
             <nav class="flex gap-x-8 px-4 sm:px-6 lg:px-8" aria-label="Tabs">
               <button id="info-tab" type="button"
                 class="group inline-flex items-center border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-400 transition duration-200 hover:border-yns_yellow hover:text-yns_yellow">
@@ -82,9 +83,9 @@
             <!-- Content Grid -->
             <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-3">
               <!-- Event Details -->
-              <div class="lg:col-span-2 lg:border-r lg:border-yns_yellow lg:pr-8">
+              <div class="lg:col-span-2 lg:border-r lg:border-gray-800 lg:pr-8">
                 <!-- Lineup Section -->
-                <div class="mb-8 space-y-6 border-b border-yns_yellow pb-8">
+                <div class="mb-8 space-y-6 border-b border-gray-800 pb-8">
                   @if ($headliner)
                     <div>
                       <h3 class="mb-2 font-heading text-lg font-medium text-gray-400">Headliner</h3>
@@ -223,11 +224,11 @@
                 <!-- Click Through Rate -->
                 <div class="rounded-lg bg-gray-800/50 p-6">
                   <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-medium text-gray-400">Ticket Link CTR</h3>
-                    <span class="fas fa-mouse-pointer text-yns_yellow"></span>
+                    <h3 class="text-sm font-medium text-gray-400">Event Shares</h3>
+                    <span class="fas fa-arrow-up-from-bracket text-yns_yellow"></span>
                   </div>
-                  <p class="mt-2 text-3xl font-bold text-white">{{ $stats['clickThroughRate'] ?? '0%' }}</p>
-                  <p class="mt-1 text-sm text-gray-400">Conversion rate</p>
+                  <p class="mt-2 text-3xl font-bold text-white">{{ $stats['eventShares'] ?? '0' }}</p>
+                  <p class="mt-1 text-sm text-gray-400">Shares of the event</p>
                 </div>
               </div>
 

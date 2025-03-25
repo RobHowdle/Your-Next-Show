@@ -27,7 +27,7 @@
   ];
 @endphp
 
-<nav x-data="{ open: false }" class="border-b border-gray-800 bg-gray-900/95 backdrop-blur-sm">
+<nav x-data="{ open: false }" class="border-b border-yns_black bg-yns_black backdrop-blur-sm">
   <div class="mx-auto max-w-[1920px] px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 items-center justify-between">
       {{-- Logo section --}}
@@ -47,7 +47,6 @@
             </a>
           </div>
 
-          {{-- Scrollable Navigation Items with max-width container --}}
           <div class="relative ml-4">
             <div class="max-w-[600px] xl:max-w-[800px] 2xl:max-w-[1000px]">
               <div class="no-scrollbar flex space-x-1 overflow-x-auto">

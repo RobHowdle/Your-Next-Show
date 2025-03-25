@@ -64,70 +64,82 @@ class EventController extends Controller
                 'initialUpcomingEvents' => collect(),
                 'pastEvents' => collect(),
                 'showLoadMoreUpcoming' => false,
-                'hasMorePast' => false,
+                'showLoadMorePast' => false,
                 'totalUpcomingCount' => 0,
                 'message' => 'No events available for your role.',
             ]);
         }
 
+        // Fetching upcoming events based on user role
+        $upcomingEventsQuery = Event::query()
+            ->where('event_date', '>', now())
+            ->whereNull('deleted_at')
+            ->orderBy('event_date', 'asc');
+
+        // Fetching past events based on user role
+        $pastEventsQuery = Event::query()
+            ->where('event_date', '<=', now())
+            ->whereNull('deleted_at')
+            ->orderBy('event_date', 'desc');
+
+
         // Fetching events based on user role
         if ($role === "promoter") {
-            // Promoter can see their own events and those created by users in their company
-            $upcomingEvents = Event::where('event_date', '>', now())
-                ->where('user_id', $user->id) // events created by this promoter
-                ->orWhereIn('id', function ($query) use ($service) {
-                    $query->select('event_id')
-                        ->from('event_promoter')
-                        ->where('promoter_id', $service->id); // events associated with the promoter
-                })
-                ->whereNull('deleted_at')
-                ->orderBy('event_date', 'asc')
-                ->get();
+            $upcomingEventsQuery->where(function ($query) use ($user, $service) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('promoters', function ($q) use ($service) {
+                        $q->where('promoter_id', $service->id);
+                    });
+            });
+
+            $pastEventsQuery->where(function ($query) use ($user, $service) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('promoters', function ($q) use ($service) {
+                        $q->where('promoter_id', $service->id);
+                    });
+            });
         } elseif ($role === "artist") {
-            // Bands can see their own events or those associated with their promoter
-            $upcomingEvents = Event::where('event_date', '>', now())
-                ->where('user_id', $user->id) // events created by this band
-                ->orWhereIn('id', function ($query) use ($service) {
-                    $query->select('event_id')
-                        ->from('event_band')
-                        ->where('band_id', $service->id); // events associated with the promoter
-                })
-                ->whereNull('deleted_at')
-                ->orderBy('event_date', 'asc')
-                ->get();
+            $upcomingEventsQuery->where(function ($query) use ($user, $service) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('bands', function ($q) use ($service) {
+                        $q->where('band_id', $service->id);
+                    });
+            });
+
+            $pastEventsQuery->where(function ($query) use ($user, $service) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('bands', function ($q) use ($service) {
+                        $q->where('band_id', $service->id);
+                    });
+            });
         } elseif ($role === "venue") {
-            // Promoter can see their own events and those created by users in their company
-            $upcomingEvents = Event::where('event_date', '>', now())
-                ->where('user_id', $user->id) // events created by this promoter
-                ->orWhereIn('id', function ($query) use ($service) {
-                    $query->select('event_id')
-                        ->from('event_venue')
-                        ->where('venue_id', $service->id); // events associated with the promoter
-                })
-                ->whereNull('deleted_at')
-                ->orderBy('event_date', 'asc')
-                ->get();
+            $upcomingEventsQuery->where(function ($query) use ($user, $service) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('venues', function ($q) use ($service) {
+                        $q->where('venue_id', $service->id);
+                    });
+            });
+
+            $pastEventsQuery->where(function ($query) use ($user, $service) {
+                $query->where('user_id', $user->id)
+                    ->orWhereHas('venues', function ($q) use ($service) {
+                        $q->where('venue_id', $service->id);
+                    });
+            });
         } else {
-            // Default case for any other roles (if necessary)
-            $upcomingEvents = Event::where('event_date', '>', now())
-                ->where('user_id', $user->id)
-                ->whereNull('deleted_at')
-                ->orderBy('event_date', 'asc')
-                ->get();
+            $upcomingEventsQuery->where('user_id', $user->id);
+            $pastEventsQuery->where('user_id', $user->id);
         }
 
-        // Prepare upcoming events for the view
-        $totalUpcomingCount = $upcomingEvents->count();
-        $initialUpcomingEvents = $upcomingEvents->take(3);
+        // Get counts and paginated results
+        $totalUpcomingCount = $upcomingEventsQuery->count();
+        $initialUpcomingEvents = $upcomingEventsQuery->take(3)->get();
 
-        // Past events remain unchanged
-        $totalPastCount = Event::where('event_date', '<=', now())->count();
-        $pastEvents = Event::where('event_date', '<=', now())
-            ->orderBy('event_date', 'desc')
-            ->paginate(3);
+        $totalPastCount = $pastEventsQuery->count();
+        $pastEvents = $pastEventsQuery->take(3)->get();
 
         $showLoadMoreUpcoming = $totalUpcomingCount > 3;
-        $hasMorePast = $totalPastCount > 3;
+        $showLoadMorePast = $totalPastCount > 3;
 
         return view('admin.dashboards.show-events', [
             'user' => $user,
@@ -137,8 +149,9 @@ class EventController extends Controller
             'initialUpcomingEvents' => $initialUpcomingEvents,
             'pastEvents' => $pastEvents,
             'showLoadMoreUpcoming' => $showLoadMoreUpcoming,
-            'hasMorePast' => $hasMorePast,
+            'showLoadMorePast' => $showLoadMorePast,
             'totalUpcomingCount' => $totalUpcomingCount,
+            'totalPastCount' => $totalPastCount,
         ]);
     }
 
