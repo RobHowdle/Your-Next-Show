@@ -1,49 +1,65 @@
 <x-app-layout :dashboardType="$dashboardType" :modules="$modules">
+  <x-slot name="header">
+    <x-sub-nav :userId="$userId" />
+  </x-slot>
   <div class="mx-auto w-full max-w-screen-2xl py-16">
-    <div class="relative mb-8 shadow-md sm:rounded-lg">
-      <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg bg-yns_dark_gray text-white">
-        <div class="rounded-lg border border-white px-8 py-4">
-          <div class="mb-6 flex items-center justify-between">
-            <p class="font-heading text-4xl font-bold">Todo List</p>
-            <div class="flex gap-4">
-              <x-white-button id="completed-task-btn" class="{{ $hasCompleted ? '' : 'hidden' }}">
-                <span class="fas fa-check-circle mr-2"></span>View Completed
-              </x-white-button>
-              <x-white-button id="uncomplete-task-btn" class="hidden">
-                <span class="fas fa-list mr-2"></span>View Active
-              </x-white-button>
+    <div class="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+      <div class="overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60 backdrop-blur-xl">
+        <!-- Header Section -->
+        <div class="border-b border-gray-800 px-6 py-8">
+          <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <h1 class="font-heading text-3xl font-bold text-white sm:text-4xl">Todo List</h1>
+            <div class="flex flex-wrap gap-3">
+              <button id="completed-task-btn"
+                class="{{ $hasCompleted ? '' : 'hidden' }} inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
+                <span class="fas fa-check-circle mr-2"></span>
+                View Completed
+              </button>
+              <button id="uncomplete-task-btn"
+                class="inline-flex hidden items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
+                <span class="fas fa-list mr-2"></span>
+                View Active
+              </button>
             </div>
           </div>
+        </div>
 
+        <div class="space-y-6 p-6">
           <!-- Add Todo Form -->
-          <form id="newTodoItem" class="mb-8 rounded-lg border border-white/10 bg-white/5 p-6">
+          <form id="newTodoItem" class="rounded-lg border border-gray-700 bg-gray-800/50 p-6">
             @csrf
-            <div class="flex flex-col items-start gap-4">
-              <div class="group w-full">
-                <x-input-label-dark>New Todo Item</x-input-label-dark>
-                <x-textarea-input class="mt-2 h-24" id="taskInput" name="task"
-                  placeholder="What needs to be done?"></x-textarea-input>
+            <div class="space-y-4">
+              <div>
+                <label for="taskInput" class="block text-sm font-medium text-gray-400">New Todo Item</label>
+                <textarea id="taskInput" name="task" rows="3"
+                  class="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder-gray-500 shadow-sm focus:border-yns_yellow focus:ring-yns_yellow"
+                  placeholder="What needs to be done?"></textarea>
               </div>
-              <div class="w-full">
-                <x-input-label-dark>Due Date (Optional)</x-input-label-dark>
-                <x-text-input type="date" class="mt-2" id="dueDate" name="due_date"></x-text-input>
+              <div>
+                <label for="dueDate" class="block text-sm font-medium text-gray-400">Due Date (Optional)</label>
+                <input type="date" id="dueDate" name="due_date"
+                  class="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white shadow-sm focus:border-yns_yellow focus:ring-yns_yellow">
               </div>
-              <x-primary-button type="submit" id="addTaskButton">
-                <span class="fas fa-plus-circle mr-2"></span>Add Item
-              </x-primary-button>
+              <button type="submit" id="addTaskButton"
+                class="inline-flex items-center rounded-lg bg-yns_yellow px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-yns_dark_orange hover:text-white">
+                <span class="fas fa-plus-circle mr-2"></span>
+                Add Item
+              </button>
             </div>
           </form>
 
           <!-- Tasks Grid -->
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" id="tasks">
-            <x-todo-items :todoItems="$todoItems" />
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" id="tasks">
+            {{-- <x-todo-items :todoItems="$todoItems" /> --}}
           </div>
 
           <!-- Load More Button -->
           <div class="mt-8 flex justify-center">
-            <x-white-button id="load-more-btn" class="{{ $hasMorePages ? '' : 'hidden' }}">
-              <span class="fas fa-spinner mr-2"></span>Load More
-            </x-white-button>
+            <button id="load-more-btn"
+              class="{{ $hasMorePages ? '' : 'hidden' }} inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
+              <span class="fas fa-spinner mr-2"></span>
+              Load More
+            </button>
           </div>
         </div>
       </div>
@@ -72,6 +88,74 @@
             .html(button.data('original-content'));
         }
 
+        function updateButtonVisibility() {
+          const hasItems = $('#tasks').find('.todo-item').length > 0;
+          const hasCompletedItems = $('.todo-item[data-completed="true"]').length > 0;
+
+          // Update completed tasks button visibility
+          $('#completed-task-btn').toggleClass('hidden', !hasCompletedItems);
+
+          // If no items left, show empty state
+          if (!hasItems) {
+            $('#tasks').html(`
+                <div class="col-span-full rounded-lg border border-gray-700 bg-gray-800/50 p-12 text-center">
+                    <span class="fas fa-clipboard-list mb-4 text-4xl text-gray-600"></span>
+                    <h3 class="mt-2 text-sm font-medium text-white">No ${isViewingCompleted ? 'completed' : 'active'} tasks</h3>
+                    <p class="mt-1 text-sm text-gray-400">${isViewingCompleted ? 'Completed tasks will appear here.' : 'Get started by adding a new task.'}</p>
+                </div>
+            `);
+          }
+        }
+
+        // Function to fetch todo items
+        function fetchTodoItems(page = 1, completed = false) {
+          return $.ajax({
+            url: `/dashboard/${dashboardType}/todo-list/load-more`,
+            method: 'GET',
+            data: {
+              page,
+              completed,
+              per_page: 6 // Set items per page
+            },
+            beforeSend: function() {
+              $('#tasks').addClass('opacity-50');
+            }
+          }).always(function() {
+            $('#tasks').removeClass('opacity-50');
+          });
+        }
+
+        // Function to initialize todo list
+        function initializeTodoList() {
+          fetchTodoItems(1, false).then(function(response) {
+            if (response.html) {
+              $('#tasks').html(response.html);
+
+              // Update load more button visibility based on total items
+              const totalPages = Math.ceil(response.totalItems / response.itemsPerPage);
+              $('#load-more-btn').toggleClass('hidden', !response.hasMorePages);
+
+              // Store total items for reference
+              window.todoItemsTotal = response.totalItems;
+
+              updateButtonVisibility();
+            } else {
+              updateButtonVisibility(); // Show empty state
+            }
+          }).catch(function(error) {
+            console.error('Failed to load tasks:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to load tasks. Please refresh the page.',
+              confirmButtonColor: '#FFB800'
+            });
+          });
+        }
+
+        // Call initialize function on page load
+        initializeTodoList();
+
         // Form submission
         $('#newTodoItem').on('submit', function(e) {
           e.preventDefault();
@@ -85,16 +169,27 @@
             processData: false,
             contentType: false,
             success: function(response) {
+              // Clear form inputs
               $('#taskInput').val('');
               $('#dueDate').val('');
-              if ($('#tasks').find('.todo-item').length === 0) {
-                $('#tasks').empty();
-              }
-              $('#tasks').prepend(response.html);
-              updateButtonVisibility();
+
+              // If we're viewing completed tasks, don't show the new task
+              if (isViewingCompleted) return;
+
+              // Refresh the todo list
+              initializeTodoList();
+            },
+            error: function(xhr) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to add task. Please try again.',
+                confirmButtonColor: '#FFB800'
+              });
             },
             complete: function() {
               hideLoading(button);
+              currentPage = 1;
             }
           });
         });
@@ -107,22 +202,21 @@
           showLoading(button);
           isLoading = true;
 
-          $.ajax({
-            url: `/dashboard/${dashboardType}/todo-list/load-more`,
-            data: {
-              page: ++currentPage,
-              completed: isViewingCompleted
-            },
-            success: function(response) {
-              $('#tasks').append(response.html);
-              if (!response.hasMorePages) {
-                button.addClass('hidden');
-              }
-            },
-            complete: function() {
-              isLoading = false;
-              hideLoading(button);
+          fetchTodoItems(++currentPage, isViewingCompleted).then(function(response) {
+            $('#tasks').append(response.html);
+
+            // Hide load more button if no more pages
+            if (!response.hasMorePages) {
+              button.addClass('hidden');
             }
+
+            updateButtonVisibility();
+          }).catch(function(error) {
+            console.error('Error loading more tasks:', error);
+            --currentPage; // Revert page increment on error
+          }).always(function() {
+            isLoading = false;
+            hideLoading(button);
           });
         });
 

@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Auth;
 
 class TodoController extends Controller
 {
+    protected function getUserId()
+    {
+        return Auth::id();
+    }
+
     protected function getService($dashboardType)
     {
         $user = Auth::user();
@@ -26,6 +31,7 @@ class TodoController extends Controller
         $user = Auth::user();
         $service = $this->getService($dashboardType);
         $modules = collect(session('modules', []));
+        $userId = $this->getUserId();
 
         $todoItems = Todo::where('user_id', $user->id)
             ->where('serviceable_type', get_class($service))
@@ -50,6 +56,7 @@ class TodoController extends Controller
         $hasMorePages = $totalItems > 6;
 
         return view('admin.dashboards.todo-list', compact(
+            'userId',
             'todoItems',
             'hasCompleted',
             'hasMorePages',
@@ -107,28 +114,37 @@ class TodoController extends Controller
         ]);
     }
 
-    public function loadMore(Request $request, $dashboardType)
+    public function loadMore(Request $request)
     {
-        $page = $request->input('page', 1);
         $perPage = 6;
-        $service = $this->getService($dashboardType);
+        $page = $request->input('page', 1);
+        $completed = $request->boolean('completed', false);
 
-        $todos = Todo::where('serviceable_type', get_class($service))
-            ->where('serviceable_id', $service->id)
-            ->where('completed', $request->boolean('completed', false))
-            ->orderByDesc('created_at')
-            ->skip(($page - 1) * $perPage)
+        $query = Todo::where('user_id', auth()->id())
+            ->where('completed', $completed)
+            ->orderBy('created_at', 'desc');
+
+        // Get total count for this status
+        $totalItems = $query->count();
+
+        // Get paginated results
+        $items = $query->skip(($page - 1) * $perPage)
             ->take($perPage)
             ->get();
 
-        $total = Todo::where('serviceable_type', get_class($service))
-            ->where('serviceable_id', $service->id)
-            ->where('completed', $request->boolean('completed', false))
-            ->count();
+        $hasMorePages = $totalItems > ($page * $perPage);
+
+        $html = '';
+        foreach ($items as $item) {
+            $html .= view('components.todo-item', ['item' => $item])->render();
+        }
 
         return response()->json([
-            'html' => view('admin.dashboards.partials.todo-items', ['todoItems' => $todos])->render(),
-            'hasMorePages' => $total > ($page * $perPage)
+            'html' => $html,
+            'hasMorePages' => $hasMorePages,
+            'totalItems' => $totalItems,
+            'currentPage' => $page,
+            'itemsPerPage' => $perPage
         ]);
     }
 
