@@ -178,15 +178,13 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     });
 
     // Reviews
-    Route::prefix('/dashboard/{dashboardType}')->group(function () {
-        Route::get('/reviews/{filter?}', [ReviewController::class, 'getReviews'])->name('admin.dashboard.get-reviews');
-        Route::get('/filtered-reviews/{filter?}', [ReviewController::class, 'fetchReviews'])->name('admin.dashboard.fetch-reviews');
-        Route::get('/reviews/pending', [ReviewController::class, 'showPendingReviews'])->name('admin.dashboard.show-pending-reviews');
-        Route::get('/reviews/all', [ReviewController::class, 'showAllReviews'])->name('admin.dashboard.show-all-reviews');
-        Route::post('/reviews/{reviewId}/approve', [ReviewController::class, 'approveReview'])->name('admin.dashboard.reviews.approve');
-        Route::post('/reviews/{reviewId}/show', [ReviewController::class, 'displayReview'])->name('admin.dashboard.reviews.show');
-        Route::post('/reviews/{reviewId}/hide', [ReviewController::class, 'hideReview'])->name('admin.dashboard.reviews.hide');
-        Route::delete('/reviews/{reviewId}/delete', [ReviewController::class, 'deleteReview'])->name('admin.dashboard.reviews.delete');
+    Route::prefix('dashboard/{dashboardType}/reviews')->group(function () {
+        Route::get('/', [ReviewController::class, 'getReviews'])->name('dashboard.reviews');
+        Route::get('/{filter}', [ReviewController::class, 'fetchReviews'])->name('dashboard.reviews.filter');
+        Route::post('/{id}/approve', [ReviewController::class, 'approveReview'])->name('dashboard.reviews.approve');
+        Route::post('/{id}/unapprove', [ReviewController::class, 'unapproveReview'])->name('dashboard.reviews.unapprove');
+        Route::post('/{id}/display', [ReviewController::class, 'displayReview'])->name('dashboard.reviews.display');
+        Route::delete('/{id}', [ReviewController::class, 'deleteReview'])->name('dashboard.reviews.delete');
     });
 
     // Documents

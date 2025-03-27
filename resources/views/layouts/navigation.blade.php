@@ -11,8 +11,7 @@
           ? route('admin.dashboard.todo-list', ['dashboardType' => $dashboardType])
           : null,
       'reviews' => $user->can('view_reviews')
-          ? route('admin.dashboard.get-reviews', [
-              'filter' => 'all',
+          ? route('dashboard.reviews', [
               'dashboardType' => $dashboardType,
           ])
           : null,
