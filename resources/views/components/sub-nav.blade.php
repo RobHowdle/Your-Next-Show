@@ -1,7 +1,7 @@
-<div class="border-t border-gray-800 bg-black/80 backdrop-blur-sm">
-  <div class="mx-auto max-w-[1920px] rounded-lg px-4 sm:px-6 lg:px-8">
+<div class="border-y border-gray-800 bg-gray-900/95 backdrop-blur-sm">
+  <div class="mx-auto max-w-[1920px] px-4 sm:px-6 lg:px-8">
     <div class="flex min-h-[48px] items-center py-2">
-      <div class="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:gap-2 xl:gap-4">
+      <div class="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
         @php
           $stats = match ($userType) {
               'promoter' => [
@@ -144,20 +144,22 @@
 
         @foreach ($stats as $stat)
           <div
-            class="{{ isset($stat['isRating']) ? 'col-span-1 sm:col-span-2 md:col-span-1' : '' }} flex min-h-[32px] items-center justify-center gap-4 overflow-hidden">
-            {{-- Mobile Icon --}}
-            <span class="flex-shrink-0 lg:hidden">
-              <svg class="h-5 w-5 text-yns_yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="{{ isset($stat['isRating']) ? 'col-span-1 sm:col-span-2 md:col-span-1' : '' }} group flex items-center justify-center gap-4 overflow-hidden rounded-lg bg-gray-800/50 p-3 transition duration-200 hover:bg-gray-800">
+            {{-- Icon (now visible on all screens) --}}
+            <span class="flex-shrink-0">
+              <svg class="h-5 w-5 text-gray-400 transition group-hover:text-yns_yellow" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $stat['icon'] }}" />
               </svg>
             </span>
 
             {{-- Label --}}
-            <span class="hidden flex-shrink-0 text-gray-400 lg:block">{{ $stat['label'] }}</span>
+            <span
+              class="flex-shrink-0 text-sm text-gray-400 transition group-hover:text-gray-300">{{ $stat['label'] }}</span>
 
             {{-- Value --}}
             @if (isset($stat['isRating']))
-              <div class="rating-wrapper flex items-center text-yns_yellow">
+              <div class="rating-wrapper flex items-center text-gray-400 transition group-hover:text-yns_yellow">
                 {!! $stat['value'] !!}
               </div>
             @else
@@ -167,7 +169,9 @@
         @endforeach
 
         @if (empty($stats))
-          <div class="flex items-center justify-center text-gray-400">Invalid user type</div>
+          <div class="flex items-center justify-center rounded-lg bg-gray-800/50 p-3 text-sm text-gray-400">
+            Invalid user type
+          </div>
         @endif
       </div>
     </div>
@@ -176,7 +180,11 @@
 
 <style>
   .ratings img {
-    @apply inline-block h-4 w-4;
+    @apply inline-block h-4 w-4 transition-all duration-200;
+  }
+
+  .group:hover .ratings img {
+    @apply brightness-110;
   }
 
   @media (max-width: 991px) {

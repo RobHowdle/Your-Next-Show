@@ -1,21 +1,32 @@
 @foreach ($todoItems as $item)
-  <div class="min-h-52 mx-auto w-full max-w-xs rounded-lg bg-yns_dark_blue text-white">
-    <div class="flex h-full flex-col justify-between rounded-lg border border-yns_red px-4 py-4">
-      <p class="mb-4">Todo: {{ $item->item }}</p>
-      @if ($item->due_date)
-        <p class="mb-2">Due Date: {{ $item->due_date }}</p>
-      @endif
-      <p class="mb-2">Created On: {{ $item->created_at->format('d-m-Y') }}</p>
-      <div class="mt-1 flex flex-row justify-between">
-        <button data-task-id="{{ $item->id }}" id="delete-task-btn"
-          class="delete-task-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_red hover:text-yns_red">Delete</button>
-        @if ($item->completed === true)
-          <button data-task-id="{{ $item->id }}" id="uncomplete-task-btn"
-            class="uncomplete-task-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Uncomplete</button>
-        @else
-          <button data-task-id="{{ $item->id }}" id="complete-task-btn"
-            class="complete-task-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Complete</button>
-        @endif
+  <div class="todo-item" data-id="{{ $item->id }}">
+    <div class="h-full rounded-lg border border-white/10 bg-white/5 p-6">
+      <div class="flex h-full flex-col justify-between">
+        <div>
+          <p class="mb-4 text-lg">{{ $item->item }}</p>
+          @if ($item->due_date)
+            <p class="mb-2 text-sm text-white/70">
+              Due: {{ \Carbon\Carbon::parse($item->due_date)->format('j M Y') }}
+            </p>
+          @endif
+          <p class="text-sm text-white/70">
+            Created: {{ $item->created_at->format('j M Y') }}
+          </p>
+        </div>
+        <div class="mt-4 flex justify-between gap-2">
+          <button
+            class="delete-task-btn flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white transition hover:border-yns_red hover:text-yns_red"
+            data-task-id="{{ $item->id }}">
+            <span class="fas fa-trash-alt mr-2"></span>Delete
+          </button>
+          @if (!$item->completed)
+            <button
+              class="complete-task-btn flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white transition hover:border-yns_yellow hover:text-yns_yellow"
+              data-task-id="{{ $item->id }}">
+              <span class="fas fa-check mr-2"></span>Complete
+            </button>
+          @endif
+        </div>
       </div>
     </div>
   </div>

@@ -2,267 +2,278 @@
   <x-slot name="header">
     <x-sub-nav :userId="$userId" />
   </x-slot>
-
   <div class="mx-auto w-full max-w-screen-2xl py-16">
-    <div class="relative mb-8 shadow-md sm:rounded-lg">
-      <div class="min-w-screen-xl mx-auto max-w-screen-xl rounded-lg bg-yns_dark_gray text-white">
-        <div class="rounded-lg border border-white px-8 py-4">
-          <p class="mb-4 font-heading text-4xl font-bold">Todo List</p>
-          <form id="newTodoItem" method="POST" class="border-b border-b-white pb-4">
-            @csrf
-            <div class="flex flex-col items-start gap-4">
-              <div class="group w-full">
-                <x-input-label-dark>What do you need to add to your todo list?</x-input-label-dark>
-                <x-textarea-input class="mt-2 h-32" id="taskInput" name="task"></x-textarea-input>
-              </div>
-              <x-white-button type="submit" id="addTaskButton">Add Item</x-white-button>
+    <div class="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+      <div class="overflow-hidden rounded-xl border border-gray-800 bg-gray-900/60 backdrop-blur-xl">
+        <!-- Header Section -->
+        <div class="border-b border-gray-800 px-6 py-8">
+          <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <h1 class="font-heading text-3xl font-bold text-white sm:text-4xl">Todo List</h1>
+            <div class="flex flex-wrap gap-3">
+              <button id="completed-task-btn"
+                class="{{ $hasCompleted ? '' : 'hidden' }} inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
+                <span class="fas fa-check-circle mr-2"></span>
+                View Completed
+              </button>
+              <button id="uncomplete-task-btn"
+                class="inline-flex hidden items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
+                <span class="fas fa-list mr-2"></span>
+                View Active
+              </button>
+            </div>
+          </div>
+        </div>
 
+        <div class="space-y-6 p-6">
+          <!-- Add Todo Form -->
+          <form id="newTodoItem" class="rounded-lg border border-gray-700 bg-gray-800/50 p-6">
+            @csrf
+            <div class="space-y-4">
+              <div>
+                <label for="taskInput" class="block text-sm font-medium text-gray-400">New Todo Item</label>
+                <textarea id="taskInput" name="task" rows="3"
+                  class="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white placeholder-gray-500 shadow-sm focus:border-yns_yellow focus:ring-yns_yellow"
+                  placeholder="What needs to be done?"></textarea>
+              </div>
+              <div>
+                <label for="dueDate" class="block text-sm font-medium text-gray-400">Due Date (Optional)</label>
+                <input type="date" id="dueDate" name="due_date"
+                  class="mt-2 block w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-white shadow-sm focus:border-yns_yellow focus:ring-yns_yellow">
+              </div>
+              <button type="submit" id="addTaskButton"
+                class="inline-flex items-center rounded-lg bg-yns_yellow px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-yns_dark_orange hover:text-white">
+                <span class="fas fa-plus-circle mr-2"></span>
+                Add Item
+              </button>
             </div>
           </form>
-          <div class="grid grid-cols-3 gap-x-4 gap-y-6 pt-6" id="tasks">
-            @if ($todoItems->isEmpty())
-              <p>No todo items found.</p>
-            @else
-              @include('components.todo-items', ['todoItems' => $todoItems])
-            @endif
+
+          <!-- Tasks Grid -->
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" id="tasks">
+            {{-- <x-todo-items :todoItems="$todoItems" /> --}}
           </div>
-          <div class="mt-6 flex flex-row gap-4">
-            <x-white-button id="load-more-btn">Load More</x-white-button>
-            <x-white-button id="completed-task-btn">View Completed</x-white-button>
-            <x-white-button id="uncomplete-task-btn">View Uncompleted</x-white-button>
+
+          <!-- Load More Button -->
+          <div class="mt-8 flex justify-center">
+            <button id="load-more-btn"
+              class="{{ $hasMorePages ? '' : 'hidden' }} inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white ring-1 ring-gray-700 transition hover:bg-gray-700 hover:ring-yns_yellow">
+              <span class="fas fa-spinner mr-2"></span>
+              Load More
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
-</x-app-layout>
-<script>
-  jQuery(document).ready(function() {
-    let currentPage = 1;
-    let dashboardType = "{{ $dashboardType }}";
-    let isViewingCompleted = false;
 
-    // Initial button states
-    checkButtonVisibility();
+  @push('scripts')
+    <script>
+      jQuery(document).ready(function() {
+        let currentPage = 1;
+        let dashboardType = "{{ $dashboardType }}";
+        let isViewingCompleted = false;
+        let isLoading = false;
 
-    // Task Loading Functions
-    function loadTasks(page) {
-      if (page > 1) {
-        jQuery.ajax({
-          url: `/dashboard/${dashboardType}/todo-list/load-more`,
-          method: 'GET',
-          data: {
-            page: page
-          },
-          success: function(response) {
-            jQuery('#tasks').append(response.html);
-            jQuery('#load-more-btn').toggle(response.hasMorePages);
-          },
-          error: function() {
-            showFailureNotification('Failed to load tasks');
-          }
-        });
-      }
-    }
+        // Initialize loading spinner
+        const spinner = '<span class="fas fa-circle-notch fa-spin"></span>';
 
-    function checkButtonVisibility() {
-      Promise.all([
-        // Get completed status
-        jQuery.ajax({
-          url: `/dashboard/${dashboardType}/todo-list/has-completed`,
-          method: 'GET'
-        }),
-        // Get uncompleted status
-        jQuery.ajax({
-          url: `/dashboard/${dashboardType}/todo-list/has-uncompleted`,
-          method: 'GET'
-        })
-      ]).then(([completedResponse, uncompletedResponse]) => {
-        // Show completed button if viewing uncompleted and has completed items
-        jQuery('#completed-task-btn').toggle(
-          !isViewingCompleted && completedResponse.hasCompleted
-        );
-
-        // Show uncompleted button if viewing completed and has uncompleted items
-        jQuery('#uncomplete-task-btn').toggle(
-          isViewingCompleted && uncompletedResponse.hasUncompleted
-        );
-      });
-    }
-
-    // Click handler for completed items
-    jQuery('#completed-task-btn').on('click', function() {
-      jQuery.ajax({
-        url: `/dashboard/${dashboardType}/todo-list/completed`,
-        method: 'GET',
-        success: function(response) {
-          isViewingCompleted = true;
-          jQuery('#tasks').html(response.html);
-          checkButtonVisibility();
-        },
-        error: function() {
-          showFailureNotification('Failed to load completed tasks');
+        function showLoading(button) {
+          button.prop('disabled', true)
+            .data('original-content', button.html())
+            .html(`${spinner} Loading...`);
         }
-      });
-    });
 
-    // Click handler for uncompleted items
-    jQuery('#uncomplete-task-btn').on('click', function() {
-      jQuery.ajax({
-        url: `/dashboard/${dashboardType}/todo-list/uncompleted`,
-        method: 'GET',
-        success: function(response) {
-          isViewingCompleted = false;
-          jQuery('#tasks').html(response.html);
-          checkButtonVisibility();
-        },
-        error: function() {
-          showFailureNotification('Failed to load uncompleted tasks');
+        function hideLoading(button) {
+          button.prop('disabled', false)
+            .html(button.data('original-content'));
         }
-      });
-    });
 
-    // Initial check
-    checkButtonVisibility();
+        function updateButtonVisibility() {
+          const hasItems = $('#tasks').find('.todo-item').length > 0;
+          const hasCompletedItems = $('.todo-item[data-completed="true"]').length > 0;
 
-    // Update task completion handler
-    function handleTaskCompletion(taskId, taskElement) {
-      jQuery.ajax({
-        url: `/dashboard/${dashboardType}/todo-list/${taskId}/complete`,
-        method: 'POST',
-        data: {
-          _token: '{{ csrf_token() }}'
-        },
-        success: function(response) {
-          taskElement.fadeOut(300, function() {
-            jQuery(this).remove();
+          // Update completed tasks button visibility
+          $('#completed-task-btn').toggleClass('hidden', !hasCompletedItems);
 
-            // Check if this was the last item
-            if (jQuery('#tasks').children().length === 0) {
-              jQuery('#tasks').html('<p>No todo items found.</p>');
-            }
-
-            showSuccessNotification(response.message);
-            checkButtonVisibility();
-          });
-        },
-        error: function() {
-          showFailureNotification('Failed to complete task');
-        }
-      });
-    }
-
-    function handleTaskDeletion(taskId, taskElement) {
-      jQuery.ajax({
-        url: `/dashboard/${dashboardType}/todo-list/${taskId}`,
-        method: 'DELETE',
-        data: {
-          _token: '{{ csrf_token() }}'
-        },
-        success: function(response) {
-          taskElement.fadeOut(300, function() {
-            jQuery(this).remove();
-
-            // Check if this was the last item
-            if (jQuery('#tasks').children().length === 0) {
-              jQuery('#tasks').html('<p>No todo items found.</p>');
-            }
-
-            showSuccessNotification(response.message);
-            checkButtonVisibility();
-          });
-        },
-        error: function() {
-          showFailureNotification('Failed to delete task');
-        }
-      });
-    }
-
-    // Form Submission Handler
-    jQuery('#newTodoItem').on('submit', function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-
-      jQuery.ajax({
-        url: `/dashboard/${dashboardType}/todo-list/new`,
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        success: function(response) {
-          // Clear form
-          jQuery('#taskInput').val('');
-
-          // Remove "No todo items found" if present
-          if (jQuery('#tasks p').text() === 'No todo items found.') {
-            jQuery('#tasks').empty();
-          }
-
-          // Format date to match existing items
-          const date = new Date();
-          const currentDate = date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          }).replace(/\//g, '-');
-
-          // Add new todo to list
-          const newTodo = `
-                <div class="min-h-52 mx-auto w-full max-w-xs rounded-lg bg-yns_dark_blue text-white">
-                    <div class="flex h-full flex-col justify-between rounded-lg border border-yns_red px-4 py-4">
-                        <p class="mb-4">Todo: ${response.todoItem.item}</p>
-                        <p class="mb-2">Created On: ${currentDate}</p>
-                        <div class="mt-1 flex flex-row justify-between">
-                            <button data-task-id="${response.todoItem.id}" id="delete-task-btn"
-                                class="delete-task-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_red hover:text-yns_red">
-                                Delete
-                            </button>
-                            <button data-task-id="${response.todoItem.id}" id="complete-task-btn"
-                                class="complete-task-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">
-                                Complete
-                            </button>
-                        </div>
-                    </div>
+          // If no items left, show empty state
+          if (!hasItems) {
+            $('#tasks').html(`
+                <div class="col-span-full rounded-lg border border-gray-700 bg-gray-800/50 p-12 text-center">
+                    <span class="fas fa-clipboard-list mb-4 text-4xl text-gray-600"></span>
+                    <h3 class="mt-2 text-sm font-medium text-white">No ${isViewingCompleted ? 'completed' : 'active'} tasks</h3>
+                    <p class="mt-1 text-sm text-gray-400">${isViewingCompleted ? 'Completed tasks will appear here.' : 'Get started by adding a new task.'}</p>
                 </div>
-            `;
-          jQuery('#tasks').prepend(newTodo);
-
-          // Show notification
-          showSuccessNotification(response.message);
-
-          // Update buttons
-          checkButtonVisibility();
-        },
-        error: function(xhr) {
-          showFailureNotification(xhr.responseJSON?.message || 'Failed to add task');
+            `);
+          }
         }
+
+        // Function to fetch todo items
+        function fetchTodoItems(page = 1, completed = false) {
+          return $.ajax({
+            url: `/dashboard/${dashboardType}/todo-list/load-more`,
+            method: 'GET',
+            data: {
+              page,
+              completed,
+              per_page: 6 // Set items per page
+            },
+            beforeSend: function() {
+              $('#tasks').addClass('opacity-50');
+            }
+          }).always(function() {
+            $('#tasks').removeClass('opacity-50');
+          });
+        }
+
+        // Function to initialize todo list
+        function initializeTodoList() {
+          fetchTodoItems(1, false).then(function(response) {
+            if (response.html) {
+              $('#tasks').html(response.html);
+
+              // Update load more button visibility based on total items
+              const totalPages = Math.ceil(response.totalItems / response.itemsPerPage);
+              $('#load-more-btn').toggleClass('hidden', !response.hasMorePages);
+
+              // Store total items for reference
+              window.todoItemsTotal = response.totalItems;
+
+              updateButtonVisibility();
+            } else {
+              updateButtonVisibility(); // Show empty state
+            }
+          }).catch(function(error) {
+            console.error('Failed to load tasks:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to load tasks. Please refresh the page.',
+              confirmButtonColor: '#FFB800'
+            });
+          });
+        }
+
+        // Call initialize function on page load
+        initializeTodoList();
+
+        // Form submission
+        $('#newTodoItem').on('submit', function(e) {
+          e.preventDefault();
+          const button = $('#addTaskButton');
+          showLoading(button);
+
+          $.ajax({
+            url: `/dashboard/${dashboardType}/todo-list/new`,
+            method: 'POST',
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+              // Clear form inputs
+              $('#taskInput').val('');
+              $('#dueDate').val('');
+
+              // If we're viewing completed tasks, don't show the new task
+              if (isViewingCompleted) return;
+
+              // Refresh the todo list
+              initializeTodoList();
+            },
+            error: function(xhr) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to add task. Please try again.',
+                confirmButtonColor: '#FFB800'
+              });
+            },
+            complete: function() {
+              hideLoading(button);
+              currentPage = 1;
+            }
+          });
+        });
+
+        // Load more functionality
+        $('#load-more-btn').on('click', function() {
+          if (isLoading) return;
+
+          const button = $(this);
+          showLoading(button);
+          isLoading = true;
+
+          fetchTodoItems(++currentPage, isViewingCompleted).then(function(response) {
+            $('#tasks').append(response.html);
+
+            // Hide load more button if no more pages
+            if (!response.hasMorePages) {
+              button.addClass('hidden');
+            }
+
+            updateButtonVisibility();
+          }).catch(function(error) {
+            console.error('Error loading more tasks:', error);
+            --currentPage; // Revert page increment on error
+          }).always(function() {
+            isLoading = false;
+            hideLoading(button);
+          });
+        });
+
+        // Handle complete/delete buttons
+        $(document).on('click', '.complete-task-btn', function() {
+          const id = $(this).data('task-id');
+          const item = $(this).closest('.todo-item');
+
+          $.ajax({
+            url: `/dashboard/${dashboardType}/todo-list/${id}/complete`,
+            method: 'POST',
+            data: {
+              _token: '{{ csrf_token() }}'
+            },
+            success: function() {
+              item.fadeOut(() => item.remove());
+              updateButtonVisibility();
+            }
+          });
+        });
+
+        $(document).on('click', '.delete-task-btn', function() {
+          const id = $(this).data('task-id');
+          const item = $(this).closest('.todo-item');
+
+          $.ajax({
+            url: `/dashboard/${dashboardType}/todo-list/${id}`,
+            method: 'DELETE',
+            data: {
+              _token: '{{ csrf_token() }}'
+            },
+            success: function() {
+              item.fadeOut(() => item.remove());
+              updateButtonVisibility();
+            }
+          });
+        });
+
+        // Toggle completed/uncompleted views
+        $('#completed-task-btn, #uncomplete-task-btn').on('click', function() {
+          isViewingCompleted = !isViewingCompleted;
+          currentPage = 1;
+
+          $.ajax({
+            url: `/dashboard/${dashboardType}/todo-list/load-more`,
+            data: {
+              completed: isViewingCompleted
+            },
+            success: function(response) {
+              $('#tasks').html(response.html);
+              $('#completed-task-btn').toggleClass('hidden');
+              $('#uncomplete-task-btn').toggleClass('hidden');
+              $('#load-more-btn').toggleClass('hidden', !response.hasMorePages);
+            }
+          });
+        });
       });
-    });
-
-    // Load More Handler
-    jQuery('#load-more-btn').on('click', function() {
-      currentPage++;
-      loadTasks(currentPage);
-    });
-
-    // Task Completion Click Handler
-    jQuery(document).on('click', '.complete-task-btn', function() {
-      const taskId = jQuery(this).data('task-id');
-      const todoItem = jQuery(this).closest('.min-h-52');
-
-      handleTaskCompletion(taskId, todoItem);
-    });
-
-    jQuery(document).on('click', '.delete-task-btn', function() {
-      const taskId = jQuery(this).data('task-id');
-      const todoItem = jQuery(this).closest('.min-h-52');
-      handleTaskDeletion(taskId, todoItem);
-    });
-
-    // Initial Load
-    loadTasks(currentPage);
-  });
-</script>
+    </script>
+  @endpush
+</x-app-layout>

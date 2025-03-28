@@ -9,6 +9,7 @@ use App\Models\Finance;
 use Illuminate\View\Component;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
+use App\Models\VenueReview;
 
 class SubNav extends Component
 {
@@ -62,45 +63,66 @@ class SubNav extends Component
     /**
      * Helper function to render rating icons
      */
-    public function renderRatingIcons($overallScore)
+    public function renderRatingIcons($rating)
     {
-        $overallScore = 0;
-        $output = '';
-        $totalIcons = 5;
-        $emptyIcon = asset('storage/images/system/ratings/empty.png');
         $fullIcon = asset('storage/images/system/ratings/full.png');
+        $emptyIcon = asset('storage/images/system/ratings/empty.png');
         $hotIcon = asset('storage/images/system/ratings/hot.png');
 
-        // Display 5 empty icons if there is no rating
-        if (is_null($overallScore) || $overallScore <= 0.1) {
-            return str_repeat('<img src="' . $emptyIcon . '" alt="Empty Icon" />', $totalIcons);
+        $rating = floatval($rating);
+        $output = '';
+
+        // If rating is 0 or null, show all empty stars
+        if ($rating <= 0) {
+            for ($i = 0; $i < 5; $i++) {
+                $output .= sprintf(
+                    '<img src="%s" alt="Empty Rating" class="inline-block h-4 w-4" />',
+                    $emptyIcon
+                );
+            }
+            return $output;
         }
 
-        $fullIcons = floor($overallScore);
-        $fraction = $overallScore - $fullIcons;
-
-        if ($overallScore == $totalIcons) {
-            // Display 5 hot icons when the score is 5/5
-            $output = str_repeat('<img src="' . $hotIcon . '" alt="Hot Icon" />', $totalIcons);
-        } else {
-            // Add full icons
-            for ($i = 0; $i < $fullIcons; $i++) {
-                $output .= '<img src="' . $fullIcon . '" alt="Full Icon" />';
+        // If rating is 5, show all hot stars
+        if ($rating >= 5) {
+            for ($i = 0; $i < 5; $i++) {
+                $output .= sprintf(
+                    '<img src="%s" alt="Hot Rating" class="inline-block h-4 w-4" />',
+                    $hotIcon
+                );
             }
-
-            // Handle the fractional icon using clip-path
-            if ($fraction > 0) {
-                $output .= '<img src="' . $fullIcon . '" alt="Partial Full Icon" style="clip-path: inset(0 ' . ((1 - $fraction) * 100) . '% 0 0);" />';
-            }
-
-            // Add empty icons to fill the rest
-            $iconsDisplayed = $fullIcons + ($fraction > 0 ? 1 : 0);
-            $remainingIcons = $totalIcons - $iconsDisplayed;
-
-            for ($i = 0; $i < $remainingIcons; $i++) {
-                $output .= '<img src="' . $emptyIcon . '" alt="Empty Icon" />';
-            }
+            return $output;
         }
+
+        $fullStars = floor($rating);
+        $partialStar = $rating - $fullStars;
+        $emptyStars = 5 - ceil($rating);
+
+        // Add full stars
+        for ($i = 0; $i < $fullStars; $i++) {
+            $output .= sprintf(
+                '<img src="%s" alt="Full Star" class="inline-block h-4 w-4" />',
+                $fullIcon
+            );
+        }
+
+        // Add partial star if needed
+        if ($partialStar > 0) {
+            $output .= sprintf(
+                '<img src="%s" alt="Partial Star" class="inline-block h-4 w-4" style="clip-path: inset(0 %d%% 0 0);" />',
+                $fullIcon,
+                (1 - $partialStar) * 100
+            );
+        }
+
+        // Add empty stars
+        for ($i = 0; $i < $emptyStars; $i++) {
+            $output .= sprintf(
+                '<img src="%s" alt="Empty Star" class="inline-block h-4 w-4" />',
+                $emptyIcon
+            );
+        }
+
         return $output;
     }
 
@@ -213,9 +235,11 @@ class SubNav extends Component
             $this->venueId = $venue->id;
             $this->eventsCountVenueYtd = $this->calculateEventsCountVenueYtd($venue);
             $this->totalProfitsVenueYtd = $this->calculateTotalProfitsVenueYtd($venue);
-            $this->overallRatingVenue = $this->renderRatingIcons($this->venueId);
+            $overallScore = VenueReview::calculateOverallScore($venue->id);
+            $this->overallRatingVenue = $this->renderRatingIcons($overallScore);
         }
     }
+
     private function loadPhotographerData($user)
     {
         $photographers = $user->otherService("Photography")->get();
