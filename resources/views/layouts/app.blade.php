@@ -88,7 +88,7 @@
       <div class="{{ request()->routeIs('profile.*') ? '' : 'px-2' }} flex-grow backdrop-brightness-50">
         {{ $slot }}
       </div>
-      <x-notes></x-notes>
+      <x-notes :dashboard-type="$dashboardType"></x-notes>
     </div>
   </div>
 
@@ -96,7 +96,7 @@
   <script>
     function initialize() {
       // Your initialization code here
-      console.log('Google Maps API initialized');
+      // console.log('Google Maps API initialized');
     }
 
     // Ensure the function is available globally

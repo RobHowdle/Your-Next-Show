@@ -1,21 +1,37 @@
-@foreach ($notes as $item)
-  <div class="min-h-52 mx-auto w-full max-w-xs rounded-lg bg-yns_dark_blue text-white">
-    <div class="flex h-full flex-col justify-between rounded-lg border border-yns_red px-4 py-4">
-      <p class="mb-2">Name: {{ $item->name }}</p>
-      <p class="mb-2">Note: {{ $item->text }}</p>
-      <p class="mb-2">Due Date: {{ $item->date }}</p>
-      <p class="mb-2">Created On: {{ $item->created_at->format('d-m-Y') }}</p>
-      <div class="mt-4 flex flex-row justify-between">
-        <button data-note-id="{{ $item->id }}"
-          class="delete-note-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_red hover:text-yns_red">Delete</button>
-        @if ($item->completed === true)
-          <button data-note-id="{{ $item->id }}"
-            class="uncomplete-note-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Uncomplete</button>
+@forelse($notes as $note)
+  <div class="note-item rounded-lg border border-gray-700 bg-gray-800 p-4">
+    <div class="mb-2 flex items-center justify-between">
+      <h3 class="text-lg font-medium text-white">{{ $note->name }}</h3>
+      <div class="flex space-x-2">
+        @if (!$note->completed)
+          <button class="complete-note-btn text-green-400 hover:text-green-300" data-note-id="{{ $note->id }}">
+            <i class="fas fa-check"></i>
+          </button>
         @else
-          <button data-note-id="{{ $item->id }}"
-            class="complete-note-btn rounded-lg border border-white bg-yns_dark_gray px-4 py-2 text-white transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Complete</button>
+          <button class="uncomplete-note-btn text-yellow-400 hover:text-yellow-300" data-note-id="{{ $note->id }}">
+            <i class="fas fa-undo"></i>
+          </button>
         @endif
+        <button class="delete-note-btn text-red-400 hover:text-red-300" data-note-id="{{ $note->id }}">
+          <i class="fas fa-trash"></i>
+        </button>
       </div>
     </div>
+    <p class="text-gray-300">{{ $note->text }}</p>
+    <div class="mt-2 text-sm text-gray-400">
+      {{ $note->date ? $note->date->format('M j, Y g:i A') : 'No date set' }}
+    </div>
+    @if ($note->is_todo)
+      <div class="mt-2">
+        <span
+          class="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-400">
+          <i class="fas fa-tasks mr-1"></i> Todo
+        </span>
+      </div>
+    @endif
   </div>
-@endforeach
+@empty
+  <div class="col-span-full py-8 text-center text-gray-400">
+    No notes found
+  </div>
+@endforelse

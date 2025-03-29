@@ -21,7 +21,7 @@
             ])
             : null,
         'notes' => $user->can('view_notes')
-            ? route('admin.dashboard.show-notes', ['dashboardType' => $dashboardType])
+            ? route('admin.dashboard.notes', ['dashboardType' => $dashboardType])
             : null,
         'documents' => $user->can('view_documents')
             ? route('admin.dashboard.documents.index', ['dashboardType' => $dashboardType])
@@ -115,7 +115,7 @@
           </a>
 
           {{-- Notes --}}
-          <a href="{{ route('admin.dashboard.show-notes', ['dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('admin.dashboard.notes', ['dashboardType' => $dashboardType]) }}"
             class="group flex flex-col items-center rounded-lg border border-gray-800 bg-gray-900 p-4 text-center transition duration-150 ease-in-out hover:bg-gray-800">
             <span
               class="fas fa-sticky-note mb-3 h-10 w-10 transform text-yns_yellow transition-transform group-hover:scale-110 sm:h-14 sm:w-14"></span>
