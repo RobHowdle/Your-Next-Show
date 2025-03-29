@@ -168,11 +168,10 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     // Notes
     //TODO - Finish
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
-        Route::get('/notes', [NoteController::class, 'showNotes'])->name('admin.dashboard.show-notes');
-        Route::get('/note-items', [NoteController::class, 'getNotes'])->name('admin.dashboard.note-items');
+        Route::get('/notes', [NoteController::class, 'getNotes'])->name('admin.dashboard.notes');
         Route::post('/notes/new', [NoteController::class, 'newNoteItem'])->name('admin.dashboard.new-note-item');
         Route::post('/note-item/{id}/complete', [NoteController::class, 'completeNoteItem'])->name('admin.dashboard.complete-note');
-        Route::post('/note-item/{id}/uncomplete', [NoteController::class, 'uncompleteNoteItem'])->name('admin.dashboard.uncomplete-note-item');
+        Route::post('/note-item/{id}/uncomplete', [NoteController::class, 'uncompleteNoteItem'])->name('admin.dashboard.uncomplete-note');
         Route::delete('/note-item/{id}', [NoteController::class, 'deleteNoteItem'])->name('admin.dashboard.delete-note');
         Route::get('/note-item/completed-notes', [NoteController::class, 'showCompletedNoteItems'])->name('admin.dashboard.completed-notes');
     });

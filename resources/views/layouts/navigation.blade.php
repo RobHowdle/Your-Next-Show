@@ -15,9 +15,7 @@
               'dashboardType' => $dashboardType,
           ])
           : null,
-      'notes' => $user->can('view_notes')
-          ? route('admin.dashboard.show-notes', ['dashboardType' => $dashboardType])
-          : null,
+      'notes' => $user->can('view_notes') ? route('admin.dashboard.notes', ['dashboardType' => $dashboardType]) : null,
       'documents' => $user->can('view_documents')
           ? route('admin.dashboard.documents.index', ['dashboardType' => $dashboardType])
           : null,

@@ -86,7 +86,7 @@
             </span>
             <span class="text-sm sm:text-base">Jobs</span>
           </a>
-          <a href="{{ route('admin.dashboard.show-notes', ['dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('admin.dashboard.notes', ['dashboardType' => $dashboardType]) }}"
             class="group flex flex-col items-center text-center transition duration-150 ease-in-out hover:text-yns_yellow">
             <span
               class="fas fa-sticky-note mb-3 h-10 w-10 rounded-lg bg-white p-2 text-black transition duration-150 ease-in-out group-hover:text-yns_yellow sm:mb-4 sm:h-12 sm:w-12 lg:h-14 lg:w-14">
