@@ -22,19 +22,19 @@ class JobsUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'client_search' => 'required|string',
-            'client_service' => 'required|string',
+            'client_id' => 'required',
             'client_name' => 'required|string',
-            'job_start_date' => 'required',
-            'job_deadline_date' => 'required',
-            'package' => 'required|string',
-            'job_status' => 'required|string',
-            'job_scope_file' => 'nullable|file|mimes:pdf,doc,docx,png,jpg,jpeg,svg,zip|max:10240',
-            'job_cost' => 'required|numeric',
-            'job_text_scope' => 'nullable|string',
+            'client_service' => 'required|string',
+            'package' => 'nullable|string',
             'job_priority' => 'required|string',
+            'job_status' => 'required|string',
+            'job_start_date' => 'required',
+            'job_end_date' => 'required',
             'estimated_lead_time_value' => 'required|numeric',
             'estimated_lead_time_unit' => 'required',
+            'scope' => 'nullable|string',
+            'job_cost' => 'required|numeric',
+            'job_scope_file' => 'nullable|file|mimes:pdf,doc,docx,png,jpg,jpeg,svg,zip|max:10240',
         ];
     }
 }
