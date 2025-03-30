@@ -325,6 +325,7 @@
     }
 
     // Poster Preview
+    // Update your file preview handler
     $('#poster_url').on('change', function(event) {
       const file = event.target.files[0];
       const maxSize = 10 * 1024 * 1024; // 10MB in bytes
@@ -334,11 +335,43 @@
           showFailureNotification('File size exceeds 10MB limit');
           this.value = ''; // Clear the file input
           $('#posterPreview').addClass('hidden').attr('src', '#');
+          $('#uploaded_file_path').val(''); // Clear the hidden input
           return;
         }
+
         const reader = new FileReader();
         reader.onload = function(e) {
+          // Update preview image
           $('#posterPreview').attr('src', e.target.result).removeClass('hidden');
+
+          // Create FormData and upload file
+          const formData = new FormData();
+          formData.append('file', file);
+
+          $.ajax({
+            url: `/dashboard/${dashboardType}/events/upload`,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+              if (response.success) {
+                // Update both preview and details sections
+                $('#uploaded_file_path').val(response.path);
+                $('#posterPreview').attr('src', response.url).removeClass('hidden');
+                showSuccessNotification('File uploaded successfully');
+              }
+            },
+            error: function(error) {
+              console.error('Upload error:', error);
+              showFailureNotification('Error uploading file');
+              $('#posterPreview').addClass('hidden');
+              $('#uploaded_file_path').val('');
+            }
+          });
         };
         reader.readAsDataURL(file);
       }

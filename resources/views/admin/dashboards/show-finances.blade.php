@@ -23,19 +23,19 @@
                 <x-text-input id="date-picker"
                   class="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white" />
               </div>
-              <div class="ml-4 flex gap-4">
+              <div class="ml-4 flex items-center gap-4">
                 <form action="{{ route('admin.dashboard.finances.export', ['dashboardType' => $dashboardType]) }}"
                   method="POST" id="exportForm">
                   @csrf
                   <input type="hidden" name="filter" id="export-filter">
                   <input type="hidden" name="date" id="export-date">
                   <button type="submit" id="exportButton"
-                    class="border-yns_blue bg-yns_blue rounded-lg border px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-yns_dark_blue hover:bg-white hover:text-yns_dark_blue">
+                    class="border-yns_blue bg-yns_blue inline-flex h-10 items-center rounded-lg border px-4 text-sm font-medium text-white transition duration-150 ease-in-out hover:border-yns_dark_blue hover:bg-white hover:text-yns_dark_blue">
                     <span class="fas fa-file-export mr-2"></span>Export
                   </button>
                 </form>
                 <a href="{{ route('admin.dashboard.create-new-finance', ['dashboardType' => $dashboardType]) }}"
-                  class="rounded-lg border border-green-500 bg-green-500 px-4 py-2 font-heading text-white transition duration-150 ease-in-out hover:border-green-700 hover:bg-green-700">
+                  class="inline-flex h-10 items-center rounded-lg bg-yns_yellow px-4 text-sm font-medium text-gray-900 transition duration-200 hover:bg-yellow-400">
                   <span class="fas fa-plus-circle mr-2"></span>New Budget
                 </a>
               </div>

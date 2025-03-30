@@ -162,11 +162,11 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/users/new-user', [LinkedUserController::class, 'newUser'])->name('admin.dashboard.new-user');
         Route::get('/users/search-users', [LinkedUserController::class, 'searchUsers'])->name('admin.dashboard.search-users');
         Route::post('/users/add-user/{id}', [LinkedUserController::class, 'linkUser'])->name('admin.dashboard.link-user');
+        Route::post('/update-user-role', [LinkedUserController::class, 'updateUserRole'])->name('admin.dashboard.update-user-role');
         Route::delete('/users/delete-user/{id}', [LinkedUserController::class, 'deleteUser'])->name('admin.dashboard.delete-user');
     });
 
     // Notes
-    //TODO - Finish
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/notes', [NoteController::class, 'getNotes'])->name('admin.dashboard.notes');
         Route::post('/notes/new', [NoteController::class, 'newNoteItem'])->name('admin.dashboard.new-note-item');
@@ -193,9 +193,10 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/documents/{id}', [DocumentController::class, 'show'])->name('admin.dashboard.document.show');
         Route::get('/documents/{id}/edit', [DocumentController::class, 'edit'])->name('admin.dashboard.document.edit');
         Route::post('/document/file-upload', [DocumentController::class, 'fileUpload'])->name('admin.dashboard.document.file.upload');
+        Route::post('/document/file/delete', [DocumentController::class, 'deleteFile'])->name('admin.dashboard.document.file.delete');
         Route::post('/documents/store', [DocumentController::class, 'storeDocument'])->name('admin.dashboard.store-document');
         Route::put('/documents/{id}', [DocumentController::class, 'update'])->name('admin.dashboard.document.update');
-        Route::delete('/documents/{id}', [DocumentController::class, 'destroy'])->name('admin.dashboard.document.delete');
+        Route::delete('/documents/{id}', [DocumentController::class, 'delete'])->name('admin.dashboard.document.delete');
         Route::get('/documents/{id}/download', [DocumentController::class, 'download'])->name('admin.dashboard.document.download');
     });
 

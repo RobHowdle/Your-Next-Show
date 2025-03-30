@@ -17,7 +17,8 @@ class ServiceUser extends Model
     protected $fillable = [
         'user_id',
         'serviceable_id',
-        'serviceable_type'
+        'serviceable_type',
+        'role_id',
     ];
 
     public $timestamps = true;

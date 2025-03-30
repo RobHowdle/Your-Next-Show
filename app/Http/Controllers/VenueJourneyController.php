@@ -70,9 +70,13 @@ class VenueJourneyController extends Controller
             ], 400);
         }
 
+        // Check if this is the first user for this venue
+        $isFirstUser = !$venue->users()->exists();
+
         $user->venues()->attach($serviceableId, [
             'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
+            'updated_at' => Carbon::now(),
+            'role' => $isFirstUser ? 'owner' : 'member' // Set role based on whether they're first
         ]);
 
         $venue->update([
