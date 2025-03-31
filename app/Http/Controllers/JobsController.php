@@ -129,33 +129,16 @@ class JobsController extends Controller
         $validated = $request->validated();
 
         $jobName = $validated['client_name'] . ' - ' . $validated['package'] . ' - ' . Carbon::now();
-        $jobFileUrls = [];
-
-        // Handle multiple file uploads
-        if ($request->hasFile('job_scope_file')) {
-            foreach ($request->file('job_scope_file') as $file) {
-                $extension = $file->getClientOriginalExtension() ?: $file->guessExtension();
-                $fileName = Str::slug($jobName . '-' . uniqid() . '.' . $extension);
-                $path = 'jobs/' . strtolower($role) . '/' . $user->id;
-
-                // Store the file and get the URL
-                $fileUrl = $file->storeAs($path, $fileName, 'public');
-                if ($fileUrl) {
-                    $jobFileUrls[] = $fileUrl;
-                }
-            }
-        }
 
         try {
             DB::beginTransaction();
 
-            // Create the job
+            // Create the job first
             $job = Job::create([
                 'name' => $jobName,
                 'job_start_date' => $validated['job_start_date'],
                 'job_end_date' => $validated['job_end_date'],
                 'scope' => $validated['scope'],
-                'scope_url' => !empty($jobFileUrls) ? $jobFileUrls[0] : null, // Store first file as main URL
                 'job_type' => $validated['package'] ?? '',
                 'estimated_amount' => $validated['job_cost'],
                 'final_amount' => '0.00',
@@ -166,6 +149,35 @@ class JobsController extends Controller
                 'lead_time_unit' => $validated['estimated_lead_time_unit'],
             ]);
 
+            // Handle multiple file uploads
+            if ($request->hasFile('job_scope_file')) {
+                foreach ($request->file('job_scope_file') as $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $extension = $file->getClientOriginalExtension() ?: $file->guessExtension();
+                    $fileName = Str::slug($jobName . '-' . uniqid() . '.' . $extension);
+                    $path = 'jobs/' . strtolower($role) . '/' . $user->id;
+
+                    // Store the file
+                    $filePath = $file->storeAs($path, $fileName, 'public');
+
+                    if ($filePath) {
+                        // Create document record
+                        DB::table('documents')->insert([
+                            'file_path' => $filePath,
+                            'original_name' => $originalName,
+                            'job_id' => $job->id,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        // Set the first file as the main scope_url
+                        if (!$job->scope_url) {
+                            $job->update(['scope_url' => $filePath]);
+                        }
+                    }
+                }
+            }
+
             // Create job-service relationship
             DB::table('job_service')->insert([
                 'job_id' => $job->id,
@@ -174,16 +186,6 @@ class JobsController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
-            // Store all uploaded files in jobs_documents
-            foreach ($jobFileUrls as $fileUrl) {
-                DB::table('jobs_documents')->insert([
-                    'job_id' => $job->id,
-                    'document_url' => $fileUrl,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
 
             DB::commit();
 
@@ -198,9 +200,9 @@ class JobsController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Clean up any uploaded files
-            foreach ($jobFileUrls as $fileUrl) {
-                Storage::disk('public')->delete($fileUrl);
+            // Clean up any uploaded files if there was an error
+            if (isset($filePath)) {
+                Storage::disk('public')->delete($filePath);
             }
 
             return response()->json([
@@ -209,6 +211,7 @@ class JobsController extends Controller
             ], 500);
         }
     }
+
     public function viewJob($dashboardType, Job $job)
     {
         $modules = collect(session('modules', []));

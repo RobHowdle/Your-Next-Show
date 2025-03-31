@@ -124,12 +124,16 @@
               <h2 class="mb-4 font-heading text-lg font-semibold text-white">Attachments</h2>
               <div>
                 <p class="mb-2 text-sm font-medium text-gray-400">Uploaded Files</p>
-                @if ($job->scope_url)
-                  <a href="{{ route('admin.dashboard.jobs.download', ['dashboardType' => $dashboardType, 'job' => $job->id]) }}"
-                    class="inline-flex items-center text-yns_yellow hover:underline">
-                    <i class="fas fa-download mr-2"></i>
-                    Download Files
-                  </a>
+                @if ($job->documents && $job->documents->count() > 0)
+                  <div class="space-y-2">
+                    @foreach ($job->documents as $document)
+                      <a href="{{ Storage::url($document->file_path) }}"
+                        class="block inline-flex items-center text-yns_yellow hover:underline" target="_blank">
+                        <i class="fas fa-file mr-2"></i>
+                        {{ $document->original_name }}
+                      </a>
+                    @endforeach
+                  </div>
                 @else
                   <p class="text-gray-400">No files uploaded</p>
                 @endif

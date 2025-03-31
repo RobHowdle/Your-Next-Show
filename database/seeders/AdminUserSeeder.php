@@ -19,7 +19,7 @@ class AdminUserSeeder extends Seeder
             'first_name' => 'Rob',
             'last_name' => 'Howdle',
             'date_of_birth' => Carbon::createFromFormat('d-m-Y', '08-10-1994'),
-            'email' => 'robhowdle94@gmail.com',
+            'email' => 'rob@yournextshow.co.uk',
             'email_verified_at' => now(),
             'password' => Hash::make('yfT11LpReC43(dV(U5'),
         ]);
