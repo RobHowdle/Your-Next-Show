@@ -80,7 +80,7 @@
           </div>
 
           <!-- Right Column: singleService Logo -->
-          <div class="relative hidden lg:block">
+          <div class="relative hidden place-content-center place-items-center lg:block">
             @if ($singleService->logo_url && file_exists(public_path($singleService->logo_url)))
               <img src="{{ asset($singleService->logo_url) }}" alt="{{ $singleService->name }}" class="_250img">
             @else

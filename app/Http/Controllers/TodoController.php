@@ -38,8 +38,7 @@ class TodoController extends Controller
             ->where('serviceable_id', $service->id)
             ->where('completed', false)
             ->orderByDesc('created_at')
-            ->take(6)
-            ->get();
+            ->paginate(6);
 
         $hasCompleted = Todo::where('user_id', $user->id)
             ->where('serviceable_type', get_class($service))
@@ -53,7 +52,7 @@ class TodoController extends Controller
             ->where('completed', false)
             ->count();
 
-        $hasMorePages = $totalItems > 6;
+        $hasMorePages = $todoItems->hasMorePages();
 
         return view('admin.dashboards.todo-list', compact(
             'userId',
@@ -116,35 +115,29 @@ class TodoController extends Controller
 
     public function loadMore(Request $request)
     {
-        $perPage = 6;
         $page = $request->input('page', 1);
-        $completed = $request->boolean('completed', false);
+        $perPage = 10;
 
-        $query = Todo::where('user_id', auth()->id())
-            ->where('completed', $completed)
-            ->orderBy('created_at', 'desc');
+        $todoItems = Todo::where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
 
-        // Get total count for this status
-        $totalItems = $query->count();
-
-        // Get paginated results
-        $items = $query->skip(($page - 1) * $perPage)
-            ->take($perPage)
-            ->get();
-
-        $hasMorePages = $totalItems > ($page * $perPage);
+        if ($todoItems->isEmpty()) {
+            return response()->json([
+                'html' => '',
+                'hasMorePages' => false
+            ]);
+        }
 
         $html = '';
-        foreach ($items as $item) {
-            $html .= view('components.todo-item', ['item' => $item])->render();
+        foreach ($todoItems as $todo) {
+            $html .= view('partials.todo-item', ['todo' => $todo])->render();
         }
 
         return response()->json([
             'html' => $html,
-            'hasMorePages' => $hasMorePages,
-            'totalItems' => $totalItems,
-            'currentPage' => $page,
-            'itemsPerPage' => $perPage
+            'hasMorePages' => $todoItems->hasMorePages(),
+            'nextPage' => $todoItems->currentPage() + 1
         ]);
     }
 

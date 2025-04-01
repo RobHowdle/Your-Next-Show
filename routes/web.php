@@ -46,18 +46,18 @@ Route::post('/venues/filter', [VenueController::class, 'filter'])->name('venues.
 Route::get('/venues/filterByCoordinates', [VenueController::class, 'filterByCoordinates'])
     ->name('venues.filterByCoordinates');
 Route::post('/venues/{slug}/submitReview', [VenueController::class, 'submitVenueReview'])->name('submit-venue-review');
-Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue');
+Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue')->middleware('log.minors');
 Route::get('/promoter-suggestion', [VenueController::class, 'suggestPromoters'])->name('suggestPromoters');
 
 Route::get('/promoters', [PromoterController::class, 'index'])->name('promoters');
 Route::post('/promoters/filter', [PromoterController::class, 'filter'])->name('promoters.filter');
-Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter');
+Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter')->middleware('log.minors');
 Route::post('/promoters/{slug}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
 
 Route::get('/services', [OtherServiceController::class, 'index'])->name('other');
 Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filter'])->name('other.filter');
 Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
-Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService');
+Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService')->middleware('log.minors');
 Route::post('/services/{serviceType}/{name}/submitReview', [OtherServiceController::class, 'submitReview'])->name('submit-single-service-review');
 
 // Gig Guide
