@@ -13,19 +13,19 @@ class ServiceRolesAndPermissionsSeeder extends Seeder
         // Create permissions
         $permissions = [
             // User management
-            // 'invite_service_users',
-            // 'remove_service_users',
-            // 'edit_service_users',
-            // 'view_service_users',
+            'invite_service_users',
+            'remove_service_users',
+            'edit_service_users',
+            'view_service_users',
 
             // Service management
-            // 'edit_service_details',
-            // 'delete_service',
-            // 'manage_service_settings',
+            'edit_service_details',
+            'delete_service',
+            'manage_service_settings',
 
             // Document management
-            // 'upload_documents',
-            // 'delete_documents',
+            'upload_documents',
+            'delete_documents',
             'edit_documents',
 
             // Calendar management
