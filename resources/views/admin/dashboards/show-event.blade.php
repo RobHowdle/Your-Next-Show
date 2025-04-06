@@ -74,6 +74,16 @@
                   </span>
                 @endif
               </button>
+              <button id="listings-tab" type="button"
+                class="group inline-flex items-center border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-400 transition duration-200 hover:border-yns_yellow hover:text-yns_yellow">
+                <span class="fas fa-list mr-2"></span>
+                Listings
+                @if ($event->opportunities->count() > 0)
+                  <span class="ml-2 rounded-full bg-yns_yellow px-2 py-0.5 text-xs font-medium text-black">
+                    {{ $event->opportunities->count() }}
+                  </span>
+                @endif
+              </button>
             </nav>
           </div>
         @endif
@@ -252,6 +262,87 @@
               </div>
             </div>
           </div>
+
+          <!-- After stats-content div -->
+          <div id="listings-content" class="tab-content hidden">
+            <div class="p-6">
+              @if ($event->opportunities->count() > 0)
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  @foreach ($event->opportunities as $opportunity)
+                    <div class="rounded-lg bg-gray-800/50 p-6">
+                      <div class="mb-4 flex items-center justify-between">
+                        <span
+                          class="@switch($opportunity->type)
+                                    @case('artist_wanted')
+                                        bg-blue-500/10 text-blue-400
+                                        @break
+                                    @case('venue_wanted')
+                                        bg-green-500/10 text-green-400
+                                        @break
+                                    @case('promoter_wanted')
+                                        bg-purple-500/10 text-purple-400
+                                        @break
+                                    @default
+                                        bg-gray-500/10 text-gray-400
+                                @endswitch rounded-full px-3 py-1 text-xs font-medium">
+                          {{ str_replace('_', ' ', ucfirst($opportunity->type)) }}
+                        </span>
+                        <span class="text-sm text-gray-400">
+                          {{ $opportunity->created_at->diffForHumans() }}
+                        </span>
+                      </div>
+
+                      <div class="space-y-3">
+                        @if ($opportunity->position_type)
+                          <div class="flex items-center text-sm">
+                            <span class="fas fa-user-circle mr-2 text-gray-400"></span>
+                            <span class="text-white">{{ ucfirst($opportunity->position_type) }}</span>
+                          </div>
+                        @endif
+
+                        @if ($opportunity->main_genres)
+                          <div class="flex items-center text-sm">
+                            <span class="fas fa-music mr-2 text-gray-400"></span>
+                            <div class="flex flex-wrap gap-1">
+                              @foreach ($opportunity->main_genres as $genre)
+                                <span class="rounded-full bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
+                                  {{ $genre }}
+                                </span>
+                              @endforeach
+                            </div>
+                          </div>
+                        @endif
+
+                        @if ($opportunity->performance_start_time)
+                          <div class="flex items-center text-sm">
+                            <span class="fas fa-clock mr-2 text-gray-400"></span>
+                            <span class="text-white">
+                              {{ \Carbon\Carbon::parse($opportunity->performance_start_time)->format('g:i A') }}
+                              @if ($opportunity->performance_end_time)
+                                - {{ \Carbon\Carbon::parse($opportunity->performance_end_time)->format('g:i A') }}
+                              @endif
+                            </span>
+                          </div>
+                        @endif
+
+                        @if ($opportunity->additional_requirements)
+                          <div class="mt-4 text-sm text-gray-300">
+                            <p class="line-clamp-3">{{ $opportunity->additional_requirements }}</p>
+                          </div>
+                        @endif
+                      </div>
+                    </div>
+                  @endforeach
+                </div>
+              @else
+                <div class="py-12 text-center">
+                  <span class="fas fa-clipboard-list mb-4 text-4xl text-gray-600"></span>
+                  <h3 class="text-lg font-medium text-gray-400">No Listings Yet</h3>
+                  <p class="mt-2 text-sm text-gray-500">This event doesn't have any active listings.</p>
+                </div>
+              @endif
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -316,8 +407,10 @@
   document.addEventListener('DOMContentLoaded', function() {
     const infoTab = document.getElementById('info-tab');
     const statsTab = document.getElementById('stats-tab');
+    const listingsTab = document.getElementById('listings-tab');
     const infoContent = document.getElementById('info-content');
     const statsContent = document.getElementById('stats-content');
+    const listingsContent = document.getElementById('listings-content');
 
     // Store chart instances and observers
     let charts = {
@@ -439,26 +532,27 @@
     }
 
     function switchTab(clickedTab) {
-      const isInfoTab = clickedTab === infoTab;
+      // Remove active states from all tabs
+      [infoTab, statsTab, listingsTab].forEach(tab => {
+        tab.classList.remove('border-yns_yellow', 'text-yns_yellow');
+      });
 
-      // Update tab styles
-      infoTab.classList.toggle('border-yns_yellow', isInfoTab);
-      infoTab.classList.toggle('text-yns_yellow', isInfoTab);
-      statsTab.classList.toggle('border-yns_yellow', !isInfoTab);
-      statsTab.classList.toggle('text-yns_yellow', !isInfoTab);
+      // Hide all content
+      [infoContent, statsContent, listingsContent].forEach(content => {
+        content.classList.add('hidden');
+      });
 
-      // Toggle content visibility
-      infoContent.classList.toggle('hidden', !isInfoTab);
-      statsContent.classList.toggle('hidden', isInfoTab);
+      // Add active state to clicked tab and show corresponding content
+      clickedTab.classList.add('border-yns_yellow', 'text-yns_yellow');
 
-      // Handle charts
-      if (!isInfoTab) {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            initializeCharts();
-          });
-        });
-      } else {
+      if (clickedTab === infoTab) {
+        infoContent.classList.remove('hidden');
+        destroyCharts();
+      } else if (clickedTab === statsTab) {
+        statsContent.classList.remove('hidden');
+        initializeCharts();
+      } else if (clickedTab === listingsTab) {
+        listingsContent.classList.remove('hidden');
         destroyCharts();
       }
     }
@@ -466,6 +560,7 @@
     // Add click handlers
     infoTab?.addEventListener('click', () => switchTab(infoTab));
     statsTab?.addEventListener('click', () => switchTab(statsTab));
+    listingsTab?.addEventListener('click', () => switchTab(listingsTab));
 
     // Set initial state
     switchTab(infoTab);
@@ -514,7 +609,7 @@
           success: function(response) {
             if (response.success) {
               showSuccessNotification(response.message);
-              window.location.href = '/dashboard/promoter/events';
+              window.location.href = response.redirect_url;
             } else {
               alert('Failed to delete the event.');
             }
