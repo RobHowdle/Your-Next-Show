@@ -195,4 +195,9 @@ class OtherService extends Model
                 return null;
         }
     }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'serviceable');
+    }
 }

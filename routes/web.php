@@ -20,6 +20,7 @@ use App\Http\Controllers\What3WordsController;
 use App\Http\Controllers\APIRequestsController;
 use App\Http\Controllers\BandJourneyController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\OtherServiceController;
 use App\Http\Controllers\VenueJourneyController;
 use App\Http\Controllers\DesignerJourneyController;
@@ -203,6 +204,7 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     // Events
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/events', [EventController::class, 'showEvents'])->name('admin.dashboard.show-events');
+        Route::post('/events/upload', [EventController::class, 'uploadPoster'])->name('admin.dashboard.upload-poster');
         Route::get('/events/load-more-upcoming', [EventController::class, 'loadMoreUpcomingEvents'])->name('admin.dashboard.load-more-upcoming-events');
         Route::get('/events/load-more-past', [EventController::class, 'loadMorePastEvents'])->name('admin.dashboard.load-more-past-events');
         Route::get('/events/create-event', [EventController::class, 'createNewEvent'])->name('admin.dashboard.create-new-event');
@@ -221,6 +223,12 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::post('/events/bands/create', [APIRequestsController::class, 'createBand']);
         Route::get('/events/venues/search', [APIRequestsController::class, 'searchVenues']);
         Route::post('/events/venues/create', [APIRequestsController::class, 'createVenue']);
+    });
+
+    // Opportunities
+    Route::prefix('/dashboard/{dashboardType}')->group(function () {
+        Route::get('/opportunities/type/{type}/fields', [OpportunityController::class, 'getTypeFields'])->name('opps.fields');
+        Route::post('/opportunities/create', [OpportunityController::class, 'store'])->name('opps.store');
     });
 
     // To-Do List

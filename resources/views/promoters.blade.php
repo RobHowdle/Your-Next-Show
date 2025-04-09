@@ -92,101 +92,103 @@
 
     <!-- Results Section -->
     <div class="mx-2 overflow-hidden rounded-lg shadow-xl">
-      <div class="hidden overflow-x-auto md:block">
+      <div class="border border-gray-800 bg-yns_dark_blue">
         <div class="hidden overflow-x-auto md:block">
-          <table class="min-w-full divide-y divide-gray-800">
-            <thead>
-              <tr>
-                <th class="sortable px-6 py-3 text-left" data-sort="name">
-                  <button
-                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                    Promoter Name
-                    <span class="fas fa-sort"></span>
-                  </button>
-                </th>
-                <th class="sortable px-6 py-3 text-left" data-sort="rating">
-                  <button
-                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                    Rating
-                    <span class="fas fa-sort"></span>
-                  </button>
-                </th>
-                <th class="sortable px-6 py-3 text-left" data-sort="location">
-                  <button
-                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                    Location
-                    <span class="fas fa-sort"></span>
-                  </button>
-                </th>
-                <th class="sortable px-6 py-3 text-left" data-sort="genres">
-                  <button
-                    class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                    Genres
-                    <span class="fas fa-sort"></span>
-                  </button>
-                </th>
-                <th class="px-6 py-3 text-left">
-                  <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
-                    Contact
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody id="resultsTableBody" class="divide-y divide-gray-800">
-              @foreach ($promoters as $promoter)
-                <tr class="hover:bg-black/20">
-                  <td class="px-6 py-4">
-                    <a href="/promoters/{{ Str::slug($promoter['name']) }}"
-                      class="font-medium text-white hover:text-yns_yellow">
-                      {{ $promoter['name'] }}
-                      @if ($promoter['is_verified'])
-                        <span
-                          class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
-                          <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-                          </svg>
-                          Verified
-                        </span>
-                      @endif
-                    </a>
-                  </td>
-                  <td class="px-6 py-4 text-gray-300">
-                    @if ($promoter['average_rating'])
-                      <div class="rating-wrapper flex items-center">
-                        {!! $promoter['rating_icons'] !!}
-                      </div>
-                    @else
-                      Not rated
-                    @endif
-                  </td>
-                  <td class="px-6 py-4 text-gray-300">
-                    {{ $promoter['postal_town'] ?: 'Location not specified' }}
-                  </td>
-                  <td class="px-6 py-4">
-                    <button onclick="showGenresModal({{ json_encode(array_keys((array) $promoter['genres'])) }})"
-                      class="inline-flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm text-gray-300 hover:bg-black/40">
-                      <span class="fas fa-music"></span>
-                      View Genres
-                    </button>
-                  </td>
-                  <td class="px-6 py-4">
+          <div class="hidden overflow-x-auto md:block">
+            <table class="min-w-full divide-y divide-gray-800">
+              <thead>
+                <tr>
+                  <th class="sortable px-6 py-3 text-left" data-sort="name">
                     <button
-                      onclick="showContactModal({{ json_encode([
-                          'name' => $promoter['name'],
-                          'preferred_contact' => $promoter['preferred_contact'],
-                          'contact_email' => $promoter['contact_email'],
-                          'contact_number' => $promoter['contact_number'],
-                          'platforms' => $promoter['platforms'],
-                      ]) }})"
-                      class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
-                      Contact Options
+                      class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                      Promoter Name
+                      <span class="fas fa-sort"></span>
                     </button>
-                  </td>
+                  </th>
+                  <th class="sortable px-6 py-3 text-left" data-sort="rating">
+                    <button
+                      class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                      Rating
+                      <span class="fas fa-sort"></span>
+                    </button>
+                  </th>
+                  <th class="sortable px-6 py-3 text-left" data-sort="location">
+                    <button
+                      class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                      Location
+                      <span class="fas fa-sort"></span>
+                    </button>
+                  </th>
+                  <th class="sortable px-6 py-3 text-left" data-sort="genres">
+                    <button
+                      class="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                      Genres
+                      <span class="fas fa-sort"></span>
+                    </button>
+                  </th>
+                  <th class="px-6 py-3 text-left">
+                    <span class="font-heading text-sm font-medium uppercase tracking-wider text-gray-400">
+                      Contact
+                    </span>
+                  </th>
                 </tr>
-              @endforeach
-            </tbody>
-          </table>
+              </thead>
+              <tbody id="resultsTableBody" class="divide-y divide-gray-800">
+                @foreach ($promoters as $promoter)
+                  <tr class="hover:bg-black/20">
+                    <td class="px-6 py-4">
+                      <a href="/promoters/{{ Str::slug($promoter['name']) }}"
+                        class="font-medium text-white hover:text-yns_yellow">
+                        {{ $promoter['name'] }}
+                        @if ($promoter['is_verified'])
+                          <span
+                            class="ml-2 inline-flex items-center rounded-full bg-yns_yellow/10 px-2 py-1 text-xs text-yns_yellow">
+                            <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path
+                                d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                            </svg>
+                            Verified
+                          </span>
+                        @endif
+                      </a>
+                    </td>
+                    <td class="px-6 py-4 text-gray-300">
+                      @if ($promoter['average_rating'])
+                        <div class="rating-wrapper flex items-center">
+                          {!! $promoter['rating_icons'] !!}
+                        </div>
+                      @else
+                        Not rated
+                      @endif
+                    </td>
+                    <td class="px-6 py-4 text-gray-300">
+                      {{ $promoter['postal_town'] ?: 'Location not specified' }}
+                    </td>
+                    <td class="px-6 py-4">
+                      <button onclick="showGenresModal({{ json_encode(array_keys((array) $promoter['genres'])) }})"
+                        class="inline-flex items-center gap-2 rounded-lg bg-black/20 px-3 py-1.5 text-sm text-gray-300 hover:bg-black/40">
+                        <span class="fas fa-music"></span>
+                        View Genres
+                      </button>
+                    </td>
+                    <td class="px-6 py-4">
+                      <button
+                        onclick="showContactModal({{ json_encode([
+                            'name' => $promoter['name'],
+                            'preferred_contact' => $promoter['preferred_contact'],
+                            'contact_email' => $promoter['contact_email'],
+                            'contact_number' => $promoter['contact_number'],
+                            'platforms' => $promoter['platforms'],
+                        ]) }})"
+                        class="inline-flex items-center gap-2 rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-black transition-all hover:bg-yellow-400">
+                        Contact Options
+                      </button>
+                    </td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

@@ -1,27 +1,60 @@
 @php
   $user = auth()->user();
-  $links = [
-      'finances' => $user->can('view_finances')
-          ? route('admin.dashboard.show-finances', ['dashboardType' => $dashboardType])
-          : null,
-      'events' => $user->can('view_events')
-          ? route('admin.dashboard.show-events', ['dashboardType' => $dashboardType])
-          : null,
-      'todo_list' => $user->can('view_todo_list')
-          ? route('admin.dashboard.todo-list', ['dashboardType' => $dashboardType])
-          : null,
-      'reviews' => $user->can('view_reviews')
-          ? route('dashboard.reviews', [
-              'dashboardType' => $dashboardType,
-          ])
-          : null,
-      'notes' => $user->can('view_notes') ? route('admin.dashboard.notes', ['dashboardType' => $dashboardType]) : null,
-      'documents' => $user->can('view_documents')
-          ? route('admin.dashboard.documents.index', ['dashboardType' => $dashboardType])
-          : null,
-      'users' => $user->can('view_users') ? route('admin.dashboard.users', ['dashboardType' => $dashboardType]) : null,
-      'jobs' => $user->can('view_jobs') ? route('admin.dashboard.jobs', ['dashboardType' => $dashboardType]) : null,
+  $modules = $modules ?? [];
+
+  $navigationLinks = [
+      'finances' => [
+          'permission' => 'view_finances',
+          'route' => 'admin.dashboard.show-finances',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
+      'events' => [
+          'permission' => 'view_events',
+          'route' => 'admin.dashboard.show-events',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
+      'todo_list' => [
+          'permission' => 'view_todo_list',
+          'route' => 'admin.dashboard.todo-list',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
+      'reviews' => [
+          'permission' => 'view_reviews',
+          'route' => 'dashboard.reviews',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
+      'notes' => [
+          'permission' => 'view_notes',
+          'route' => 'admin.dashboard.notes',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
+      'documents' => [
+          'permission' => 'view_documents',
+          'route' => 'admin.dashboard.documents.index',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
+      'users' => [
+          'permission' => 'view_users',
+          'route' => 'admin.dashboard.users',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
+      'jobs' => [
+          'permission' => 'view_jobs',
+          'route' => 'admin.dashboard.jobs',
+          'params' => ['dashboardType' => $dashboardType ?? 'default'],
+      ],
   ];
+
+  // Build active links based on permissions
+  $links = collect($navigationLinks)
+      ->map(function ($config, $module) use ($user, $modules) {
+          if (!$user->can($config['permission']) || !isset($modules[$module])) {
+              return null;
+          }
+          return route($config['route'], $config['params']);
+      })
+      ->filter()
+      ->toArray();
 @endphp
 
 <nav x-data="{ open: false }" class="border-b border-yns_black bg-yns_black backdrop-blur-sm">
@@ -48,18 +81,15 @@
             <div class="max-w-[600px] xl:max-w-[800px] 2xl:max-w-[1000px]">
               <div class="no-scrollbar flex space-x-1 overflow-x-auto">
                 @foreach ($links as $module => $url)
-                  @if ($url && isset($modules[$module]))
+                  @if (isset($modules[$module]) && $modules[$module]['is_enabled'])
                     @php
-                      $isEnabled = $modules[$module]['is_enabled'];
                       $isActive = request()->is('dashboard/*/' . $module . '*');
                     @endphp
 
-                    @if ($isEnabled)
-                      <a href="{{ $url }}"
-                        class="nav-link {{ $isActive ? 'border-b-yns_yellow bg-gray-800 text-yns_yellow' : 'border-transparent text-gray-400 hover:border-gray-700 hover:bg-gray-800/50 hover:text-gray-200' }} inline-flex h-16 shrink-0 items-center whitespace-nowrap border-b-2 px-4 text-sm font-medium transition duration-150 ease-in-out">
-                        {{ ucfirst(str_replace('_', ' ', $module)) }}
-                      </a>
-                    @endif
+                    <a href="{{ $url }}"
+                      class="nav-link {{ $isActive ? 'border-b-yns_yellow bg-gray-800 text-yns_yellow' : 'border-transparent text-gray-400 hover:border-gray-700 hover:bg-gray-800/50 hover:text-gray-200' }} inline-flex h-16 shrink-0 items-center whitespace-nowrap border-b-2 px-4 text-sm font-medium transition duration-150 ease-in-out">
+                      {{ ucfirst(str_replace('_', ' ', $module)) }}
+                    </a>
                   @endif
                 @endforeach
               </div>

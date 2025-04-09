@@ -29,10 +29,6 @@ html {
     font-family: Figtree, sans-serif;
     font-feature-settings: normal;
 }
-/* 
-.swal2-html-container {
-    color: white !important;
-} */
 
 body {
     margin: 0;
@@ -1206,6 +1202,18 @@ video {
     overflow: visible;
     opacity: 1;
 }
+
+/* .modal.hidden {
+    display: none !important;
+}
+
+.modal {
+    display: none;
+}
+
+.modal:not(.hidden) {
+    display: block !important;
+} */
 
 .close {
     background-color: var(--color-white);

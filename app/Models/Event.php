@@ -116,4 +116,9 @@ class Event extends Model
         return $query->where('event_date', '>=', now())
             ->orderBy('event_date', 'asc');
     }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'related');
+    }
 }
