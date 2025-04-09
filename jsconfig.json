@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "maxNodeModuleJsDepth": 1,
+        "target": "ES6",
+        "module": "es6",
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["resources/js/*"]
+        }
+    },
+    "include": ["resources/js/**/*", "resources/views/**/*.blade.php"],
+    "exclude": ["node_modules", "public"]
+}

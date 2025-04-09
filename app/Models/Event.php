@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\TrackChanges;
+use App\Models\EventView;
 use App\Models\TicketPlatform;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -115,5 +116,20 @@ class Event extends Model
     {
         return $query->where('event_date', '>=', now())
             ->orderBy('event_date', 'asc');
+    }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'related');
+    }
+
+    public function views()
+    {
+        return $this->hasMany(EventView::class);
+    }
+
+    public function getUniqueViewsCountAttribute()
+    {
+        return $this->views()->count();
     }
 }

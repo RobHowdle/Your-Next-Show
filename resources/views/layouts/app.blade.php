@@ -62,6 +62,41 @@
   <script nomodule defer src="https://cdn.what3words.com/javascript-components@4.8.0/dist/what3words/what3words.js">
   </script>
 
+  <script>
+    // Wait for DOM to be ready before loading Maps
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load Maps API using recommended approach
+      const loader = new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src =
+          `https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&loading=async&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        window.initMap = resolve;
+      });
+
+      // Initialize maps after loading
+      loader.then(() => {
+        // Use requestAnimationFrame to avoid reflow
+        requestAnimationFrame(() => {
+          initMapCore();
+        });
+      });
+    });
+
+    function initMapCore() {
+      // Core map initialization logic here
+      console.log('Google Maps API initialized');
+      // Add your map initialization code here
+      return true;
+    }
+  </script>
+
+  <!-- Other scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <!-- Include Summernote -->
   <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
@@ -93,22 +128,6 @@
   </div>
 
   @stack('scripts')
-  <script>
-    function initialize() {
-      // Your initialization code here
-      // console.log('Google Maps API initialized');
-    }
-
-    // Ensure the function is available globally
-    window.initialize = initialize;
-  </script>
 </body>
 
 </html>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
-
-<!-- Google Maps API -->
-<script
-  src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initializeMaps"
-  async defer></script>

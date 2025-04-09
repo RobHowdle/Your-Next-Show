@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Helpers\CompareHelper;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -263,82 +264,12 @@ class EventController extends Controller
         ]);
     }
 
-    /**
-     * Get API keys for a service and filter based on config
-     */
-    private function getServiceApiKeys($service)
-    {
-        // Get enabled ticket platforms from config
-        $enabledPlatforms = collect(config('integrations.ticket_platforms'))
-            ->filter(function ($platform) {
-                return $platform['enabled'] === true;
-            })
-            ->keys()
-            ->toArray();
-
-        // Get and format service API keys
-        return $service->apiKeys()
-            ->where('is_active', true)
-            ->whereIn('name', $enabledPlatforms)
-            ->get()
-            ->map(function ($apiKey) {
-                return [
-                    'id' => $apiKey->id,
-                    'name' => $apiKey->name,
-                    'key_type' => $apiKey->key_type,
-                    'display_name' => config("integrations.ticket_platforms.{$apiKey->name}.name"),
-                    'description' => config("integrations.ticket_platforms.{$apiKey->name}.description")
-                ];
-            })
-            ->toArray();
-    }
-
-    public function selectVenue($dashboardType, Request $request)
-    {
-        $modules = collect(session('modules', []));
-
-        $query = $request->input('query');
-
-        if (!is_string($query) || strlen($query) < 3) {
-            return response()->json([], 400);
-        }
-
-        $venues = collect();
-
-        if ($dashboardType === 'venue') {
-            $user = Auth::user()->load('venues');
-            $venue = $user->venues()->first();
-
-            if ($venue) {
-                $venues->push($venue);
-            }
-        } else {
-            $venues = Venue::where('name', 'like', '%' . $query . '%')->get();
-        }
-
-        return response()->json($venues);
-    }
-
-    public function selectPromoter($dashboardType, Request $request)
-    {
-        $modules = collect(session('modules', []));
-
-        $query = $request->input('query');
-
-        if (!is_string($query) || strlen($query) < 3) {
-            return response()->json([], 400);
-        }
-
-        $promoters = Promoter::where('name', 'like', '%' . $query . '%')->get();
-
-        return response()->json($promoters);
-    }
-
     public function storeNewEvent($dashboardType, StoreUpdateEventRequest $request)
     {
         $modules = collect(session('modules', []));
 
         try {
+            DB::beginTransaction();
             $validatedData = $request->validated();
 
             $user = Auth::user()->load('roles');
@@ -491,13 +422,95 @@ class EventController extends Controller
                 SyncGoogleCalendarEvents::dispatch($event, Auth::id())->delay(now()->addSeconds(20))->onQueue('default');
             }
 
+            // Handle pending opportunities if they exist
+            if ($request->has('pending_opportunities')) {
+                $opportunities = $request->input('pending_opportunities');
+
+                // If it's a JSON string, decode it
+                if (is_string($opportunities)) {
+                    $opportunities = json_decode($opportunities, true);
+                }
+
+                // Ensure we have an array
+                if (!is_array($opportunities)) {
+                    $opportunities = [];
+                }
+
+                if (!empty($opportunities)) {
+                    $opportunityController = app(OpportunityController::class);
+
+                    foreach ($opportunities as $index => $opportunityData) {
+                        try {
+                            $mergedGenresArray = array_merge(
+                                $opportunityData['main_genres'] ?? [],
+                                $opportunityData['subgenres'] ?? []
+                            );
+                            \Log::info($posterUrl);
+                            $opportunityData = array_merge($opportunityData, [
+                                'event_id' => $event->id,
+                                'serviceable_id' => $user->id,
+                                'serviceable_type' => get_class($user),
+                                'related_type' => 'App\Models\Event',
+                                'related_id' => $event->id,
+                                'title' => $event->event_name,
+                                'type' => $opportunityData['type'] ?? null,
+                                'position_type' => $opportunityData['position_type'] ?? null,
+                                'genres' => $mergedGenresArray ?? [],
+                                'performance_start_time' => $opportunityData['performance_start_time'],
+                                'performance_end_time' => $opportunityData['performance_end_time'],
+                                'set_length' => $opportunityData['set_length'],
+                                'application_deadline' => $opportunityData['application_deadline'],
+                                'additional_info' => $opportunityData['additional_info'] ?? null,
+                                'use_related_poster' => $opportunityData['poster_type'] === 'event',
+                                'excluded_entities' => $opportunityData['excluded_entities'] ?? [],
+                                'poster_url' => $opportunityData['poster_type'] === 'event' ? $posterUrl : null,
+                            ]);
+
+                            // Create opportunity
+                            $result = $opportunityController->createEventOpportunity($opportunityData);
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to create opportunity', [
+                                'error' => $e->getMessage(),
+                                'data' => $opportunityData
+                            ]);
+                            throw $e;
+                        }
+                    }
+                } else {
+                    \Log::info('No valid opportunities to process');
+                }
+            }
+
+            // Update has_opportunities check
+            $hasOpportunities = false;
+            if ($request->has('pending_opportunities')) {
+                $opps = $request->input('pending_opportunities');
+                if (is_string($opps)) {
+                    $opps = json_decode($opps, true);
+                }
+                $hasOpportunities = !empty($opps);
+            }
+            DB::commit();
+
+            \Log::info('Transaction committed successfully', [
+                'event_id' => $event->id,
+                'has_opportunities' => $hasOpportunities,
+                'opportunities_data' => $opportunities
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Event created successfully',
-                'redirect_url' => route('admin.dashboard.show-event', ['dashboardType' => $dashboardType, 'id' => $event->id])
+                'message' => $hasOpportunities
+                    ? 'Event and opportunities created successfully'
+                    : 'Event created successfully',
+                'redirect_url' => route('admin.dashboard.show-event', [
+                    'dashboardType' => $dashboardType,
+                    'id' => $event->id
+                ])
             ], 201);
         } catch (\Exception $e) {
-            Log::error('Error creating event: ' . $e->getMessage(), [
+            DB::rollBack();
+            \Log::error('Error creating event: ' . $e->getMessage(), [
                 'success' => false,
                 'message' => 'Error creating event. Please try again.',
                 'request' => $request->all(),
@@ -513,13 +526,57 @@ class EventController extends Controller
         }
     }
 
+    public function selectVenue($dashboardType, Request $request)
+    {
+        $modules = collect(session('modules', []));
+
+        $query = $request->input('query');
+
+        if (!is_string($query) || strlen($query) < 3) {
+            return response()->json([], 400);
+        }
+
+        $venues = collect();
+
+        if ($dashboardType === 'venue') {
+            $user = Auth::user()->load('venues');
+            $venue = $user->venues()->first();
+
+            if ($venue) {
+                $venues->push($venue);
+            }
+        } else {
+            $venues = Venue::where('name', 'like', '%' . $query . '%')->get();
+        }
+
+        return response()->json($venues);
+    }
+
+    public function selectPromoter($dashboardType, Request $request)
+    {
+        $modules = collect(session('modules', []));
+
+        $query = $request->input('query');
+
+        if (!is_string($query) || strlen($query) < 3) {
+            return response()->json([], 400);
+        }
+
+        $promoters = Promoter::where('name', 'like', '%' . $query . '%')->get();
+
+        return response()->json($promoters);
+    }
+
     public function showEvent($dashboardType, $id)
     {
         $modules = collect(session('modules', []));
 
         $user = Auth::user()->load(['roles', 'otherService']);
         $role = $user->roles->first()->name;
-        $event = Event::with(['bands', 'promoters', 'venues', 'services'])->findOrFail($id);
+        $event = Event::with(['bands', 'promoters', 'venues', 'services', 'opportunities'])->findOrFail($id);
+
+        // View Tracker
+        $this->trackEventView($event, request());
 
         // Generate mock stats data if user is event creator
         $mockStats = null;
@@ -528,8 +585,7 @@ class EventController extends Controller
                 'ticketsSold' => rand(50, 150),
                 'ticketsAvailable' => 200,
                 'totalRevenue' => rand(500, 2000),
-                'pageViews' => rand(100, 1000),
-                'clickThroughRate' => rand(20, 80) . '%',
+                'pageViews' => $event->unique_views_count,
                 'hasNewStats' => (bool)rand(0, 1),
                 'salesData' => collect([
                     ['date' => '2024-03-01', 'count' => rand(5, 15)],
@@ -537,12 +593,7 @@ class EventController extends Controller
                     ['date' => '2024-03-15', 'count' => rand(15, 35)],
                     ['date' => '2024-03-22', 'count' => rand(20, 45)],
                 ]),
-                'trafficSources' => collect([
-                    ['source' => 'Direct', 'count' => rand(100, 300)],
-                    ['source' => 'Social Media', 'count' => rand(150, 400)],
-                    ['source' => 'Search', 'count' => rand(50, 200)],
-                    ['source' => 'Referral', 'count' => rand(25, 100)],
-                ])
+                'trafficSources' => $this->getTrafficSourceCounts($event)
             ];
         }
 
@@ -868,13 +919,17 @@ class EventController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Event deleted successfully'
+                'message' => 'Event deleted successfully',
+                'redirect_url' => route('admin.dashboard.show-events', ['dashboardType' => $dashboardType])
+
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Event not found.'
+            'message' => 'Event not found.',
+            'redirect_url' => route('admin.dashboard.show-events', ['dashboardType' => $dashboardType])
+
         ], 404);
     }
 
@@ -983,5 +1038,205 @@ class EventController extends Controller
             ->paginate(9);
 
         return view('partials.event-grid', compact('events'))->render();
+    }
+
+    public function uploadPoster(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|image|max:10240', // 10MB max
+            ]);
+
+            $file = $request->file('file');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+
+            // Store in temporary location
+            $path = $file->storeAs('temp/posters', $fileName, 'public');
+
+            return response()->json([
+                'success' => true,
+                'path' => $path,
+                'url' => asset('storage/' . $path)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * PRIVATE FUNCTIONS
+     */
+
+    /**
+     * Track event view
+     */
+    private function trackEventView($event, Request $request)
+    {
+        // Generate a visitor ID based on IP and user agent
+        $visitorId = md5($request->ip() . $request->userAgent());
+
+        try {
+            // Get referrer information
+            $referrerUrl = $request->header('referer');
+            $referrerType = $this->determineReferrerType($referrerUrl);
+
+            $event->views()->firstOrCreate(
+                [
+                    'visitor_id' => $visitorId,
+                    'ip_address' => $request->ip()
+                ],
+                [
+                    'referrer_url' => $referrerUrl,
+                    'referrer_type' => $referrerType
+                ]
+            );
+        } catch (\Exception $e) {
+            // Handle any potential errors silently
+            \Log::error('Error tracking view: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Determine the referrer type based on the URL
+     */
+    private function determineReferrerType($referrerUrl)
+    {
+        if (!$referrerUrl) {
+            return 'direct';
+        }
+
+        $referrerDomain = parse_url($referrerUrl, PHP_URL_HOST);
+
+        // Define patterns for different referrer types
+        $patterns = [
+            'facebook' => ['facebook.com', 'fb.com', 'messenger.com'],
+            'instagram' => ['instagram.com'],
+            'twitter' => ['twitter.com', 'x.com'],
+            'google' => ['google.com', 'google.co.uk'],
+            'bing' => ['bing.com'],
+            'tiktok' => ['tiktok.com'],
+            'whatsapp' => ['whatsapp.com'],
+            'snapchat' => ['snapchat.com'],
+            'youtube' => ['youtube.com', 'youtu.be'],
+            'linkedin' => ['linkedin.com'],
+            'instagram' => ['instagram.com'],
+        ];
+
+        // Check each pattern
+        foreach ($patterns as $type => $domains) {
+            foreach ($domains as $domain) {
+                if (str_contains($referrerDomain, $domain)) {
+                    return $type;
+                }
+            }
+        }
+
+        // Check if it's internal
+        if (str_contains($referrerDomain, parse_url(config('app.url'), PHP_URL_HOST))) {
+            return 'internal';
+        }
+
+        return 'other';
+    }
+
+    /**
+     * Get API keys for a service and filter based on config
+     */
+    private function getServiceApiKeys($service)
+    {
+        // Get enabled ticket platforms from config
+        $enabledPlatforms = collect(config('integrations.ticket_platforms'))
+            ->filter(function ($platform) {
+                return $platform['enabled'] === true;
+            })
+            ->keys()
+            ->toArray();
+
+        // Get and format service API keys
+        return $service->apiKeys()
+            ->where('is_active', true)
+            ->whereIn('name', $enabledPlatforms)
+            ->get()
+            ->map(function ($apiKey) {
+                return [
+                    'id' => $apiKey->id,
+                    'name' => $apiKey->name,
+                    'key_type' => $apiKey->key_type,
+                    'display_name' => config("integrations.ticket_platforms.{$apiKey->name}.name"),
+                    'description' => config("integrations.ticket_platforms.{$apiKey->name}.description")
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
+     * Get traffic source categories
+     */
+    private function getTrafficSourceCategories()
+    {
+        return [
+            'social_media' => [
+                'facebook',
+                'instagram',
+                'twitter',
+                'x.com',
+                'tiktok'
+            ],
+            'search' => [
+                'google',
+                'bing',
+                'yahoo'
+            ],
+            'direct' => [
+                'direct'
+            ],
+            'internal' => [
+                'internal'
+            ]
+        ];
+    }
+
+    /**
+     * Get traffic source counts
+     */
+    private function getTrafficSourceCounts($event)
+    {
+        $sources = $event->views()
+            ->select('referrer_type', DB::raw('count(*) as count'))
+            ->groupBy('referrer_type')
+            ->get();
+
+        $trafficSourceCounts = [
+            'social_media' => 0,
+            'search' => 0,
+            'direct' => 0,
+            'internal' => 0,
+            'other' => 0
+        ];
+
+        foreach ($sources as $source) {
+            $categorized = false;
+            foreach ($this->getTrafficSourceCategories() as $category => $sourceTypes) {
+                if (in_array($source->referrer_type, $sourceTypes)) {
+                    $trafficSourceCounts[$category] += $source->count;
+                    $categorized = true;
+                    break;
+                }
+            }
+            if (!$categorized) {
+                $trafficSourceCounts['other'] += $source->count;
+            }
+        }
+
+        return collect([
+            ['source' => 'Direct', 'count' => $trafficSourceCounts['direct']],
+            ['source' => 'Social Media', 'count' => $trafficSourceCounts['social_media']],
+            ['source' => 'Search', 'count' => $trafficSourceCounts['search']],
+            ['source' => 'Internal', 'count' => $trafficSourceCounts['internal']],
+            ['source' => 'Other', 'count' => $trafficSourceCounts['other']]
+        ]);
     }
 }

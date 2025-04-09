@@ -50,7 +50,21 @@
 
           <!-- Tasks Grid -->
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" id="tasks">
-            {{-- <x-todo-items :todoItems="$todoItems" /> --}}
+            <div class="todo-container space-y-4">
+              @forelse($todoItems as $todo)
+                @include('partials.todo-item', ['todo' => $todo])
+              @empty
+                <p class="text-gray-400">No todos found</p>
+              @endforelse
+            </div>
+
+            @if ($todoItems->hasMorePages())
+              <div class="load-more mt-4">
+                <button class="rounded bg-blue-500 px-4 py-2 text-white">
+                  Load More
+                </button>
+              </div>
+            @endif
           </div>
 
           <!-- Load More Button -->

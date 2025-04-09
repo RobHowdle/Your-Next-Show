@@ -122,7 +122,6 @@ class User extends Authenticatable
         }
     }
 
-
     public function services()
     {
         $promoters = $this->morphedByMany(Promoter::class, 'serviceable', 'service_user', 'user_id', 'serviceable_id')
@@ -236,5 +235,62 @@ class User extends Authenticatable
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function getCurrentService($dashboardType)
+    {
+        $serviceType = $this->getServiceType($dashboardType);
+
+        if (!$serviceType) {
+            return null;
+        }
+
+        $service = DB::table('service_user')
+            ->where('user_id', $this->id)
+            ->where('serviceable_type', $serviceType)
+            ->whereNull('deleted_at')
+            ->first();
+
+        return $service;
+    }
+
+    public function getCurrentServiceRole($dashboardType)
+    {
+        $serviceType = $this->getServiceType($dashboardType);
+        $currentService = $this->getCurrentService($dashboardType);
+
+        if (!$currentService) {
+            return null;
+        }
+
+        return $this->getServiceRole($currentService->serviceable_id, $serviceType);
+    }
+
+    public function getServiceType($dashboardType)
+    {
+        return match (strtolower($dashboardType)) {
+            'promoter' => 'App\Models\Promoter',
+            'venue' => 'App\Models\Venue',
+            'artist', 'designer', 'photographer', 'videographer' => 'App\Models\OtherService',
+            default => null,
+        };
+    }
+
+    public function getServiceRole($serviceId, $serviceType)
+    {
+        $serviceUser = DB::table('service_user')
+            ->where('user_id', $this->id)
+            ->where('serviceable_id', $serviceId)
+            ->where('serviceable_type', $serviceType)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$serviceUser || !$serviceUser->role_id) {
+            return null;
+        }
+
+        return DB::table('roles')
+            ->where('id', $serviceUser->role_id)
+            ->value('name');
     }
 }

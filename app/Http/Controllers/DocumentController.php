@@ -6,6 +6,8 @@ use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\StoreUpdateDocumentRequest;
 
 class DocumentController extends Controller
 {
@@ -21,42 +23,27 @@ class DocumentController extends Controller
         $role = $user->roles->first()->name;
 
         // Determine the service based on the user's role
-        if (in_array($role, ["artist", "photographer", "videographer", "designer"])) {
-            $service = $user->otherService(ucfirst($role))->first();
-            if (is_null($service)) {
-                return view('admin.dashboards.show-documents', [
-                    'user' => $user,
-                    'userId' => $this->getUserId(),
-                    'dashboardType' => $dashboardType,
-                    'modules' => $modules,
-                    'documents' => collect(),
-                    'message' => "No documents found for this {$role}.",
-                ]);
-            }
-
-            $documents = Document::where('serviceable_type', 'App\Models\OtherService')
-                ->where('serviceable_id', $service->id)
-                ->orderBy('created_at', 'desc')
-                ->get();
-        } elseif ($role === "promoter") {
-            $service = $user->promoters()->first();
-            if ($service) {
-                $documents = Document::where('serviceable_type', 'App\Models\Promoter')
-                    ->where('serviceable_id', $service->id)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-            }
-        } elseif ($role === "venue") {
-            $service = $user->venues()->first();
-            if ($service) {
-                $documents = Document::where('serviceable_type', 'App\Models\Venue')
-                    ->where('serviceable_id', $service->id)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-            }
-        } else {
-            $service = null;
-            $documents = collect();
+        switch ($dashboardType) {
+            case 'designer':
+                $service = $user->otherService('Designer')->first();
+                break;
+            case 'photographer':
+                $service = $user->otherService('Photographer')->first();
+                break;
+            case 'artist':
+                $service = $user->otherService('Artist')->first();
+                break;
+            case 'videographer':
+                $service = $user->otherService('Videographer')->first();
+                break;
+            case 'venue':
+                $service = $user->venues()->first();
+                break;
+            case 'promoter':
+                $service = $user->promoters()->first();
+                break;
+            default:
+                $service = null;
         }
 
         if (is_null($service)) {
@@ -68,6 +55,11 @@ class DocumentController extends Controller
                 'documents' => collect(),
                 'message' => 'No documents available for your role.',
             ]);
+        } else {
+            $documents = Document::where('serviceable_type', get_class($service))
+                ->where('serviceable_id', $service->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
         }
 
 
@@ -88,13 +80,10 @@ class DocumentController extends Controller
     public function show($dashboardType, $id)
     {
         $modules = collect(session('modules', []));
-        $user = Auth::user();
-        $serviceable = $user->otherService()->first();
-        $dashboardType = lcfirst($serviceable->services);
         $document = Document::findOrFail($id);
 
         return view('admin.dashboards.show-document', [
-            'userId' => $user->id,
+            'userId' => $this->getUserId(),
             'document' => $document,
             'dashboardType' => $dashboardType,
             'modules' => $modules,
@@ -146,140 +135,150 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function storeDocument($dashboardType, Request $request)
+    public function storeDocument($dashboardType, StoreUpdateDocumentRequest $request)
     {
-        // dd($request->all());
         $user = Auth::user();
 
-        switch ($dashboardType) {
-            case 'designer':
-                $serviceableType = 'App\Models\OtherService';
-                $service = $user->otherService('Designer')->first();
-                break;
-            case 'photographer':
-                $serviceableType = 'App\Models\OtherService';
-                $service = $user->otherService('Photographer')->first();
-                break;
-            case 'artist':
-                $serviceableType = 'App\Models\OtherService';
-                $service = $user->otherService('Artist')->first();
-                break;
-            case 'videographer':
-                $serviceableType = 'App\Models\OtherService';
-                $service = $user->otherService('Videographer')->first();
-                break;
-            case 'venue':
-                $serviceableType = 'App\Models\Venue';
-                $service = $user->venues()->first();
-                break;
-            case 'promoter':
-                $serviceableType = 'App\Models\Promoter';
-                $service = $user->promoters()->first();
-                break;
-            default:
-                $serviceableType = null;
-                $service = null;
-        }
-
         // Validate request data
-        $request->validate([
-            'title' => 'required|string',
-            'tags' => 'nullable|array',
-            'tags.*' => 'array',
-            'description' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
-        // Get uploaded files from the session
-        $uploadedFiles = Session::get('uploaded_files', []);
+        // Find the service
+        $service = $validated['serviceable_type']::find($validated['serviceable_id']);
 
-        if ($service) {
-            $serviceableId = $service->id;
-
-            // Flatten and remove duplicates from tags
-            $tags = [];
-            if (isset($request->tags)) {
-                foreach ($request->tags as $tag) {
-                    if (is_array($tag)) {
-                        $tags = array_merge($tags, $tag); // Flatten the array
-                    } else {
-                        $tags[] = $tag; // Add single tag
-                    }
-                }
-            }
-
-            $tags = array_unique($tags); // Remove duplicates
-            $tagsJson = json_encode(array_values($tags)); // Encode tags as JSON
-
-            // Loop through each uploaded file and create a document
-            foreach ($uploadedFiles as $filePath) {
-                $document = new Document();
-                $document->user_id = $user->id;
-                $document->serviceable_type = $serviceableType;
-                $document->service = $service->services;
-                $document->serviceable_id = $serviceableId;
-                $document->title = $request->title;
-                $document->description = $request->description;
-                $document->category = $tagsJson; // Store tags as JSON
-                $document->file_path = $filePath;
-                $document->save();
-            }
-        } else {
-            return response()->json(['success' => false, 'message' => 'No service associated with this user'], 400);
+        if (!$service) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid service'
+            ], 403);
         }
 
-        // Clear uploaded files from the session
-        Session::forget('uploaded_files');
+        // Process tags from JSON string to array
+        $tagsArray = json_decode($request->tags) ?? [];
+        $tagsArray = array_map('trim', $tagsArray);
+        $tagsArray = array_filter($tagsArray);
+        $tagsArray = array_unique($tagsArray);
+        $tagsJson = json_encode(array_values($tagsArray));
+
+        // Create document
+        $document = Document::create([
+            'user_id' => $user->id,
+            'serviceable_type' => $validated['serviceable_type'],
+            'service' => get_class($service),
+            'serviceable_id' => $validated['serviceable_id'],
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'category' => $tagsJson,
+            'file_path' => $validated['uploaded_file_path']
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Document uploaded successfully!',
-            'redirect_url' => route('admin.dashboard.document.show', ['dashboardType' => $dashboardType, 'id' => $document->id])
+            'redirect_url' => route('admin.dashboard.document.show', [
+                'dashboardType' => $dashboardType,
+                'id' => $document->id
+            ])
         ]);
     }
 
     public function fileUpload(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:pdf,doc,docx,txt,png,jpg,jpeg|max:2048',
-        ]);
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:pdf,doc,docx,txt,png,jpg,jpeg,heic,heif|max:25600',
+            ]);
 
-        if ($request->file('file')) {
-            $userId = auth()->id();
-            $user = auth()->user();
-            $userType = strtolower($user->getRoleNames()->first());
+            if ($request->hasFile('file') && $request->file('file')->isValid()) {
+                $userId = auth()->id();
+                $user = auth()->user();
+                $userType = strtolower($user->getRoleNames()->first());
 
-            $customPath = "documents/{$userType}/{$userId}";
-            $path = $request->file('file')->store($customPath);
+                // Get original file name and sanitize it
+                $originalName = $request->file('file')->getClientOriginalName();
+                $fileName = pathinfo($originalName, PATHINFO_FILENAME);
+                $extension = $request->file('file')->getClientOriginalExtension();
 
-            $uploadedFiles = Session::get('uploaded_files', []);
-            $uploadedFiles[] = $path;
-            Session::put('uploaded_files', $uploadedFiles);
+                // Sanitize filename
+                $fileName = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $fileName));
+                $fileName = $fileName . '_' . time() . '.' . $extension;
 
-            return response()->json(['success' => true, 'path' => $path]);
+                // Create custom path with user type and ID
+                $customPath = "documents/{$userType}/{$userId}";
+
+                // Store file in public disk
+                $path = Storage::disk('public')->putFileAs(
+                    $customPath,
+                    $request->file('file'),
+                    $fileName
+                );
+
+                if (!$path) {
+                    \Log::error('Failed to store file', [
+                        'original_name' => $originalName,
+                        'custom_path' => $customPath,
+                        'file_name' => $fileName
+                    ]);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to store file'
+                    ], 500);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'path' => $path,
+                    'url' => Storage::disk('public')->url($path)
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid file upload'
+            ], 400);
+        } catch (\Exception $e) {
+            \Log::error('File upload error: ' . $e->getMessage(), [
+                'file' => $request->hasFile('file') ? $request->file('file')->getClientOriginalName() : 'No file'
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing file upload: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteFile(Request $request)
+    {
+        $path = $request->input('path');
+
+        if (Storage::exists($path)) {
+            Storage::delete($path);
+            return response()->json(['success' => true]);
         }
 
-        return response()->json(['success' => false, 'message' => 'File upload failed.'], 400);
+        return response()->json(['success' => false], 404);
     }
 
     public function edit($dashboardType, $id)
     {
-        $user = Auth::user();
-        $serviceable = $user->otherService()->first();
-        $dashboardType = lcfirst($serviceable->services);
+        $modules = collect(session('modules', []));
         $document = Document::findOrFail($id);
+        $tags = config("document_tags.$dashboardType", []);
+
+
         return view('admin.dashboards.edit-document', [
             'document' => $document,
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
-
+            'modules' => $modules,
+            'tags' => $tags,
         ]);
     }
 
-    public function update($dashboardType, Request $request, $id)
+    public function update($dashboardType, StoreUpdateDocumentRequest $request, $id)
     {
         $user = Auth::user();
-        $serviceable = $user->otherService()->first();
-        $dashboardType = lcfirst($serviceable->services);
         $validated = $request->validate([
             'title' => 'required|string',
             'tags' => 'nullable|array',
@@ -311,23 +310,63 @@ class DocumentController extends Controller
         return redirect()->route('admin.dashboard.document.show', ['dashboardType' => $dashboardType, 'id' => $document->id])->with('success', 'Document updated successfully!');
     }
 
-    public function download($id)
-    {
-        $document = Document::findOrFail($id);
-        $filePath = storage_path("app/public/{$document->file_path}");
-
-        return response()->download($filePath);
-    }
-
-    public function destroy($dashboardType, $id)
+    public function download($dashboardType, $id)
     {
         try {
             $document = Document::findOrFail($id);
+            $filePath = storage_path("app/{$document->file_path}");
+
+            if (!file_exists($filePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File not found'
+                ], 404);
+            }
+
+            return response()->download($filePath);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error downloading file'
+            ], 500);
+        }
+    }
+
+    public function delete($dashboardType, $id)
+    {
+        try {
+            $document = Document::findOrFail($id);
+
+            // Delete the file from storage if it exists
+            if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
+                Storage::disk('public')->delete($document->file_path);
+            }
+
+            // Delete the document record
             $document->delete();
 
-            return response()->json(['success' => true, 'message' => 'Document deleted successfully!']);
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Document deleted successfully',
+                    'redirect' => route('admin.dashboard.documents.index', ['dashboardType' => $dashboardType])
+                ]);
+            }
+
+            return redirect()
+                ->route('admin.dashboard.documents.index', ['dashboardType' => $dashboardType])
+                ->with('success', 'Document deleted successfully');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to delete the document.'], 500);
+            \Log::error('Document deletion error: ' . $e->getMessage());
+
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error deleting document'
+                ], 500);
+            }
+
+            return back()->with('error', 'Error deleting document');
         }
     }
 }

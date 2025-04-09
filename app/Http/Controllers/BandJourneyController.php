@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\JoinBandRequest;
+use App\Http\Requests\CreateUpdateArtist;
 
 class BandJourneyController extends Controller
 {
@@ -101,26 +103,13 @@ class BandJourneyController extends Controller
         ], 200);
     }
 
-    public function createBand(Request $request)
+    public function createBand(CreateUpdateArtist $request)
     {
         $dashboardType = 'Artist';
 
         try {
             // Validate the request
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'location' => 'required|string|max:255',
-                'postal_town' => 'required',
-                'latitude' => 'required',
-                'longitude' => 'required',
-                'description' => 'required|string',
-                'contact_name' => 'required',
-                'contact_number' => 'required',
-                'contact_email' => 'required|email',
-                'contact_link' => 'required|string',
-                'band_type' => 'required|string',
-                'genres' => 'required|string'
-            ]);
+            $validated = $request->validated();
 
             // Format band type to match DB structure ["original-bands"]
             $bandType = [$validated['band_type'] . '-bands'];
@@ -142,14 +131,26 @@ class BandJourneyController extends Controller
                 ];
             }
 
+            $defaultLogo = asset('images/system/yns_no_image_found.png');
+            $artistId = Role::where('name', 'artist')->first()->id;
+            $emptyPackages = json_encode([]);
+            $emptyEnvironmentTypes = json_encode([]);
+            $emptyWorkingTimes = json_encode([]);
+            $emptyMembers = json_encode([]);
+            $emptyStreamUrls = json_encode([]);
+            $emptyStyles = json_encode([]);
+            $emptyPrints = json_encode([]);
+            $emptyPortfolio = json_encode([]);
+
             // Create new band in the OtherService model
             $band = OtherService::create([
                 'name' => $validated['name'],
+                'logo_url' => $defaultLogo,
                 'location' => $validated['location'],
-                'other_service_id' => 4,
                 'postal_town' => $validated['postal_town'],
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
+                'other_service_id' => $artistId,
                 'description' => $validated['description'],
                 'contact_name' => $validated['contact_name'],
                 'contact_number' => $validated['contact_number'],
@@ -158,6 +159,14 @@ class BandJourneyController extends Controller
                 'services' => 'Artist',
                 'band_type' => json_encode($bandType),
                 'genre' => json_encode($formattedGenres),
+                'packages' => $emptyPackages,
+                'environment_type' => $emptyEnvironmentTypes,
+                'working_times' => $emptyWorkingTimes,
+                'members' => $emptyMembers,
+                'stream_urls' => $emptyStreamUrls,
+                'styles' => $emptyStyles,
+                'print' => $emptyPrints,
+                'portfolio_images' => $emptyPortfolio,
             ]);
 
             if (!$band) {
@@ -176,10 +185,8 @@ class BandJourneyController extends Controller
                 'updated_at' => now()
             ]);
 
-            \Log::info('Band created successfully', [
-                'band_id' => $band->id,
-                'user_id' => $user->id
-            ]);
+            // Update the band to set it as verified
+            $band->update(['is_verified' => 1]);
 
             return response()->json([
                 'success' => true,

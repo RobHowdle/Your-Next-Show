@@ -21,25 +21,59 @@ class LinkedUserController extends Controller
     public function showUsers($dashboardType)
     {
         $modules = collect(session('modules', []));
+        $user = Auth::user();
+
+        // Get the user's role for the current service
+        $serviceType = $user->getServiceType($dashboardType);
+        $currentService = $user->getCurrentService($dashboardType);
+        $userRole = null;
+
+        if ($currentService) {
+            // Get role from service_user table using role_id
+            $serviceUser = DB::table('service_user')
+                ->where('user_id', $user->id)
+                ->where('serviceable_id', $currentService->serviceable_id)
+                ->where('serviceable_type', $serviceType)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($serviceUser && $serviceUser->role_id) {
+                $role = DB::table('roles')
+                    ->where('id', $serviceUser->role_id)
+                    ->first();
+
+                $userRole = $role ? $role->name : null;
+            }
+        }
 
         return view('admin.dashboards.show-users', [
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
-            'modules' => $modules
+            'modules' => $modules,
+            'userRole' => $userRole
         ]);
     }
 
     public function getUsers($dashboardType)
     {
         $modules = collect(session('modules', []));
-        $user = Auth::user()->load(['promoters', 'otherService']);
+        $user = Auth::user()->load(['promoters', 'venues', 'otherService']);
 
         $relatedUsers = null;
 
-        if ($dashboardType == 'promoter') {
-            $relatedUsers = $user->promoters->load(['linkedUsers']);
-        } elseif ($dashboardType == 'artist') {
-            $relatedUsers = $user->otherService("Artist")->get();
+        switch ($dashboardType) {
+            case 'promoter':
+                $relatedUsers = $user->promoters->load(['linkedUsers']);
+                break;
+            case 'venue':
+                $relatedUsers = $user->venues->load(['linkedUsers']);
+                break;
+            case 'artist':
+            case 'designer':
+            case 'photographer':
+            case 'videographer':
+                $relatedUsers = $user->otherService($dashboardType)->load(['linkedUsers']);
+                break;
         }
 
         return response()->json([
@@ -165,7 +199,6 @@ class LinkedUserController extends Controller
 
     public function linkUser($dashboardType, $id, Request $request)
     {
-        $modules = collect(session('modules', []));
         try {
             $userId = User::where('id', $id)->value('id');
             if (!$userId) {
@@ -173,36 +206,55 @@ class LinkedUserController extends Controller
             }
 
             $currentServiceId = $request->currentServiceId;
-            $role = 'standard';
+            $user = User::find($userId);
 
-            if ($dashboardType == 'promoter') {
-                $serviceType = Promoter::class;
-            } elseif ($dashboardType == 'venue') {
-                $serviceType = Venue::class;
-            } elseif (in_array($dashboardType, ['artist', 'designer', 'photographer', 'videographer'])) {
-                $serviceType = OtherService::class;
-            } else {
-                return response()->json(['message' => 'Invalid dashboard type.'], 400);
+            // Get service type
+            $serviceType = $user->getServiceType($dashboardType);
+
+            // Check if this is the first user for this service
+            $isFirstUser = !ServiceUser::where('serviceable_id', $currentServiceId)
+                ->where('serviceable_type', $serviceType)
+                ->exists();
+
+            // Determine role name
+            $roleName = $isFirstUser ? 'service-owner' : 'service-member';
+
+            // Get role ID from database
+            $role = DB::table('roles')->where('name', $roleName)->first();
+
+            if (!$role) {
+                throw new \Exception("Role not found: {$roleName}");
             }
 
-            ServiceUser::insert([
+            // Assign Spatie role to user
+            $user->assignRole($roleName);
+
+            // Create service user record
+            ServiceUser::create([
                 'user_id' => $userId,
                 'serviceable_id' => $currentServiceId,
                 'serviceable_type' => $serviceType,
-                'role' => $role,
+                'role_id' => $role->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            return response()->json(['message' => 'User successfully added.'], 200);
+            return response()->json([
+                'message' => $isFirstUser ? 'User added as owner with full permissions.' : 'User added as member.',
+                'role' => $roleName
+            ], 200);
         } catch (\Exception $e) {
+            \Log::error('Link User Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'message' => 'An error occurred while linking the user.',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
-
 
     public function deleteUser(Request $request)
     {
@@ -222,5 +274,59 @@ class LinkedUserController extends Controller
             ->delete();
 
         return response()->json(['success' => true, 'message' => 'User successfully removed.']);
+    }
+
+    public function updateUserRole($dashboardType, Request $request)
+    {
+        try {
+            $currentUser = Auth::user();
+            $serviceType = $currentUser->getServiceType($dashboardType);
+            $currentUserRole = $currentUser->getCurrentServiceRole($dashboardType);
+
+            // Get the target user's current role
+            $targetUserRole = DB::table('service_user')
+                ->where('user_id', $request->user_id)
+                ->where('serviceable_id', $request->service_id)
+                ->where('serviceable_type', $serviceType)
+                ->whereNull('deleted_at')
+                ->join('roles', 'service_user.role_id', '=', 'roles.id')
+                ->value('roles.name');
+
+            // Validate permissions
+            if (
+                $currentUserRole === 'service-member' ||
+                ($currentUserRole === 'service-manager' &&
+                    ($targetUserRole === 'service-owner' || $request->role === 'service-owner'))
+            ) {
+                return response()->json(['message' => 'You do not have permission to perform this action.'], 403);
+            }
+
+            // Get role ID
+            $roleId = DB::table('roles')->where('name', $request->role)->value('id');
+            if (!$roleId) {
+                return response()->json(['message' => 'Invalid role specified.'], 400);
+            }
+
+            // Update role
+            DB::table('service_user')
+                ->where('user_id', $request->user_id)
+                ->where('serviceable_id', $request->service_id)
+                ->where('serviceable_type', $serviceType)
+                ->update(['role_id' => $roleId]);
+
+            // Update Spatie role
+            $user = User::find($request->user_id);
+            $user->syncRoles([$request->role]);
+
+            return response()->json([
+                'message' => 'User role updated successfully.',
+                'role' => $request->role
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating the role.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

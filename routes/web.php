@@ -20,6 +20,7 @@ use App\Http\Controllers\What3WordsController;
 use App\Http\Controllers\APIRequestsController;
 use App\Http\Controllers\BandJourneyController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\OtherServiceController;
 use App\Http\Controllers\VenueJourneyController;
 use App\Http\Controllers\DesignerJourneyController;
@@ -46,18 +47,18 @@ Route::post('/venues/filter', [VenueController::class, 'filter'])->name('venues.
 Route::get('/venues/filterByCoordinates', [VenueController::class, 'filterByCoordinates'])
     ->name('venues.filterByCoordinates');
 Route::post('/venues/{slug}/submitReview', [VenueController::class, 'submitVenueReview'])->name('submit-venue-review');
-Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue');
+Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue')->middleware('log.minors');
 Route::get('/promoter-suggestion', [VenueController::class, 'suggestPromoters'])->name('suggestPromoters');
 
 Route::get('/promoters', [PromoterController::class, 'index'])->name('promoters');
 Route::post('/promoters/filter', [PromoterController::class, 'filter'])->name('promoters.filter');
-Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter');
+Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter')->middleware('log.minors');
 Route::post('/promoters/{slug}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
 
 Route::get('/services', [OtherServiceController::class, 'index'])->name('other');
 Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filter'])->name('other.filter');
 Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
-Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService');
+Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService')->middleware('log.minors');
 Route::post('/services/{serviceType}/{name}/submitReview', [OtherServiceController::class, 'submitReview'])->name('submit-single-service-review');
 
 // Gig Guide
@@ -162,11 +163,11 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/users/new-user', [LinkedUserController::class, 'newUser'])->name('admin.dashboard.new-user');
         Route::get('/users/search-users', [LinkedUserController::class, 'searchUsers'])->name('admin.dashboard.search-users');
         Route::post('/users/add-user/{id}', [LinkedUserController::class, 'linkUser'])->name('admin.dashboard.link-user');
+        Route::post('/update-user-role', [LinkedUserController::class, 'updateUserRole'])->name('admin.dashboard.update-user-role');
         Route::delete('/users/delete-user/{id}', [LinkedUserController::class, 'deleteUser'])->name('admin.dashboard.delete-user');
     });
 
     // Notes
-    //TODO - Finish
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/notes', [NoteController::class, 'getNotes'])->name('admin.dashboard.notes');
         Route::post('/notes/new', [NoteController::class, 'newNoteItem'])->name('admin.dashboard.new-note-item');
@@ -193,15 +194,17 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/documents/{id}', [DocumentController::class, 'show'])->name('admin.dashboard.document.show');
         Route::get('/documents/{id}/edit', [DocumentController::class, 'edit'])->name('admin.dashboard.document.edit');
         Route::post('/document/file-upload', [DocumentController::class, 'fileUpload'])->name('admin.dashboard.document.file.upload');
+        Route::post('/document/file/delete', [DocumentController::class, 'deleteFile'])->name('admin.dashboard.document.file.delete');
         Route::post('/documents/store', [DocumentController::class, 'storeDocument'])->name('admin.dashboard.store-document');
         Route::put('/documents/{id}', [DocumentController::class, 'update'])->name('admin.dashboard.document.update');
-        Route::delete('/documents/{id}', [DocumentController::class, 'destroy'])->name('admin.dashboard.document.delete');
+        Route::delete('/documents/{id}', [DocumentController::class, 'delete'])->name('admin.dashboard.document.delete');
         Route::get('/documents/{id}/download', [DocumentController::class, 'download'])->name('admin.dashboard.document.download');
     });
 
     // Events
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/events', [EventController::class, 'showEvents'])->name('admin.dashboard.show-events');
+        Route::post('/events/upload', [EventController::class, 'uploadPoster'])->name('admin.dashboard.upload-poster');
         Route::get('/events/load-more-upcoming', [EventController::class, 'loadMoreUpcomingEvents'])->name('admin.dashboard.load-more-upcoming-events');
         Route::get('/events/load-more-past', [EventController::class, 'loadMorePastEvents'])->name('admin.dashboard.load-more-past-events');
         Route::get('/events/create-event', [EventController::class, 'createNewEvent'])->name('admin.dashboard.create-new-event');
@@ -220,6 +223,12 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::post('/events/bands/create', [APIRequestsController::class, 'createBand']);
         Route::get('/events/venues/search', [APIRequestsController::class, 'searchVenues']);
         Route::post('/events/venues/create', [APIRequestsController::class, 'createVenue']);
+    });
+
+    // Opportunities
+    Route::prefix('/dashboard/{dashboardType}')->group(function () {
+        Route::get('/opportunities/type/{type}/fields', [OpportunityController::class, 'getTypeFields'])->name('opps.fields');
+        Route::post('/opportunities/create', [OpportunityController::class, 'store'])->name('opps.store');
     });
 
     // To-Do List

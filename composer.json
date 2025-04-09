@@ -8,6 +8,7 @@
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.0",
         "geocoder-php/google-maps-provider": "^4.7",
+        "geoip2/geoip2": "^3.1",
         "google/apiclient": "^2.18",
         "guzzlehttp/guzzle": "^7.2",
         "icehouse-ventures/laravel-chartjs": "^4.1",
@@ -17,9 +18,9 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.8",
         "marvinlabs/laravel-discord-logger": "^1.4",
+        "skiddle/skiddle-php-sdk": "1.0.0",
         "spatie/laravel-permission": "^6.9",
-        "what3words/w3w-php-wrapper": "^3.4",
-        "skiddle/skiddle-php-sdk": "1.0.0"
+        "what3words/w3w-php-wrapper": "^3.4"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.13",

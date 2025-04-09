@@ -2,14 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Venue;
-use App\Models\Promoter;
 use App\Models\BandReviews;
 use Illuminate\Support\Str;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Models\DesignerReviews;
-use App\Services\FilterService;
 use App\Models\OtherServiceList;
 use App\Helpers\SocialLinksHelper;
 use App\Models\PhotographyReviews;
@@ -223,13 +220,8 @@ class OtherServiceController extends Controller
         $data = json_decode($genreList, true);
         $genres = $data['genres'];
 
-        $serviceData = match ($singleService->services) {
-            'Artist' => $this->getArtistData($singleService),
-            'Photography' => $this->getPhotographerData($singleService),
-            'Videography' => $this->getVideographerData($singleService),
-            'Designer' => $this->getDesignerData($singleService),
-            default => []
-        };
+        $serviceData = $this->getServiceSpecificData($singleService);
+
 
         // Calculate review score based on service type
         $reviewScore = match ($singleService->services) {
@@ -250,6 +242,7 @@ class OtherServiceController extends Controller
             'reviewCount' => $reviewScore,
             'serviceData' => $serviceData,
             'genreNames' => $serviceData['genreNames'] ?? [],
+            'hasMinors' => $serviceData['hasMinors'] ?? false,
         ]);
     }
 
@@ -643,5 +636,34 @@ class OtherServiceController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Review submitted successfully']);
+    }
+
+    /**
+     * Get service-specific data based on the service type
+     */
+    private function getServiceSpecificData(OtherService $singleService)
+    {
+        return match ($singleService->services) {
+            'Artist' => array_merge($this->getArtistData($singleService), ['hasMinors' => $this->checkForMinors($singleService)]),
+            'Photography' => $this->getPhotographerData($singleService),
+            'Videography' => $this->getVideographerData($singleService),
+            'Designer' => $this->getDesignerData($singleService),
+            default => [],
+        };
+    }
+
+    // Check if the service has minors
+    private function checkForMinors(OtherService $service): bool
+    {
+        return DB::table('service_user')
+            ->join('users', 'users.id', '=', 'service_user.user_id')
+            ->where('service_user.serviceable_id', $service->id)
+            ->where('service_user.serviceable_type', 'App\Models\OtherService')
+            ->where(function ($query) {
+                $eighteenYearsAgo = now()->subYears(18);
+                $query->whereNotNull('users.date_of_birth')
+                    ->where('users.date_of_birth', '>', $eighteenYearsAgo);
+            })
+            ->exists();
     }
 }

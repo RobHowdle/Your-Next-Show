@@ -85,4 +85,9 @@ class Promoter extends Model
             ->where('events.event_date', '>=', now())
             ->orderBy('events.event_date', 'asc');
     }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'serviceable');
+    }
 }

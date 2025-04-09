@@ -59,112 +59,65 @@ class JobsController extends Controller
         $modules = collect(session('modules', []));
         $user = Auth::user()->load(['roles', 'promoters', 'venues', 'otherService']);
 
+        // Get all available clients from all service types
+        $venues = DB::table('venues')
+            ->select('venues.id', 'venues.name', DB::raw("'venue' as type"))
+            ->whereNull('deleted_at')
+            ->get();
+
+        $promoters = DB::table('promoters')
+            ->select('promoters.id', 'promoters.name', DB::raw("'promoter' as type"))
+            ->whereNull('deleted_at')
+            ->get();
+
+        $otherServices = DB::table('other_services')
+            ->select(
+                'other_services.id',
+                'other_services.name',
+                'other_services.services as type'
+            )
+            ->whereNull('deleted_at')
+            ->get();
+
+        // Combine all clients into one collection
+        $clients = collect()
+            ->concat($venues)
+            ->concat($promoters)
+            ->concat($otherServices)
+            ->sortBy('name');
+
+        // Get packages based on dashboard type (keep existing package logic)
+        $packages = collect();
         switch ($dashboardType) {
             case 'promoter':
                 $role = $user->promoters()->first();
-
-                if ($role) {
-                    $packages = collect(json_decode($role->packages, true))
-                        ->map(function ($package) {
-                            return [
-                                'job_type' => $package['job_type'] ?? null,
-                                'name' => $package['title'] ?? null,
-                                'lead_time' => $package['lead_time'] ?? null,
-                                'lead_time_unit' => $package['lead_time_unit'] ?? null,
-                                'price' => $package['price'] ?? null
-                            ];
-                        });
-                    \Log::info('Packages:', $packages->toArray()); // Debug log
-                };
-                break;
-            case 'artist':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $packages = collect(json_decode($role->packages, true))
-                        ->map(function ($package) {
-                            return [
-                                'job_type' => $package['job_type'] ?? null,
-                                'name' => $package['title'] ?? null,
-                                'lead_time' => $package['lead_time'] ?? null,
-                                'lead_time_unit' => $package['lead_time_unit'] ?? null,
-                                'price' => $package['price'] ?? null
-                            ];
-                        });
-                    \Log::info('Packages:', $packages->toArray()); // Debug log
-                };
-                break;
-            case 'designer':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $packages = collect(json_decode($role->packages, true))
-                        ->map(function ($package) {
-                            return [
-                                'job_type' => $package['job_type'] ?? null,
-                                'name' => $package['title'] ?? null,
-                                'lead_time' => $package['lead_time'] ?? null,
-                                'lead_time_unit' => $package['lead_time_unit'] ?? null,
-                                'price' => $package['price'] ?? null
-                            ];
-                        });
-                    \Log::info('Packages:', $packages->toArray()); // Debug log
-                };
-                break;
-            case 'videographer':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $packages = collect(json_decode($role->packages, true))
-                        ->map(function ($package) {
-                            return [
-                                'job_type' => $package['job_type'] ?? null,
-                                'name' => $package['title'] ?? null,
-                                'lead_time' => $package['lead_time'] ?? null,
-                                'lead_time_unit' => $package['lead_time_unit'] ?? null,
-                                'price' => $package['price'] ?? null
-                            ];
-                        });
-                    \Log::info('Packages:', $packages->toArray()); // Debug log
-                };
-                break;
-            case 'photographer':
-                $role = $user->otherService('service')->first();
-                if ($role) {
-                    $packages = collect(json_decode($role->packages, true))
-                        ->map(function ($package) {
-                            return [
-                                'job_type' => $package['job_type'] ?? null,
-                                'name' => $package['title'] ?? null,
-                                'lead_time' => $package['lead_time'] ?? null,
-                                'lead_time_unit' => $package['lead_time_unit'] ?? null,
-                                'price' => $package['price'] ?? null
-                            ];
-                        });
-                    \Log::info('Packages:', $packages->toArray()); // Debug log
-                };
                 break;
             case 'venue':
                 $role = $user->venues()->first();
-
-                if ($role) {
-                    $packages = collect(json_decode($role->packages, true))
-                        ->map(function ($package) {
-                            return [
-                                'id' => $package['job_type'] ?? null,
-                                'name' => $package['title'] ?? null,
-                                'lead_time' => $package['lead_time'] ?? null,
-                                'lead_time_unit' => $package['lead_time_unit'] ?? null,
-                                'price' => $package['price'] ?? null
-                            ];
-                        });
-                    \Log::info('Packages:', $packages->toArray()); // Debug log
-                };
                 break;
+            default:
+                $role = $user->otherService('service')->first();
+        }
+
+        if ($role && isset($role->packages)) {
+            $packages = collect(json_decode($role->packages, true))
+                ->map(function ($package) {
+                    return [
+                        'job_type' => $package['job_type'] ?? null,
+                        'name' => $package['title'] ?? null,
+                        'lead_time' => $package['lead_time'] ?? null,
+                        'lead_time_unit' => $package['lead_time_unit'] ?? null,
+                        'price' => $package['price'] ?? null
+                    ];
+                });
         }
 
         return view('admin.dashboards.new-job', [
             'userId' => $this->getUserId(),
             'dashboardType' => $dashboardType,
             'modules' => $modules,
-            'packages' => $packages ?? collect(),
+            'packages' => $packages,
+            'clients' => $clients->sortBy('name'),
         ]);
     }
 
@@ -175,41 +128,66 @@ class JobsController extends Controller
         $role = $user->getRoleNames()->first();
         $validated = $request->validated();
 
-        $jobName =  $validated['client_name'] . ' - ' . $validated['package'] . ' - ' . Carbon::now();
-        $jobFileUrl = '';
-        if (isset($validated['job_scope_file'])) {
-            $jobFile = $validated['job_scope_file'];
-            $jobFileExtension = $jobFile->getClientOriginalExtension() ?: $jobFile->guessExtension();
-            $jobFileName = Str::slug($jobName . '.' . $jobFileExtension);
+        $jobName = $validated['client_name'] . ' - ' . $validated['package'] . ' - ' . Carbon::now();
 
-            $path = 'jobs/' . strtolower($role) . '/' . $user->id;
-            $jobFileUrl = $jobFile->storeAs($path, $jobFileName, 'public');
-        }
+        try {
+            DB::beginTransaction();
 
-        $job = Job::create([
-            'name' => $jobName,
-            'job_start_date' => $validated['job_start_date'],
-            'job_end_date' => $validated['job_deadline_date'],
-            'scope' => $validated['job_text_scope'],
-            'scope_url' => $jobFileUrl,
-            'job_type' => $validated['package'],
-            'estimated_amount' => $validated['job_cost'],
-            'final_amount' => '0.00',
-            'job_status' => $validated['job_status'],
-            'priority' => $validated['job_priority'],
-            'user_id' => $user->id,
-            'lead_time' => $validated['estimated_lead_time_value'],
-            'lead_time_unit' => $validated['estimated_lead_time_unit'],
-        ]);
+            // Create the job first
+            $job = Job::create([
+                'name' => $jobName,
+                'job_start_date' => $validated['job_start_date'],
+                'job_end_date' => $validated['job_end_date'],
+                'scope' => $validated['scope'],
+                'job_type' => $validated['package'] ?? '',
+                'estimated_amount' => $validated['job_cost'],
+                'final_amount' => '0.00',
+                'job_status' => $validated['job_status'],
+                'priority' => $validated['job_priority'],
+                'user_id' => $user->id,
+                'lead_time' => $validated['estimated_lead_time_value'],
+                'lead_time_unit' => $validated['estimated_lead_time_unit'],
+            ]);
 
-        if ($job) {
+            // Handle multiple file uploads
+            if ($request->hasFile('job_scope_file')) {
+                foreach ($request->file('job_scope_file') as $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $extension = $file->getClientOriginalExtension() ?: $file->guessExtension();
+                    $fileName = Str::slug($jobName . '-' . uniqid() . '.' . $extension);
+                    $path = 'jobs/' . strtolower($role) . '/' . $user->id;
+
+                    // Store the file
+                    $filePath = $file->storeAs($path, $fileName, 'public');
+
+                    if ($filePath) {
+                        // Create document record
+                        DB::table('documents')->insert([
+                            'file_path' => $filePath,
+                            'original_name' => $originalName,
+                            'job_id' => $job->id,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        // Set the first file as the main scope_url
+                        if (!$job->scope_url) {
+                            $job->update(['scope_url' => $filePath]);
+                        }
+                    }
+                }
+            }
+
+            // Create job-service relationship
             DB::table('job_service')->insert([
                 'job_id' => $job->id,
-                'serviceable_id' => $validated['client_search'],
+                'serviceable_id' => $validated['client_id'],
                 'serviceable_type' => $this->getServiceClass($validated['client_service']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -219,21 +197,24 @@ class JobsController extends Controller
                     'job' => $job->id
                 ])
             ]);
-        }
+        } catch (\Exception $e) {
+            DB::rollBack();
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to create job'
-        ], 500);
+            // Clean up any uploaded files if there was an error
+            if (isset($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create job: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function viewJob($dashboardType, Job $job)
     {
         $modules = collect(session('modules', []));
-
-        // $job->load(['services' => function ($query) {
-        //     $query->where('serviceable_type', 'App\Models\OtherService');
-        // }, 'venue', 'promoter', 'user']);
         $job->load(['otherServices', 'venue', 'promoter', 'user', 'pivot']);
 
         return view('admin.dashboards.show-job', [
@@ -434,7 +415,7 @@ class JobsController extends Controller
     {
         $job->update([
             'job_status' => 'completed',
-            'completed_at' => $request->completed_at,
+            'completed_date' => $request->completed_at,
             'final_amount' => $request->final_amount,
         ]);
 

@@ -34,4 +34,9 @@ class Todo extends Model
     {
         return $this->morphMany(Todo::class, 'serviceable');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
