@@ -107,8 +107,8 @@ export function showScheduledNotification(message, scheduledTime = null) {
         timerProgressBar: true,
         customClass: {
             popup: "bg-yns_dark_gray !important rounded-lg font-heading",
-            title: "text-white",
-            container: "!text-white",
+            title: "text-black",
+            container: "text-black",
             icon: "text-yns_yellow",
         },
         icon: "info",
