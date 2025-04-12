@@ -4,7 +4,7 @@ import "summernote/dist/summernote-bs4.css";
 import $ from "jquery";
 
 // Import components
-import { initOpportunityModal } from "./components/opportunity-modal.js";
+import { initOpportunityModal } from "../js/components/opportunity-modal.js";
 import { initAccordion } from "./components/accordion.js";
 import { initRatings } from "./components/ratings.js";
 import { initCalendar } from "./components/calendar.js";
