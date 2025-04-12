@@ -4,11 +4,11 @@ import "summernote/dist/summernote-bs4.css";
 import $ from "jquery";
 
 // Import components
-import { initOpportunityModal } from "./components/opportunity-modal";
-import { initAccordion } from "./components/accordion";
-import { initRatings } from "./components/ratings";
-import { initCalendar } from "./components/calendar";
-import { initEventForm } from "./forms/event-form";
+import { initOpportunityModal } from "./components/opportunity-modal.js";
+import { initAccordion } from "./components/accordion.js";
+import { initRatings } from "./components/ratings.js";
+import { initCalendar } from "./components/calendar.js";
+import { initEventForm } from "./forms/event-form.js";
 
 // Import utilities
 import { formatCurrency, formatDateToDMY } from "./utils/formatters";
