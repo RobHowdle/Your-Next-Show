@@ -18,6 +18,7 @@ export default defineConfig({
             jquery: "jquery",
             flatpickr: path.resolve(__dirname, "node_modules/flatpickr"),
         },
+        extensions: [".js", ".jsx", ".ts", ".tsx"],
     },
     optimizeDeps: {
         include: ["@fullcalendar/core", "@fullcalendar/daygrid", "flatpickr"],
