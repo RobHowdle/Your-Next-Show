@@ -37,5 +37,9 @@ class DatabaseSeeder extends Seeder
             // UserServiceSeeder::class,
             // TodoTestDataSeeder::class,
         ]);
+        $this->call(VenuesTableSeeder::class);
+        $this->call(PromotersTableSeeder::class);
+        $this->call(OtherServicesTableSeeder::class);
+        $this->call(OtherServicesListTableSeeder::class);
     }
 }
