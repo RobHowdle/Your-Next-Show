@@ -36,7 +36,8 @@ class VenueDataHelper
         $contactLinks = $venue ? json_decode($venue->contact_link, true) : [];
 
         $platforms = [];
-        $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+        $activePlatforms = [];
+        $platformsToCheck = ['facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
         // Initialize the platforms array with empty strings for each platform
         foreach ($platformsToCheck as $platform) {
@@ -47,8 +48,9 @@ class VenueDataHelper
         if ($contactLinks) {
             foreach ($platformsToCheck as $platform) {
                 // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
+                if (isset($contactLinks[$platform]) && !empty($contactLinks[$platform])) {
                     $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                    $activePlatforms[] = $platform; // Track this platform as active
                 }
             }
         }
@@ -106,6 +108,9 @@ class VenueDataHelper
                 }
             });
         }
+
+        $packages = $venue ? json_decode($venue->packages) : [];
+
         return [
             'venue' => $venue,
             'venueId' => $venue->id,
@@ -121,6 +126,7 @@ class VenueDataHelper
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
+            'activePlatforms' => $activePlatforms,
             'platformsToCheck' => $platformsToCheck,
             'preferred_contact' => $preferredContact,
             'inHouseGear' => $inHouseGear,
@@ -137,6 +143,7 @@ class VenueDataHelper
             'depositAmount' => $depositAmont,
             'apiProviders' => $apiProviders,
             'apiKeys' => $apiKeys,
+            'packages' => $packages,
         ];
     }
 }

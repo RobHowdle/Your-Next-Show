@@ -113,7 +113,7 @@
           </x-slot>
 
           <x-slot name="content">
-            <div class="rounded-lg bg-gray-800 p-1 shadow-xl ring-1 ring-gray-700">
+            <div class="rounded-lg bg-gray-800 p-1 shadow-xl ring-1 ring-gray-700" style="z-index: 100;">
               <x-dropdown-link :href="route('profile.edit', ['dashboardType' => lcfirst($dashboardType), 'id' => Auth::user()->id])" class="rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
                 {{ __('Profile') }}
               </x-dropdown-link>

@@ -36,6 +36,7 @@ class Promoter extends Model
         'is_verified',
         'verified_at',
         'preferred_contact',
+        'packages',
     ];
 
     protected $casts = [
@@ -55,7 +56,9 @@ class Promoter extends Model
     public function linkedUsers(): MorphToMany
     {
         return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id')
-            ->withPivot('created_at', 'updated_at', 'role')
+            ->withPivot('created_at', 'updated_at', 'role_id')
+            ->join('roles', 'service_user.role_id', '=', 'roles.id')
+            ->select('users.*', 'roles.name as role_name')
             ->whereNull('service_user.deleted_at');
     }
 

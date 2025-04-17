@@ -156,7 +156,7 @@
                         <x-textarea-input id="contact_link" name="contact_link" rows="3" class="mt-1 block w-full"
                           placeholder="Paste your social media URLs, separated by commas"></x-textarea-input>
                         <p class="mt-1 text-sm text-gray-400">
-                          Supported platforms: Facebook, Twitter, Instagram, TikTok, YouTube, Snapchat, Bluesky
+                          Supported platforms: Facebook, X, Instagram, TikTok, YouTube, Snapchat, Bluesky
                         </p>
                       </div>
                     </div>

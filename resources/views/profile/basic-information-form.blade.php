@@ -1,153 +1,138 @@
 <header>
-  <h2 class="text-md mb-4 font-heading font-medium text-white">
-    {{ __(ucfirst($dashboardType) . ' Details') }}
-  </h2>
+  <h2 class="text-md mb-6 font-heading font-medium text-white">{{ __(ucfirst($dashboardType) . ' Details') }}</h2>
 </header>
 
-<form id="saveBasicInformation" method="POST" class="grid grid-cols-3 gap-x-8 gap-y-8" enctype="multipart/form-data">
+<form id="saveBasicInformation" method="POST" class="grid grid-cols-1 gap-6 lg:grid-cols-2" enctype="multipart/form-data">
   @csrf
   @method('PUT')
-  <div class="col-start-1 col-end-2">
-    <div class="group mb-6">
-      <x-input-label-dark for="name">{{ ucfirst($dashboardType) }} Name:</x-input-label-dark>
-      <x-text-input id="name" name="name" value="{{ old('name', $profileData['name'] ?? '') }}"></x-text-input>
-      @error('name')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
 
-    <div class="group mb-6">
-      <x-input-label-dark for="contact_name">Contact Name:</x-input-label-dark>
-      <x-text-input id="contact_name" name="contact_name"
-        value="{{ old('contact_name', $profileData['contact_name'] ?? '') }}"></x-text-input>
-      @error('contact_name')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
+  {{-- Primary & Contact Information Combined Card --}}
+  <div class="rounded-lg bg-gray-800/50 p-6 backdrop-blur-sm">
+    <h3 class="mb-4 text-lg font-bold text-white">Basic Information</h3>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {{-- Left Column --}}
+      <div class="space-y-4">
+        <div class="group">
+          <x-input-label-dark for="name">{{ ucfirst($dashboardType) }} Name</x-input-label-dark>
+          <x-text-input id="name" name="name" value="{{ old('name', $profileData['name'] ?? '') }}"
+            class="w-full" />
+          @error('name')
+            <p class="yns_red mt-1 text-sm">{{ $message }}</p>
+          @enderror
+        </div>
 
-    <div class="group mb-6">
-      <x-google-address-picker :postalTown="old('postalTown', $profileData['postalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
-        placeholder="Enter an address" :value="old('location', $profileData['location'] ?? '')" :latitude="old('lat', $profileData['lat'] ?? '')" :longitude="old('long', $profileData['long'] ?? '')" />
-    </div>
+        <div class="group">
+          <x-input-label-dark for="contact_email">Email</x-input-label-dark>
+          <x-text-input id="contact_email" name="contact_email"
+            value="{{ old('contact_email', $profileData['contact_email'] ?? '') }}" class="w-full" />
+        </div>
 
-    @if ($dashboardType === 'venue')
-      <div class="group mb-6">
-        <x-input-label-dark for="w3w">What3Words:</x-input-label-dark>
-        <x-text-input id="w3w" name="w3w" value="{{ old('w3w', $profileData['w3w'] ?? '') }}"></x-text-input>
-        <div id="suggestions"></div>
+        <div class="group">
+          <x-input-label-dark for="contact_number">Phone</x-input-label-dark>
+          <x-text-input id="contact_number" name="contact_number"
+            value="{{ old('contact_number', $profileData['contact_number'] ?? '') }}" class="w-full" />
+        </div>
       </div>
-    @endif
 
-    <div class="group mb-6">
-      <x-input-label-dark for="email">Email:</x-input-label-dark>
-      <x-text-input id="contact_email" name="contact_email"
-        value="{{ old('contact_email', $profileData['contact_email'] ?? '') }}"></x-text-input>
-      @error('contact_email')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
+      {{-- Right Column --}}
+      <div class="space-y-4">
+        <div class="group">
+          <x-input-label-dark for="contact_name">Contact Name</x-input-label-dark>
+          <x-text-input id="contact_name" name="contact_name"
+            value="{{ old('contact_name', $profileData['contact_name'] ?? '') }}" class="w-full" />
+        </div>
 
-    <div class="group mb-6">
-      <x-input-label-dark for="contact_number">Contact Phone:</x-input-label-dark>
-      <x-text-input id="contact_number" name="contact_number"
-        value="{{ old('contact_number', $profileData['contact_number'] ?? '') }}"></x-text-input>
-      @error('contact_number')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
-
-    <div class="group mb-6">
-      <x-input-label-dark for="preferred_contact">Preferred Contact Method:</x-input-label-dark>
-      <select id="preferred_contact" name="preferred_contact"
-        class="mt-1 block w-full rounded-md border border-gray-700 bg-black/50 p-2 text-white shadow-sm focus:border-yns_yellow focus:ring-yns_yellow">
-        <option value="">Select preferred contact method</option>
-        <option value="email"
-          {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === 'email' ? 'selected' : '' }}>Email
-        </option>
-        <option value="phone"
-          {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === 'phone' ? 'selected' : '' }}>Phone
-        </option>
-        @if (isset($profileData['platformsToCheck']) && is_array($profileData['platformsToCheck']))
-          @foreach ($profileData['platformsToCheck'] as $platform)
-            @if (isset($profileData['platforms'][$platform]))
+        <div class="group">
+          <x-input-label-dark for="preferred_contact">Preferred Contact</x-input-label-dark>
+          <select id="preferred_contact" name="preferred_contact"
+            class="w-full rounded-md border-yns_red bg-gray-900 px-2 py-2 text-gray-300">
+            <option value="">Select preferred method</option>
+            @if (!empty($profileData['contact_email']))
+              <option value="email"
+                {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === 'email' ? 'selected' : '' }}>
+                Email</option>
+            @endif
+            @if (!empty($profileData['contact_number']))
+              <option value="phone"
+                {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === 'phone' ? 'selected' : '' }}>
+                Phone</option>
+            @endif
+            @foreach ($profileData['activePlatforms'] as $platform)
               <option value="{{ $platform }}"
                 {{ old('preferred_contact', $profileData['preferred_contact'] ?? '') === $platform ? 'selected' : '' }}>
                 {{ ucfirst($platform) }}
               </option>
-            @endif
-          @endforeach
-        @endif
-      </select>
-      @error('preferred_contact')
-        <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-      @enderror
-    </div>
+            @endforeach
+          </select>
+        </div>
 
-    <div class="flex items-center gap-4">
-      <button type="button" onclick="confirmLeaveCompany()"
-        class="mt-8 rounded-lg border border-red-600 bg-red-600 px-4 py-2 font-heading font-bold text-white transition duration-150 ease-in-out hover:bg-red-700">
-        Leave Company
-      </button>
+        <div class="group">
+          <x-google-address-picker :postalTown="old('postalTown', $profileData['postalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
+            placeholder="Enter an address" :value="old('location', $profileData['location'] ?? '')" :latitude="old('lat', $profileData['lat'] ?? '')" :longitude="old('long', $profileData['long'] ?? '')" />
+        </div>
+      </div>
     </div>
   </div>
 
+  {{-- Logo Upload Card --}}
+  <div class="rounded-lg bg-gray-800/50 p-6 backdrop-blur-sm">
+    <h3 class="mb-4 text-lg font-bold text-white">Logo</h3>
+    <div class="flex flex-col items-center gap-4">
+      <img id="logo-preview"
+        src="{{ !empty($profileData['logo_url']) ? Storage::url($profileData['logo_url']) : asset('images/system/yns_no_image_found.png') }}"
+        alt="Logo Preview" class="h-32 w-auto rounded-lg object-contain"
+        onerror="this.src='{{ asset('images/system/yns_no_image_found.png') }}'">
+      <x-input-file id="logo_url" name="logo_url" onchange="previewLogo(event)" class="w-full" />
+    </div>
+  </div>
+
+  {{-- Social Links Card --}}
   @if (isset($profileData['platformsToCheck']) && is_array($profileData['platformsToCheck']))
-    <div class="col-start-2 col-end-3">
-      @foreach ($profileData['platformsToCheck'] as $platform)
-        <div class="group mb-6">
-          <x-input-label-dark for="{{ $platform }}">{{ ucfirst($platform) }}:</x-input-label-dark>
-
-          @php
-            $links =
-                isset($profileData['platforms'][$platform]) && is_array($profileData['platforms'][$platform])
-                    ? $profileData['platforms'][$platform]
-                    : (isset($profileData['platforms'][$platform])
-                        ? [$profileData['platforms'][$platform]]
-                        : []);
-          @endphp
-
-          @foreach ($links as $index => $link)
-            <x-text-input id="{{ $platform }}-{{ $index }}" name="contact_links[{{ $platform }}][]"
-              value="{{ old('contact_links.' . $platform . '.' . $index, $link) }}">
-            </x-text-input>
-          @endforeach
-
-          @if (empty($links))
-            <x-text-input id="{{ $platform }}-new" name="contact_links[{{ $platform }}][]"
-              value="{{ old('contact_links.' . $platform . '.new', '') }}"
-              placeholder="Add a {{ ucfirst($platform) }} link">
-            </x-text-input>
-          @endif
-
-          @error('contact_links.' . $platform . '.*')
-            <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-          @enderror
-        </div>
-      @endforeach
+    <div class="col-span-full rounded-lg bg-gray-800/50 p-6 backdrop-blur-sm">
+      <h3 class="mb-4 text-lg font-bold text-white">Social Links</h3>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach ($profileData['platformsToCheck'] as $platform)
+          <div class="group">
+            <x-input-label-dark for="{{ $platform }}">{{ ucfirst($platform) }}</x-input-label-dark>
+            @php
+              $links =
+                  isset($profileData['platforms'][$platform]) && is_array($profileData['platforms'][$platform])
+                      ? $profileData['platforms'][$platform]
+                      : (isset($profileData['platforms'][$platform])
+                          ? [$profileData['platforms'][$platform]]
+                          : []);
+            @endphp
+            @foreach ($links as $index => $link)
+              <x-text-input id="{{ $platform }}-{{ $index }}" name="contact_links[{{ $platform }}][]"
+                value="{{ old('contact_links.' . $platform . '.' . $index, $link) }}" class="mb-2 w-full" />
+            @endforeach
+            @if (empty($links))
+              <x-text-input id="{{ $platform }}-new" name="contact_links[{{ $platform }}][]"
+                value="{{ old('contact_links.' . $platform . '.new', '') }}"
+                placeholder="Add {{ ucfirst($platform) }} link" class="w-full" />
+            @endif
+          </div>
+        @endforeach
+      </div>
     </div>
   @endif
 
-  <div class="group mb-6 flex flex-col items-center">
-    <x-input-label-dark for="logo_url" class="text-left">Logo:</x-input-label-dark>
-    <x-input-file id="logo_url" name="logo_url" onchange="previewLogo(event)"></x-input-file>
-
-    <img id="logo-preview"
-      src="{{ !empty($profileData['logo_url']) ? Storage::url($profileData['logo_url']) : asset('images/system/yns_no_image_found.png') }}"
-      alt="Logo Preview" class="mt-4 h-80 w-80 object-cover"
-      onerror="this.src='{{ asset('images/system/yns_no_image_found.png') }}'">
-
-    @error('logo_url')
-      <p class="yns_red mt-1 text-sm">{{ $message }}</p>
-    @enderror
-  </div>
-
-  <div class="flex items-center gap-4">
-    <button type="submit"
-      class="mt-8 rounded-lg border border-white bg-white px-4 py-2 font-heading font-bold text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">Save</button>
-    @if (session('status') === 'profile-updated')
-      <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)"
-        class="text-sm text-gray-600 dark:text-gray-400">{{ __('Saved.') }}</p>
-    @endif
+  {{-- Action Buttons --}}
+  <div class="col-span-full mt-6 flex items-center justify-between rounded-lg bg-gray-800/50 p-4 backdrop-blur-sm">
+    <button type="button" onclick="confirmLeaveCompany()"
+      class="rounded-lg border border-red-600 bg-red-600 px-4 py-2 font-heading font-bold text-white transition hover:bg-red-700">
+      Leave Company
+    </button>
+    <div class="flex items-center gap-4">
+      <button type="submit"
+        class="rounded-lg border border-yns_yellow bg-yns_yellow px-4 py-2 font-heading font-bold text-black transition hover:bg-yns_yellow/90">
+        Save Changes
+      </button>
+      @if (session('status') === 'profile-updated')
+        <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm text-gray-400">
+          {{ __('Saved.') }}</p>
+      @endif
+    </div>
   </div>
 </form>
 <script>

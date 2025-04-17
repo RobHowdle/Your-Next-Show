@@ -575,12 +575,20 @@ class EventController extends Controller
         $role = $user->roles->first()->name;
         $event = Event::with(['bands', 'promoters', 'venues', 'services', 'opportunities'])->findOrFail($id);
 
+        // Check if user has permission to view the event
+        if (!$this->canViewEvent($user, $event)) {
+            return response()->view('errors.403', [
+                'dashboardType' => $dashboardType,
+                'modules' => $modules
+            ], 403);
+        }
+
         // View Tracker
         $this->trackEventView($event, request());
 
         // Generate mock stats data if user is event creator
         $mockStats = null;
-        if ($event->user_id === Auth::id()) {
+        if ($event->user_id === Auth::id() || $user->isLinkedToEvent($event)) {
             $mockStats = [
                 'ticketsSold' => rand(50, 150),
                 'ticketsAvailable' => 200,
@@ -1114,7 +1122,7 @@ class EventController extends Controller
         $patterns = [
             'facebook' => ['facebook.com', 'fb.com', 'messenger.com'],
             'instagram' => ['instagram.com'],
-            'twitter' => ['twitter.com', 'x.com'],
+            'x' => ['twitter.com', 'x.com'],
             'google' => ['google.com', 'google.co.uk'],
             'bing' => ['bing.com'],
             'tiktok' => ['tiktok.com'],
@@ -1238,5 +1246,16 @@ class EventController extends Controller
             ['source' => 'Internal', 'count' => $trafficSourceCounts['internal']],
             ['source' => 'Other', 'count' => $trafficSourceCounts['other']]
         ]);
+    }
+
+    private function canViewEvent($user, $event): bool
+    {
+        // Event creator can always view
+        if ($event->user_id === $user->id) {
+            return true;
+        }
+
+        // Use the new method to check if user is linked to event
+        return $user->isLinkedToEvent($event);
     }
 }

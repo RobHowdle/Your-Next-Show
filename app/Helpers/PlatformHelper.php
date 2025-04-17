@@ -10,7 +10,7 @@ if (!function_exists('determinePlatform')) {
     function determinePlatform($urls)
     {
         // Define the platforms we're interested in
-        $platforms = ['facebook', 'twitter', 'instagram', 'tiktok', 'youtube', 'snapchat', 'bluesky'];
+        $platforms = ['facebook', 'x', 'instagram', 'tiktok', 'youtube', 'snapchat', 'bluesky'];
         $result = [];
 
         // Split the input URLs by commas

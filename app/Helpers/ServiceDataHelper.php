@@ -31,7 +31,7 @@ class ServiceDataHelper
         $contactLinks = $artist ? json_decode($artist->contact_link, true) : [];
 
         $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+        $platformsToCheck = ['website', 'facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
         // Initialize the platforms array with empty strings for each platform
         foreach ($platformsToCheck as $platform) {
@@ -148,7 +148,7 @@ class ServiceDataHelper
             $contactLinks = $designer ? json_decode($designer->contact_link, true) : [];
 
             $platforms = [];
-            $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+            $platformsToCheck = ['website', 'facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
             // Initialize the platforms array with empty strings for each platform
             foreach ($platformsToCheck as $platform) {
@@ -273,7 +273,7 @@ class ServiceDataHelper
         $contactLinks = $photographer ? json_decode($photographer->contact_link, true) : [];
 
         $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+        $platformsToCheck = ['website', 'facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
         // Initialize the platforms array with empty strings for each platform
         foreach ($platformsToCheck as $platform) {
@@ -412,7 +412,7 @@ class ServiceDataHelper
             $contactLinks = $videographer ? json_decode($videographer->contact_link, true) : [];
 
             $platforms = [];
-            $platformsToCheck = ['website', 'facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+            $platformsToCheck = ['website', 'facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
             // Initialize the platforms array with empty strings for each platform
             foreach ($platformsToCheck as $platform) {

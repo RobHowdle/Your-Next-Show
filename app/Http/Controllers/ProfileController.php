@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\ApiKeys;
 use App\Models\Promoter;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
@@ -22,7 +21,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\StoreUpdateBandTypes;
-use App\Http\Requests\StoreUpdateBandGenres;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\BandProfileUpdateRequest;
 use App\Http\Requests\VenueProfileUpdateRequest;
@@ -867,22 +865,6 @@ class ProfileController extends Controller
         }
     }
 
-    // Helper for JSON Fields
-    protected function updateJsonField($photographer, $field, $data)
-    {
-        $existingData = json_decode($photographer->$field, true) ?? [];
-        $updatedData = array_merge($existingData, $data);
-        $photographer->update([$field => json_encode(array_filter($updatedData))]);
-    }
-
-    // Helper for Logo Upload
-    protected function uploadLogo($file, $name)
-    {
-        $filename = Str::slug($name) . '.' . $file->getClientOriginalExtension();
-        $file->move(storage_path('app/public/images/photographer_logos'), $filename);
-        return Storage::url('images/photographer_logos/' . $filename);
-    }
-
     /**
      * Delete the user's account.
      */
@@ -902,54 +884,6 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
-    }
-
-    protected function getCommunicationSettings($userId, $dashboardType)
-    {
-        $user = User::findOrFail($userId);
-        // Get default preferences from config
-        $defaultPreferences = config('mailing_preferences.communication_preferences');
-        if (!$defaultPreferences) {
-            \Log::error('Mailing preferences config not loaded');
-            return [];
-        }
-
-        // Get user preferences from JSON field and ensure it's an array
-        $userPreferences = is_array($user->mailing_preferences)
-            ? $user->mailing_preferences
-            : json_decode($user->mailing_preferences, true) ?? [];
-
-        $communicationSettings = [];
-
-        // Map each preference to include name, description and enabled status
-        foreach ($defaultPreferences as $key => $preference) {
-            $communicationSettings[$key] = [
-                'name' => $preference['name'],
-                'description' => $preference['description'],
-                'is_enabled' => isset($userPreferences[$key])
-                    ? ($userPreferences[$key] === true ? 1 : 0)
-                    : ($preference['enabled'] ? 1 : 0)
-            ];
-        }
-
-        return $communicationSettings;
-    }
-
-    protected function getModulesWithSettings($userId, $dashboardType)
-    {
-        // Load all modules from config
-        $modules = config('modules.modules');
-
-        $modulesWithSettings = UserModuleSetting::where('user_id', $userId)
-            ->get()
-            ->mapWithKeys(function ($module) {
-                return [$module->module_name => [
-                    'is_enabled' => $module->is_enabled,
-                    'description' => $module->description
-                ]];
-            })->toArray();
-
-        return $modulesWithSettings;
     }
 
     // Get Data for Dashboard Type User
@@ -1430,5 +1364,69 @@ class ProfileController extends Controller
             'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
 
         ]);
+    }
+
+    // Helper for JSON Fields
+    protected function updateJsonField($photographer, $field, $data)
+    {
+        $existingData = json_decode($photographer->$field, true) ?? [];
+        $updatedData = array_merge($existingData, $data);
+        $photographer->update([$field => json_encode(array_filter($updatedData))]);
+    }
+
+    // Helper for Logo Upload
+    protected function uploadLogo($file, $name)
+    {
+        $filename = Str::slug($name) . '.' . $file->getClientOriginalExtension();
+        $file->move(storage_path('app/public/images/photographer_logos'), $filename);
+        return Storage::url('images/photographer_logos/' . $filename);
+    }
+
+    protected function getCommunicationSettings($userId, $dashboardType)
+    {
+        $user = User::findOrFail($userId);
+        // Get default preferences from config
+        $defaultPreferences = config('mailing_preferences.communication_preferences');
+        if (!$defaultPreferences) {
+            \Log::error('Mailing preferences config not loaded');
+            return [];
+        }
+
+        // Get user preferences from JSON field and ensure it's an array
+        $userPreferences = is_array($user->mailing_preferences)
+            ? $user->mailing_preferences
+            : json_decode($user->mailing_preferences, true) ?? [];
+
+        $communicationSettings = [];
+
+        // Map each preference to include name, description and enabled status
+        foreach ($defaultPreferences as $key => $preference) {
+            $communicationSettings[$key] = [
+                'name' => $preference['name'],
+                'description' => $preference['description'],
+                'is_enabled' => isset($userPreferences[$key])
+                    ? ($userPreferences[$key] === true ? 1 : 0)
+                    : ($preference['enabled'] ? 1 : 0)
+            ];
+        }
+
+        return $communicationSettings;
+    }
+
+    protected function getModulesWithSettings($userId, $dashboardType)
+    {
+        // Load all modules from config
+        $modules = config('modules.modules');
+
+        $modulesWithSettings = UserModuleSetting::where('user_id', $userId)
+            ->get()
+            ->mapWithKeys(function ($module) {
+                return [$module->module_name => [
+                    'is_enabled' => $module->is_enabled,
+                    'description' => $module->description
+                ]];
+            })->toArray();
+
+        return $modulesWithSettings;
     }
 }

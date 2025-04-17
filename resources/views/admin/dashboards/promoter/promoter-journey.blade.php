@@ -101,7 +101,6 @@
           query: query
         },
         success: function(data) {
-          console.log(data.html);
           if (data.html.trim() === '') {
             jQuery('#promotersTable').hide();
             jQuery('#promoter-table-title').hide();

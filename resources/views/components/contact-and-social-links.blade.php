@@ -21,7 +21,7 @@
         </a>
       @break
 
-      @case('twitter')
+      @case('x')
         <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
           target="_blank">
           <span class="fab fa-twitter"></span>

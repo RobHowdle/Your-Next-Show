@@ -97,6 +97,8 @@
         </form>
       </div>
     @endforeach
+  @else
+    <p>No Packages</p>
   @endif
 
   {{-- Add New Package Card --}}

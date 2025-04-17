@@ -15,7 +15,7 @@
           <div class="flex items-center justify-end">
             <label class="relative inline-flex cursor-pointer items-center">
               <input type="checkbox" class="toggle-checkbox sr-only" data-module="{{ $name }}"
-                onchange="updateModuleStatus('{{ $name }}', this.checked)"
+                onchange="updateModuleStatus('{{ $name }}', '{{ $dashboardType }}', this.checked, '{{ Auth::id() }}')"
                 {{ $settings['is_enabled'] === 1 ? 'checked' : '' }}>
               <div class="toggle-bg">
                 <div class="toggle-circle"></div>
@@ -27,49 +27,12 @@
     @endforeach
   </div>
 </section>
-
-<script>
-  function updateModuleStatus(moduleName, enabled) {
-    const dashboardType = '{{ $dashboardType }}';
-    const userId = '{{ $userId }}';
-
-    $.ajax({
-      url: `/profile/${dashboardType}/settings/update`,
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-      },
-      data: {
-        module: moduleName,
-        enabled: enabled ? 1 : 0,
-        userId: userId
-      },
-      success: function(response) {
-        if (response.success) {
-          // Update Alpine store
-          Alpine.store('userModules', (modules) => ({
-            ...modules,
-            [moduleName]: {
-              ...modules[moduleName],
-              is_enabled: enabled ? 1 : 0
-            }
-          }));
-        }
-        showSuccessNotification(moduleName, 'successfully updated.');
-      },
-      error: function(xhr, status, error) {
-        showFailureNotification('Failed to update module:', error);
-      }
-    });
-  }
-</script>
 <style>
   /* Container for the slider background */
   .toggle-bg {
     width: 44px;
     height: 24px;
     background-color: #d1d5db;
-    /* Default gray */
     border-radius: 12px;
     position: relative;
     cursor: pointer;

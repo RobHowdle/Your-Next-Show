@@ -90,7 +90,6 @@
     const dashboardType = '{{ $dashboardType }}';
 
     const savedDepositRequired = @json(old('deposit_required', $profileData['depositRequired'] ?? ''));
-    console.log('Saved Deposit Required:', savedDepositRequired);
 
     function toggleDepositAmount(value) {
       if (value === 'yes') {

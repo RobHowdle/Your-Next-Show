@@ -1,62 +1,68 @@
-<x-app-layout :dashboardType="$dashboardType" :modules="$modules">
-  <div x-data="{
-      sidebarOpen: localStorage.getItem('sidebarOpen') === 'true',
-      activeTab: 'profile',
-      settingsOpen: false,
-      publicProfileOpen: false,
-      loading: true,
-      init() {
-          this.$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))
-          // Set loading to false after a brief delay to ensure everything is initialized
-          setTimeout(() => {
-              this.loading = false
-              // Ensure we're at the top of the page
-              window.scrollTo(0, 0)
-          }, 100)
-      }
-  }" class="from-yns_pink min-h-screen bg-gradient-to-br to-yns_purple">
-    <!-- Loading overlay -->
-    <div x-show="loading" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="rounded-lg bg-white p-6 text-center">
-        <div class="border-yns_pink mb-4 h-12 w-12 animate-spin rounded-full border-4 border-t-transparent"></div>
-        <p class="text-gray-700">Loading...</p>
-      </div>
-    </div>
-    <div x-show="!loading" x-cloak class="relative h-full">
-      {{-- Grid Container --}}
-      <div class="grid transition-all duration-300"
-        :class="sidebarOpen ? 'grid-cols-[300px,1fr]' : 'grid-cols-[80px,1fr]'">
+  <x-app-layout :dashboardType="$dashboardType" :modules="$modules">
+    <div x-data="{
+        sidebarOpen: localStorage.getItem('sidebarOpen') === 'true',
+        activeTab: 'profile',
+        settingsOpen: false,
+        publicProfileOpen: false,
+        loading: true,
+        init() {
+            this.$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))
+            this.$watch('activeTab', value => {
+                localStorage.setItem('activeTab', value)
+            })
+            setTimeout(() => {
+                this.loading = false
+                window.scrollTo(0, 0)
+            }, 100)
+        }
+    }" class="from-yns_orange relative min-h-screen bg-gradient-to-br to-yns_purple">
+      <!-- Loading overlay -->
+      <x-loading-overlay x-show="loading" />
 
-        {{-- Sidebar --}}
-        <div class="relative h-screen bg-opac_8_black transition-all duration-300">
-          {{-- Navigation Header --}}
-          <div class="flex items-center justify-between px-4 py-6">
+      <!-- Main Layout -->
+      <div x-show="!loading" x-cloak class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="bg-opac_8_black transition-all duration-300" :class="sidebarOpen ? 'w-[300px]' : 'w-[80px]'"
+          style="z-index: 50;">
+          <div class="flex items-center px-4 py-6" :class="sidebarOpen ? 'justify-between' : 'justify-center'">
             <p class="font-heading font-bold text-white" x-show="sidebarOpen">Navigation</p>
             <button @click="sidebarOpen = !sidebarOpen"
-              class="bg-yns_pink rounded-full p-1.5 text-white transition-transform duration-300">
-              <i class="fa-solid" :class="sidebarOpen ? 'fa-chevron-left' : 'fa-bars'"></i>
+              class="bg-yns_orange flex h-8 w-8 items-center justify-center rounded-full p-1.5 text-white transition-all duration-300">
+              <i class="fa-solid"
+                :class="{
+                    'fa-chevron-left': sidebarOpen,
+                    'fa-bars': !sidebarOpen
+                }"></i>
             </button>
           </div>
 
-          {{-- Navigation Items --}}
-          <div class="mt-4 flex flex-col gap-2">
-            {{-- Profile --}}
-            <button @click="activeTab = 'profile'" class="group flex items-center px-8 py-2 text-white transition"
-              :class="activeTab === 'profile' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
-              <i class="fa-solid fa-user h-5 w-5"></i>
-              <span x-show="sidebarOpen" class="ml-3 transition-opacity duration-300">Profile</span>
+          <!-- Navigation Items -->
+          <div class="mt-4 flex flex-col gap-2 px-4">
+            <button @click="activeTab = 'profile'"
+              class="group flex items-center gap-3 rounded-lg px-4 py-2 transition-all duration-300"
+              :class="activeTab === 'profile'
+                  ?
+                  'bg-yns_orange text-white' :
+                  'text-gray-300 hover:bg-yns_orange hover:bg-opacity-20 hover:text-white'">
+              <i class="fa-solid fa-user"></i>
+              <span x-show="sidebarOpen">User Details</span>
             </button>
 
             {{-- Public Profiles --}}
             <div>
               <button @click="publicProfileOpen = !publicProfileOpen"
-                class="hover:text-yns_pink flex w-full items-center justify-between px-8 py-2 text-white transition">
+                class="flex w-full items-center justify-between px-4 py-2 transition-all duration-300"
+                :class="publicProfileOpen
+                    ?
+                    'bg-yns_orange text-white' :
+                    'text-gray-300 hover:bg-yns_orange/20 hover:text-white'">
                 <div class="flex items-center">
                   <i class="fa-solid fa-circle-user h-5 w-5"></i>
                   <span x-show="sidebarOpen" class="ml-3">Public Profile</span>
                 </div>
                 <i x-show="sidebarOpen" class="fa-solid fa-chevron-down transition-transform duration-300"
-                  :class="{ 'rotate-180': publicProfileOpen }"></i>
+                  :class="{ 'rotate-180': publicProfileOpen }">
+                </i>
               </button>
 
               <div x-show="publicProfileOpen && sidebarOpen" class="space-y-1 pl-12">
@@ -92,238 +98,210 @@
                 @endif
               </div>
             </div>
-
-            {{-- Settings --}}
-            <div>
-              <button @click="settingsOpen = !settingsOpen"
-                class="hover:text-yns_pink flex w-full items-center justify-between px-8 py-2 text-white transition">
-                <div class="flex items-center">
-                  <i class="fa-solid fa-gear h-5 w-5"></i>
-                  <span x-show="sidebarOpen" class="ml-3">Settings</span>
-                </div>
-                <i x-show="sidebarOpen" class="fa-solid fa-chevron-down transition-transform duration-300"
-                  :class="{ 'rotate-180': settingsOpen }"></i>
-              </button>
-
-              <div x-show="settingsOpen && sidebarOpen" class="space-y-1 pl-12">
-                <button @click="activeTab = 'modules'" class="hover:text-yns_pink block py-2 text-white transition"
-                  :class="activeTab === 'modules' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
-                  <i class="fa-solid fa-layer-group h-5 w-5"></i>
-                  <span x-show="settingsOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Modules</span>
-                </button>
-                <button @click="activeTab = 'api'" class="hover:text-yns_pink block py-2 text-white transition"
-                  :class="activeTab === 'api' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
-                  <i class="fa-solid fa-key h-5 w-5"></i>
-                  <span x-show="settingsOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">API
-                    Keys</span>
-                </button>
-              </div>
-            </div>
-
-            {{-- Communications --}}
-            <button @click="activeTab = 'communications'"
-              class="hover:text-yns_pink group flex items-center px-8 py-2 text-white transition"
-              :class="activeTab === 'communications' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
-              <i class="fa-solid fa-comments h-5 w-5"></i>
-              <span x-show="sidebarOpen" class="ml-3 transition-opacity duration-300">Communications</span>
-            </button>
           </div>
         </div>
 
-        {{-- Content Area --}}
-        <div class="p-8">
-          <div class="mx-auto max-w-7xl space-y-6 rounded-lg bg-opac_8_black p-4 shadow sm:p-8">
-            <div x-show="activeTab === 'profile'">
-              @include('profile.partials.edit-user-details')
-            </div>
-            <div x-show="activeTab === 'basicInfo'">
-              @include('profile.basic-information-form', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      'promoter' => $promoterData,
-                      'artist' => $bandData,
-                      'photographer' => $photographerData,
-                      'designer' => $designerData,
-                      'videographer' => $videographerData,
-                      default => [],
-                  },
-              ])
-            </div>
-            <div x-show="activeTab === 'description'">
-              @include('profile.about', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      'promoter' => $promoterData,
-                      'artist' => $bandData,
-                      'photographer' => $photographerData,
-                      'designer' => $designerData,
-                      'videographer' => $videographerData,
-                      default => [],
-                  },
-              ])
-            </div>
-            <div x-show="activeTab === 'genresAndTypes'">
-              @include('profile.genres-and-types', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      'promoter' => $promoterData,
-                      'artist' => $bandData,
-                      'photographer' => $photographerData,
-                      'designer' => $designerData,
-                      'videographer' => $videographerData,
-                      default => [],
-                  },
-              ])
-            </div>
-            @if ($dashboardType === 'venue')
-              <div x-show="activeTab === 'capacity'">
-                @include('profile.venue.capacity', [
+        <!-- Main Content Area -->
+        <div class="flex-1 overflow-y-auto">
+          <div class="container mx-auto p-6">
+            <div class="rounded-lg bg-opac_8_black p-6 shadow-lg">
+              <!-- Profile Content -->
+              <div x-show="activeTab === 'profile'" class="space-y-6">
+                @include('profile.partials.edit-user-details')
+              </div>
+
+              <!-- Basic Info Content -->
+              <div x-show="activeTab === 'basicInfo'" class="space-y-6">
+                @include('profile.basic-information-form', [
                     'profileData' => match ($dashboardType) {
                         'venue' => $venueData,
+                        'promoter' => $promoterData,
+                        'artist' => $bandData,
+                        'photographer' => $photographerData,
+                        'designer' => $designerData,
+                        'videographer' => $videographerData,
                         default => [],
                     },
                 ])
               </div>
-            @endif
-            @if ($dashboardType === 'venue')
-              <div x-show="activeTab === 'inHouseGear'">
-                @include('profile.venue.in-house-gear', [
+
+              <div x-show="activeTab === 'description'">
+                @include('profile.about', [
                     'profileData' => match ($dashboardType) {
                         'venue' => $venueData,
-                        default => [],
-                    },
-                ])
-              </div>
-            @endif
-            @if ($dashboardType === 'artist')
-              <div x-show="activeTab === 'streamLinks'">
-                @include('profile.artist.stream-links', [
-                    'profileData' => match ($dashboardType) {
+                        'promoter' => $promoterData,
                         'artist' => $bandData,
+                        'photographer' => $photographerData,
+                        'designer' => $designerData,
+                        'videographer' => $videographerData,
                         default => [],
                     },
                 ])
               </div>
-            @endif
-            @if ($dashboardType === 'artist')
-              <div x-show="activeTab === 'members'">
-                @include('profile.artist.members', [
+              <div x-show="activeTab === 'genresAndTypes'">
+                @include('profile.genres-and-types', [
                     'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        'promoter' => $promoterData,
                         'artist' => $bandData,
+                        'photographer' => $photographerData,
+                        'designer' => $designerData,
+                        'videographer' => $videographerData,
                         default => [],
                     },
                 ])
               </div>
-            @endif
-            <div x-show="activeTab === 'myEvents'">
-              @include('profile.events', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      'promoter' => $promoterData,
-                      'artist' => $bandData,
-                      'photographer' => $photographerData,
-                      'videographer' => $videographerData,
-                      default => [],
-                  },
-              ])
-            </div>
-            <div x-show="activeTab === 'myBands'">
-              @include('profile.artists', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      'promoter' => $promoterData,
-                      'artist' => $bandData,
-                      'photographer' => $photographerData,
-                      'designer' => $designerData,
-                      'videographer' => $videographerData,
-                      default => [],
-                  },
-              ])
-            </div>
-            <div x-show="activeTab === 'designAndHours'">
-              @include('profile.designer.styles-and-times', [
-                  'profileData' => match ($dashboardType) {
-                      'photographer' => $photographerData,
-                      'designer' => $designerData,
-                      'videographer' => $videographerData,
-                      default => [],
-                  },
-              ])
-            </div>
-            @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
-              <div x-show="activeTab === 'portfolio'">
-                @include('profile.portfolio', [
+              @if ($dashboardType === 'venue')
+                <div x-show="activeTab === 'capacity'">
+                  @include('profile.venue.capacity', [
+                      'profileData' => match ($dashboardType) {
+                          'venue' => $venueData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+              @if ($dashboardType === 'venue')
+                <div x-show="activeTab === 'inHouseGear'">
+                  @include('profile.venue.in-house-gear', [
+                      'profileData' => match ($dashboardType) {
+                          'venue' => $venueData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+              @if ($dashboardType === 'artist')
+                <div x-show="activeTab === 'streamLinks'">
+                  @include('profile.artist.stream-links', [
+                      'profileData' => match ($dashboardType) {
+                          'artist' => $bandData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+              @if ($dashboardType === 'artist')
+                <div x-show="activeTab === 'members'">
+                  @include('profile.artist.members', [
+                      'profileData' => match ($dashboardType) {
+                          'artist' => $bandData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+              <div x-show="activeTab === 'myEvents'">
+                @include('profile.events', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        'promoter' => $promoterData,
+                        'artist' => $bandData,
+                        'photographer' => $photographerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+              <div x-show="activeTab === 'myBands'">
+                @include('profile.artists', [
+                    'profileData' => match ($dashboardType) {
+                        'venue' => $venueData,
+                        'promoter' => $promoterData,
+                        'artist' => $bandData,
+                        'photographer' => $photographerData,
+                        'designer' => $designerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+              <div x-show="activeTab === 'designAndHours'">
+                @include('profile.designer.styles-and-times', [
+                    'profileData' => match ($dashboardType) {
+                        'photographer' => $photographerData,
+                        'designer' => $designerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+              @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
+                <div x-show="activeTab === 'portfolio'">
+                  @include('profile.portfolio', [
+                      'dashboardType' => $dashboardType,
+                      'waterMarkedPortfolioImages' => $profileData['waterMarkedPortfolioImages'] ?? [],
+                      'profileData' => match ($dashboardType) {
+                          'designer' => $designerData,
+                          'photographer' => $photographerData,
+                          'videographer' => $videographerData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+              @if (collect($modules)->contains('name', 'jobs'))
+                <div x-show="activeTab === 'packages'">
+                  @include('profile.packages', [
+                      'profileData' => match ($dashboardType) {
+                          'designer' => $designerData,
+                          'photographer' => $photographerData,
+                          'videographer' => $videographerData,
+                          'venue' => $venueData,
+                          'promoter' => $promoterData,
+                          'artist' => $bandData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+              @if ($dashboardType === 'venue')
+                <div x-show="activeTab === 'additionalInfo'">
+                  @include('profile.venue.additional-info', [
+                      'profileData' => match ($dashboardType) {
+                          'venue' => $venueData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+              @if ($dashboardType === 'venue')
+                <div x-show="activeTab === 'lmlc'">
+                  @include('profile.venue.lmlc', [
+                      'profileData' => match ($dashboardType) {
+                          'venue' => $venueData,
+                          default => [],
+                      },
+                  ])
+                </div>
+              @endif
+
+              <div x-show="activeTab === 'modules'">
+                @include('profile.settings.modules', [
+                    'modules' => $modules,
                     'dashboardType' => $dashboardType,
-                    'waterMarkedPortfolioImages' => $profileData['waterMarkedPortfolioImages'] ?? [],
+                    'userId' => $user->id,
+                ])
+              </div>
+              <div x-show="activeTab === 'api'">
+                @include('profile.settings.api-keys', [
                     'profileData' => match ($dashboardType) {
-                        'designer' => $designerData,
+                        'venue' => $venueData,
+                        'promoter' => $promoterData,
+                        'artist' => $bandData,
                         'photographer' => $photographerData,
+                        'designer' => $designerData,
                         'videographer' => $videographerData,
                         default => [],
                     },
                 ])
               </div>
-            @endif
-            @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
-              <div x-show="activeTab === 'packages'">
-                @include('profile.packages', [
-                    'profileData' => match ($dashboardType) {
-                        'designer' => $designerData,
-                        'photographer' => $photographerData,
-                        'videographer' => $videographerData,
-                        default => [],
-                    },
-                ])
+              <div x-show="activeTab === 'communications'">
+                @include('profile.partials.communication-settings')
               </div>
-            @endif
-            @if ($dashboardType === 'venue')
-              <div x-show="activeTab === 'additionalInfo'">
-                @include('profile.venue.additional-info', [
-                    'profileData' => match ($dashboardType) {
-                        'venue' => $venueData,
-                        default => [],
-                    },
-                ])
-              </div>
-            @endif
-
-            @if ($dashboardType === 'venue')
-              <div x-show="activeTab === 'lmlc'">
-                @include('profile.venue.lmlc', [
-                    'profileData' => match ($dashboardType) {
-                        'venue' => $venueData,
-                        default => [],
-                    },
-                ])
-              </div>
-            @endif
-
-            <div x-show="activeTab === 'modules'">
-              @include('profile.settings.modules', [
-                  'modules' => $modules,
-                  'dashboardType' => $dashboardType,
-                  'userId' => $user->id,
-              ])
-            </div>
-            <div x-show="activeTab === 'api'">
-              @include('profile.settings.api-keys', [
-                  'profileData' => match ($dashboardType) {
-                      'venue' => $venueData,
-                      'promoter' => $promoterData,
-                      'artist' => $bandData,
-                      'photographer' => $photographerData,
-                      'designer' => $designerData,
-                      'videographer' => $videographerData,
-                      default => [],
-                  },
-              ])
-            </div>
-            <div x-show="activeTab === 'communications'">
-              @include('profile.partials.communication-settings')
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</x-app-layout>
+  </x-app-layout>

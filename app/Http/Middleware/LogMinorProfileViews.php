@@ -19,12 +19,14 @@ class LogMinorProfileViews
             'type' => 'service'
         ],
         'venue' => [
-            'parameter' => 'slug',
-            'type' => 'venue'
+            'parameter' => 'name',
+            'type' => 'venue',
+            'model_class' => \App\Models\Venue::class
         ],
         'promoter' => [
-            'parameter' => 'slug',
-            'type' => 'promoter'
+            'parameter' => 'name',
+            'type' => 'promoter',
+            'model_class' => \App\Models\Promoter::class
         ]
     ];
 

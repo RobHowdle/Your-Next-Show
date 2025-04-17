@@ -54,7 +54,7 @@
         </div>
 
         <!-- Tabs Navigation -->
-        @if ($event->user_id === Auth::id())
+        @if ($event->user_id === Auth::id() || Auth::user()->isLinkedToEvent($event))
           <div class="mt-8 border-b border-gray-800">
             <nav class="flex gap-x-8 px-4 sm:px-6 lg:px-8" aria-label="Tabs">
               <button id="info-tab" type="button"

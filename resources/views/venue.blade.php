@@ -330,18 +330,8 @@
 
             <!-- Other Tab -->
             <div id="other" class="tab-panel hidden">
-              @if ($venue->capacity)
-                <p class="bold pb-2 text-left text-xl md:text-2xl">Other Information you may want to
-                  know about
-                  {{ $venue->name }}.</p>
-                @if ($venue->contact_name)
-                  <p class="text-left md:text-base">Person(s) To Speak To: {{ $venue->contact_name }}
-                  </p>
-                @endif
-                @if ($venue->capacity)
-                  <p class="pb-2 text-left">Capacity: {{ $venue->capacity }}</p>
-                @endif
-                <p class="bold pb-2 pt-2 text-left text-2xl">More Info:</p>
+              @if ($venue->additional_info)
+                <p class="text-left">We have some additional information about this venue:</p>
                 <p class="pb-2 text-left">{!! nl2br(e($venue->additional_info)) !!}</p>
               @else
                 <p class="text-left">No Further Information Avaliable</p>

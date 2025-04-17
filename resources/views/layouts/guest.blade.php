@@ -29,24 +29,18 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="guest relative font-sans antialiased" x-data="{ sidebarOpen: false }">
+<body class="guest relative font-sans antialiased" x-data="{
+    sidebarOpen: false,
+    loading: true,
+    init() {
+        setTimeout(() => {
+            this.loading = false
+        }, 500)
+    }
+}">
   <div class="absolute inset-0 bg-cover bg-fixed bg-center bg-no-repeat"
     style="background-image: url('{{ asset('storage/images/system/hero-bg.jpg') }}'); z-index: -1;"></div>
-  <div x-data="loader" x-init="init()" x-show="isLoading"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black transition-opacity duration-300"
-    x-transition:enter="ease-out" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-    x-transition:leave="ease-in" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-    <div class="text-center">
-      <div class="music-loader mb-4">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-      </div>
-      <p class="text-lg text-white">LOADING...</p>
-    </div>
-  </div>
+  <x-loading-overlay x-show="loading" />
   @if (Route::has('login'))
     <nav class="fixed z-10 w-full bg-yns_dark_blue">
       <div class="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between px-2 py-4 md:px-4 md:py-8">
@@ -240,29 +234,7 @@
     </div>
 
   </footer>
-  <script>
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('loader', () => ({
-        isLoading: true,
-        init() {
-          this.handleLoading();
-          document.addEventListener('turbo:visit', () => {
-            this.isLoading = true;
-          });
-          document.addEventListener('turbo:load', () => {
-            this.handleLoading();
-          });
-        },
-        handleLoading() {
-          // Ensure minimum loading time of 500ms for smooth transition
-          setTimeout(() => {
-            this.isLoading = false;
-          }, 250);
-        }
-      }));
-    });
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 </body>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 
 </html>
