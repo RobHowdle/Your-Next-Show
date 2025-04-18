@@ -10,6 +10,7 @@ export default defineConfig({
             input: [
                 "resources/css/app.css",
                 "resources/js/app.js",
+                "resources/js/utils/password-checker.js",
                 "resources/js/utils/swal.js",
             ],
             refresh: true,

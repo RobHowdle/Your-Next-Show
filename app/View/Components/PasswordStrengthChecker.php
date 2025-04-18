@@ -3,17 +3,22 @@
 namespace App\View\Components;
 
 use Closure;
-use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
+use App\Rules\CompromisedPassword;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
 
 class PasswordStrengthChecker extends Component
 {
+    private CompromisedPassword $compromisedRule;
+
     /**
      * The ID of the password input field.
      *
      * @var string
      */
     public string $inputId;
+    private ?string $apiError = null;
 
     /**
      * Create a new component instance.
@@ -21,6 +26,7 @@ class PasswordStrengthChecker extends Component
     public function __construct(string $inputId = 'password')
     {
         $this->inputId = $inputId;
+        $this->compromisedRule = new CompromisedPassword();
     }
 
     /**
@@ -50,6 +56,20 @@ class PasswordStrengthChecker extends Component
             'special' => [
                 'text' => 'At least 1 special character (@$!%*?&)',
                 'regex' => '/[@$!%*?&]/'
+            ],
+            'compromised' => [
+                'text' => 'Must not be a compromised password',
+                'check' => function ($password) {
+                    try {
+                        $result = $this->compromisedRule->passes('password', $password);
+                        $this->apiError = null;
+                        return $result;
+                    } catch (\Exception $e) {
+                        Log::error('Password check failed: ' . $e->getMessage());
+                        $this->apiError = 'Unable to verify password security. Please try again later.';
+                        return true; // Fail open for better UX
+                    }
+                }
             ]
         ];
     }
@@ -88,7 +108,8 @@ class PasswordStrengthChecker extends Component
     {
         return view('components.password-strength-checker', [
             'requirements' => $this->getRequirements(),
-            'strengthLevels' => $this->getStrengthLevels()
+            'strengthLevels' => $this->getStrengthLevels(),
+            'apiError' => $this->apiError,
         ]);
     }
 }

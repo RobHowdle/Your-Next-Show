@@ -3,17 +3,126 @@ export function checkRequirement(value, test, inputId = "password") {
         `${inputId}-${test}-requirement`
     );
     const icon = requirement?.querySelector("svg");
-    const isValid = {
+
+    // Regular synchronous checks first
+    const regularChecks = {
         length: (pwd) => pwd.length >= 8,
         uppercase: (pwd) => /[A-Z]/.test(pwd),
         lowercase: (pwd) => /[a-z]/.test(pwd),
         number: (pwd) => /[0-9]/.test(pwd),
         special: (pwd) => /[@$!%*?&]/.test(pwd),
-    }[test](value);
+    };
 
+    if (test === "compromised") {
+        return true; // We'll handle this separately
+    }
+
+    const isValid = regularChecks[test](value);
     requirement?.classList.toggle("valid", isValid);
     icon?.classList.toggle("hidden", !isValid);
     return isValid;
+}
+
+export function initializePasswordChecker(inputId = "password") {
+    const passwordInput = document.getElementById(inputId);
+    let hasCheckedCompromised = false;
+    let lastCheckedPassword = "";
+
+    // Listen for input changes
+    passwordInput?.addEventListener("input", (e) => {
+        const currentPassword = e.target.value;
+        // Reset the compromised check if password changes
+        if (currentPassword !== lastCheckedPassword) {
+            hasCheckedCompromised = false;
+            // Reset compromised requirement visual state
+            const requirement = document.getElementById(
+                `${inputId}-compromised-requirement`
+            );
+            const successIcon = requirement?.querySelector(".success-icon");
+            const failureIcon = requirement?.querySelector(".failure-icon");
+            const loadingIcon = requirement?.querySelector(".loading-icon");
+
+            successIcon?.classList.add("hidden");
+            failureIcon?.classList.add("hidden");
+            loadingIcon?.classList.add("hidden");
+        }
+        updatePasswordStrength(currentPassword, inputId);
+    });
+
+    // Check for compromised password on blur
+    passwordInput?.addEventListener("blur", async () => {
+        const password = passwordInput.value;
+
+        // Check if all regular requirements are met
+        const requirements = [
+            "length",
+            "uppercase",
+            "lowercase",
+            "number",
+            "special",
+        ];
+        const allRequirementsMet = requirements.every((req) =>
+            checkRequirement(password, req, inputId)
+        );
+
+        if (
+            allRequirementsMet &&
+            !hasCheckedCompromised &&
+            password.length > 0 &&
+            password !== lastCheckedPassword
+        ) {
+            const requirement = document.getElementById(
+                `${inputId}-compromised-requirement`
+            );
+            const successIcon = requirement?.querySelector(".success-icon");
+            const failureIcon = requirement?.querySelector(".failure-icon");
+            const loadingIcon = requirement?.querySelector(".loading-icon");
+
+            // Show loading state
+            successIcon?.classList.add("hidden");
+            failureIcon?.classList.add("hidden");
+            loadingIcon?.classList.remove("hidden");
+
+            try {
+                const response = await fetch("/api/check-password", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector(
+                            'meta[name="csrf-token"]'
+                        ).content,
+                    },
+                    body: JSON.stringify({ password }),
+                });
+
+                const data = await response.json();
+                const isValid = !data.compromised;
+
+                // Hide loading spinner
+                loadingIcon?.classList.add("hidden");
+
+                // Show appropriate icon
+                if (isValid) {
+                    successIcon?.classList.remove("hidden");
+                    failureIcon?.classList.add("hidden");
+                } else {
+                    successIcon?.classList.add("hidden");
+                    failureIcon?.classList.remove("hidden");
+                }
+
+                requirement?.classList.toggle("valid", isValid);
+                hasCheckedCompromised = true;
+                lastCheckedPassword = password;
+
+                if (!isValid) {
+                    updatePasswordStrength(password, inputId);
+                }
+            } catch (error) {
+                loadingIcon?.classList.add("hidden");
+                successIcon?.classList.remove("hidden");
+            }
+        }
+    });
 }
 
 export function updatePasswordStrength(password, inputId = "password") {
@@ -121,32 +230,5 @@ export function togglePasswordVisibility(inputId = "password") {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         `;
-    }
-}
-
-export function initializePasswordChecker(inputId = "password") {
-    const passwordInput = document.getElementById(inputId);
-    const confirmInput = document.getElementById(`${inputId}_confirmation`);
-
-    console.log("hit");
-
-    if (!passwordInput) return;
-
-    const checkBothPasswords = () => {
-        if (passwordInput.value.length > 0) {
-            updatePasswordStrength(passwordInput.value, inputId);
-        }
-        checkPasswordMatch(inputId);
-    };
-
-    // Check on password input
-    passwordInput.addEventListener("input", checkBothPasswords);
-
-    // Check on confirmation input
-    confirmInput?.addEventListener("input", checkBothPasswords);
-
-    // Also check on initial load (in case of form repopulation)
-    if (passwordInput.value || (confirmInput && confirmInput.value)) {
-        checkBothPasswords();
     }
 }
