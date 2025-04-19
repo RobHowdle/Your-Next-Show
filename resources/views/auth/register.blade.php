@@ -1,5 +1,5 @@
 <x-guest-layout>
-  <div class="flex min-h-screen flex-col xl:flex-row">
+  <div x-data="roleSelector" class="flex min-h-screen flex-col xl:flex-row">
     {{-- Benefits Section --}}
     <div class="relative mt-24 hidden bg-black lg:flex xl:mt-0 xl:w-1/2">
       <div class="absolute inset-0">
@@ -153,28 +153,37 @@
 
             {{-- Role Selection --}}
             <div>
-              <x-input-label-dark for="role" :value="__('Select User Role')" :required="true" />
-              <select id="role" name="role"
-                class="mt-1 block w-full rounded-md border-gray-800 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-yns_yellow focus:ring-yns_yellow">
-                @foreach ($roles as $role)
-                  <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
-                @endforeach
-              </select>
-            </div>
+              <x-input-label-dark for="role" :value="__('Account Type')" :required="true" />
+              <div class="mt-2">
+                <button type="button" id="role-selector"
+                  class="w-full rounded-md border border-gray-700 bg-gray-900 px-4 py-2 text-left text-gray-300 hover:bg-gray-800"
+                  @click="showRoleModal = true">
+                  <span x-text="selectedRoleText"></span>
+                </button>
+              </div>
 
-            {{-- Submit Section --}}
-            <div class="flex flex-col-reverse gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <a class="text-center text-sm text-gray-400 hover:text-white sm:text-left" href="{{ route('login') }}">
-                Already registered?
-              </a>
-              <x-primary-button id="register-button" class="w-full sm:w-auto">
-                Register
-              </x-primary-button>
-            </div>
+              {{-- Hidden Role Input --}}
+              <input type="hidden" name="role" id="role-input" x-model="selectedRole">
+
+              <x-role-selection-modal />
+
+              {{-- Submit Section --}}
+              <div class="flex flex-col-reverse gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <a class="text-center text-sm text-gray-400 hover:text-white sm:text-left"
+                  href="{{ route('login') }}">
+                  Already registered?
+                </a>
+                <x-button type="submit" label="Register" id="register-button" />
+                {{-- <x-primary-button id="register-button" class="w-full sm:w-auto">
+                  Register
+                </x-primary-button> --}}
+              </div>
           </form>
         </div>
       </div>
     </div>
+
+
 
   </div>
 </x-guest-layout>
@@ -186,17 +195,6 @@
   }
 </style>
 <script>
-  // import {
-  //   initializePasswordChecker,
-  //   checkPasswordMatch,
-  //   updatePasswordStrength,
-  // } from '{{ asset('js/utils/password-checker.js') }}';
-
-  // import {
-  //   showSuccessNotification,
-  //   showFailureNotification
-  // } from '{{ asset('js/utils/swal.js') }}';
-
   // Event Listeners
   document.addEventListener('DOMContentLoaded', () => {
     initializePasswordChecker();
