@@ -25,6 +25,24 @@
   <script src="https://kit.fontawesome.com/dd6bff54df.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+  <script type="module">
+    import {
+      showSuccessNotification,
+      showFailureNotification,
+      showWarningNotification,
+      showConfirmationNotification,
+      showScheduledNotification,
+      showTestNotification, //DEBUG
+    } from "{{ Vite::asset('resources/js/utils/swal.js') }}";
+    // Make notifications globally available
+    window.showSuccessNotification = showSuccessNotification;
+    window.showFailureNotification = showFailureNotification;
+    window.showWarningNotification = showWarningNotification;
+    window.showConfirmationNotification = showConfirmationNotification;
+    window.showScheduledNotification = showScheduledNotification;
+    window.showTestNotification = showTestNotification; // DEBUG
+  </script>
+
   <!-- Scripts -->
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -234,7 +252,7 @@
     </div>
 
   </footer>
+  @stack('scripts')
 </body>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 
 </html>

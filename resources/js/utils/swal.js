@@ -128,3 +128,24 @@ export function showScheduledNotification(message, scheduledTime = null) {
         `,
     });
 }
+
+/**
+ * Shows a test notification toast
+ * @param {string} message - The message to display
+ */
+export function showTestNotification(message) {
+    Swal.fire({
+        showConfirmButton: false,
+        toast: true,
+        position: "top-end",
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+            popup: "bg-yns_dark_gray !important rounded-lg font-heading",
+            title: "text-black",
+            htmlContainer: "text-black",
+        },
+        icon: "success",
+        text: message,
+    });
+}

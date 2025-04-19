@@ -35,6 +35,17 @@ document.addEventListener("alpine:init", () => {
             }
         },
     }));
+
+    Alpine.data("roleSelector", () => ({
+        showRoleModal: false,
+        selectedRole: "",
+        selectedRoleText: "Choose your account type...",
+        selectRole(roleId, roleName) {
+            this.selectedRole = roleId;
+            this.selectedRoleText = roleName;
+            this.showRoleModal = false;
+        },
+    }));
 });
 
 // Make all functions globally available

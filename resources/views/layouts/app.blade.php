@@ -100,11 +100,19 @@
   <script type="module">
     import {
       showSuccessNotification,
-      showFailureNotification
+      showFailureNotification,
+      showWarningNotification,
+      showConfirmationNotification,
+      showScheduledNotification,
+      showTestNotification, //DEBUG
     } from "{{ Vite::asset('resources/js/utils/swal.js') }}";
     // Make notifications globally available
     window.showSuccessNotification = showSuccessNotification;
     window.showFailureNotification = showFailureNotification;
+    window.showWarningNotification = showWarningNotification;
+    window.showConfirmationNotification = showConfirmationNotification;
+    window.showScheduledNotification = showScheduledNotification;
+    window.showTestNotification = showTestNotification; // DEBUG
   </script>
 
   @vite(['resources/css/app.css', 'resources/js/app.js'])
