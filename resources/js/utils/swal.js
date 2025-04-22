@@ -1,15 +1,18 @@
 import Swal from "sweetalert2";
 
+const DEFAULT_TIMER = 3000;
+
 /**
  * Shows a success notification toast
  * @param {string} message - The message to display
+ * @param {number} [timer=DEFAULT_TIMER] - Duration in milliseconds to show the toast
  */
-export function showSuccessNotification(message) {
+export function showSuccessNotification(message, timer = DEFAULT_TIMER) {
     Swal.fire({
         showConfirmButton: false,
         toast: true,
         position: "top-end",
-        timer: 3000,
+        timer: timer,
         timerProgressBar: true,
         customClass: {
             popup: "bg-yns_dark_gray !important rounded-lg font-heading",
@@ -26,12 +29,12 @@ export function showSuccessNotification(message) {
  * Shows an error notification toast
  * @param {string} message - The error message to display
  */
-export function showFailureNotification(message) {
+export function showFailureNotification(message, timer = DEFAULT_TIMER) {
     Swal.fire({
         showConfirmButton: false,
         toast: true,
         position: "top-end",
-        timer: 3000,
+        timer: timer,
         timerProgressBar: true,
         customClass: {
             popup: "bg-yns_dark_gray !important rounded-lg font-heading",
@@ -48,7 +51,7 @@ export function showFailureNotification(message) {
  * Shows a warning notification modal
  * @param {string} message - The warning message to display
  */
-export function showWarningNotification(message) {
+export function showWarningNotification(message, timer = DEFAULT_TIMER) {
     Swal.fire({
         showConfirmButton: true,
         toast: false,
@@ -98,7 +101,11 @@ export function showConfirmationNotification(options) {
  * @param {string} message - The message to display
  * @param {string|null} scheduledTime - Optional scheduled time to display
  */
-export function showScheduledNotification(message, scheduledTime = null) {
+export function showScheduledNotification(
+    message,
+    scheduledTime = null,
+    timer = DEFAULT_TIMER
+) {
     Swal.fire({
         showConfirmButton: false,
         toast: true,
@@ -133,12 +140,12 @@ export function showScheduledNotification(message, scheduledTime = null) {
  * Shows a test notification toast
  * @param {string} message - The message to display
  */
-export function showTestNotification(message) {
+export function showTestNotification(message, timer = DEFAULT_TIMER) {
     Swal.fire({
         showConfirmButton: false,
         toast: true,
         position: "top-end",
-        timer: 3000,
+        timer: timer,
         timerProgressBar: true,
         customClass: {
             popup: "bg-yns_dark_gray !important rounded-lg font-heading",

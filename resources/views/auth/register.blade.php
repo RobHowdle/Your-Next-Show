@@ -174,9 +174,6 @@
                   Already registered?
                 </a>
                 <x-button type="submit" label="Register" id="register-button" />
-                {{-- <x-primary-button id="register-button" class="w-full sm:w-auto">
-                  Register
-                </x-primary-button> --}}
               </div>
           </form>
         </div>

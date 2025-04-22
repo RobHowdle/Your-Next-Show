@@ -70,7 +70,11 @@ class PasswordStrengthChecker extends Component
                         return true; // Fail open for better UX
                     }
                 }
-            ]
+            ],
+            'patterns' => [
+                'text' => 'No common patterns (e.g., "123456", "password")',
+                'regex' => '/^(?!.*(?:123456|password|qwerty|abc123|letmein|monkey|iloveyou|admin|welcome|123456789|12345678|12345|1234567)).*$/'
+            ],
         ];
     }
 
