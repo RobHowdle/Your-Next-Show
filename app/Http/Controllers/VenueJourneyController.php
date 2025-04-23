@@ -91,9 +91,6 @@ class VenueJourneyController extends Controller
             'verified_at' => Carbon::now()
         ]);
 
-        \Log::info($dashboardType);
-
-
         return response()->json([
             'success' => true,
             'message' => 'Successfully linked!',
