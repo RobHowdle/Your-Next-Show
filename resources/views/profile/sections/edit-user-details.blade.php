@@ -9,6 +9,7 @@
   </header>
 
   <form id="saveProfile" class="space-y-6">
+    {{-- @dd($user) --}}
     @csrf
     @method('PUT')
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -94,12 +95,6 @@
           class="rounded-lg border border-yns_yellow bg-yns_yellow px-4 py-2 font-heading font-bold text-black transition hover:bg-yns_yellow/90">
           {{ __('Save Changes') }}
         </button>
-
-        @if (session('status') === 'profile-updated')
-          <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm text-gray-400">
-            {{ __('Saved.') }}
-          </p>
-        @endif
       </div>
     </div>
   </form>
@@ -107,8 +102,23 @@
 @push('scripts')
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Initialize password checker
+      // Initialize password checker using globally available function
       window.initializePasswordChecker('password');
+
+      const passwordInput = document.getElementById('password');
+      const confirmInput = document.getElementById('password_confirmation');
+
+      passwordInput?.addEventListener('input', (e) => {
+        // Using window.updatePasswordStrength since it's globally available
+        window.updatePasswordStrength(e.target.value);
+        if (confirmInput.value) {
+          window.checkPasswordMatch('password');
+        }
+      });
+
+      confirmInput?.addEventListener('input', () => {
+        window.checkPasswordMatch('password');
+      });
 
       // Handle status message
       const statusMessage = document.getElementById('status-message');
@@ -117,6 +127,36 @@
           statusMessage.style.display = 'none';
         }, 2000);
       }
+    });
+
+    $(document).ready(function() {
+      const dashboardType = "{{ $dashboardType }}";
+      const userId = "{{ $user->id }}";
+
+      $('#saveProfile').on('submit', function(e) {
+        e.preventDefault();
+
+        const form = $(this);
+        const formData = new FormData(this);
+
+        $.ajax({
+          url: '{{ route('profile.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}',
+          method: 'POST',
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function(response) {
+            showSuccessNotification(response.message);
+            setTimeout(() => {
+              window.location.href = response.redirect;
+            }, 2000);
+          },
+          error: function(xhr) {
+            const response = xhr.responseJSON;
+            showFailureNotification(response);
+          }
+        });
+      });
     });
   </script>
 @endpush

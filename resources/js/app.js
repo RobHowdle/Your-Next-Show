@@ -16,6 +16,7 @@ import { initializeSummernote } from "./components/summernote";
 import {
     initializePasswordChecker,
     togglePasswordVisibility,
+    checkPasswordMatch,
 } from "./utils/password-checker.js";
 
 // Initialize Alpine.js data and plugins
@@ -52,6 +53,7 @@ document.addEventListener("alpine:init", () => {
 Object.assign(window, {
     initializePasswordChecker,
     togglePasswordVisibility,
+    checkPasswordMatch,
     updateModuleStatus,
     formatCurrency,
     formatDateToDMY,
