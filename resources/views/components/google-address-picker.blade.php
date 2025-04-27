@@ -20,57 +20,67 @@
 
   <input type="text" id="location_{{ $dataId }}"
     class="mt-1 block w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-yns_red dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600"
-    name="location" placeholder="{{ htmlspecialchars($placeholder) }}"
-    value="{{ htmlspecialchars(is_array($value) ? $value['location'] ?? '' : $value) }}" data-id="{{ $dataId }}"
-    {{ $required ? 'required' : '' }} />
+    placeholder="{{ htmlspecialchars($placeholder) }}" data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
 
-  <input type="hidden" id="postal_town_{{ $dataId }}" name="postal_town" value="{{ $postalTown }}"
+  <input type="" id="postal_town_{{ $dataId }}" name="postal_town" value="{{ $postalTown }}"
+    data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
+  <input type="" id="latitude_{{ $dataId }}" name="latitude" value="{{ $latitude }}"
+    data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
+  <input type="" id="longitude_{{ $dataId }}" name="longitude" value="{{ $longitude }}"
     data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
 
-  <input type="hidden" id="latitude_{{ $dataId }}" name="latitude" value="{{ $latitude }}"
-    data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
-  <input type="hidden" id="longitude_{{ $dataId }}" name="longitude" value="{{ $longitude }}"
-    data-id="{{ $dataId }}" {{ $required ? 'required' : '' }}>
+  <div id="maps-error-{{ $dataId }}" class="mt-2 hidden text-sm text-yns_red"></div>
 </div>
 
-<script defer>
-  function initializeMaps() {
-    const addressPickers = document.querySelectorAll('[id^="location_"]');
+<script>
+  (() => {
+    const pickerId = '{{ $dataId }}';
 
-    addressPickers.forEach((addressPicker) => {
-      const index = addressPicker.getAttribute('data-id');
+    function initializeAutocomplete() {
+      const input = document.getElementById(`location_${pickerId}`);
+      if (!input) return;
 
-      const autocomplete = new google.maps.places.Autocomplete(addressPicker, {
-        types: ['geocode'],
-        componentRestrictions: {
-          country: 'uk',
-        },
+      const autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ['address']
       });
 
-      autocomplete.addListener("place_changed", function() {
+      autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
 
-        if (place.geometry) {
-          const latitude = place.geometry.location.lat();
-          const longitude = place.geometry.location.lng();
+        if (!place.geometry) {
+          console.error('No geometry data received');
+          return;
+        }
 
-          // Extract postal town from address components
-          let postalTown = "";
-          if (place.address_components) {
-            for (const component of place.address_components) {
-              if (component.types.includes("postal_town")) {
-                postalTown = component.long_name;
-                break;
-              }
-            }
+        // Update latitude and longitude
+        document.getElementById(`latitude_${pickerId}`).value = place.geometry.location.lat();
+        document.getElementById(`longitude_${pickerId}`).value = place.geometry.location.lng();
+
+        // Find postal town
+        if (place.address_components) {
+          const townComponent = place.address_components.find(
+            component =>
+            component.types.includes('postal_town') ||
+            component.types.includes('locality')
+          );
+
+          if (townComponent) {
+            document.getElementById(`postal_town_${pickerId}`).value = townComponent.long_name;
           }
-
-          // Update hidden fields
-          document.getElementById(`postal_town_${index}`).value = postalTown;
-          document.getElementById(`latitude_${index}`).value = latitude;
-          document.getElementById(`longitude_${index}`).value = longitude;
         }
       });
-    });
-  }
+    }
+
+    // Initialize when Maps API is loaded
+    if (window.google && window.google.maps) {
+      initializeAutocomplete();
+    } else {
+      const checkForMaps = setInterval(() => {
+        if (window.google && window.google.maps) {
+          clearInterval(checkForMaps);
+          initializeAutocomplete();
+        }
+      }, 100);
+    }
+  })();
 </script>

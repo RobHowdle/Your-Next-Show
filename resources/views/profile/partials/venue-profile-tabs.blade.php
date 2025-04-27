@@ -18,7 +18,8 @@
   <div class="w-full">
     @include('profile.venue.about', [
         'description' => $venueData['description'],
-    ]) </div>
+    ])
+  </div>
 </div>
 <div x-show="activeTab === 'genresAndTypes'" class="bg-opac_8_black p-4 shadow sm:rounded-lg sm:p-8" x-cloak>
   <div class="w-full">

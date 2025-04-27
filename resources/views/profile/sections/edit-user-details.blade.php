@@ -1,20 +1,4 @@
-<section class="rounded-lg bg-gray-800/50 p-6 backdrop-blur-sm" x-data="{
-    initPassword() {
-        return {
-            showPassword: false,
-            init() {
-                window.initializePasswordChecker('password');
-                this.$watch('showPassword', value => {
-                    const input = document.getElementById('password');
-                    const eye = document.getElementById('password-eye');
-                    if (input && eye) {
-                        input.type = value ? 'text' : 'password';
-                    }
-                });
-            }
-        }
-    }
-}" x-init="initPassword().init()">
+<div class="rounded-lg bg-gray-800/50 p-6 backdrop-blur-sm">
   <header class="mb-6 border-b border-gray-700 pb-4">
     <h2 class="font-heading text-lg font-medium text-white">
       {{ __('User Profile Details') }}
@@ -27,7 +11,6 @@
   <form id="saveProfile" class="space-y-6">
     @csrf
     @method('PUT')
-
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {{-- Personal Information Card --}}
       <div class="rounded-lg bg-black/20 p-6">
@@ -76,61 +59,64 @@
       </div>
 
       {{-- Password Section Card --}}
-      <div class="rounded-lg bg-black/20 p-6" x-data="{
-          showPassword: false,
-          togglePassword() {
-              this.showPassword = !this.showPassword;
-          },
-          init() {
-              window.initializePasswordChecker('password');
-          }
-      }">
+      <div class="rounded-lg bg-black/20 p-6">
         <h3 class="mb-4 font-heading text-lg font-medium text-white">Password</h3>
         <div class="space-y-4">
           <div>
             <x-input-label-dark for="password" :value="__('New Password')" />
             <div class="relative">
-              <x-text-input id="password" class="mt-1 block w-full" x-bind:type="showPassword ? 'text' : 'password'"
-                name="password" autocomplete="new-password" />
-              <button type="button" @click="togglePassword()"
+              <x-text-input id="password" class="mt-1 block w-full" type="password" name="password"
+                autocomplete="new-password" />
+              <button type="button" onclick="togglePasswordVisibility('password')"
                 class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-300">
                 <svg class="h-5 w-5" id="password-eye" xmlns="http://www.w3.org/2000/svg" fill="none"
                   viewBox="0 0 24 24" stroke="currentColor">
-                  <template x-if="showPassword">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </template>
-                  <template x-if="!showPassword">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </template>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </button>
             </div>
-
             <x-password-strength-checker input-id="password" />
           </div>
-          <x-input-label-dark for="password_confirmation" :value="__('Confirm Password')" />
-          <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password"
-            name="password_confirmation" autocomplete="new-password" />
-          <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+
+          <div>
+            <x-input-label-dark for="password_confirmation" :value="__('Confirm Password')" />
+            <x-text-input id="password_confirmation" class="mt-1 block w-full" type="password"
+              name="password_confirmation" autocomplete="new-password" />
+            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+          </div>
         </div>
       </div>
-    </div>
-    </div>
 
-    {{-- Form Actions --}}
-    <div class="flex items-center justify-end gap-4 border-t border-gray-700 pt-6">
-      <button type="submit"
-        class="rounded-lg border border-yns_yellow bg-yns_yellow px-4 py-2 font-heading font-bold text-black transition hover:bg-yns_yellow/90">
-        {{ __('Save Changes') }}
-      </button>
+      {{-- Form Actions --}}
+      <div class="flex items-center justify-end gap-4 border-t border-gray-700 pt-6">
+        <button type="submit"
+          class="rounded-lg border border-yns_yellow bg-yns_yellow px-4 py-2 font-heading font-bold text-black transition hover:bg-yns_yellow/90">
+          {{ __('Save Changes') }}
+        </button>
 
-      @if (session('status') === 'profile-updated')
-        <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm text-gray-400">
-          {{ __('Saved.') }}
-        </p>
-      @endif
+        @if (session('status') === 'profile-updated')
+          <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm text-gray-400">
+            {{ __('Saved.') }}
+          </p>
+        @endif
+      </div>
     </div>
   </form>
-</section>
+</div>
+@push('scripts')
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize password checker
+      window.initializePasswordChecker('password');
+
+      // Handle status message
+      const statusMessage = document.getElementById('status-message');
+      if (statusMessage) {
+        setTimeout(() => {
+          statusMessage.style.display = 'none';
+        }, 2000);
+      }
+    });
+  </script>
+@endpush

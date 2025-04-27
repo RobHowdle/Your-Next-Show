@@ -23,6 +23,28 @@
   <meta name="apple-mobile-web-app-title" content="YNS" />
   <link rel="manifest" href="/icons/site.webmanifest" />
 
+  <script>
+    window.mapsReadyPromise = new Promise((resolve) => {
+      window.initMap = function() {
+        window.mapsLoaded = true;
+        resolve();
+      };
+    });
+
+    window.handleMapsError = function(error) {
+      console.error('Maps API failed to load:', error);
+      const errorDivs = document.querySelectorAll('[id^="maps-error-"]');
+      errorDivs.forEach(div => {
+        div.textContent = 'Google Maps failed to load. Please refresh the page.';
+        div.classList.remove('hidden');
+      });
+    };
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=places&callback=initMap">
+  </script>
+
   <!-- Include jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"
     integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -50,9 +72,6 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Include Alpine.js -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-
   <!-- Full Calendar -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
@@ -63,34 +82,20 @@
   </script>
 
   <script>
-    // Wait for DOM to be ready before loading Maps
     document.addEventListener('DOMContentLoaded', function() {
-      // Load Maps API using recommended approach
-      const loader = new Promise((resolve) => {
-        const script = document.createElement('script');
-        script.src =
-          `https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&loading=async&callback=initMap`;
-        script.async = true;
-        script.defer = true;
-        document.head.appendChild(script);
-        window.initMap = resolve;
+      // Using a more specific selector to target only Summernote color pickers
+      const backColorPickers = document.querySelectorAll('.note-editor [id="backColorPicker"]');
+      const foreColorPickers = document.querySelectorAll('.note-editor [id="foreColorPicker"]');
+
+      // Add unique suffixes
+      backColorPickers.forEach((picker, index) => {
+        picker.id = `summernote-backColorPicker-${index + 1}`;
       });
 
-      // Initialize maps after loading
-      loader.then(() => {
-        // Use requestAnimationFrame to avoid reflow
-        requestAnimationFrame(() => {
-          initMapCore();
-        });
+      foreColorPickers.forEach((picker, index) => {
+        picker.id = `summernote-foreColorPicker-${index + 1}`;
       });
     });
-
-    function initMapCore() {
-      // Core map initialization logic here
-      console.log('Google Maps API initialized');
-      // Add your map initialization code here
-      return true;
-    }
   </script>
 
   <!-- Other scripts -->
@@ -115,15 +120,17 @@
     window.showTestNotification = showTestNotification; // DEBUG
   </script>
 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <!-- Include Summernote -->
   <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
 </head>
 
-<body class="relative font-sans antialiased">
+<body class="relative overflow-x-hidden font-sans antialiased">
   <div class="absolute inset-0 bg-cover bg-fixed bg-center bg-no-repeat"
     style="background-image: url('{{ asset('storage/images/system/hero-bg.jpg') }}'); z-index: -1;"></div>
-  <div class="min-h-screen text-white">
+  <div class="min-h-screen text-white" style="isolation: isolate;">
     @include('layouts.navigation', [
         'dashboardType' => $dashboardType,
         'modules' => $modules,

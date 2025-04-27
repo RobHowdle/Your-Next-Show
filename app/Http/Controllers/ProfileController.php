@@ -54,68 +54,19 @@ class ProfileController extends Controller
         $this->promoterDataHelper = $promoterDataHelper;
     }
 
-    private function getUniqueBandsForPromoterEvents($promoterId)
-    {
-        return $this->serviceDataHelper->getBandsData($promoterId);
-    }
-
-    private function getPortfolioData($service)
-    {
-        return $this->serviceDataHelper->getPortfolioData(auth()->user(), $service);
-    }
-
     /**
      * Display the user's profile form.
      */
     public function edit($dashboardType, $userId): View
     {
         $user = User::where('id', $userId)->first();
-        $roles = Role::where('name', '!=', 'administrator')->get();
-        $userRole = $user->roles;
 
-        // Initialize promoter variables
-        $promoterData = [];
-        $bandData = [];
-        $venueData = [];
-        $photographerData = [];
-        $standardUserData = [];
-        $designerData = [];
-        $videographerData = [];
-
-        // Check dashboard type and get the data
-        if ($dashboardType === 'promoter') {
-            $promoterData = $this->getPromoterData($user);
-        } elseif ($dashboardType === 'artist') {
-            $bandData = $this->getOtherServicData($dashboardType, $user);
-        } elseif ($dashboardType === 'venue') {
-            $venueData = $this->getVenueData($user);
-        } elseif ($dashboardType === 'photographer') {
-            $photographerData = $this->getOtherServicData($dashboardType, $user);
-        } elseif ($dashboardType === 'standard') {
-            $standardUserData = $this->getStandardUserData($user);
-        } elseif ($dashboardType === 'designer') {
-            $designerData = $this->getOtherServicData($dashboardType, $user);
-        } elseif ($dashboardType === 'videographer') {
-            $videographerData = $this->getOtherServicData($dashboardType, $user);
-        }
-
-        $modulesWithSettings = $this->getModulesWithSettings($userId, $dashboardType);
-        $communicationSettings = $this->getCommunicationSettings($userId, $dashboardType);
-
-        return view('profile.edit', [
+        // Initialize data array
+        $data = [
             'user' => $user,
             'dashboardType' => $dashboardType,
-            'modules' => $modulesWithSettings,
-            'promoterData' => $promoterData,
-            'bandData' => $bandData,
-            'venueData' => $venueData,
-            'photographerData' => $photographerData,
-            'standardUserData' => $standardUserData,
-            'designerData' => $designerData,
-            'videographerData' => $videographerData,
-            'user' => $user,
-            'roles' => $roles,
-            'userRole' => $userRole,
+            'roles' => Role::where('name', '!=', 'administrator')->get(),
+            'userRole' => $user->roles,
             'userFirstName' => $user->first_name,
             'userLastName' => $user->last_name,
             'userEmail' => $user->email,
@@ -124,10 +75,29 @@ class ProfileController extends Controller
             'userPostalTown' => $user->postal_town,
             'userLat' => $user->latitude,
             'userLong' => $user->longitude,
-            'communications' => $communicationSettings,
-        ]);
-    }
+        ];
 
+        // Get profile specific data
+        $profileData = match ($dashboardType) {
+            'promoter' => $this->getPromoterData($user),
+            'artist' => $this->getOtherServicData('artist', $user),
+            'venue' => $this->getVenueData($user),
+            'photographer' => $this->getOtherServicData('photographer', $user),
+            'designer' => $this->getOtherServicData('designer', $user),
+            'videographer' => $this->getOtherServicData('videographer', $user),
+            'standard' => $this->getStandardUserData($user),
+            default => [],
+        };
+
+        // Get modules and communication settings
+        $data['modules'] = $this->getModulesWithSettings($userId, $dashboardType);
+        $data['communications'] = $this->getCommunicationSettings($userId, $dashboardType);
+
+        // Add profile data to view data with the correct key
+        $data["{$dashboardType}Data"] = $profileData;
+
+        return view('profile.edit', $data);
+    }
     /**
      * Update the user's profile information.
      */

@@ -950,6 +950,10 @@ video {
   z-index: 30;
 }
 
+.relative.min-h-screen {
+  isolation: isolate;
+}
+
 #calendar {
     width: 100%;
     min-height: 500px;

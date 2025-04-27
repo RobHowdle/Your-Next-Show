@@ -1,115 +1,135 @@
-<header>
-  <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Genres and Artist Types') }}
-  </h2>
-</header>
+<div class="rounded-lg bg-gray-800/50 p-6 backdrop-blur-sm">
+  <header class="mb-6 border-b border-gray-700 pb-4">
+    <h2 class="font-heading text-lg font-medium text-white">
+      {{ __('Genres and Artist Types') }}
+    </h2>
+    <p class="mt-1 text-sm text-gray-400">
+      {{ __('Select the genres and types that best describe your music.') }}
+    </p>
+  </header>
 
-<x-input-label-dark class="mt-8">Select your artist type(s)</x-input-label-dark>
-<div class="grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
-  <input type="hidden" id="band-types-data" name="band_types_data">
+  <form class="space-y-6" id="genres-and-types-form">
+    @csrf
+    @method('PUT')
 
-  <div class="flex items-center">
-    <input id="all-types" name="band_type[]" type="checkbox" value="all"
-      class="filter-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" />
-    <label for="all-types" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">All
-      Types</label>
-  </div>
-  <div class="flex items-center">
-    <input id="original" name="original" type="checkbox" value="original-bands"
-      class="filter-checkbox band-type-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" />
-    <label for="original" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Original</label>
-  </div>
-  <div class="flex items-center">
-    <input id="cover" name="cover" type="checkbox" value="cover-bands"
-      class="filter-checkbox band-type-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" />
-    <label for="cover" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Covers</label>
-  </div>
-  <div class="flex items-center">
-    <input id="tribute" name="tribute" type="checkbox" value="tribute-bands"
-      class="filter-checkbox band-type-checkbox focus:ring-3 h-4 w-4 rounded border border-gray-300 bg-gray-50 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" />
-    <label for="tribute" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Tributes</label>
-  </div>
-</div>
+    {{-- Artist Types Section --}}
+    <div class="rounded-lg bg-black/20 p-6">
+      <h3 class="mb-4 font-heading text-lg font-medium text-white">Artist Types</h3>
+      <div class="grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
+        <input type="hidden" id="band-types-data" name="band_types_data">
 
-<x-input-label-dark class="mt-6">Select your genre(s):</x-input-label-dark>
-<div class="grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
-  @php
-    // Handle genres
-    $profileGenres = [];
-    if (!empty($profileData['profileGenres'])) {
-        if (is_string($profileData['profileGenres'])) {
-            try {
-                $decoded = json_decode($profileData['profileGenres'], true);
-                $profileGenres = $decoded ?: [];
-            } catch (\Exception $e) {
-                $profileGenres = [];
-            }
-        } else {
-            $profileGenres = $profileData['profileGenres'] ?: [];
-        }
-    }
+        <div class="flex items-center">
+          <input id="all-types" name="band_type[]" type="checkbox" value="all"
+            class="filter-checkbox h-4 w-4 rounded border-gray-700 bg-gray-900 text-yns_yellow focus:ring-yns_yellow" />
+          <label for="all-types" class="ml-2 text-sm font-medium text-gray-300">All Types</label>
+        </div>
 
-    // Handle band types
-    $profileBandTypes = [];
-    if (!empty($profileData['bandTypes'])) {
-        if (is_string($profileData['bandTypes'])) {
-            try {
-                $decoded = json_decode($profileData['bandTypes'], true);
-                $profileBandTypes = $decoded ?: [];
-            } catch (\Exception $e) {
-                $profileBandTypes = [];
-            }
-        } else {
-            $profileBandTypes = $profileData['bandTypes'] ?: [];
-        }
-    }
-  @endphp
+        <div class="flex items-center">
+          <input id="original" name="original" type="checkbox" value="original-bands"
+            class="filter-checkbox band-type-checkbox h-4 w-4 rounded border-gray-700 bg-gray-900 text-yns_yellow focus:ring-yns_yellow" />
+          <label for="original" class="ml-2 text-sm font-medium text-gray-300">Original</label>
+        </div>
 
-  <!-- Master "All Genres" Section -->
-  <div class="border-b border-slate-200">
-    <div class="flex items-center gap-2 py-5">
-      <x-input-checkbox id="master-all-genres" class="master-all-genres-checkbox" name="master-all-genres"
-        value="all-genres" />
-      <x-input-label-dark>All Genres</x-input-label-dark>
+        <div class="flex items-center">
+          <input id="cover" name="cover" type="checkbox" value="cover-bands"
+            class="filter-checkbox band-type-checkbox h-4 w-4 rounded border-gray-700 bg-gray-900 text-yns_yellow focus:ring-yns_yellow" />
+          <label for="cover" class="ml-2 text-sm font-medium text-gray-300">Covers</label>
+        </div>
+
+        <div class="flex items-center">
+          <input id="tribute" name="tribute" type="checkbox" value="tribute-bands"
+            class="filter-checkbox band-type-checkbox h-4 w-4 rounded border-gray-700 bg-gray-900 text-yns_yellow focus:ring-yns_yellow" />
+          <label for="tribute" class="ml-2 text-sm font-medium text-gray-300">Tributes</label>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Individual Genres Sections -->
-  @foreach ($profileData['genres'] as $index => $genre)
-    <div class="border-b border-slate-200">
-      <button onclick="toggleAccordion({{ $index }})" id="genre-{{ $index }}"
-        class="accordion-btn flex w-full items-center justify-between py-5 text-white">
-        <span class="genre-name">{{ $genre['name'] }}</span>
-        <div class="group flex items-center gap-4">
-          <span class="status mr-4" data-genre="{{ $genre['name'] }}"></span>
-          <span id="icon-{{ $index }}" class="accordion-icon text-slate-800 transition-transform duration-300">
-            <!-- Icon SVG -->
-          </span>
+    {{-- Genres Section --}}
+    <div class="rounded-lg bg-black/20 p-6">
+      <h3 class="mb-4 font-heading text-lg font-medium text-white">Music Genres</h3>
+
+      {{-- Master "All Genres" Section --}}
+      <div class="mb-4 border-b border-gray-700 pb-4">
+        <div class="flex items-center gap-2">
+          <x-input-checkbox id="master-all-genres"
+            class="master-all-genres-checkbox h-4 w-4 rounded border-gray-700 bg-gray-900 text-yns_yellow focus:ring-yns_yellow" />
+          <x-input-label-dark>All Genres</x-input-label-dark>
         </div>
-      </button>
+      </div>
+      <x-input-label-dark class="mt-6">Select your genre(s):</x-input-label-dark>
+      <div class="grid sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 lg:gap-4">
+        @php
+          // Handle genres
+          $profileGenres = [];
+          if (!empty($profileData['profileGenres'])) {
+              if (is_string($profileData['profileGenres'])) {
+                  try {
+                      $decoded = json_decode($profileData['profileGenres'], true);
+                      $profileGenres = $decoded ?: [];
+                  } catch (\Exception $e) {
+                      $profileGenres = [];
+                  }
+              } else {
+                  $profileGenres = $profileData['profileGenres'] ?: [];
+              }
+          }
 
-      <div id="subgenres-accordion-{{ $index }}"
-        class="max-h-0 content grid grid-cols-2 overflow-hidden transition-all duration-300 ease-in-out">
-        <!-- All [Genre] checkbox -->
-        <div class="all-genre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
-          <x-input-checkbox class="genre-all-checkbox" id="all-{{ Str::slug($genre['name']) }}"
-            data-genre="{{ $genre['name'] }}" name="genre[{{ $genre['name'] }}][all]" value="true" />
-          <x-input-label-dark>All {{ $genre['name'] }}</x-input-label-dark>
-        </div>
+          // Handle band types
+          $profileBandTypes = [];
+          if (!empty($profileData['bandTypes'])) {
+              if (is_string($profileData['bandTypes'])) {
+                  try {
+                      $decoded = json_decode($profileData['bandTypes'], true);
+                      $profileBandTypes = $decoded ?: [];
+                  } catch (\Exception $e) {
+                      $profileBandTypes = [];
+                  }
+              } else {
+                  $profileBandTypes = $profileData['bandTypes'] ?: [];
+              }
+          }
+        @endphp
 
-        <!-- Subgenres -->
-        @foreach ($genre['subgenres'] as $subgenre)
-          <div class="subgenre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
-            <x-input-checkbox class="subgenre-checkbox"
-              id="subgenre-{{ Str::slug($genre['name']) }}-{{ Str::slug($subgenre) }}"
-              data-genre="{{ $genre['name'] }}" data-subgenre="{{ $subgenre }}"
-              name="genre[{{ $genre['name'] }}][subgenres][]" value="{{ $subgenre }}" />
-            <x-input-label-dark>{{ $subgenre }}</x-input-label-dark>
+
+        <!-- Individual Genres Sections -->
+        @foreach ($profileData['genres'] as $index => $genre)
+          <div class="border-b border-slate-200">
+            <button type="button" onclick="toggleAccordion({{ $index }})" id="genre-{{ $index }}"
+              class="accordion-btn flex w-full items-center justify-between py-5 text-white">
+              <span class="genre-name">{{ $genre['name'] }}</span>
+              <div class="group flex items-center gap-4">
+                <span class="status mr-4" data-genre="{{ $genre['name'] }}"></span>
+                <span id="icon-{{ $index }}"
+                  class="accordion-icon text-slate-800 transition-transform duration-300">
+                  <!-- Icon SVG -->
+                </span>
+              </div>
+            </button>
+
+            <div id="subgenres-accordion-{{ $index }}"
+              class="max-h-0 content grid grid-cols-2 overflow-hidden transition-all duration-300 ease-in-out">
+              <!-- All [Genre] checkbox -->
+              <div class="all-genre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
+                <x-input-checkbox class="genre-all-checkbox" id="all-{{ Str::slug($genre['name']) }}"
+                  data-genre="{{ $genre['name'] }}" name="genre[{{ $genre['name'] }}][all]" value="true" />
+                <x-input-label-dark>All {{ $genre['name'] }}</x-input-label-dark>
+              </div>
+
+              <!-- Subgenres -->
+              @foreach ($genre['subgenres'] as $subgenre)
+                <div class="subgenre-wrapper flex items-center gap-2 pb-2 text-sm text-white">
+                  <x-input-checkbox class="subgenre-checkbox"
+                    id="subgenre-{{ Str::slug($genre['name']) }}-{{ Str::slug($subgenre) }}"
+                    data-genre="{{ $genre['name'] }}" data-subgenre="{{ $subgenre }}"
+                    name="genre[{{ $genre['name'] }}][subgenres][]" value="{{ $subgenre }}" />
+                  <x-input-label-dark>{{ $subgenre }}</x-input-label-dark>
+                </div>
+              @endforeach
+            </div>
           </div>
         @endforeach
       </div>
     </div>
-  @endforeach
 </div>
 
 <script defer>
@@ -222,6 +242,7 @@
   }
 
   function toggleAccordion(index) {
+    event.preventDefault();
     const content = document.getElementById(`subgenres-accordion-${index}`);
     const icon = document.getElementById(`icon-${index}`);
 
