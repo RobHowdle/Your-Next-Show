@@ -1374,9 +1374,7 @@ class ProfileController extends Controller
             $communicationSettings[$key] = [
                 'name' => $preference['name'],
                 'description' => $preference['description'],
-                'is_enabled' => isset($userPreferences[$key])
-                    ? ($userPreferences[$key] === true ? 1 : 0)
-                    : ($preference['enabled'] ? 1 : 0)
+                'is_enabled' => $userPreferences[$key] ?? false // Use the direct boolean value from DB
             ];
         }
 
