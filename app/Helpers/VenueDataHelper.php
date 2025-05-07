@@ -26,7 +26,9 @@ class VenueDataHelper
         $long = $venue ? $venue->longitude : '';
         $w3w = $venue ? $venue->w3w : '';
         $logo = $venue && $venue->logo_url
-            ? (filter_var($venue->logo_url, FILTER_VALIDATE_URL) ? $venue->logo_url : Storage::url($venue->logo_url))
+            ? (filter_var($venue->logo_url, FILTER_VALIDATE_URL)
+                ? $venue->logo_url
+                : Storage::url($venue->logo_url))
             : asset('images/system/yns_no_image_found.png');
 
         $capacity = $venue ? $venue->capacity : '';
@@ -37,16 +39,18 @@ class VenueDataHelper
 
         $platforms = [];
         $activePlatforms = [];
-        $platformsToCheck = ['facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+
+        // Get the social platforms config file - this contains all platform information
+        $socialPlatformsConfig = config('social_platforms');
 
         // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
+        foreach (array_keys($socialPlatformsConfig) as $platform) {
             $platforms[$platform] = '';  // Set default to empty string
         }
 
         // Check if the contactLinks array exists and contains social links
         if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
+            foreach (array_keys($socialPlatformsConfig) as $platform) {
                 // Only add the link if the platform exists in the $contactLinks array
                 if (isset($contactLinks[$platform]) && !empty($contactLinks[$platform])) {
                     $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
@@ -127,7 +131,7 @@ class VenueDataHelper
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'activePlatforms' => $activePlatforms,
-            'platformsToCheck' => $platformsToCheck,
+            'platformsToCheck' => $socialPlatformsConfig,
             'preferred_contact' => $preferredContact,
             'inHouseGear' => $inHouseGear,
             'myEvents' => $myEvents,

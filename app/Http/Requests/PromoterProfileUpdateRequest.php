@@ -33,7 +33,8 @@ class PromoterProfileUpdateRequest extends FormRequest
             'contact_name' => 'nullable|string',
             'contact_number' => ['nullable', 'regex:/^(?:0|\+44)(?:\d\s?){9,10}$/'],
             'contact_email' => 'nullable|email',
-            'contact_links.*.*' => 'nullable|url',
+            'contact_links' => 'sometimes|array',
+            'contact_links.*' => 'string|url',
             'description' => 'nullable|string',
             'preferred_contact' => 'nullable|string',
         ];

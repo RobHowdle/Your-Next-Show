@@ -227,21 +227,23 @@ class ProfileController extends Controller
                 }
 
                 // Contact Links
-                if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
-                    // Start with the existing `contact_links` array or an empty array if it doesn't exist
-                    $updatedLinks = !empty($promoter->contact_link) ? json_decode($promoter->contact_link, true) : [];
+                if (isset($userData['contact_links'])) {
+                    // Get existing links
+                    $existingLinks = json_decode($promoter->contact_link, true) ?? [];
 
-                    // Iterate through the `contact_link` array from the request data
-                    foreach ($userData['contact_links'] as $platform => $links) {
-                        // Ensure we're setting only non-empty values
-                        $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                    // Get new links
+                    $newLinks = is_array($userData['contact_links'])
+                        ? $userData['contact_links']
+                        : json_decode($userData['contact_links'], true);
+
+                    if ($newLinks) {
+                        // Merge while preserving existing links that aren't being updated
+                        $mergedLinks = array_merge($existingLinks, $newLinks);
+
+                        // Update contact links
+                        $promoter->contact_link = json_encode($mergedLinks);
+                        $promoter->save();
                     }
-
-                    // Filter out null values to remove platforms with no links
-                    $updatedLinks = array_filter($updatedLinks);
-
-                    // Encode the array back to JSON for storage and update the promoter record
-                    $promoter->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
                 if (isset($userData['preferred_contact'])) {
@@ -346,21 +348,23 @@ class ProfileController extends Controller
                 }
 
                 // Contact Links
-                if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
-                    // Start with the existing `contact_links` array or an empty array if it doesn't exist
-                    $updatedLinks = !empty($venue->contact_link) ? json_decode($venue->contact_link, true) : [];
+                if (isset($userData['contact_links'])) {
+                    // Get existing links
+                    $existingLinks = json_decode($venue->contact_link, true) ?? [];
 
-                    // Iterate through the `contact_link` array from the request data
-                    foreach ($userData['contact_links'] as $platform => $links) {
-                        // Ensure we're setting only non-empty values
-                        $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                    // Get new links
+                    $newLinks = is_array($userData['contact_links'])
+                        ? $userData['contact_links']
+                        : json_decode($userData['contact_links'], true);
+
+                    if ($newLinks) {
+                        // Merge while preserving existing links that aren't being updated
+                        $mergedLinks = array_merge($existingLinks, $newLinks);
+
+                        // Update contact links
+                        $venue->contact_link = json_encode($mergedLinks);
+                        $venue->save();
                     }
-
-                    // Filter out null values to remove platforms with no links
-                    $updatedLinks = array_filter($updatedLinks);
-
-                    // Encode the array back to JSON for storage and update the promoter record
-                    $venue->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
                 if (isset($userData['preferred_contact'])) {
@@ -392,23 +396,38 @@ class ProfileController extends Controller
                     $venue->update(['deposit_amount' => $userData['deposit_amount']]);
                 }
 
+
                 // Logo
                 if (isset($userData['logo_url'])) {
                     $venueLogoFile = $userData['logo_url'];
 
                     // Generate the file name
-                    $venueName = $request->input('name');
+                    $venueName = $request->input('name') ?: 'venue'; // Add fallback for empty name
                     $venueLogoExtension = $venueLogoFile->getClientOriginalExtension() ?: $venueLogoFile->guessExtension();
-                    $venueLogoFilename = Str::slug($venueName) . '.' . $venueLogoExtension;
+                    $venueLogoFilename = Str::slug($venueName) . '-' . time() . '.' . $venueLogoExtension; // Add timestamp for uniqueness
 
-                    // Store file in public disk
-                    $path = $venueLogoFile->storeAs('public/images/venue_logos', $venueLogoFilename);
+                    try {
+                        // Store file in public disk
+                        $path = $venueLogoFile->storeAs('public/images/venue_logos', $venueLogoFilename);
 
-                    // Generate proper URL for public access
-                    $logoUrl = asset(str_replace('public', 'storage', $path));
+                        // Store just the relative path (without 'public/')
+                        $logoUrl = 'images/venue_logos/' . $venueLogoFilename;
 
-                    // Update database with relative path
-                    $venue->update(['logo_url' => $logoUrl]);
+                        // Log storage information for debugging
+                        $fullStoragePath = storage_path('app/' . $path);
+
+                        \Log::info('Logo file saved', [
+                            'filename' => $venueLogoFilename,
+                            'storage_path' => $fullStoragePath,
+                            'storage_exists' => file_exists($fullStoragePath),
+                            'relative_path' => $logoUrl
+                        ]);
+
+                        // Update database with relative path
+                        $venue->update(['logo_url' => $logoUrl]);
+                    } catch (\Exception $e) {
+                        \Log::error('Logo upload failed', ['error' => $e->getMessage()]);
+                    }
                 }
 
                 // Capacity
@@ -449,7 +468,7 @@ class ProfileController extends Controller
 
         if ($dashboardType == 'artist') {
             // Fetch the promoter associated with the user via the service_user pivot table
-            $band = OtherService::where('other_service_id', 4)->whereHas('linkedUsers', function ($query) use ($userId) {
+            $band = OtherService::bands()->whereHas('linkedUsers', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })->first();
 
@@ -593,7 +612,7 @@ class ProfileController extends Controller
             $userData = $request->validated();
 
             // Find photographer with error handling
-            $photographer = OtherService::where('other_service_id', 1)
+            $photographer = OtherService::photographers()
                 ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
                 ->first();
 
@@ -832,6 +851,142 @@ class ProfileController extends Controller
                     ], 500);
                 }
             }
+        }
+    }
+
+    public function updateVideographer($dashboardType, PhotographerProfileUpdateRequest $request, $user)
+    {
+        try {
+            // Validate dashboard type
+            if ($dashboardType !== 'videographer') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid dashboard type'
+                ], 400);
+            }
+
+            // Find user with error handling
+            try {
+                $user = User::findOrFail($user);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            $userData = $request->validated();
+
+            // Find photographer with error handling
+            $videographer = OtherService::videographers()
+                ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
+                ->first();
+
+            if (!$videographer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'videographer not found'
+                ], 404);
+            }
+
+            DB::beginTransaction();
+            try {
+                // Update basic fields
+                $fieldsToUpdate = ['name', 'contact_name', 'contact_email', 'contact_number', 'description'];
+                $updates = [];
+                foreach ($fieldsToUpdate as $field) {
+                    if (isset($userData[$field]) && $videographer->$field !== $userData[$field]) {
+                        $updates[$field] = $userData[$field];
+                    }
+                }
+
+                if (!empty($updates)) {
+                    $videographer->update($updates);
+                }
+
+                // Contact Links
+                if (isset($userData['contact_links'])) {
+                    $this->updateJsonField($videographer, 'contact_link', $userData['contact_links']);
+                }
+
+                // Genres
+                if (isset($userData['genres'])) {
+                    $this->updateJsonField($videographer, 'genre', $userData['genres']);
+                }
+
+                // Logo Upload
+                if (isset($userData['logo_url'])) {
+                    try {
+                        $logoPath = $this->uploadLogo($userData['logo_url'], $userData['name']);
+                        $videographer->update(['logo_url' => $logoPath]);
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Failed to upload logo: ' . $e->getMessage()
+                        ], 500);
+                    }
+                }
+
+                if (isset($userData['preferred_contact'])) {
+                    $videographer->update(['preferred_contact' => $userData['preferred_contact']]);
+                }
+
+                // Working Times
+                if (isset($userData['working_times'])) {
+                    $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                    // Sort and validate working times
+                    $sortedWorkingTimes = array_merge(
+                        array_flip($weekDaysOrder),
+                        array_intersect_key($userData['working_times'], array_flip($weekDaysOrder))
+                    );
+
+                    $sortedWorkingTimes = array_filter($sortedWorkingTimes, fn($value) => $value !== null);
+
+                    // Validate time ranges
+                    foreach ($sortedWorkingTimes as $day => $time) {
+                        if (is_array($time)) {
+                            $start = $time['start'] ?? null;
+                            $end = $time['end'] ?? null;
+
+                            if ($start && $end) {
+                                if ($start >= $end) {
+                                    DB::rollBack();
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => "Start time must be earlier than end time for $day."
+                                    ], 422);
+                                }
+                            }
+                        }
+                    }
+
+                    $videographer->update(['working_times' => json_encode($sortedWorkingTimes)]);
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'videographer profile updated successfully!',
+                    'redirect' => route('profile.edit', [
+                        'dashboardType' => $dashboardType,
+                        'id' => $user->id
+                    ])
+                ]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update videographer profile: ' . $e->getMessage()
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred: ' . $e->getMessage()
+            ], 500);
         }
     }
 

@@ -18,7 +18,7 @@
         <h3 class="mb-4 font-heading text-lg font-medium text-white">Contact Information</h3>
         <div class="grid gap-4">
           <div>
-            <x-input-label-dark for="name">{{ ucfirst($dashboardType) }} Name</x-input-label-dark>
+            <x-input-label-dark for="name" :required="true">{{ ucfirst($dashboardType) }} Name</x-input-label-dark>
             <x-text-input id="name" name="name" value="{{ old('name', $profileData['name'] ?? '') }}"
               class="mt-1 block w-full" />
             @error('name')
@@ -42,7 +42,7 @@
 
           <div class="grid gap-4 sm:grid-cols-2">
             <div>
-              <x-input-label-dark for="contact_name" :value="__('Contact Name')" />
+              <x-input-label-dark for="contact_name" :value="__('Contact Name')" :required="true" />
               <x-text-input id="contact_name" name="contact_name"
                 value="{{ old('contact_name', $profileData['contact_name'] ?? '') }}" class="mt-1 block w-full" />
             </div>
@@ -50,7 +50,7 @@
             <div>
               <x-input-label-dark for="preferred_contact" :value="__('Preferred Contact')" />
               <select id="preferred_contact" name="preferred_contact"
-                class="w-full rounded-md border-yns_red bg-gray-900 px-2 py-2 text-gray-300 shadow-sm focus:border-indigo-500 focus:border-indigo-600 focus:ring-indigo-500">
+                class="w-full rounded-md border-yns_red bg-gray-900 px-2 py-2 text-gray-300 shadow-sm focus:border-indigo-600 focus:ring-indigo-500">
                 <option value="">Select preferred method</option>
                 @if (!empty($profileData['contact_email']))
                   <option value="email"
@@ -73,7 +73,7 @@
 
           <div>
             <x-google-address-picker :postalTown="old('postalTown', $profileData['postalTown'] ?? '')" data-id="2" id="location" name="location" label="Location"
-              placeholder="Enter an address" :value="old('location', $profileData['location'] ?? '')" :latitude="old('lat', $profileData['lat'] ?? '')" :longitude="old('long', $profileData['long'] ?? '')" />
+              :required="true" placeholder="Enter an address" :value="old('location', $profileData['location'] ?? '')" :latitude="old('lat', $profileData['lat'] ?? '')" :longitude="old('long', $profileData['long'] ?? '')" />
           </div>
         </div>
       </div>
@@ -82,10 +82,8 @@
       <div class="rounded-lg bg-black/20 p-6">
         <h3 class="mb-4 font-heading text-lg font-medium text-white">Logo</h3>
         <div class="flex flex-col items-center gap-4">
-          <img id="logo-preview"
-            src="{{ !empty($profileData['logo_url']) ? Storage::url($profileData['logo_url']) : asset('images/system/yns_no_image_found.png') }}"
-            alt="Logo Preview" class="h-32 w-auto rounded-lg object-contain"
-            onerror="this.src='{{ asset('images/system/yns_no_image_found.png') }}'">
+          <img id="logo-preview" src="{{ $profileData['logo'] ?? asset('images/system/yns_no_image_found.png') }}"
+            alt="Logo Preview" class="h-64 w-auto rounded-lg object-contain">
           <x-input-file id="logo_url" name="logo_url" onchange="previewLogo(event)" class="w-full" />
         </div>
       </div>
@@ -95,27 +93,30 @@
         <div class="col-span-full rounded-lg bg-black/20 p-6">
           <h3 class="mb-4 font-heading text-lg font-medium text-white">Social Links</h3>
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach ($profileData['platformsToCheck'] as $platform)
+            @foreach ($profileData['platformsToCheck'] as $platformKey => $platformConfig)
               <div>
-                <x-input-label-dark for="{{ $platform }}" :value="__(ucfirst($platform))" />
+                <x-input-label-dark for="{{ $platformKey }}" :value="__($platformConfig['name'] ?? ucfirst($platformKey))" />
                 @php
                   $links =
-                      isset($profileData['platforms'][$platform]) && is_array($profileData['platforms'][$platform])
-                          ? $profileData['platforms'][$platform]
-                          : (isset($profileData['platforms'][$platform])
-                              ? [$profileData['platforms'][$platform]]
+                      isset($profileData['platforms'][$platformKey]) &&
+                      is_array($profileData['platforms'][$platformKey])
+                          ? $profileData['platforms'][$platformKey]
+                          : (isset($profileData['platforms'][$platformKey])
+                              ? [$profileData['platforms'][$platformKey]]
                               : []);
                 @endphp
                 @foreach ($links as $index => $link)
-                  <x-text-input id="{{ $platform }}-{{ $index }}"
-                    name="contact_links[{{ $platform }}][]"
-                    value="{{ old('contact_links.' . $platform . '.' . $index, $link) }}"
-                    class="mb-2 mt-1 block w-full" />
+                  <x-text-input id="{{ $platformKey }}-{{ $index }}"
+                    name="contact_links[{{ $platformKey }}][]"
+                    value="{{ old('contact_links.' . $platformKey . '.' . $index, $link) }}"
+                    class="mb-2 mt-1 block w-full"
+                    placeholder="{{ $platformConfig['placeholder'] ?? 'Add ' . ucfirst($platformKey) . ' link' }}" />
                 @endforeach
                 @if (empty($links))
-                  <x-text-input id="{{ $platform }}-new" name="contact_links[{{ $platform }}][]"
-                    value="{{ old('contact_links.' . $platform . '.new', '') }}"
-                    placeholder="Add {{ ucfirst($platform) }} link" class="mt-1 block w-full" />
+                  <x-text-input id="{{ $platformKey }}-new" name="contact_links[{{ $platformKey }}][]"
+                    value="{{ old('contact_links.' . $platformKey . '.new', '') }}"
+                    placeholder="{{ $platformConfig['placeholder'] ?? 'Add ' . ucfirst($platformKey) . ' link' }}"
+                    class="mt-1 block w-full" />
                 @endif
               </div>
             @endforeach
@@ -218,7 +219,43 @@
         },
         error: function(xhr, status, error) {
           const response = xhr.responseJSON;
-          showFailureNotification(response);
+          showFailureNotification(response.message);
+
+          // Clear previous error messages
+          $('.validation-error').remove();
+          $('.error-border').removeClass('error-border');
+
+          // Handle validation errors
+          if (response && response.errors) {
+            Object.keys(response.errors).forEach(field => {
+              const errorMessage = response.errors[field][0];
+              const inputElement = $(`[name="${field}"]`);
+
+              // Handle array inputs like contact_links
+              if (field.includes('.')) {
+                const parts = field.split('.');
+                const baseField = parts[0];
+                const platform = parts[1];
+                const index = parts[2] || 0;
+
+                $(`[name="${baseField}[${platform}][]"]:eq(${index})`).addClass('error-border')
+                  .after(`<p class="validation-error mt-1 text-sm text-red-500">${errorMessage}</p>`);
+              } else {
+                // Regular inputs
+                inputElement.addClass('error-border')
+                  .after(`<p class="validation-error mt-1 text-sm text-red-500">${errorMessage}</p>`);
+              }
+            });
+
+            // Scroll to the first error
+            const firstErrorField = Object.keys(response.errors)[0];
+            const element = $(`[name="${firstErrorField}"]`);
+            if (element.length) {
+              $('html, body').animate({
+                scrollTop: element.offset().top - 100
+              }, 500);
+            }
+          }
         }
       });
     });

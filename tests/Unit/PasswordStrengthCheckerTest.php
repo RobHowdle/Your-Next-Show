@@ -32,7 +32,7 @@ class PasswordStrengthCheckerTest extends TestCase
         $this->assertEquals($shouldPass, (bool)$result);
     }
 
-    public function passwordRequirementsProvider(): array
+    public static function passwordRequirementsProvider(): array
     {
         return [
             'length_requirement_pass' => ['length', 'Password123!', true],

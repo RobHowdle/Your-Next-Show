@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
         ]);
         $this->call(VenuesTableSeeder::class);
         $this->call(PromotersTableSeeder::class);
-        $this->call(OtherServicesTableSeeder::class);
         $this->call(OtherServicesListTableSeeder::class);
+        $this->call(OtherServicesTableSeeder::class);
     }
 }

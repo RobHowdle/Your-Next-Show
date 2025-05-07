@@ -13,10 +13,10 @@
     @method('PUT')
 
     <div class="rounded-lg bg-black/20 p-6">
-      <h3 class="mb-4 font-heading text-lg font-medium text-white">Description</h3>
       <div class="grid gap-4">
         <div>
-          <x-input-label-dark for="description">Tell us about you... where you started, why you started, what you do
+          <x-input-label-dark for="description" :required="true">Tell us about you... where you started, why you
+            started, what you do
             etc</x-input-label-dark>
           <x-textarea-input id="description" name="description"
             class="mt-1 block w-full">{{ old('description', $profileData['description'] ?? '') }}</x-textarea-input>
