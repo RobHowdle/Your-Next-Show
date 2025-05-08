@@ -402,29 +402,38 @@ class ProfileController extends Controller
                     $venueLogoFile = $userData['logo_url'];
 
                     // Generate the file name
-                    $venueName = $request->input('name') ?: 'venue'; // Add fallback for empty name
+                    $venueName = $request->input('name') ?: 'venue';
                     $venueLogoExtension = $venueLogoFile->getClientOriginalExtension() ?: $venueLogoFile->guessExtension();
-                    $venueLogoFilename = Str::slug($venueName) . '-' . time() . '.' . $venueLogoExtension; // Add timestamp for uniqueness
+                    $venueLogoFilename = Str::slug($venueName) . '-' . time() . '.' . $venueLogoExtension;
 
                     try {
-                        // Store file in public disk
-                        $path = $venueLogoFile->storeAs('public/images/venue_logos', $venueLogoFilename);
+                        // Make sure the directory exists
+                        $directory = public_path('storage/images/venue_logos');
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0755, true);
+                        }
 
-                        // Store just the relative path (without 'public/')
-                        $logoUrl = 'images/venue_logos/' . $venueLogoFilename;
+                        // Save the file directly
+                        $savedPath = $directory . '/' . $venueLogoFilename;
+                        move_uploaded_file($venueLogoFile->getPathname(), $savedPath);
 
-                        // Log storage information for debugging
-                        $fullStoragePath = storage_path('app/' . $path);
+                        // Verify file exists
+                        if (file_exists($savedPath)) {
+                            // Store web-accessible path in the database
+                            $logoUrl = 'images/venue_logos/' . $venueLogoFilename;
+                            $venue->update(['logo_url' => $logoUrl]);
 
-                        \Log::info('Logo file saved', [
-                            'filename' => $venueLogoFilename,
-                            'storage_path' => $fullStoragePath,
-                            'storage_exists' => file_exists($fullStoragePath),
-                            'relative_path' => $logoUrl
-                        ]);
-
-                        // Update database with relative path
-                        $venue->update(['logo_url' => $logoUrl]);
+                            \Log::info('Logo file saved directly', [
+                                'filename' => $venueLogoFilename,
+                                'saved_path' => $savedPath,
+                                'exists' => file_exists($savedPath),
+                                'url_path' => $logoUrl
+                            ]);
+                        } else {
+                            \Log::error('Failed to save logo file', [
+                                'target_path' => $savedPath
+                            ]);
+                        }
                     } catch (\Exception $e) {
                         \Log::error('Logo upload failed', ['error' => $e->getMessage()]);
                     }

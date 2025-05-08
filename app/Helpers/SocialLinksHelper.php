@@ -26,16 +26,26 @@ class SocialLinksHelper
         $platforms = [];
 
         foreach ($links as $platform => $url) {
-            // Skip invalid URLs
-            if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
-                continue;
+            // Handle cases where URL is an array
+            if (is_array($url)) {
+                // Use first non-empty value in array
+                foreach ($url as $singleUrl) {
+                    if (!empty($singleUrl) && filter_var($singleUrl, FILTER_VALIDATE_URL)) {
+                        $platforms[] = [
+                            'platform' => strtolower($platform),
+                            'url' => $singleUrl
+                        ];
+                        break;  // Only use first valid URL
+                    }
+                }
             }
-
-            // Convert to standard format
-            $platforms[] = [
-                'platform' => strtolower($platform),
-                'url' => $url
-            ];
+            // Handle case where URL is a direct string
+            elseif (!empty($url) && filter_var($url, FILTER_VALIDATE_URL)) {
+                $platforms[] = [
+                    'platform' => strtolower($platform),
+                    'url' => $url
+                ];
+            }
         }
 
         return $platforms;

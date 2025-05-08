@@ -61,7 +61,9 @@
             <!-- Role-Specific Sections -->
             @if ($dashboardType === 'venue')
               <div x-show="activeTab === 'venue-details'">
-                @include('profile.sections.venue.venue-details')
+                @include('profile.sections.venue.venue-details', [
+                    'profileData' => $venueData,
+                ])
               </div>
               <div x-show="activeTab === 'in-house-gear'">
                 @include('profile.sections.venue.in-house-gear')

@@ -101,7 +101,6 @@
                 <span class="status mr-4" data-genre="{{ $genre['name'] }}"></span>
                 <span id="icon-{{ $index }}"
                   class="accordion-icon text-slate-800 transition-transform duration-300">
-                  <!-- Icon SVG -->
                 </span>
               </div>
             </button>
@@ -131,6 +130,27 @@
       </div>
     </div>
 </div>
+
+<style>
+  .status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background-color: rgba(255, 196, 0, 0.2);
+    color: #FFC400;
+  }
+
+  /* Hide when count is zero */
+  .status.empty {
+    display: none;
+  }
+</style>
 
 <script defer>
   const genres = @json($profileData['genres']);
@@ -195,8 +215,6 @@
 
   // Update state and hidden input
   function updateBandTypesState() {
-    console.log('Dashboard Type:', dashboardType); // Debug dashboard type
-
     bandTypesData = {
       allTypes: allTypesCheckbox.checked,
       bandTypes: Array.from(bandTypeCheckboxes)
@@ -204,7 +222,6 @@
         .map(cb => cb.value)
     };
 
-    console.log('Band Types Data:', bandTypesData); // Debug data structure
     sendBandTypes(bandTypesData);
   }
 
@@ -224,7 +241,6 @@
       })
       .then(response => response.json())
       .then(data => {
-        console.log('Server Response:', data); // Debug server response
         if (!data.success) {
           throw new Error(data.message || 'Failed to save band types');
         }
@@ -335,6 +351,7 @@
     genreAllCheckboxes.forEach(checkbox => checkbox.checked = isChecked);
     subgenreCheckboxes.forEach(checkbox => checkbox.checked = isChecked);
     updateGenresState();
+    updateCheckboxCounters();
   });
 
   // Genre "All [Genre]" checkbox handlers
@@ -345,6 +362,8 @@
       relatedSubgenres.forEach(sub => sub.checked = this.checked);
       updateMasterCheckbox();
       updateGenresState();
+      updateCheckboxCounters();
+
     });
   });
 
@@ -360,6 +379,8 @@
 
       updateMasterCheckbox();
       updateGenresState();
+      updateCheckboxCounters();
+
     });
   });
 
@@ -414,5 +435,37 @@
   // Initialize with saved data if available
   if (typeof profileGenres !== 'undefined') {
     initializeGenres(profileGenres);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    updateCheckboxCounters();
+  });
+
+  // Function to update the checkbox count indicators
+  function updateCheckboxCounters() {
+    // For each genre section
+    genres.forEach((genre, index) => {
+      const genreName = genre.name;
+      const statusElement = document.querySelector(`.status[data-genre="${genreName}"]`);
+
+      // Find all checked subgenre checkboxes for this genre
+      const checkedSubgenres = document.querySelectorAll(
+        `[data-genre="${genreName}"].subgenre-checkbox:checked`
+      );
+
+      // Get count of checked boxes
+      const count = checkedSubgenres.length;
+
+      // Update the status indicator
+      if (statusElement) {
+        if (count > 0) {
+          statusElement.textContent = count;
+          statusElement.classList.remove('empty');
+        } else {
+          statusElement.textContent = '';
+          statusElement.classList.add('empty');
+        }
+      }
+    });
   }
 </script>

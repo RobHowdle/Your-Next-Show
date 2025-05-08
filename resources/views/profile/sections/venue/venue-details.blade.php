@@ -19,7 +19,7 @@
         <div>
           <x-input-label-dark for="capacity" value="Venue Capacity" />
           <x-text-input id="capacity" name="capacity" type="number" class="mt-1 block w-full"
-            value="{{ old('capacity', $venueData->capacity ?? '') }}" required />
+            value="{{ old('capacity', $profileData['capacity'] ?? '') }}" required />
           <x-input-error :messages="$errors->get('capacity')" class="mt-2" />
         </div>
 
@@ -27,7 +27,7 @@
         <div>
           <x-input-label-dark for="w3w">What3Words Address</x-input-label-dark>
           <x-text-input id="w3w" name="w3w" class="mt-1 block w-full"
-            value="{{ old('w3w', $venueData->w3w ?? '') }}" />
+            value="{{ old('w3w', $venueData['w3w'] ?? '') }}" />
           <div id="suggestions" class="mt-2"></div>
           <x-input-error :messages="$errors->get('w3w')" class="mt-2" />
         </div>
