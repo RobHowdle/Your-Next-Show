@@ -35,7 +35,8 @@ class PromoterDataHelper
         $contactLinks = $promoter ? json_decode($promoter->contact_link, true) : [];
 
         $platforms = [];
-        $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+        $activePlatforms = [];
+        $platformsToCheck = ['facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
         // Initialize the platforms array with empty strings for each platform
         foreach ($platformsToCheck as $platform) {
@@ -46,8 +47,9 @@ class PromoterDataHelper
         if ($contactLinks) {
             foreach ($platformsToCheck as $platform) {
                 // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
+                if (isset($contactLinks[$platform]) && !empty($contactLinks[$platform])) {
                     $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                    $activePlatforms[] = $platform; // Track this platform as active
                 }
             }
         }
@@ -82,7 +84,7 @@ class PromoterDataHelper
             }
         }
 
-        $bandTypes = json_decode($promoter->band_type) ?? [];
+        $bandTypes = json_decode($promoter->band_type, true) ?? [];
         $apiProviders = config('api_providers.providers');
         $apiKeys = ApiKey::where('serviceable_id', $promoter->id)->where('serviceable_type', get_class($promoter))->get();
 
@@ -103,6 +105,8 @@ class PromoterDataHelper
             });
         }
 
+        $packages = $promoter ? json_decode($promoter->packages) : [];
+
         return [
             'promoter' => $promoter,
             'promoterId' => $promoter->id,
@@ -117,6 +121,7 @@ class PromoterDataHelper
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
+            'activePlatforms' => $activePlatforms,
             'platformsToCheck' => $platformsToCheck,
             'preferred_contact' => $preferredContact,
             'myVenues' => $myVenues,
@@ -129,6 +134,7 @@ class PromoterDataHelper
             'bandTypes' => $bandTypes,
             'apiProviders' => $apiProviders,
             'apiKeys' => $apiKeys,
+            'packages' => $packages,
         ];
     }
 }

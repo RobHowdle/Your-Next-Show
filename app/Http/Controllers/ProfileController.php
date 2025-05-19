@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Venue;
-use App\Models\ApiKeys;
 use App\Models\Promoter;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
@@ -22,7 +21,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\StoreUpdateBandTypes;
-use App\Http\Requests\StoreUpdateBandGenres;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\BandProfileUpdateRequest;
 use App\Http\Requests\VenueProfileUpdateRequest;
@@ -56,68 +54,19 @@ class ProfileController extends Controller
         $this->promoterDataHelper = $promoterDataHelper;
     }
 
-    private function getUniqueBandsForPromoterEvents($promoterId)
-    {
-        return $this->serviceDataHelper->getBandsData($promoterId);
-    }
-
-    private function getPortfolioData($service)
-    {
-        return $this->serviceDataHelper->getPortfolioData(auth()->user(), $service);
-    }
-
     /**
      * Display the user's profile form.
      */
     public function edit($dashboardType, $userId): View
     {
         $user = User::where('id', $userId)->first();
-        $roles = Role::where('name', '!=', 'administrator')->get();
-        $userRole = $user->roles;
 
-        // Initialize promoter variables
-        $promoterData = [];
-        $bandData = [];
-        $venueData = [];
-        $photographerData = [];
-        $standardUserData = [];
-        $designerData = [];
-        $videographerData = [];
-
-        // Check dashboard type and get the data
-        if ($dashboardType === 'promoter') {
-            $promoterData = $this->getPromoterData($user);
-        } elseif ($dashboardType === 'artist') {
-            $bandData = $this->getOtherServicData($dashboardType, $user);
-        } elseif ($dashboardType === 'venue') {
-            $venueData = $this->getVenueData($user);
-        } elseif ($dashboardType === 'photographer') {
-            $photographerData = $this->getOtherServicData($dashboardType, $user);
-        } elseif ($dashboardType === 'standard') {
-            $standardUserData = $this->getStandardUserData($user);
-        } elseif ($dashboardType === 'designer') {
-            $designerData = $this->getOtherServicData($dashboardType, $user);
-        } elseif ($dashboardType === 'videographer') {
-            $videographerData = $this->getOtherServicData($dashboardType, $user);
-        }
-
-        $modulesWithSettings = $this->getModulesWithSettings($userId, $dashboardType);
-        $communicationSettings = $this->getCommunicationSettings($userId, $dashboardType);
-
-        return view('profile.edit', [
+        // Initialize data array
+        $data = [
             'user' => $user,
             'dashboardType' => $dashboardType,
-            'modules' => $modulesWithSettings,
-            'promoterData' => $promoterData,
-            'bandData' => $bandData,
-            'venueData' => $venueData,
-            'photographerData' => $photographerData,
-            'standardUserData' => $standardUserData,
-            'designerData' => $designerData,
-            'videographerData' => $videographerData,
-            'user' => $user,
-            'roles' => $roles,
-            'userRole' => $userRole,
+            'roles' => Role::where('name', '!=', 'administrator')->get(),
+            'userRole' => $user->roles,
             'userFirstName' => $user->first_name,
             'userLastName' => $user->last_name,
             'userEmail' => $user->email,
@@ -126,8 +75,29 @@ class ProfileController extends Controller
             'userPostalTown' => $user->postal_town,
             'userLat' => $user->latitude,
             'userLong' => $user->longitude,
-            'communications' => $communicationSettings,
-        ]);
+        ];
+
+        // Get profile specific data
+        $profileData = match ($dashboardType) {
+            'promoter' => $this->getPromoterData($user),
+            'artist' => $this->getOtherServicData('artist', $user),
+            'venue' => $this->getVenueData($user),
+            'photographer' => $this->getOtherServicData('photographer', $user),
+            'designer' => $this->getOtherServicData('designer', $user),
+            'videographer' => $this->getOtherServicData('videographer', $user),
+            'standard' => $this->getStandardUserData($user),
+            default => [],
+        };
+
+        // Get modules and communication settings
+        $data['modules'] = $this->getModulesWithSettings($userId, $dashboardType);
+        $data['communications'] = $this->getCommunicationSettings($userId, $dashboardType);
+        \Log::info('Communications:', $data['communications']);
+
+        // Add profile data to view data with the correct key
+        $data["{$dashboardType}Data"] = $profileData;
+
+        return view('profile.edit', $data);
     }
 
     /**
@@ -259,21 +229,23 @@ class ProfileController extends Controller
                 }
 
                 // Contact Links
-                if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
-                    // Start with the existing `contact_links` array or an empty array if it doesn't exist
-                    $updatedLinks = !empty($promoter->contact_link) ? json_decode($promoter->contact_link, true) : [];
+                if (isset($userData['contact_links'])) {
+                    // Get existing links
+                    $existingLinks = json_decode($promoter->contact_link, true) ?? [];
 
-                    // Iterate through the `contact_link` array from the request data
-                    foreach ($userData['contact_links'] as $platform => $links) {
-                        // Ensure we're setting only non-empty values
-                        $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                    // Get new links
+                    $newLinks = is_array($userData['contact_links'])
+                        ? $userData['contact_links']
+                        : json_decode($userData['contact_links'], true);
+
+                    if ($newLinks) {
+                        // Merge while preserving existing links that aren't being updated
+                        $mergedLinks = array_merge($existingLinks, $newLinks);
+
+                        // Update contact links
+                        $promoter->contact_link = json_encode($mergedLinks);
+                        $promoter->save();
                     }
-
-                    // Filter out null values to remove platforms with no links
-                    $updatedLinks = array_filter($updatedLinks);
-
-                    // Encode the array back to JSON for storage and update the promoter record
-                    $promoter->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
                 if (isset($userData['preferred_contact'])) {
@@ -342,7 +314,7 @@ class ProfileController extends Controller
 
             // Check if the venue exists
             if ($venue) {
-                // venue Name
+                // Venue Name
                 if (isset($userData['name']) && $venue->name !== $userData['name']) {
                     $venue->update(['name' => $userData['name']]);
                 }
@@ -363,8 +335,8 @@ class ProfileController extends Controller
                 }
 
                 //W3W
-                if (isset($userData['w3w'])) {
-                    $venue->update(['w3w' => $userData['w3w']]);
+                if (isset($userData['venue']['w3w'])) {
+                    $venue->update(['w3w' => $userData['venue']['w3w']]);
                 }
 
                 // Contact Email
@@ -378,21 +350,23 @@ class ProfileController extends Controller
                 }
 
                 // Contact Links
-                if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
-                    // Start with the existing `contact_links` array or an empty array if it doesn't exist
-                    $updatedLinks = !empty($venue->contact_link) ? json_decode($venue->contact_link, true) : [];
+                if (isset($userData['contact_links'])) {
+                    // Get existing links
+                    $existingLinks = json_decode($venue->contact_link, true) ?? [];
 
-                    // Iterate through the `contact_link` array from the request data
-                    foreach ($userData['contact_links'] as $platform => $links) {
-                        // Ensure we're setting only non-empty values
-                        $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                    // Get new links
+                    $newLinks = is_array($userData['contact_links'])
+                        ? $userData['contact_links']
+                        : json_decode($userData['contact_links'], true);
+
+                    if ($newLinks) {
+                        // Merge while preserving existing links that aren't being updated
+                        $mergedLinks = array_merge($existingLinks, $newLinks);
+
+                        // Update contact links
+                        $venue->contact_link = json_encode($mergedLinks);
+                        $venue->save();
                     }
-
-                    // Filter out null values to remove platforms with no links
-                    $updatedLinks = array_filter($updatedLinks);
-
-                    // Encode the array back to JSON for storage and update the promoter record
-                    $venue->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
                 if (isset($userData['preferred_contact'])) {
@@ -424,23 +398,47 @@ class ProfileController extends Controller
                     $venue->update(['deposit_amount' => $userData['deposit_amount']]);
                 }
 
+
                 // Logo
                 if (isset($userData['logo_url'])) {
                     $venueLogoFile = $userData['logo_url'];
 
                     // Generate the file name
-                    $venueName = $request->input('name');
+                    $venueName = $request->input('name') ?: 'venue';
                     $venueLogoExtension = $venueLogoFile->getClientOriginalExtension() ?: $venueLogoFile->guessExtension();
-                    $venueLogoFilename = Str::slug($venueName) . '.' . $venueLogoExtension;
+                    $venueLogoFilename = Str::slug($venueName) . '-' . time() . '.' . $venueLogoExtension;
 
-                    // Store file in public disk
-                    $path = $venueLogoFile->storeAs('public/images/venue_logos', $venueLogoFilename);
+                    try {
+                        // Make sure the directory exists
+                        $directory = public_path('storage/images/venue_logos');
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0755, true);
+                        }
 
-                    // Generate proper URL for public access
-                    $logoUrl = asset(str_replace('public', 'storage', $path));
+                        // Save the file directly
+                        $savedPath = $directory . '/' . $venueLogoFilename;
+                        move_uploaded_file($venueLogoFile->getPathname(), $savedPath);
 
-                    // Update database with relative path
-                    $venue->update(['logo_url' => $logoUrl]);
+                        // Verify file exists
+                        if (file_exists($savedPath)) {
+                            // Store web-accessible path in the database
+                            $logoUrl = 'images/venue_logos/' . $venueLogoFilename;
+                            $venue->update(['logo_url' => $logoUrl]);
+
+                            \Log::info('Logo file saved directly', [
+                                'filename' => $venueLogoFilename,
+                                'saved_path' => $savedPath,
+                                'exists' => file_exists($savedPath),
+                                'url_path' => $logoUrl
+                            ]);
+                        } else {
+                            \Log::error('Failed to save logo file', [
+                                'target_path' => $savedPath
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Logo upload failed', ['error' => $e->getMessage()]);
+                    }
                 }
 
                 // Capacity
@@ -481,7 +479,7 @@ class ProfileController extends Controller
 
         if ($dashboardType == 'artist') {
             // Fetch the promoter associated with the user via the service_user pivot table
-            $band = OtherService::where('other_service_id', 4)->whereHas('linkedUsers', function ($query) use ($userId) {
+            $band = OtherService::bands()->whereHas('linkedUsers', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })->first();
 
@@ -625,7 +623,7 @@ class ProfileController extends Controller
             $userData = $request->validated();
 
             // Find photographer with error handling
-            $photographer = OtherService::where('other_service_id', 1)
+            $photographer = OtherService::photographers()
                 ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
                 ->first();
 
@@ -867,20 +865,140 @@ class ProfileController extends Controller
         }
     }
 
-    // Helper for JSON Fields
-    protected function updateJsonField($photographer, $field, $data)
+    public function updateVideographer($dashboardType, PhotographerProfileUpdateRequest $request, $user)
     {
-        $existingData = json_decode($photographer->$field, true) ?? [];
-        $updatedData = array_merge($existingData, $data);
-        $photographer->update([$field => json_encode(array_filter($updatedData))]);
-    }
+        try {
+            // Validate dashboard type
+            if ($dashboardType !== 'videographer') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid dashboard type'
+                ], 400);
+            }
 
-    // Helper for Logo Upload
-    protected function uploadLogo($file, $name)
-    {
-        $filename = Str::slug($name) . '.' . $file->getClientOriginalExtension();
-        $file->move(storage_path('app/public/images/photographer_logos'), $filename);
-        return Storage::url('images/photographer_logos/' . $filename);
+            // Find user with error handling
+            try {
+                $user = User::findOrFail($user);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            $userData = $request->validated();
+
+            // Find photographer with error handling
+            $videographer = OtherService::videographers()
+                ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
+                ->first();
+
+            if (!$videographer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'videographer not found'
+                ], 404);
+            }
+
+            DB::beginTransaction();
+            try {
+                // Update basic fields
+                $fieldsToUpdate = ['name', 'contact_name', 'contact_email', 'contact_number', 'description'];
+                $updates = [];
+                foreach ($fieldsToUpdate as $field) {
+                    if (isset($userData[$field]) && $videographer->$field !== $userData[$field]) {
+                        $updates[$field] = $userData[$field];
+                    }
+                }
+
+                if (!empty($updates)) {
+                    $videographer->update($updates);
+                }
+
+                // Contact Links
+                if (isset($userData['contact_links'])) {
+                    $this->updateJsonField($videographer, 'contact_link', $userData['contact_links']);
+                }
+
+                // Genres
+                if (isset($userData['genres'])) {
+                    $this->updateJsonField($videographer, 'genre', $userData['genres']);
+                }
+
+                // Logo Upload
+                if (isset($userData['logo_url'])) {
+                    try {
+                        $logoPath = $this->uploadLogo($userData['logo_url'], $userData['name']);
+                        $videographer->update(['logo_url' => $logoPath]);
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Failed to upload logo: ' . $e->getMessage()
+                        ], 500);
+                    }
+                }
+
+                if (isset($userData['preferred_contact'])) {
+                    $videographer->update(['preferred_contact' => $userData['preferred_contact']]);
+                }
+
+                // Working Times
+                if (isset($userData['working_times'])) {
+                    $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                    // Sort and validate working times
+                    $sortedWorkingTimes = array_merge(
+                        array_flip($weekDaysOrder),
+                        array_intersect_key($userData['working_times'], array_flip($weekDaysOrder))
+                    );
+
+                    $sortedWorkingTimes = array_filter($sortedWorkingTimes, fn($value) => $value !== null);
+
+                    // Validate time ranges
+                    foreach ($sortedWorkingTimes as $day => $time) {
+                        if (is_array($time)) {
+                            $start = $time['start'] ?? null;
+                            $end = $time['end'] ?? null;
+
+                            if ($start && $end) {
+                                if ($start >= $end) {
+                                    DB::rollBack();
+                                    return response()->json([
+                                        'success' => false,
+                                        'message' => "Start time must be earlier than end time for $day."
+                                    ], 422);
+                                }
+                            }
+                        }
+                    }
+
+                    $videographer->update(['working_times' => json_encode($sortedWorkingTimes)]);
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'videographer profile updated successfully!',
+                    'redirect' => route('profile.edit', [
+                        'dashboardType' => $dashboardType,
+                        'id' => $user->id
+                    ])
+                ]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update videographer profile: ' . $e->getMessage()
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -902,54 +1020,6 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
-    }
-
-    protected function getCommunicationSettings($userId, $dashboardType)
-    {
-        $user = User::findOrFail($userId);
-        // Get default preferences from config
-        $defaultPreferences = config('mailing_preferences.communication_preferences');
-        if (!$defaultPreferences) {
-            \Log::error('Mailing preferences config not loaded');
-            return [];
-        }
-
-        // Get user preferences from JSON field and ensure it's an array
-        $userPreferences = is_array($user->mailing_preferences)
-            ? $user->mailing_preferences
-            : json_decode($user->mailing_preferences, true) ?? [];
-
-        $communicationSettings = [];
-
-        // Map each preference to include name, description and enabled status
-        foreach ($defaultPreferences as $key => $preference) {
-            $communicationSettings[$key] = [
-                'name' => $preference['name'],
-                'description' => $preference['description'],
-                'is_enabled' => isset($userPreferences[$key])
-                    ? ($userPreferences[$key] === true ? 1 : 0)
-                    : ($preference['enabled'] ? 1 : 0)
-            ];
-        }
-
-        return $communicationSettings;
-    }
-
-    protected function getModulesWithSettings($userId, $dashboardType)
-    {
-        // Load all modules from config
-        $modules = config('modules.modules');
-
-        $modulesWithSettings = UserModuleSetting::where('user_id', $userId)
-            ->get()
-            ->mapWithKeys(function ($module) {
-                return [$module->module_name => [
-                    'is_enabled' => $module->is_enabled,
-                    'description' => $module->description
-                ]];
-            })->toArray();
-
-        return $modulesWithSettings;
     }
 
     // Get Data for Dashboard Type User
@@ -1430,5 +1500,68 @@ class ProfileController extends Controller
             'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
 
         ]);
+    }
+
+    // Helper for JSON Fields
+    protected function updateJsonField($photographer, $field, $data)
+    {
+        $existingData = json_decode($photographer->$field, true) ?? [];
+        $updatedData = array_merge($existingData, $data);
+        $photographer->update([$field => json_encode(array_filter($updatedData))]);
+    }
+
+    // Helper for Logo Upload
+    protected function uploadLogo($file, $name)
+    {
+        $filename = Str::slug($name) . '.' . $file->getClientOriginalExtension();
+        $file->move(storage_path('app/public/images/photographer_logos'), $filename);
+        return Storage::url('images/photographer_logos/' . $filename);
+    }
+
+    protected function getCommunicationSettings($userId)
+    {
+        $user = User::findOrFail($userId);
+        // Get default preferences from config
+        $defaultPreferences = config('mailing_preferences.communication_preferences');
+        if (!$defaultPreferences) {
+            \Log::error('Mailing preferences config not loaded');
+            return [];
+        }
+
+        // Get user preferences from JSON field and ensure it's an array
+        $userPreferences = is_array($user->mailing_preferences)
+            ? $user->mailing_preferences
+            : json_decode($user->mailing_preferences, true) ?? [];
+
+        $communicationSettings = [];
+
+        // Map each preference to include name, description and enabled status
+        foreach ($defaultPreferences as $key => $preference) {
+            $rawValue = $userPreferences[$key] ?? false;
+            $communicationSettings[$key] = [
+                'name' => $preference['name'],
+                'description' => $preference['description'],
+                'is_enabled' => filter_var($rawValue, FILTER_VALIDATE_BOOLEAN),
+            ];
+        }
+
+        return $communicationSettings;
+    }
+
+    protected function getModulesWithSettings($userId, $dashboardType)
+    {
+        // Load all modules from config
+        $modules = config('modules.modules');
+
+        $modulesWithSettings = UserModuleSetting::where('user_id', $userId)
+            ->get()
+            ->mapWithKeys(function ($module) {
+                return [$module->module_name => [
+                    'is_enabled' => $module->is_enabled,
+                    'description' => $module->description
+                ]];
+            })->toArray();
+
+        return $modulesWithSettings;
     }
 }

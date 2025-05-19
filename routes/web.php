@@ -258,16 +258,17 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     // What3Words
     Route::post('/what3words/suggest', [What3WordsController::class, 'suggest'])->name('what3words.suggest');
-
+    Route::post('/what3words/convert-address', [What3WordsController::class, 'convertToW3W'])
+        ->name('what3words.convert-address');
     // More specific routes
     // Profile Updates
     Route::put('/profile/{dashboardType}/promoter-profile-update/{user}', [ProfileController::class, 'updatePromoter'])->name('promoter.update');
     Route::put('/profile/{dashboardType}/venue-profile-update/{user}', [ProfileController::class, 'updateVenue'])->name('venue.update');
     Route::put('/profile/{dashboardType}/band-profile-update/{user}', [ProfileController::class, 'updateBand'])->name('artist.update');
     Route::put('/profile/{dashboardType}/photographer-profile-update/{user}', [ProfileController::class, 'updatePhotographer'])->name('photographer.update');
-    Route::put('/profile/{dashboardType}/standard-user-update/{user}', [ProfileController::class, 'updateStandardUser'])->name('standard-user.update');
-    Route::put('/profile/{dashboardType}/designer-user-update/{user}', [ProfileController::class, 'updateDesigner'])->name('designer.update');
-    Route::put('/profile/{dashboardType}/videographer-user-update/{user}', [ProfileController::class, 'updateVideographer'])->name('videographer.update');
+    Route::put('/profile/{dashboardType}/standard-profile-update/{user}', [ProfileController::class, 'updateStandardUser'])->name('standard-user.update');
+    Route::put('/profile/{dashboardType}/designer-profile-update/{user}', [ProfileController::class, 'updateDesigner'])->name('designer.update');
+    Route::put('/profile/{dashboardType}/videographer-profile-update/{user}', [ProfileController::class, 'updateVideographer'])->name('videographer.update');
     Route::post('/profile/{dashboardType}/portfolio-image-upload', [ProfileController::class, 'uploadPortfolioImages'])->name('portfolio.upload');
     Route::get('/profile/{dashboardType}/settings', [ProfileController::class, 'settings'])->name('settings.index');
     Route::post('/profile/{dashboardType}/photographer-environment-types', [ProfileController::class, 'updateEnvironmentTypes'])->name('photographer.environment-types');

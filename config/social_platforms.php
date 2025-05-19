@@ -21,14 +21,14 @@ return [
             'message' => 'Please enter a valid Instagram URL'
         ]
     ],
-    'twitter' => [
-        'name' => 'Twitter',
+    'x' => [
+        'name' => 'X (formerly Twitter)',
         'icon' => 'fab fa-twitter',
-        'url_pattern' => 'https://twitter.com/{username}',
-        'placeholder' => 'Enter your Twitter username',
+        'url_pattern' => 'https://x.com/{username}',
+        'placeholder' => 'Enter your X username',
         'validation' => [
-            'pattern' => '^(https?:\/\/)?(www\.)?twitter.com\/[a-zA-Z0-9_]+\/?$',
-            'message' => 'Please enter a valid Twitter URL'
+            'pattern' => '^(https?:\/\/)?(www\.)?x.com\/[a-zA-Z0-9_]+\/?$',
+            'message' => 'Please enter a valid X URL'
         ]
     ],
     'linkedin' => [

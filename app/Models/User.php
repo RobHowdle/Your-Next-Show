@@ -293,4 +293,36 @@ class User extends Authenticatable
             ->where('id', $serviceUser->role_id)
             ->value('name');
     }
+
+    public function isLinkedToEvent(Event $event): bool
+    {
+        // Get user's role and service
+        $role = $this->roles->first()->name;
+
+        switch ($role) {
+            case 'venue':
+                return $event->venues()
+                    ->where('venue_id', $this->venues->first()?->id)
+                    ->exists();
+
+            case 'promoter':
+                return $event->promoters()
+                    ->where('promoter_id', $this->promoters->first()?->id)
+                    ->exists();
+
+            case 'artist':
+                $service = $this->otherService()->where('services', 'Artist')->first();
+                if (!$service) return false;
+
+                return $event->bands()
+                    ->where('band_id', $service->id)
+                    ->exists();
+
+            case 'admin':
+                return true;
+
+            default:
+                return false;
+        }
+    }
 }

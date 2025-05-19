@@ -1,3 +1,5 @@
+@import './loader.css';
+
 @import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
 
 @tailwind base;
@@ -930,35 +932,28 @@ video {
     color: #777;
 }
 
-/* Preloader */
-.music-loader {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 4px;
-    height: 50px;
-}
-
-.music-loader .bar {
-    width: 4px;
-    background-color: #FCD34D; /* yns_yellow */
-    border-radius: 4px;
-    animation: music-wave 1.5s ease-in-out infinite;
-}
-
-.music-loader .bar:nth-child(1) { height: 10px; animation-delay: 0.0s; }
-.music-loader .bar:nth-child(2) { height: 20px; animation-delay: 0.2s; }
-.music-loader .bar:nth-child(3) { height: 30px; animation-delay: 0.4s; }
-.music-loader .bar:nth-child(4) { height: 20px; animation-delay: 0.6s; }
-.music-loader .bar:nth-child(5) { height: 10px; animation-delay: 0.8s; }
-
-@keyframes music-wave {
-    0% { transform: scaleY(1); }
-    50% { transform: scaleY(0.5); }
-    100% { transform: scaleY(1); }
-}
-
 /* Profile */
+.user-dropdown {
+  position: relative;
+  z-index: 100;
+}
+
+.dropdown-content {
+  z-index: 100;
+}
+
+.profile-sidebar {
+  z-index: 40;
+}
+
+.profile-content {
+  z-index: 30;
+}
+
+.relative.min-h-screen {
+  isolation: isolate;
+}
+
 #calendar {
     width: 100%;
     min-height: 500px;

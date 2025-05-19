@@ -57,7 +57,7 @@
       ->toArray();
 @endphp
 
-<nav x-data="{ open: false }" class="border-b border-yns_black bg-yns_black backdrop-blur-sm">
+<nav x-data="{ open: false }" class="relative z-[999] border-b border-yns_black bg-yns_black backdrop-blur-sm">
   <div class="mx-auto max-w-[1920px] px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 items-center justify-between">
       {{-- Logo section --}}
@@ -113,14 +113,19 @@
           </x-slot>
 
           <x-slot name="content">
-            <div class="rounded-lg bg-gray-800 p-1 shadow-xl ring-1 ring-gray-700">
-              <x-dropdown-link :href="route('profile.edit', ['dashboardType' => lcfirst($dashboardType), 'id' => Auth::user()->id])" class="rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
-                {{ __('Profile') }}
-              </x-dropdown-link>
-              <x-dropdown-link :href="route('logout')" class="rounded-md text-gray-300 hover:bg-gray-700 hover:text-white"
-                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                {{ __('Logout') }}
-              </x-dropdown-link>
+            <div class="absolute right-0 z-[9999] mt-2">
+              <div class="w-48 rounded-lg bg-gray-800 p-1 shadow-xl ring-1 ring-gray-700">
+                <x-dropdown-link :href="route('profile.edit', [
+                    'dashboardType' => lcfirst($dashboardType),
+                    'id' => Auth::user()->id,
+                ])" class="rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
+                  {{ __('Profile') }}
+                </x-dropdown-link>
+                <x-dropdown-link :href="route('logout')" class="rounded-md text-gray-300 hover:bg-gray-700 hover:text-white"
+                  onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                  {{ __('Logout') }}
+                </x-dropdown-link>
+              </div>
             </div>
           </x-slot>
         </x-dropdown>

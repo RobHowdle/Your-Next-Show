@@ -5,9 +5,17 @@
       <div class="relative mb-4 overflow-hidden rounded-2xl bg-yns_dark_blue shadow-2xl md:mb-8">
         <div class="absolute inset-0">
           <div class="absolute inset-0 bg-gradient-to-r from-black to-transparent"></div>
-          @if ($venue->logo_url && file_exists(public_path($venue->logo_url)))
-            <img src="{{ asset($venue->logo_url) }}" alt="{{ $venue->name }}"
-              class="h-full w-full object-cover opacity-20">
+          @if ($venue->logo_url)
+            @php
+              $logoPath = $venue->logo_url;
+              $fileExists =
+                  file_exists(public_path('storage/' . $venue->logo_url)) || file_exists(public_path($venue->logo_url));
+            @endphp
+
+            @if ($fileExists)
+              <img src="{{ asset('storage/' . $venue->logo_url) }}" alt="{{ $venue->name }}"
+                class="h-full w-full object-cover opacity-20">
+            @endif
           @endif
         </div>
 
@@ -70,9 +78,20 @@
           </div>
 
           <!-- Right Column: Venue Logo -->
-          <div class="relative hidden lg:block">
-            @if ($venue->logo_url && file_exists(public_path($venue->logo_url)))
-              <img src="{{ asset($venue->logo_url) }}" alt="{{ $venue->name }}" class="_250img">
+          <div class="relative hidden place-content-center place-items-center lg:block">
+            @if ($venue->logo_url)
+              @php
+                $logoPath = $venue->logo_url;
+                $fileExists =
+                    file_exists(public_path('storage/' . $venue->logo_url)) ||
+                    file_exists(public_path($venue->logo_url));
+              @endphp
+
+              @if ($fileExists)
+                <img src="{{ asset('storage/' . $venue->logo_url) }}" alt="{{ $venue->name }}" class="_250img">
+              @else
+                <img src="{{ asset('images/system/yns_no_image_found.png') }}" alt="No Image" class="_250img">
+              @endif
             @else
               <img src="{{ asset('images/system/yns_no_image_found.png') }}" alt="No Image" class="_250img">
             @endif
@@ -161,66 +180,72 @@
 
             <!-- Genres Tab -->
             <div id="genres" class="tab-panel hidden">
+              <h2 class="mb-6 font-heading text-xl font-bold text-white">Music at {{ $venue->name }}</h2>
+
               @php
                 $bandTypes = json_decode($venue->band_type ?? '[]');
+                // Filter out any empty values
+                $bandTypes = !empty($bandTypes) ? array_filter($bandTypes) : [];
               @endphp
-              @if ($bandTypes == [])
-                <p class="text-left">We don't have any specific band types listed, please <a
-                    class="underline hover:text-yns_yellow" href="mailto:{{ $venue->contact_email }}">contact us.</a>
-                  if you would like to enquire about
-                  booking
-                  your band.</p>
-              @else
-                <p class="mb-2">The band types that we usually have at <span
-                    class="bold">{{ $venue->name }}</span>
-                  are:</p>
-                <ul class="band-types-list">
-                  @foreach ($bandTypes as $type)
-                    @switch($type)
-                      @case('original-bands')
-                        <li class="ml-6">Original Bands</li>
-                      @break
 
-                      @case('cover-bands')
-                        <li class="ml-6">Cover Bands</li>
-                      @break
+              <!-- Band Types Section -->
+              @if (!empty($bandTypes))
+                <div class="band-types-section mb-8 border-b border-gray-800 pb-6">
+                  <h3 class="mb-4 text-lg font-medium text-white">Band Types</h3>
 
-                      @case('tribute-bands')
-                        <li class="ml-6">Tribute Bands</li>
-                      @break
-
-                      @case('all')
-                        <li class="ml-6">All Band Types</li>
-                      @break
-
-                      @default
-                    @endswitch
-                  @endforeach
-                </ul>
-                <p class="mt-2 text-left">If you would like to enquire about a show, please <a
-                    class="underline hover:text-yns_yellow" href="mailto:{{ $venue->email }}">contact us.</a></p>
+                  <div class="flex flex-wrap gap-2">
+                    @foreach ($bandTypes as $type)
+                      @php
+                        $label = match ($type) {
+                            'original-bands' => 'Original',
+                            'cover-bands' => 'Cover',
+                            'tribute-bands' => 'Tribute',
+                            'all' => 'All Types',
+                            default => ucfirst($type),
+                        };
+                      @endphp
+                      <span class="inline-flex items-center rounded-full bg-gray-800 px-3 py-1 text-sm text-yns_yellow">
+                        {{ $label }}
+                      </span>
+                    @endforeach
+                  </div>
+                </div>
               @endif
 
-              @php
-                $genres = json_decode($venue->genre ?? '[]');
-              @endphp
-              @if ($venue->genre != '[]')
-                <p class="mt-4">The genres that we usually have at {{ $venue->name }} are:</p>
+              <!-- Genres Section -->
+              @if (!empty($processedGenres))
+                <div class="genres-section">
+                  <h3 class="mb-4 text-lg font-medium text-white">Music Genres</h3>
 
-                <ul class="genre-list columns-1 gap-2 md:columns-3 md:gap-4">
-                  @foreach ($genreNames as $genre)
-                    <li class="ml-6">{{ $genre }}</li>
-                  @endforeach
-                </ul>
+                  <div class="space-y-6">
+                    @foreach ($processedGenres as $genreName => $genreData)
+                      <div class="genre-block border-l-2 border-yns_yellow pl-4">
+                        <h4 class="mb-2 font-medium text-yns_yellow">{{ $genreName }}</h4>
 
-                <p class="mt-4">If you would like to enquire about a show, please <a
-                    class="underline hover:text-yns_yellow" href="mailto:{{ $venue->contact_email }}">contact us.</a>
-                </p>
+                        @if (!empty($genreData['subgenres']))
+                          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                            @foreach ($genreData['subgenres'] as $subgenre)
+                              <span class="text-sm text-gray-300">{{ $subgenre }}</span>
+                            @endforeach
+                          </div>
+                        @elseif ($genreData['all'])
+                          <div class="mb-2">
+                            <span
+                              class="inline-flex items-center rounded-full bg-yns_yellow/20 px-3 py-1 text-sm text-white">
+                              All subgenres
+                            </span>
+                          </div>
+                        @endif
+                      </div>
+                    @endforeach
+                  </div>
+                </div>
               @else
-                <p class="mt-4">We don't have a preference on genres of music at {{ $venue->name }}. If you would
-                  like to enquire
-                  about a show, please <a class="underline hover:text-yns_yellow"
-                    href="mailto:{{ $venue->contact_email }}">contact us.</a></p>
+                <p class="text-gray-300">
+                  We don't have specific genre preferences. Please
+                  <a class="underline hover:text-yns_yellow" href="mailto:{{ $venue->contact_email }}">contact us</a>
+                  to discuss your music.
+                </p>
               @endif
             </div>
 
@@ -330,18 +355,8 @@
 
             <!-- Other Tab -->
             <div id="other" class="tab-panel hidden">
-              @if ($venue->capacity)
-                <p class="bold pb-2 text-left text-xl md:text-2xl">Other Information you may want to
-                  know about
-                  {{ $venue->name }}.</p>
-                @if ($venue->contact_name)
-                  <p class="text-left md:text-base">Person(s) To Speak To: {{ $venue->contact_name }}
-                  </p>
-                @endif
-                @if ($venue->capacity)
-                  <p class="pb-2 text-left">Capacity: {{ $venue->capacity }}</p>
-                @endif
-                <p class="bold pb-2 pt-2 text-left text-2xl">More Info:</p>
+              @if ($venue->additional_info)
+                <p class="text-left">We have some additional information about this venue:</p>
                 <p class="pb-2 text-left">{!! nl2br(e($venue->additional_info)) !!}</p>
               @else
                 <p class="text-left">No Further Information Avaliable</p>

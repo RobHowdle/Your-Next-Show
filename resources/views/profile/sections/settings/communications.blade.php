@@ -17,7 +17,7 @@
               class="{{ in_array($name, ['system_announcements', 'legal_or_policy_updates']) ? 'opacity-50' : '' }} relative inline-flex cursor-pointer items-center">
               <input type="checkbox" class="toggle-checkbox sr-only" data-communication="{{ $name }}"
                 onchange="updateCommunicationStatus('{{ $name }}', this.checked)"
-                {{ $settings['is_enabled'] === 1 ? 'checked' : '' }}
+                {{ $settings['is_enabled'] ? 'checked' : '' }}
                 {{ in_array($name, ['system_announcements', 'legal_or_policy_updates']) ? 'disabled' : '' }}>
               <div
                 class="toggle-bg {{ in_array($name, ['system_announcements', 'legal_or_policy_updates']) ? 'cursor-not-allowed' : '' }}">
@@ -35,9 +35,10 @@
   function updateCommunicationStatus(settingName, enabled) {
     const dashboardType = '{{ $dashboardType }}';
     const userId = '{{ $user->id }}';
+    const comSettings = @json(collect($communications)->mapWithKeys(fn($v, $k) => [$k => $v['name']]));
 
     $.ajax({
-      url: `/api/profile/${dashboardType}/communications/update`,
+      url: `/profile/${dashboardType}/communications/update`,
       method: 'POST',
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -49,7 +50,10 @@
       },
       success: function(response) {
         if (response.success) {
-          showSuccessNotification(settingName, 'successfully updated.');
+          function settingsDisplayName(key) {
+            return comSettings[key] || key;
+          }
+          showSuccessNotification(settingsDisplayName(settingName) + ' successfully updated.');
         }
       },
       error: function(xhr, status, error) {

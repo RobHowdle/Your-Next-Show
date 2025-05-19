@@ -1,5 +1,5 @@
 <x-guest-layout>
-  <div class="flex min-h-screen flex-col xl:flex-row">
+  <div x-data="roleSelector" class="flex min-h-screen flex-col xl:flex-row">
     {{-- Benefits Section --}}
     <div class="relative mt-24 hidden bg-black lg:flex xl:mt-0 xl:w-1/2">
       <div class="absolute inset-0">
@@ -139,62 +139,8 @@
                 </button>
               </div>
 
-              {{-- Password Strength Indicator --}}
-              <div class="mt-2">
-                <div class="h-1 w-full rounded-full bg-gray-800">
-                  <div id="password-strength-meter" class="h-full w-0 rounded-full transition-all duration-300">
-                  </div>
-                </div>
-                <span id="password-strength-text" class="text-xs text-gray-400"></span>
-              </div>
-
-              {{-- Password Requirements (Collapsible) --}}
-              <div id="password-requirements" class="mt-2 text-xs text-gray-400">
-                <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <span id="length-requirement" class="requirement flex items-center">
-                    <svg id="length-icon" class="mr-1 hidden h-3 w-3 text-green-400" fill="currentColor"
-                      viewBox="0 0 20 20">
-                      <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
-                    </svg>
-                    Min 8 characters
-                  </span>
-                  <span id="uppercase-requirement" class="requirement flex items-center">
-                    <svg id="length-icon" class="mr-1 hidden h-3 w-3 text-green-400" fill="currentColor"
-                      viewBox="0 0 20 20">
-                      <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
-                    </svg>
-                    At least 1 uppcase letter (A-Z)
-                  </span>
-                  <span id="lowercase-requirement" class="requirement flex items-center">
-                    <svg id="length-icon" class="mr-1 hidden h-3 w-3 text-green-400" fill="currentColor"
-                      viewBox="0 0 20 20">
-                      <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
-                    </svg>
-                    At least 1 lowercase letter (a-z)
-                  </span>
-                  <span id="special-requirement" class="requirement flex items-center">
-                    <svg id="length-icon" class="mr-1 hidden h-3 w-3 text-green-400" fill="currentColor"
-                      viewBox="0 0 20 20">
-                      <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
-                    </svg>
-                    At least 1 special character (@$!%*?&)
-                  </span>
-                  <span id="not-compromised-requirement" class="requirement flex items-center">
-                    <svg id="length-icon" class="mr-1 hidden h-3 w-3 text-green-400" fill="currentColor"
-                      viewBox="0 0 20 20">
-                      <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
-                    </svg>
-                    Must not be a compromised password
-                  </span>
-                  <span id="password-match-requirement" class="requirement flex items-center">
-                    <svg id="length-icon" class="mr-1 hidden h-3 w-3 text-green-400" fill="currentColor"
-                      viewBox="0 0 20 20">
-                      <path d="M6 10l2 2 6-6-1.5-1.5L8 10.5l-3.5-3.5L3 8l3 3z" />
-                    </svg>
-                    Must not be a compromised password
-                  </span>
-                </div>
-              </div>
+              {{-- Add the password strength checker component here --}}
+              <x-password-strength-checker input-id="password" />
             </div>
 
             {{-- Password Confirmation Section --}}
@@ -207,28 +153,34 @@
 
             {{-- Role Selection --}}
             <div>
-              <x-input-label-dark for="role" :value="__('Select User Role')" :required="true" />
-              <select id="role" name="role"
-                class="mt-1 block w-full rounded-md border-gray-800 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-yns_yellow focus:ring-yns_yellow">
-                @foreach ($roles as $role)
-                  <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
-                @endforeach
-              </select>
-            </div>
+              <x-input-label-dark for="role" :value="__('Account Type')" :required="true" />
+              <div class="mt-2">
+                <button type="button" id="role-selector"
+                  class="w-full rounded-md border border-gray-700 bg-gray-900 px-4 py-2 text-left text-gray-300 hover:bg-gray-800"
+                  @click="showRoleModal = true">
+                  <span x-text="selectedRoleText"></span>
+                </button>
+              </div>
 
-            {{-- Submit Section --}}
-            <div class="flex flex-col-reverse gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <a class="text-center text-sm text-gray-400 hover:text-white sm:text-left" href="{{ route('login') }}">
-                Already registered?
-              </a>
-              <x-primary-button id="register-button" class="w-full sm:w-auto">
-                Register
-              </x-primary-button>
-            </div>
+              {{-- Hidden Role Input --}}
+              <input type="hidden" name="role" id="role-input" x-model="selectedRole">
+
+              <x-role-selection-modal />
+
+              {{-- Submit Section --}}
+              <div class="flex flex-col-reverse gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <a class="text-center text-sm text-gray-400 hover:text-white sm:text-left"
+                  href="{{ route('login') }}">
+                  Already registered?
+                </a>
+                <x-button type="submit" label="Register" id="register-button" />
+              </div>
           </form>
         </div>
       </div>
     </div>
+
+
 
   </div>
 </x-guest-layout>
@@ -240,110 +192,11 @@
   }
 </style>
 <script>
-  // Utility Functions
-  const checkRequirement = (value, test) => {
-    const requirement = document.getElementById(`${test}-requirement`);
-    const icon = document.getElementById(`${test}-icon`);
-    const isValid = {
-      length: pwd => pwd.length >= 8,
-      uppercase: pwd => /[A-Z]/.test(pwd),
-      lowercase: pwd => /[a-z]/.test(pwd),
-      number: pwd => /[0-9]/.test(pwd),
-      special: pwd => /[@$!%*?&]/.test(pwd)
-    } [test](value);
-
-    requirement?.classList.toggle('valid', isValid);
-    icon?.classList.toggle('hidden', !isValid);
-    return isValid;
-  };
-
-  const updatePasswordStrength = (password) => {
-    const meter = document.getElementById('password-strength-meter');
-    const text = document.getElementById('password-strength-text');
-    const requirements = ['length', 'uppercase', 'lowercase', 'number', 'special'];
-    const strength = requirements.filter(req => checkRequirement(password, req)).length;
-
-    const levels = {
-      0: {
-        width: '0%',
-        class: '',
-        text: ''
-      },
-      1: {
-        width: '25%',
-        class: 'weak',
-        text: 'Weak'
-      },
-      2: {
-        width: '50%',
-        class: 'medium',
-        text: 'Medium'
-      },
-      3: {
-        width: '75%',
-        class: 'strong',
-        text: 'Strong'
-      },
-      4: {
-        width: '100%',
-        class: 'strong',
-        text: 'Very Strong'
-      }
-    };
-
-    const {
-      width,
-      class: className,
-      text: strengthText
-    } = levels[strength];
-    meter.style.width = width;
-    meter.className = className;
-    text.textContent = strengthText;
-  };
-
-  function checkPasswordMatch() {
-    const password = document.getElementById('password').value;
-    const confirmation = document.getElementById('password_confirmation').value;
-    const matchRequirement = document.getElementById('password-match-requirement');
-    const matchIcon = document.getElementById('password-match-icon');
-
-    if (password && confirmation) {
-      const matches = password === confirmation;
-      matchRequirement?.classList.toggle('valid', matches);
-      matchIcon?.classList.toggle('hidden', !matches);
-    }
-  }
-
-  function togglePasswordVisibility() {
-    const passwordInput = document.getElementById('password');
-    const eyeIcon = document.getElementById('password-eye');
-
-    if (passwordInput.type === 'password') {
-      passwordInput.type = 'text';
-      eyeIcon.innerHTML = `
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-            `;
-    } else {
-      passwordInput.type = 'password';
-      eyeIcon.innerHTML = `
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            `;
-    }
-  }
-
   // Event Listeners
   document.addEventListener('DOMContentLoaded', () => {
+    initializePasswordChecker();
+
     const form = document.getElementById('registration-form');
-    const passwordInput = document.getElementById('password');
-    const confirmInput = document.getElementById('password_confirmation');
-
-    passwordInput?.addEventListener('input', (e) => {
-      updatePasswordStrength(e.target.value);
-      checkPasswordMatch();
-    });
-
-    confirmInput?.addEventListener('input', checkPasswordMatch);
 
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();

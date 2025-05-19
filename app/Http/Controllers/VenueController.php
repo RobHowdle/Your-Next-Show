@@ -137,6 +137,19 @@ class VenueController extends Controller
         $genres = json_decode($venue->genre);
         $genreNames = collect($genres)->keys()->toArray();
 
+        $filteredGenres = collect($genres)->filter(function ($genreData, $genreName) {
+            return $genreData->all === true || (isset($genreData->subgenres) && count($genreData->subgenres) > 0);
+        })->toArray();
+
+        // Prepare a structured array for the view
+        $processedGenres = [];
+        foreach ($filteredGenres as $genreName => $genreData) {
+            $processedGenres[$genreName] = [
+                'all' => $genreData->all,
+                'subgenres' => $genreData->subgenres ?? []
+            ];
+        }
+
         // Fetch upcoming events through the pivot table
         $upcomingEvents = Event::whereHas('venues', function ($query) use ($venueId) {
             $query->where('venue_id', $venueId);
@@ -152,6 +165,7 @@ class VenueController extends Controller
             'venue',
             'venueId',
             'genreNames',
+            'processedGenres',
             'overallScore',
             'overallReviews',
             'averageCommunicationRating',

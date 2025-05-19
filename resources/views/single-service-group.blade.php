@@ -892,7 +892,7 @@
         href = value;
         iconClass = 'fab fa-facebook';
         break;
-      case 'twitter':
+      case 'x':
         href = value;
         iconClass = 'fab fa-twitter';
         break;

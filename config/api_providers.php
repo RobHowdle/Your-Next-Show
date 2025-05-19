@@ -71,8 +71,8 @@ return [
                 'requires_secret' => true,
                 'required_fields' => ['access_token']
             ],
-            'twitter' => [
-                'name' => 'Twitter',
+            'x' => [
+                'name' => 'X',
                 'description' => 'Social networking service',
                 'requires_secret' => true,
                 'required_fields' => ['api_key', 'api_secret']

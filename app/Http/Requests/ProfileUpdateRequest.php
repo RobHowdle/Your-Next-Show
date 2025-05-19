@@ -49,4 +49,26 @@ class ProfileUpdateRequest extends FormRequest
             ],
         ];
     }
+
+    /**
+     * Get the validation attributes for the request.
+     * 
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            // User Details
+            'userFirstName.string' => 'The first name must be a string.',
+            'userLastName.string' => 'The last name must be a string.',
+            'email.email' => 'The email must be a valid email address.',
+            'email.unique' => 'The email has already been taken.',
+            'userDob.date' => 'The date of birth must be a valid date.',
+            'role.exists' => 'The selected role is invalid.',
+            'location.string' => 'The location must be a string.',
+            'postal_town.string' => 'The postal town must be a string.',
+            'latitude.numeric' => 'The latitude must be a number.',
+            'longitude.numeric' => 'The longitude must be a number.',
+        ];
+    }
 }

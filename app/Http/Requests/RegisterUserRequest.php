@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules;
 use App\Rules\CompromisedPassword;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules;
 
 class RegisterUserRequest extends FormRequest
 {
@@ -42,7 +43,12 @@ class RegisterUserRequest extends FormRequest
                 'not_regex:/' . preg_quote($this->first_name) . '/i',
                 'not_regex:/' . preg_quote($this->last_name) . '/i',
             ],
-            'role' => ['required', 'exists:roles,id'],
+            'role' => [
+                'required',
+                Rule::exists('roles', 'name')->where(function ($query) {
+                    return $query->where('name', '!=', 'administrator');
+                })
+            ],
         ];
     }
 

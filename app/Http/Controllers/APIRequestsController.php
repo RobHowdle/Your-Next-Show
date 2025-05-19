@@ -410,19 +410,27 @@ class APIRequestsController extends Controller
             'userId' => 'required|integer|exists:users,id',
         ]);
 
-        $user = User::findOrFail($request->userId);
+        try {
+            $user = User::findOrFail($request->userId);
 
-        $mailingPreferences = $user->mailing_preferences ?? [];
+            $mailingPreferences = $user->mailing_preferences ?? [];
 
-        // Simply update the specific setting
-        $mailingPreferences[$request->setting] = $request->enabled;
+            // Update the specific setting
+            $mailingPreferences[$request->setting] = $request->enabled;
 
-        $user->update(['mailing_preferences' => $mailingPreferences]);
+            $user->update(['mailing_preferences' => $mailingPreferences]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Communications updated successfully'
-        ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Communications updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update communications'
+            ], 500);
+        }
     }
 
     public function updateStylesAndPrint(Request $request)
@@ -446,61 +454,76 @@ class APIRequestsController extends Controller
         ]);
     }
 
+    /**
+     * Save packages for a user
+     */
     public function updatePackages($dashboardType, StoreUpdatePackages $request)
     {
         try {
             $user = Auth::user();
+            $validated = $request->validated();
 
-            if (!$user) {
-                \Log::error('User not authenticated');
-                return response()->json(['error' => 'Unauthenticated'], 401);
+            // Get the appropriate service based on dashboard type
+            $service = match ($dashboardType) {
+                'venue' => $user->venues()->first(),
+                'promoter' => $user->promoters()->first(),
+                'artist' => $user->otherService('Artist')->first(),
+                'photographer' => $user->otherService('Photography')->first(),
+                'designer' => $user->otherService('Designer')->first(),
+                'videographer' => $user->otherService('Videography')->first(),
+                default => null,
+            };
+
+            if (!$service) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service not found'
+                ], 404);
             }
 
-            $packages = $request->input('packages', []);
+            // Check if jobs module is enabled for this user
+            $jobsModuleEnabled = UserModuleSetting::where('user_id', $user->id)
+                ->where('module_name', 'jobs')
+                ->where('is_enabled', true)
+                ->exists();
 
-            switch ($dashboardType) {
-                case 'venue':
-                    $model = $user->venues()->first();
-                    break;
-                case 'promoter':
-                    $model = $user->promoters()->first();
-                    break;
-                default:
-                    $model = $user->otherService('service')->first();
+            if (!$jobsModuleEnabled) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jobs module is not enabled'
+                ], 403);
             }
 
-            if (!$model) {
-                \Log::error('Model not found for package update', [
-                    'user_id' => $user->id,
-                    'type' => $request->input('type')
-                ]);
-                return response()->json(['error' => 'Service not found'], 404);
-            }
+            // Structure packages data
+            $packages = array_map(function ($package) {
+                return [
+                    'name' => $package['name'],
+                    'description' => $package['description'],
+                    'price' => $package['price'],
+                    'features' => $package['features'] ?? [],
+                    'is_active' => $package['is_active'] ?? true,
+                ];
+            }, $validated['packages']);
 
-            // Handle empty packages case
-            if (empty($packages)) {
-                $model->packages = json_encode([]);
-            } else {
-                $model->packages = json_encode($packages);
-            }
-
-            try {
-                $model->save();
-                return response()->json(['success' => true]);
-            } catch (\Exception $e) {
-                \Log::error('Failed to save packages:', [
-                    'error' => $e->getMessage(),
-                    'user_id' => $user->id,
-                    'packages' => $packages
-                ]);
-                return response()->json(['error' => 'Failed to save packages: ' . $e->getMessage()], 500);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Package update failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            // Update packages in the database
+            $service->update([
+                'packages' => json_encode($packages)
             ]);
-            return response()->json(['error' => 'Update failed: ' . $e->getMessage()], 500);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Packages updated successfully',
+                'redirect' => route('profile.edit', [
+                    'dashboardType' => $dashboardType,
+                    'id' => $user->id
+                ])
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error saving packages: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save packages'
+            ], 500);
         }
     }
 

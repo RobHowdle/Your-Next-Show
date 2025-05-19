@@ -9,8 +9,8 @@ use Database\Seeders\VenuesSeeder;
 use Database\Seeders\AdminUserSeeder;
 use Database\Seeders\PermissionsSeeder;
 use Database\Seeders\OtherServiceSeeder;
+use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\OtherServicesListSeeder;
-use Database\Seeders\ServiceRolesAndPermissionsSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,8 +22,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminUserSeeder::class,
             PermissionsSeeder::class,
-            ServiceRolesAndPermissionsSeeder::class,
             RoleSeeder::class,
+            RolePermissionSeeder::class,
             // VenueTestSeeder::class, // For Testing Data
             VenuesSeeder::class,
             // VenueExtraInfoSeeder::class, // For Testing Data
@@ -37,5 +37,9 @@ class DatabaseSeeder extends Seeder
             // UserServiceSeeder::class,
             // TodoTestDataSeeder::class,
         ]);
+        $this->call(VenuesTableSeeder::class);
+        $this->call(PromotersTableSeeder::class);
+        $this->call(OtherServicesListTableSeeder::class);
+        $this->call(OtherServicesTableSeeder::class);
     }
 }

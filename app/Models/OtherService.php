@@ -70,7 +70,7 @@ class OtherService extends Model
      */
     public static function photographers()
     {
-        return self::where('other_service_id', 1);
+        return self::where('name', 'photographer');
     }
 
     /**
@@ -78,7 +78,7 @@ class OtherService extends Model
      */
     public static function videographers()
     {
-        return self::where('other_service_id', 2);
+        return self::where('name', 'videographer');
     }
 
     /**
@@ -86,7 +86,7 @@ class OtherService extends Model
      */
     public static function designers()
     {
-        return self::where('other_service_id', 3);
+        return self::where('name', 'designer');
     }
 
 
@@ -95,7 +95,7 @@ class OtherService extends Model
      */
     public static function bands()
     {
-        return self::where('other_service_id', 4);
+        return self::where('name', 'artist');
     }
     /**
      * Belongs to OtherServiceList relation.

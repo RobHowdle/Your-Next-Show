@@ -28,7 +28,7 @@ class BandProfileUpdateRequest extends FormRequest
             'postal_town' => 'nullable|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'other_service_id' => "nullable|exists:other_service_list,id",
+            'other_service_id' => "nullable|exists:other_services_list,id",
             'about' => 'nullable|string',
             'packages' => "nullable|array",
             'environment_type' => "nullable|array",

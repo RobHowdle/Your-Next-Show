@@ -11,47 +11,71 @@ class What3WordsService
 {
     protected $apiKey;
 
-    // public function __construct()
-    // {
-    //     $this->apiKey = config('services.what3words.api_key');
-    // }
-
     /**
-     * Get What3Words address suggestions using autosuggest.
+     * Convert a regular address to What3Words format
      *
-     * @param string $words
+     * @param string $address
      * @return array|null
      */
-    // public function getSuggestedWords(string $words): ?array
-    // {
-    //     // Autosuggest API endpoint
-    //     $response = Http::get('https://api.what3words.com/v3/autosuggest', [
-    //         'input' => $words,
-    //         'key' => $this->apiKey,
-    //         'lang' => 'en',
-    //         'country' => 'GB',
-    //     ]);
+    public function convertAddressToW3W(string $address): ?array
+    {
+        $api = new Geocoder(config('services.what3words.api_key'));
 
-    //     // Log the full response to inspect its structure
-    //     Log::info('What3Words Autosuggest Response', [
-    //         'response' => $response->json(),
-    //         'status' => $response->status(),
-    //     ]);
+        try {
+            // First convert the address to coordinates using a geocoding service
+            $coordinates = $this->geocodeAddress($address);
 
-    //     if ($response->successful()) {
-    //         $suggestions = $response->json('suggestions');
-    //         Log::info('Suggestions', $suggestions);  // Log suggestions to see if they're being returned
+            if (!$coordinates) {
+                return null;
+            }
 
-    //         return is_array($suggestions) ? $suggestions : null;
-    //     }
+            // Then convert the coordinates to 3 words
+            $response = $api->convertTo3wa($coordinates['lat'], $coordinates['lng']);
 
-    //     Log::error('What3Words Autosuggest Error', [
-    //         'response' => $response->json(),
-    //         'status' => $response->status(),
-    //     ]);
+            if (isset($response['words'])) {
+                return [
+                    'words' => $response['words'],
+                    'nearestPlace' => $response['nearestPlace'] ?? 'Unknown location',
+                    'coordinates' => [
+                        'lat' => $coordinates['lat'],
+                        'lng' => $coordinates['lng']
+                    ]
+                ];
+            }
 
-    //     return null;
-    // }
+            return null;
+        } catch (\Exception $e) {
+            \Log::error('What3Words conversion error', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Geocode an address to coordinates
+     * 
+     * @param string $address
+     * @return array|null
+     */
+    protected function geocodeAddress(string $address): ?array
+    {
+        // For a basic implementation, you can use Google's Geocoding API
+        // You'll need to add a Google API key to your config
+        $googleApiKey = config('services.google.api_key');
+        $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+            'address' => $address,
+            'key' => $googleApiKey,
+        ]);
+
+        if ($response->successful() && isset($response['results'][0]['geometry']['location'])) {
+            $location = $response['results'][0]['geometry']['location'];
+            return [
+                'lat' => $location['lat'],
+                'lng' => $location['lng']
+            ];
+        }
+
+        return null;
+    }
 
     /**
      * Get What3Words address suggestions using autosuggest.

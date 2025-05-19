@@ -42,6 +42,7 @@ class Venue extends Model
         'is_verified',
         'verified_at',
         'preferred_contact',
+        'packages',
     ];
 
     protected $casts = [
