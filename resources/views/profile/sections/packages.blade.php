@@ -1,31 +1,32 @@
-<header>
-  <h2 class="text-md font-heading font-medium text-white">
-    {{ __('Packages') }}
-  </h2>
-</header>
+<div class="rounded-lg bg-gray-800/50 p-6 backdrop-blur-sm">
+  <header class="mb-6 border-b border-gray-700 pb-4">
+    <h2 class="font-heading text-lg font-medium text-white">
+      {{ __('Packages') }}
+    </h2>
+    <p class="mt-1 text-sm text-gray-400">
+      {{ __('Create and manage your service packages.') }}
+    </p>
+  </header>
 
-<div class="mt-8 grid grid-cols-3 gap-4" id="packages-container">
-  {{-- Loop through existing packages --}}
-  @if (isset($profileData['packages']) && !empty($profileData['packages']))
-    @foreach ($profileData['packages'] as $index => $package)
-      <div class="package-card rounded-lg bg-gray-800 p-6 shadow-lg">
-        <form class="package-form">
-          @csrf
-          <div class="space-y-4">
-            <div>
-              <x-input-label-dark>Package Title</x-input-label-dark>
-              <x-text-input name="packages[{{ $index }}][title]"
-                value="{{ is_object($package) ? $package->title : $package['title'] ?? '' }}" class="w-full" />
-            </div>
-
-            <div>
-              <x-input-label-dark>Description</x-input-label-dark>
-              <x-textarea-input name="packages[{{ $index }}][description]"
-                rows="3">{{ is_object($package) ? $package->description : $package['description'] ?? '' }}</x-textarea-input>
-            </div>
-
-            <div>
-              <div class="group">
+  <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3" id="packages-container">
+    {{-- Loop through existing packages --}}
+    @if (isset($profileData['packages']) && !empty($profileData['packages']))
+      @foreach ($profileData['packages'] as $index => $package)
+        <div class="package-card flex flex-col rounded-lg bg-gray-800 p-6 shadow-lg">
+          <form class="package-form flex h-full flex-col">
+            @csrf
+            <div class="flex-1 space-y-4">
+              <div>
+                <x-input-label-dark>Package Title</x-input-label-dark>
+                <x-text-input name="packages[{{ $index }}][title]"
+                  value="{{ is_object($package) ? $package->title : $package['title'] ?? '' }}" class="w-full" />
+              </div>
+              <div>
+                <x-input-label-dark>Description</x-input-label-dark>
+                <x-textarea-input name="packages[{{ $index }}][description]"
+                  rows="3">{{ is_object($package) ? $package->description : $package['description'] ?? '' }}</x-textarea-input>
+              </div>
+              <div>
                 <x-input-label-dark>Lead Time</x-input-label-dark>
                 <div class="flex flex-row gap-2">
                   <x-number-input name="packages[{{ $index }}][lead_time]"
@@ -37,87 +38,83 @@
                     @php
                       $selectedUnit = is_object($package) ? $package->lead_time_unit : $package['lead_time_unit'] ?? '';
                     @endphp
-                    <option class="px-2" value="hours" {{ $selectedUnit === 'hours' ? 'selected' : '' }}>Hours
-                    </option>
-                    <option class="px-2" value="days" {{ $selectedUnit === 'days' ? 'selected' : '' }}>Days</option>
-                    <option class="px-2" value="weeks" {{ $selectedUnit === 'weeks' ? 'selected' : '' }}>Weeks
-                    </option>
-                    <option class="px-2" value="months" {{ $selectedUnit === 'months' ? 'selected' : '' }}>Months
-                    </option>
+                    <option value="hours" {{ $selectedUnit === 'hours' ? 'selected' : '' }}>Hours</option>
+                    <option value="days" {{ $selectedUnit === 'days' ? 'selected' : '' }}>Days</option>
+                    <option value="weeks" {{ $selectedUnit === 'weeks' ? 'selected' : '' }}>Weeks</option>
+                    <option value="months" {{ $selectedUnit === 'months' ? 'selected' : '' }}>Months</option>
                   </select>
                 </div>
               </div>
-            </div>
-
-            <div>
-              <x-input-label-dark>Job Type</x-input-label-dark>
-              <select name="packages[{{ $index }}][job_type]"
-                class="w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-yns_red dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600">
-                @php
-                  $jobTypes = config('job_types.' . strtolower($dashboardType));
-                  $selectedJobType = is_object($package) ? $package->job_type : $package['job_type'] ?? '';
-                @endphp
-
-                @foreach ($jobTypes as $clientType => $types)
-                  <optgroup label="{{ ucfirst($clientType) }}">
-                    @foreach ($types as $type)
-                      <option value="{{ $type['id'] }}" {{ $selectedJobType === $type['id'] ? 'selected' : '' }}>
-                        {{ $type['name'] }}
-                      </option>
-                    @endforeach
-                  </optgroup>
-                @endforeach
-              </select>
-            </div>
-
-            <div>
-              <x-input-label-dark>Price</x-input-label-dark>
-              <x-number-input-pound name="packages[{{ $index }}][price]"
-                value="{{ is_object($package) ? $package->price : $package['price'] ?? '' }}" class="w-full" />
-            </div>
-
-            <div class="included-items">
-              <x-input-label-dark>Included Items</x-input-label-dark>
-              <div class="space-y-2" id="items-container-{{ $index }}">
-                @if (isset($package->items) || isset($package['items']))
-                  @foreach (is_object($package) ? $package->items : $package['items'] as $itemIndex => $item)
-                    <div class="flex gap-2">
-                      <x-text-input name="packages[{{ $index }}][items][]" value="{{ $item }}"
-                        class="w-full" />
-                      <button type="button" class="remove-item text-red-500">×</button>
-                    </div>
+              <div>
+                <x-input-label-dark>Job Type</x-input-label-dark>
+                <select name="packages[{{ $index }}][job_type]"
+                  class="w-full rounded-md border-yns_red shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-yns_red dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600">
+                  @php
+                    $jobTypes = config('job_types.' . strtolower($dashboardType));
+                    $selectedJobType = is_object($package) ? $package->job_type : $package['job_type'] ?? '';
+                  @endphp
+                  @foreach ($jobTypes as $clientType => $types)
+                    <optgroup label="{{ ucfirst($clientType) }}">
+                      @foreach ($types as $type)
+                        <option value="{{ $type['id'] }}" {{ $selectedJobType === $type['id'] ? 'selected' : '' }}>
+                          {{ $type['name'] }}
+                        </option>
+                      @endforeach
+                    </optgroup>
                   @endforeach
-                @endif
+                </select>
               </div>
-              <button type="button" class="add-item mt-2 text-yns_yellow" data-package="{{ $index }}">+ Add
-                Item</button>
+              <div>
+                <x-input-label-dark>Price</x-input-label-dark>
+                <x-number-input-pound name="packages[{{ $index }}][price]"
+                  value="{{ is_object($package) ? $package->price : $package['price'] ?? '' }}" class="w-full" />
+              </div>
+              <div class="included-items">
+                <x-input-label-dark>Included Items</x-input-label-dark>
+                <div class="space-y-2" id="items-container-{{ $index }}">
+                  @if (isset($package->items) || isset($package['items']))
+                    @foreach (is_object($package) ? $package->items : $package['items'] as $itemIndex => $item)
+                      <div class="flex gap-2">
+                        <x-text-input name="packages[{{ $index }}][items][]" value="{{ $item }}"
+                          class="w-full" />
+                        <button type="button" class="remove-item text-red-500">×</button>
+                      </div>
+                    @endforeach
+                  @endif
+                </div>
+                <button type="button" class="add-item mt-2 text-yns_yellow" data-package="{{ $index }}">+ Add
+                  Item</button>
+              </div>
             </div>
-          </div>
-          <button type="button" class="remove-package mt-4 text-red-500">Delete Package</button>
-        </form>
+            <button type="button" class="remove-package mt-4 self-end text-red-500">Delete Package</button>
+          </form>
+        </div>
+      @endforeach
+    @else
+      <div class="col-span-full">
+        <p class="py-8 text-center text-gray-400">No Packages</p>
       </div>
-    @endforeach
-  @else
-    <p>No Packages</p>
-  @endif
+    @endif
 
-  {{-- Add New Package Card --}}
-  <div
-    class="add-package-card flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-600 p-6 hover:border-yns_yellow">
-    <div class="text-center">
-      <span class="text-4xl text-gray-400">+</span>
-      <p class="mt-2 text-gray-400">Add New Package</p>
+    {{-- Add New Package Card --}}
+    <div
+      class="add-package-card flex min-h-[200px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-600 p-6 hover:border-yns_yellow">
+      <div class="text-center">
+        <span class="text-4xl text-gray-400">+</span>
+        <p class="mt-2 text-gray-400">Add New Package</p>
+      </div>
     </div>
+  </div>
+
+  {{-- Save Button --}}
+  <div class="mt-6 flex justify-end border-t border-gray-700 pt-6">
+    <button type="button" id="save-packages"
+      class="rounded-lg border border-white bg-white px-4 py-2 font-heading font-bold text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">
+      Save Packages
+    </button>
   </div>
 </div>
 
-{{-- Save Button --}}
-<div class="mt-6 flex justify-end">
-  <button type="button" id="save-packages"
-    class="rounded-lg border border-white bg-white px-4 py-2 font-heading font-bold text-black transition duration-150 ease-in-out hover:border-yns_yellow hover:text-yns_yellow">
-    Save Packages
-  </button>
-</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -159,8 +156,7 @@
 
     function createPackageCard(index) {
       const div = document.createElement('div');
-      const jobTypes = @json(config('job_types.' . strtolower($dashboardType)));
-
+      const jobTypes = @json(config('job_types.' . strtolower($dashboardType))) || {};
       div.className = 'package-card bg-gray-800 p-6 rounded-lg shadow-lg';
       let jobTypeOptions = '';
 

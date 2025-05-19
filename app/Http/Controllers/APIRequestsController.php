@@ -410,19 +410,27 @@ class APIRequestsController extends Controller
             'userId' => 'required|integer|exists:users,id',
         ]);
 
-        $user = User::findOrFail($request->userId);
+        try {
+            $user = User::findOrFail($request->userId);
 
-        $mailingPreferences = $user->mailing_preferences ?? [];
+            $mailingPreferences = $user->mailing_preferences ?? [];
 
-        // Simply update the specific setting
-        $mailingPreferences[$request->setting] = $request->enabled;
+            // Update the specific setting
+            $mailingPreferences[$request->setting] = $request->enabled;
 
-        $user->update(['mailing_preferences' => $mailingPreferences]);
+            $user->update(['mailing_preferences' => $mailingPreferences]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Communications updated successfully'
-        ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Communications updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update communications'
+            ], 500);
+        }
     }
 
     public function updateStylesAndPrint(Request $request)

@@ -92,12 +92,14 @@ class ProfileController extends Controller
         // Get modules and communication settings
         $data['modules'] = $this->getModulesWithSettings($userId, $dashboardType);
         $data['communications'] = $this->getCommunicationSettings($userId, $dashboardType);
+        \Log::info('Communications:', $data['communications']);
 
         // Add profile data to view data with the correct key
         $data["{$dashboardType}Data"] = $profileData;
 
         return view('profile.edit', $data);
     }
+
     /**
      * Update the user's profile information.
      */
@@ -312,7 +314,7 @@ class ProfileController extends Controller
 
             // Check if the venue exists
             if ($venue) {
-                // venue Name
+                // Venue Name
                 if (isset($userData['name']) && $venue->name !== $userData['name']) {
                     $venue->update(['name' => $userData['name']]);
                 }
@@ -333,8 +335,8 @@ class ProfileController extends Controller
                 }
 
                 //W3W
-                if (isset($userData['w3w'])) {
-                    $venue->update(['w3w' => $userData['w3w']]);
+                if (isset($userData['venue']['w3w'])) {
+                    $venue->update(['w3w' => $userData['venue']['w3w']]);
                 }
 
                 // Contact Email
@@ -1516,7 +1518,7 @@ class ProfileController extends Controller
         return Storage::url('images/photographer_logos/' . $filename);
     }
 
-    protected function getCommunicationSettings($userId, $dashboardType)
+    protected function getCommunicationSettings($userId)
     {
         $user = User::findOrFail($userId);
         // Get default preferences from config
@@ -1535,10 +1537,11 @@ class ProfileController extends Controller
 
         // Map each preference to include name, description and enabled status
         foreach ($defaultPreferences as $key => $preference) {
+            $rawValue = $userPreferences[$key] ?? false;
             $communicationSettings[$key] = [
                 'name' => $preference['name'],
                 'description' => $preference['description'],
-                'is_enabled' => $userPreferences[$key] ?? false // Use the direct boolean value from DB
+                'is_enabled' => filter_var($rawValue, FILTER_VALIDATE_BOOLEAN),
             ];
         }
 

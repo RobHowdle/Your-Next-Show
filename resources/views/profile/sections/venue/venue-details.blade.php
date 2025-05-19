@@ -26,16 +26,15 @@
         <!-- What3Words -->
         <div>
           <x-input-label-dark for="w3w">What3Words Address</x-input-label-dark>
-          <x-text-input id="w3w" name="w3w" class="mt-1 block w-full"
-            value="{{ old('w3w', $venueData['w3w'] ?? '') }}" />
-          <div id="suggestions" class="mt-2"></div>
+          <x-w3w-search id="venue_w3w" name="venue[w3w]" :value="old('w3w', $venueData['w3w'] ?? '')"
+            label="Venue Location (What3Words)"></x-w3w-search>
           <x-input-error :messages="$errors->get('w3w')" class="mt-2" />
         </div>
       </div>
     </div>
 
     <div class="flex items-center justify-end gap-4 border-t border-gray-700 pt-6">
-      <button type="submit"
+      <button type="button" onclick="submitVenueForm()"
         class="rounded-lg border border-yns_yellow bg-yns_yellow px-4 py-2 font-heading font-bold text-black transition hover:bg-yns_yellow/90">
         Save Changes
       </button>
@@ -46,39 +45,49 @@
   </form>
 </div>
 
-@push('scripts')
-  <script>
-    $(document).ready(function() {
-      $('#venueDetailsForm').on('submit', function(e) {
-        e.preventDefault();
+<script>
+  function submitVenueForm() {
+    console.log('Submit button clicked');
 
-        const formData = {
-          capacity: $('#capacity').val(),
-          w3w: $('#w3w').val(),
-        };
+    // Get form values
+    var capacity = document.getElementById('capacity').value;
 
-        $.ajax({
-          url: '{{ route('venue.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}',
-          method: 'POST',
-          data: formData,
-          headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-          },
-          success: function(response) {
-            // Show success notification
-            if (typeof showNotification === 'function') {
-              showNotification('success', 'Venue details updated successfully');
-            }
-          },
-          error: function(xhr, status, error) {
-            // Show error notification
-            if (typeof showNotification === 'function') {
-              showNotification('error', 'Failed to update venue details');
-            }
-            console.error('Error:', error);
-          }
-        });
+    // Find the hidden input within the w3w component 
+    var w3wValue = document.querySelector('input[name="venue[w3w]"]').value;
+    console.log('W3W value:', w3wValue);
+
+    // Create form data object
+    var formData = new FormData();
+    formData.append('capacity', capacity);
+    formData.append('venue[w3w]', w3wValue);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    formData.append('_method', 'PUT');
+
+    // Send AJAX request
+    fetch('{{ route('venue.update', ['dashboardType' => $dashboardType, 'user' => $user]) }}', {
+        method: 'POST', // Use POST with _method: PUT for Laravel
+        body: formData,
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Response:', data);
+        if (data.success) {
+          // Show success message
+          showSuccessNotification(data.message);
+          setTimeout(() => {
+            window.location.href = response.redirect;
+          }, 2000);
+        } else {
+          // Show error message
+          showFailureNotification(data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showFailureNotification(error);
       });
-    });
-  </script>
-@endpush
+  }
+</script>

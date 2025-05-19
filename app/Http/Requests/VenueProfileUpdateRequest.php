@@ -29,14 +29,13 @@ class VenueProfileUpdateRequest extends FormRequest
             'contact_email' => 'nullable|email',
             'preferred_contact' => 'nullable|string',
             'logo_url' => 'nullable|image|mimes:jpeg,jpg,png,webp,svg|max:5120',
+            'inHouseGear' => 'nullable|string',
             'deposit_required' => 'nullable|in:yes,no',
             'deposit_amount' => 'nullable|numeric',
             'band_types' => 'nullable|array',
             'genres' => 'nullable|array',
             'additionalInfo' => 'nullable|string',
         ];
-
-        // Determine which form is being submitted based on key fields
 
         // If this is the basic information form submission
         if ($this->has('location') || $this->has('contact_name') || $this->has('contact_links')) {
@@ -60,7 +59,7 @@ class VenueProfileUpdateRequest extends FormRequest
         // If this is the venue details form (capacity, etc.)
         if ($this->has('capacity') || $this->has('w3w')) {
             $rules['capacity'] = 'nullable|numeric';
-            $rules['w3w'] = 'nullable|string';
+            $rules['venue.w3w'] = 'nullable|string';
         }
 
         return $rules;
@@ -93,6 +92,15 @@ class VenueProfileUpdateRequest extends FormRequest
             'description' => 'Please provide a valid description',
 
             // Genre & Artist Types
+            'band_types' => 'Please provide valid band types',
+            'genres' => 'Please provide valid genres',
+
+            // Venue Details
+            'capacity' => 'Please provide a valid capacity',
+            'w3w' => 'Please provide a valid What3Words address',
+
+            // In House Gear
+            'in_house_gear' => 'Please provide valid in-house gear',
             'deposit_required.required' => 'Please specify if a deposit is required',
             'deposit_required.in' => 'Deposit required must be either yes or no'
         ];

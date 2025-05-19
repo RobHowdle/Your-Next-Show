@@ -15,4 +15,4 @@ Route::post('/check-password', function (Request $request) {
     return response()->json([
         'compromised' => !$rule->passes('password', $request->input('password'))
     ]);
-})->middleware('throttle:6,1'); // Rate limit to 6 requests per minute
+})->middleware('throttle:6,1');

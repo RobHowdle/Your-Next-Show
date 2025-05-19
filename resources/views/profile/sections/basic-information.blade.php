@@ -156,45 +156,6 @@
   }
 
   jQuery(document).ready(function() {
-    // Listen for the 'input' event on the address input field
-    jQuery('#w3w').on('input', function() {
-      var address = jQuery(this).val();
-
-      if (address.length >= 7) { // Send request only if at least 3 characters are entered
-        setTimeout(function() {
-          $.ajax({
-            url: '{{ route('what3words.suggest') }}', // Route to handle the AJAX request
-            method: 'POST',
-            data: {
-              _token: '{{ csrf_token() }}', // Include CSRF token
-              w3w: address // Send the current address entered by the user
-            },
-            success: function(response) {
-              // Check if suggestions were found and display them
-              if (response.success) {
-                var suggestionsHtml = '<strong>Suggested Addresses:</strong><ul>';
-                response.suggestions.forEach(function(word) {
-                  suggestionsHtml += '<li>' + word.nearestPlace + ' - ' + word.words +
-                    '</li>';
-                });
-                suggestionsHtml += '</ul>';
-                jQuery('#suggestions').html(suggestionsHtml);
-              } else {
-                jQuery('#suggestions').html('<strong>No suggestions found</strong>');
-              }
-            },
-            error: function(xhr, status, error) {
-              // Handle any errors
-              jQuery('#suggestions').html(
-                '<strong>Error occurred while processing your request.</strong>');
-            }
-          });
-        }, 2000);
-      } else {
-        jQuery('#suggestions').empty(); // Clear suggestions if input is less than 3 characters
-      }
-    });
-
     $('#saveBasicInformation').on('submit', function(e) {
       e.preventDefault();
 

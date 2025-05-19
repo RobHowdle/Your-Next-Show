@@ -42,9 +42,6 @@
 </div>
 
 <script>
-  // ...existing code...
-</script>
-<script>
   document.addEventListener('DOMContentLoaded', function() {
     if (typeof jQuery !== 'undefined') {
       const aboutContent = @json(old('description', $profileData['description'] ?? ''));

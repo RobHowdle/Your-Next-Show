@@ -58,6 +58,20 @@
               ])
             </div>
 
+            <div x-show="activeTab === 'events'">
+              @include('profile.sections.events', [
+                  'profileData' => match ($dashboardType) {
+                      'venue' => $venueData,
+                      'promoter' => $promoterData,
+                      'artist' => $bandData,
+                      'photographer' => $photographerData,
+                      'designer' => $designerData,
+                      'videographer' => $videographerData,
+                      default => [],
+                  },
+              ])
+            </div>
+
             <!-- Role-Specific Sections -->
             @if ($dashboardType === 'venue')
               <div x-show="activeTab === 'venue-details'">
@@ -66,7 +80,9 @@
                 ])
               </div>
               <div x-show="activeTab === 'in-house-gear'">
-                @include('profile.sections.venue.in-house-gear')
+                @include('profile.sections.venue.in-house-gear', [
+                    'profileData' => $venueData,
+                ])
               </div>
               @if (isset($modules['jobs']) && $modules['jobs']['is_enabled'])
                 <div x-show="activeTab === 'packages'">
@@ -87,7 +103,15 @@
             @endif
 
             <!-- Settings Sections -->
-            {{-- @include('profile.sections.settings-tabs') --}}
+            <div x-show="activeTab === 'modules'">
+              @include('profile.sections.settings.modules')
+            </div>
+            <div x-show="activeTab === 'api-keys'">
+              @include('profile.sections.settings.api-keys')
+            </div>
+            <div x-show="activeTab === 'communications'">
+              @include('profile.sections.settings.communications')
+            </div>
           </div>
         </div>
       </div>

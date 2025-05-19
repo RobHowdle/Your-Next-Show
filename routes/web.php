@@ -258,7 +258,8 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     // What3Words
     Route::post('/what3words/suggest', [What3WordsController::class, 'suggest'])->name('what3words.suggest');
-
+    Route::post('/what3words/convert-address', [What3WordsController::class, 'convertToW3W'])
+        ->name('what3words.convert-address');
     // More specific routes
     // Profile Updates
     Route::put('/profile/{dashboardType}/promoter-profile-update/{user}', [ProfileController::class, 'updatePromoter'])->name('promoter.update');

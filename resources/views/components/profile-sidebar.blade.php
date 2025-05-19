@@ -32,6 +32,19 @@
     @endif
 
     <!-- Settings Section -->
-    <x-profile-nav-item icon="cog" label="Settings" tab="settings" />
+    <div x-data="{ open: false }" class="flex flex-col">
+      <button @click="open = !open"
+        class="flex items-center gap-2 rounded px-2 py-2 transition hover:bg-gray-700 focus:outline-none"
+        :class="sidebarOpen ? 'justify-start' : 'justify-center'" type="button">
+        <i class="fa-solid fa-cog"></i>
+        <span x-show="sidebarOpen" class="font-heading text-white">Settings</span>
+        <i class="fa-solid ml-auto" x-show="sidebarOpen" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </button>
+      <div x-show="open" x-transition class="ml-8 mt-1 flex flex-col gap-1" x-cloak>
+        <x-profile-nav-item icon="puzzle-piece" label="Modules" tab="modules" />
+        <x-profile-nav-item icon="key" label="API Keys" tab="api-keys" />
+        <x-profile-nav-item icon="building" label="Communications" tab="communications" />
+      </div>
+    </div>
   </nav>
 </div>
