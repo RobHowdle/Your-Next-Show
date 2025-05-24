@@ -15,7 +15,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach ($myEvents as $event)
+      @foreach ($profileData['myEvents'] as $event)
         <tr class="border-gray-700 odd:dark:bg-black even:dark:bg-gray-900">
           <td class="max-w-md whitespace-normal break-words px-6 py-4 font-sans text-white">{{ $event->event_name }}
           </td>

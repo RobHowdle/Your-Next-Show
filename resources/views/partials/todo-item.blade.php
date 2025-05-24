@@ -13,7 +13,13 @@
       @if ($todo->due_date)
         <span class="text-sm text-gray-400">
           <i class="fas fa-calendar-alt mr-1"></i>
-          {{ $todo->due_date->format('M d, Y') }}
+          @php
+            $dueDate =
+                $todo->due_date instanceof \Carbon\Carbon
+                    ? $todo->due_date
+                    : \Illuminate\Support\Carbon::parse($todo->due_date);
+          @endphp
+          {{ $dueDate->format('M d, Y') }}
         </span>
       @endif
       <button class="delete-todo text-red-400 transition-colors duration-150 hover:text-red-600"

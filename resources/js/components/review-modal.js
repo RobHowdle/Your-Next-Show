@@ -58,4 +58,58 @@ export function initReviewModal() {
             }
         }
     });
+
+    // AJAX form submission for review modal
+    const reviewForm = document.querySelector("#review-modal form");
+    if (reviewForm instanceof HTMLFormElement) {
+        reviewForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(reviewForm);
+            const action = reviewForm.action;
+            const submitButton = reviewForm.querySelector(
+                'button[type="submit"]'
+            );
+            if (submitButton instanceof HTMLButtonElement)
+                submitButton.disabled = true;
+
+            fetch(action, {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": String(formData.get("_token")),
+                },
+                body: formData,
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    // @ts-ignore
+                    if (
+                        typeof window.showSuccessNotification === "function" &&
+                        data.success
+                    ) {
+                        // @ts-ignore
+                        window.showSuccessNotification(
+                            data.message || "Your review has been submitted."
+                        );
+                    }
+                    hideModal("review-modal");
+                    reviewForm.reset();
+                })
+                .catch((error) => {
+                    // @ts-ignore
+                    if (typeof window.showFailureNotification === "function") {
+                        // @ts-ignore
+                        window.showFailureNotification(
+                            "There was a problem submitting your review. Please try again."
+                        );
+                    }
+                })
+                .finally(() => {
+                    if (submitButton instanceof HTMLButtonElement)
+                        submitButton.disabled = false;
+                });
+        });
+    }
 }
+
+window.initReviewModal = initReviewModal;

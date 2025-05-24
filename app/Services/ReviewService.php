@@ -60,7 +60,7 @@ class ReviewService
             if (isset($config['service_type'])) {
                 // Handle other services (artist, designer, photographer, videographer)
                 $otherServices = $user->otherService()
-                    ->where('service_type', $config['service_type'])
+                    ->where('services', $config['service_type'])
                     ->get();
 
                 if ($otherServices->isEmpty()) {

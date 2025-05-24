@@ -235,6 +235,8 @@ class OtherServiceController extends Controller
         $overallReviews = [];
         $overallReviews[$singleService->id] = $this->renderRatingIcons($reviewScore);
 
+
+
         return view('single-service', [
             'singleService' => $singleService,
             'genres' => $genres,
@@ -580,7 +582,7 @@ class OtherServiceController extends Controller
         ];
     }
 
-    public function submitReview(Request $request, $serviceName, $name)
+    public function submitReview(Request $request, $service, $name)
     {
         $formattedName = Str::title(str_replace('-', ' ', $name));
         $singleService = OtherService::where('name', $formattedName)->first();
@@ -595,47 +597,60 @@ class OtherServiceController extends Controller
             return count($ratingArray); // Count checked boxes for final rating
         };
 
-        switch ($serviceType) {
-            case 'Artist':
-                $bandReview = new BandReviews();
-                $bandReview->other_services_id = $serviceId;
-                $bandReview->other_services_list_id = $otherServicesListId;
-                $bandReview->music_rating = $request->music_rating;
-                $bandReview->promotion_rating = $request->promotion_rating;
-                $bandReview->gig_quality_rating = $request->gig_quality_rating;
-                $bandReview->save();
-                break;
-            case 'Photography':
-                $photographyReview = new PhotographyReviews();
-                $photographyReview->other_services_id = $serviceId;
-                $photographyReview->other_services_list_id = $otherServicesListId;
-                $photographyReview->photo_quality_rating = $request->photo_quality_rating;
-                $photographyReview->save();
-                break;
-            case 'Videography':
-                $videographyReview = new VideographyReviews();
-                $videographyReview->other_services_id = $serviceId;
-                $videographyReview->other_services_list_id = $otherServicesListId;
-                $videographyReview->video_quality_rating = $request->video_quality_rating;
-                $videographyReview->save();
-                break;
-            case 'Designer':
-                $designerReview = new DesignerReviews();
-                $designerReview->other_services_id = $serviceId;
-                $designerReview->other_services_list_id = $otherServicesListId;
-                $designerReview->reviewer_ip = $request->reviewer_ip;
-                $designerReview->communication_rating = $processRating($request->input('communication-rating', []));
-                $designerReview->flexibility_rating = $processRating($request->input('flexibility-rating', []));
-                $designerReview->professionalism_rating = $processRating($request->input('professionalism-rating', []));
-                $designerReview->design_quality_rating = $processRating($request->input('designer_quality-rating', []));
-                $designerReview->price_rating = $processRating($request->input('price-rating', []));
-                $designerReview->author = $request->review_author;
-                $designerReview->review = $request->review_message;
-                $designerReview->save();
-                break;
+        try {
+            switch ($serviceType) {
+                case 'Artist':
+                    $bandReview = new BandReviews();
+                    $bandReview->other_services_id = $serviceId;
+                    $bandReview->other_services_list_id = $otherServicesListId;
+                    $bandReview->communication_rating = $request->communication_rating;
+                    $bandReview->music_rating = $request->music_rating;
+                    $bandReview->promotion_rating = $request->promotion_rating;
+                    $bandReview->gig_quality_rating = $request->gig_quality_rating;
+                    $bandReview->review_approved = 0;
+                    $bandReview->review = $request->review_message;
+                    $bandReview->author = $request->review_author;
+                    $bandReview->display = 0;
+                    $bandReview->reviewer_ip = $request->reviewer_ip;
+                    $bandReview->save();
+                    break;
+                case 'Photography':
+                    $photographyReview = new PhotographyReviews();
+                    $photographyReview->other_services_id = $serviceId;
+                    $photographyReview->other_services_list_id = $otherServicesListId;
+                    $photographyReview->photo_quality_rating = $request->photo_quality_rating;
+                    $photographyReview->save();
+                    break;
+                case 'Videography':
+                    $videographyReview = new VideographyReviews();
+                    $videographyReview->other_services_id = $serviceId;
+                    $videographyReview->other_services_list_id = $otherServicesListId;
+                    $videographyReview->video_quality_rating = $request->video_quality_rating;
+                    $videographyReview->save();
+                    break;
+                case 'Designer':
+                    $designerReview = new DesignerReviews();
+                    $designerReview->other_services_id = $serviceId;
+                    $designerReview->other_services_list_id = $otherServicesListId;
+                    $designerReview->reviewer_ip = $request->reviewer_ip;
+                    $designerReview->communication_rating = $processRating($request->input('communication-rating', []));
+                    $designerReview->flexibility_rating = $processRating($request->input('flexibility-rating', []));
+                    $designerReview->professionalism_rating = $processRating($request->input('professionalism-rating', []));
+                    $designerReview->design_quality_rating = $processRating($request->input('designer_quality-rating', []));
+                    $designerReview->price_rating = $processRating($request->input('price-rating', []));
+                    $designerReview->author = $request->review_author;
+                    $designerReview->review = $request->review_message;
+                    $designerReview->save();
+                    break;
+                default:
+                    return response()->json(['success' => false, 'message' => 'Unknown service type.'], 400);
+            }
+        } catch (Exception $e) {
+            \Log::error('Review submission failed: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json(['success' => false, 'message' => 'Failed to submit review. Please try again.'], 500);
         }
 
-        return response()->json(['success' => true, 'message' => 'Review submitted successfully']);
+        return response()->json(['success' => true, 'message' => 'Review submitted for review']);
     }
 
     /**

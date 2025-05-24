@@ -79,7 +79,7 @@ class ProfileController extends Controller
 
         // Get profile specific data
         $profileData = match ($dashboardType) {
-            'promoter' => $this->getPromoterData($user),
+            'promoter' => $this->getPromoterData($user, $dashboardType),
             'artist' => $this->getOtherServicData('artist', $user),
             'venue' => $this->getVenueData($user),
             'photographer' => $this->getOtherServicData('photographer', $user),
@@ -92,7 +92,6 @@ class ProfileController extends Controller
         // Get modules and communication settings
         $data['modules'] = $this->getModulesWithSettings($userId, $dashboardType);
         $data['communications'] = $this->getCommunicationSettings($userId, $dashboardType);
-        \Log::info('Communications:', $data['communications']);
 
         // Add profile data to view data with the correct key
         $data["{$dashboardType}Data"] = $profileData;
@@ -1023,9 +1022,9 @@ class ProfileController extends Controller
     }
 
     // Get Data for Dashboard Type User
-    private function getPromoterData(User $user)
+    private function getPromoterData(User $user, $dashboardType)
     {
-        return $this->promoterDataHelper->getPromoterData($user);
+        return $this->promoterDataHelper->getPromoterData($user, $dashboardType);
     }
 
     private function getVenueData(User $user)

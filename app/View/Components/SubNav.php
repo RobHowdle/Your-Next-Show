@@ -372,14 +372,21 @@ class SubNav extends Component
         return 0;
     }
 
-    public function calculateOverallRatingBand($band)
-    {
-        //
-    }
-
     public function calculateTotalProfitsBandYtd($band)
     {
-        //
+        if ($band) {
+            $startOfYear = Carbon::now()->startOfYear();
+            $endOfYear = Carbon::now()->endOfYear();
+
+            $totalProfitsYTD = Finance::where('serviceable_id', $band)
+                ->where('serviceable_type', 'App\Models\OtherService')
+                ->whereBetween('date_to', [$startOfYear, $endOfYear])
+                ->sum('total_profit');
+
+            return $totalProfitsYTD;
+        }
+
+        return 0;
     }
 
     // Venue Calculations
@@ -488,11 +495,6 @@ class SubNav extends Component
         return 0;
     }
 
-    public function calculateOverallRatingDesigner($designer)
-    {
-        //
-    }
-
     // Videographer Calculations
     public function calculateTotalProfitsVideographerYtd($videographer)
     {
@@ -537,11 +539,6 @@ class SubNav extends Component
         }
 
         return 0;
-    }
-
-    public function calculateoverallVideographerRating($videographer)
-    {
-        //
     }
 
     /**

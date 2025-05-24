@@ -156,7 +156,7 @@
       <!-- Reviews Tab -->
       <div id="reviews" class="tab-panel hidden">
         <div class="space-y-6">
-          @if ($singleService->recentReviews && $singleService->recentReviews > 0)
+          @if (!empty($serviceData['recentReviews']))
             <p class="text-center">Want to know what we're like? Check out our reviews!</p>
 
             <!-- Detailed Ratings -->
@@ -164,32 +164,32 @@
               <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
                 Communication:
                 <span class="rating-wrapper flex flex-row gap-3">
-                  {!! $renderRatingIcons($averageCommunicationRating) !!}
+                  {!! $serviceData['renderRatingIcons']($serviceData['bandAverageCommunicationRating']) !!}
                 </span>
               </p>
               <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
                 Music:
                 <span class="rating-wrapper flex flex-row gap-3">
-                  {!! $renderRatingIcons($bandAverageMusicRating) !!}
+                  {!! $serviceData['renderRatingIcons']($serviceData['bandAverageMusicRating']) !!}
                 </span>
               </p>
               <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
                 Promotion:
                 <span class="rating-wrapper flex flex-row gap-3">
-                  {!! $renderRatingIcons($bandAveragePromotionRating) !!}
+                  {!! $serviceData['renderRatingIcons']($serviceData['bandAveragePromotionRating']) !!}
                 </span>
               </p>
               <p class="grid grid-cols-1 text-center md:grid-cols-2 md:text-left">
                 Gig Quality:
                 <span class="rating-wrapper flex flex-row gap-3">
-                  {!! $renderRatingIcons($bandAverageGigQualityRating) !!}
+                  {!! $serviceData['renderRatingIcons']($serviceData['bandAverageGigQualityRating']) !!}
                 </span>
               </p>
             </div>
 
             <!-- Review Comments -->
             <div class="reviews-block mt-8 flex flex-col gap-4">
-              @foreach ($singleService->recentReviews as $review)
+              @foreach ($serviceData['recentReviews'] as $review)
                 <div class="review text-center font-sans">
                   <p class="flex flex-col">
                     "{{ $review->review }}"

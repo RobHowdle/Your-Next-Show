@@ -94,6 +94,19 @@
               </div>
             @endif
 
+            @if ($dashboardType === 'promoter')
+              <div x-show="activeTab === 'venues'">
+                @include('profile.sections.promoter.my-venues', [
+                    'profileData' => $promoterData,
+                ])
+              </div>
+              <div x-show="activeTab === 'bands'">
+                @include('profile.sections.promoter.my-bands', [
+                    'profileData' => $promoterData,
+                ])
+              </div>
+            @endif
+
             @if ($dashboardType === 'artist')
               {{-- @include('profile.sections.artist-tabs') --}}
             @endif

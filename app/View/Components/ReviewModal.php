@@ -15,13 +15,14 @@ class ReviewModal extends Component
 
     public function getFormAction(): string
     {
-        $slug = strtolower(str_replace(' ', '-', $this->service));
+        $slug = strtolower(str_replace(' ', '-', $this->title)); // Use title for slug (service name)
+        $serviceType = strtolower($this->service); // Use actual service type (e.g., artist, designer)
 
         return match ($this->serviceType) {
             'venue' => route('submit-venue-review', ['slug' => $slug]),
             'promoter' => route('submit-promoter-review', ['slug' => $slug]),
             'singleService' => route('submit-single-service-review', [
-                'serviceType' => strtolower($this->serviceType),
+                'serviceType' => $serviceType,
                 'name' => $slug
             ]),
             default => throw new \InvalidArgumentException("Unknown service type: {$this->serviceType}")
