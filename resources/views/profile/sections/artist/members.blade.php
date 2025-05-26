@@ -16,6 +16,13 @@
           ['role' => 'Vocals', 'name' => ''],
       ];
 
+      // Add debug logging for the members data
+      \Log::debug('Members data in template', [
+          'profileData_members_exists' => isset($profileData['members']),
+          'profileData_members_type' => isset($profileData['members']) ? gettype($profileData['members']) : 'not set',
+          'profileData_members' => isset($profileData['members']) ? $profileData['members'] : null
+      ]);
+
       $members = isset($profileData['members']) ? $profileData['members'] : $defaultMembers;
     @endphp
 

@@ -472,24 +472,21 @@ class ProfileController extends Controller
 
     public function updateBand($dashboardType, BandProfileUpdateRequest $request, $user)
     {
+        // Make sure the members directory exists
+        try {
+            if (!is_dir(public_path('images/members'))) {
+                mkdir(public_path('images/members'), 0755, true);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to create members directory', [
+                'error' => $e->getMessage()
+            ]);
+        }
+        
         // Fetch the user
         $user = User::findOrFail($user);
         $userId = $user->id;
         $userData = $request->validated();
-
-        \Log::info('Updating band profile', [
-            'dashboardType' => $dashboardType,
-            'userId' => $userId,
-            'userData' => $userData
-        ]);
-
-        // Debug stream links submission
-        if (isset($userData['stream_links'])) {
-            \Log::info('Stream links data received', [
-                'stream_links' => $userData['stream_links'],
-                'default' => $userData['default_platform'] ?? null,
-            ]);
-        }
 
         if ($dashboardType == 'artist') {
             // Fetch the band associated with the user via the service_user pivot table
@@ -509,37 +506,6 @@ class ProfileController extends Controller
                     })
                     ->select('other_services.*')
                     ->first();
-            }
-
-            // Add debug logging
-            \Log::info('Band lookup result', [
-                'userId' => $userId,
-                'bandFound' => !is_null($band),
-                'bandId' => $band ? $band->id : null
-            ]);
-
-            // Log the actual service_user records for this user for debugging
-            try {
-                $serviceUserRecords = \DB::table('service_user')
-                    ->where('user_id', $userId)
-                    ->get();
-
-                \Log::info('Service user records for this user', [
-                    'userId' => $userId,
-                    'records' => $serviceUserRecords,
-                    'count' => $serviceUserRecords->count()
-                ]);
-
-                // Also check for any artist services
-                $artistServices = OtherService::bands()->get();
-                \Log::info('All artist services', [
-                    'count' => $artistServices->count(),
-                    'serviceIds' => $artistServices->pluck('id')->toArray()
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Error querying service_user table', [
-                    'error' => $e->getMessage()
-                ]);
             }
 
             // Check if the band exists
@@ -634,7 +600,7 @@ class ProfileController extends Controller
                 }
 
                 // Members
-                if (isset($userData['members'])) {
+                if (isset($userData['members']) && is_array($userData['members'])) {
                     $storedMembers = json_decode($band->members, true) ?: [];
                     $updatedMembers = $userData['members'];
 
@@ -647,18 +613,49 @@ class ProfileController extends Controller
                                 $extension = $file->getClientOriginalExtension();
                                 $fileName = Str::slug($memberName) . '-' . time() . '.' . $extension;
 
-                                // Store the file in public storage
-                                $file->storeAs('public/images/members', $fileName);
+                                try {
+                                    // Make sure the directory exists in public
+                                    $directory = public_path('images/members');
+                                    if (!is_dir($directory)) {
+                                        mkdir($directory, 0755, true);
+                                    }
 
-                                // Set the file path in the members data
-                                $updatedMembers[$index]['profile_pic'] = 'storage/images/members/' . $fileName;
+                                    // Store the file directly in the public directory
+                                    $file->move($directory, $fileName);
+
+                                    // Set the file path in the members data
+                                    $updatedMembers[$index]['profile_pic'] = 'images/members/' . $fileName;
+
+                                    // Log successful upload
+                                    \Log::info('Member profile picture uploaded successfully', [
+                                        'fileName' => $fileName,
+                                        'path' => 'images/members/' . $fileName,
+                                        'memberIndex' => $index
+                                    ]);
+                                } catch (\Exception $e) {
+                                    \Log::error('Failed to upload member profile picture', [
+                                        'error' => $e->getMessage(),
+                                        'memberIndex' => $index
+                                    ]);
+                                }
                             }
                         }
                     }
 
+                    // Ensure existing profile pics are preserved if not being updated
+                    foreach ($updatedMembers as $index => $member) {
+                        // If no profile_pic is set in the submitted data but we have one in stored data
+                        if (empty($member['profile_pic']) && isset($storedMembers[$index]['profile_pic'])) {
+                            $updatedMembers[$index]['profile_pic'] = $storedMembers[$index]['profile_pic'];
+                        }
+                    }
+                    
                     // Update members with new data including profile pictures
                     if ($storedMembers !== $updatedMembers) {
                         $band->update(['members' => json_encode($updatedMembers)]);
+                        \Log::info('Updated band members', [
+                            'count' => count($updatedMembers)
+                        ]);
                     }
                 }
 
@@ -711,9 +708,20 @@ class ProfileController extends Controller
         }
 
         // If we get here, it means the dashboard type is not artist
+        \Log::warning('Invalid dashboard type in updateBand', [
+            'expected' => 'artist',
+            'got' => $dashboardType,
+            'user_id' => $user->id ?? null
+        ]);
+        
         return response()->json([
             'success' => false,
             'message' => 'Invalid dashboard type. Expected "artist", got "' . $dashboardType . '"',
+            'debug' => [
+                'requestData' => $userData,
+                'dashboardType' => $dashboardType,
+                'userId' => $user->id ?? null
+            ]
         ], 400);
     }
 

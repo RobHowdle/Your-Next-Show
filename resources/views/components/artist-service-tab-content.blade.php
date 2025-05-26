@@ -54,7 +54,6 @@
       <!-- Music Tab -->
       <div id="music" class="tab-panel hidden">
         @if (!empty($serviceData['streamUrls']))
-          <p class="mb-4 text-center text-2xl font-bold">Listen To Us</p>
           <p class="mb-4 text-center">Our music is available on the following platforms. Feel free to give us a
             follow to stay updated with our releases!</p>
 
@@ -66,20 +65,34 @@
             $defaultPlatform = $streamUrls['default'] ?? 'spotify';
             $embedHtml = '';
 
-            if (isset($streamUrls[$defaultPlatform]) && !empty($streamUrls[$defaultPlatform][0])) {
-                $platformUrl = $streamUrls[$defaultPlatform][0];
+            if (isset($streamUrls[$defaultPlatform]) && !empty($streamUrls[$defaultPlatform])) {
+                $platformUrl = $streamUrls[$defaultPlatform];
 
                 switch ($defaultPlatform) {
                     case 'spotify':
-                        // Extract Spotify artist ID from URL
-                        preg_match('/artist\/([\w\d]+)/', $platformUrl, $matches);
-                        $spotifyId = $matches[1] ?? '';
-                        if ($spotifyId) {
-                            $embedHtml =
-                                '<iframe src="https://open.spotify.com/embed/artist/' .
-                                $spotifyId .
-                                '" width="100%" height="380" frameborder="0" allowtransparency="true"
-                              allow="encrypted-media"></iframe>';
+                        // Handle both track and artist URLs
+                        if (strpos($platformUrl, 'track') !== false) {
+                            // For track URLs
+                            preg_match('/track\/([\w\d]+)/', $platformUrl, $matches);
+                            $spotifyId = $matches[1] ?? '';
+                            if ($spotifyId) {
+                                $embedHtml =
+                                    '<iframe src="https://open.spotify.com/embed/track/' .
+                                    $spotifyId .
+                                    '" width="100%" height="380" frameborder="0" allowtransparency="true"
+                                  allow="encrypted-media"></iframe>';
+                            }
+                        } else {
+                            // For artist URLs
+                            preg_match('/artist\/([\w\d]+)/', $platformUrl, $matches);
+                            $spotifyId = $matches[1] ?? '';
+                            if ($spotifyId) {
+                                $embedHtml =
+                                    '<iframe src="https://open.spotify.com/embed/artist/' .
+                                    $spotifyId .
+                                    '" width="100%" height="380" frameborder="0" allowtransparency="true"
+                                  allow="encrypted-media"></iframe>';
+                            }
                         }
                         break;
                     case 'apple-music':
@@ -140,11 +153,22 @@
             // Convert stream URLs to other links format
             foreach ($streamUrls as $platform => $urls) {
                 // Skip the default platform and 'default' key
-                if ($platform !== $defaultPlatform && $platform !== 'default' && is_array($urls) && !empty($urls[0])) {
-                    $otherLinks[] = [
-                        'platform' => $platform,
-                        'url' => $urls[0],
-                    ];
+                if ($platform !== $defaultPlatform && $platform !== 'default') {
+                    // Handle different data structures
+                    $url = null;
+                    if (is_array($urls) && !empty($urls[0])) {
+                        $url = $urls[0];
+                    } elseif (is_string($urls) && !empty($urls)) {
+                        $url = $urls;
+                    }
+
+                    // Only add non-empty URLs
+                    if (!empty($url)) {
+                        $otherLinks[] = [
+                            'platform' => $platform,
+                            'url' => $url,
+                        ];
+                    }
                 }
             }
 
