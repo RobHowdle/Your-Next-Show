@@ -32,6 +32,7 @@
     @endif
 
     @if ($dashboardType === 'artist')
+      <x-profile-nav-item icon="music" label="Documents" tab="documents" />
       <x-profile-nav-item icon="music" label="Stream Links" tab="stream-links" />
       <x-profile-nav-item icon="users" label="Band Members" tab="members" />
       <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />

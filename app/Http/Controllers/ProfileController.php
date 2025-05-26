@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Venue;
+use App\Models\Document;
 use App\Models\Promoter;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
@@ -15,6 +16,7 @@ use App\Helpers\ServiceDataHelper;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use App\Helpers\PromoterDataHelper;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -28,7 +30,6 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Requests\DesignerProfileUpdateRequest;
 use App\Http\Requests\PromoterProfileUpdateRequest;
 use App\Http\Requests\PhotographerProfileUpdateRequest;
-use App\Http\Requests\StoreUpdatePackages;
 
 class ProfileController extends Controller
 {
@@ -171,7 +172,7 @@ class ProfileController extends Controller
                 'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
             ]);
         } catch (\Exception $e) {
-            \Log::error('Profile Update Failed:', [
+            Log::error('Profile Update Failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -424,19 +425,19 @@ class ProfileController extends Controller
                             $logoUrl = 'images/venue_logos/' . $venueLogoFilename;
                             $venue->update(['logo_url' => $logoUrl]);
 
-                            \Log::info('Logo file saved directly', [
+                            Log::info('Logo file saved directly', [
                                 'filename' => $venueLogoFilename,
                                 'saved_path' => $savedPath,
                                 'exists' => file_exists($savedPath),
                                 'url_path' => $logoUrl
                             ]);
                         } else {
-                            \Log::error('Failed to save logo file', [
+                            Log::error('Failed to save logo file', [
                                 'target_path' => $savedPath
                             ]);
                         }
                     } catch (\Exception $e) {
-                        \Log::error('Logo upload failed', ['error' => $e->getMessage()]);
+                        Log::error('Logo upload failed', ['error' => $e->getMessage()]);
                     }
                 }
 
@@ -476,13 +477,72 @@ class ProfileController extends Controller
         $userId = $user->id;
         $userData = $request->validated();
 
+        \Log::info('Updating band profile', [
+            'dashboardType' => $dashboardType,
+            'userId' => $userId,
+            'userData' => $userData
+        ]);
+
+        // Debug stream links submission
+        if (isset($userData['stream_links'])) {
+            \Log::info('Stream links data received', [
+                'stream_links' => $userData['stream_links'],
+                'default' => $userData['default_platform'] ?? null,
+            ]);
+        }
+
         if ($dashboardType == 'artist') {
-            // Fetch the promoter associated with the user via the service_user pivot table
+            // Fetch the band associated with the user via the service_user pivot table
+            // First try the normal method
             $band = OtherService::bands()->whereHas('linkedUsers', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })->first();
 
-            // Check if the promoter exists
+            // If no band found, try with a direct join query as fallback
+            if (!$band) {
+                \Log::info('Band not found with regular query, trying direct join query');
+                $band = OtherService::bands()
+                    ->join('service_user', function ($join) use ($userId) {
+                        $join->on('other_services.id', '=', 'service_user.serviceable_id')
+                            ->where('service_user.serviceable_type', '=', OtherService::class)
+                            ->where('service_user.user_id', '=', $userId);
+                    })
+                    ->select('other_services.*')
+                    ->first();
+            }
+
+            // Add debug logging
+            \Log::info('Band lookup result', [
+                'userId' => $userId,
+                'bandFound' => !is_null($band),
+                'bandId' => $band ? $band->id : null
+            ]);
+
+            // Log the actual service_user records for this user for debugging
+            try {
+                $serviceUserRecords = \DB::table('service_user')
+                    ->where('user_id', $userId)
+                    ->get();
+
+                \Log::info('Service user records for this user', [
+                    'userId' => $userId,
+                    'records' => $serviceUserRecords,
+                    'count' => $serviceUserRecords->count()
+                ]);
+
+                // Also check for any artist services
+                $artistServices = OtherService::bands()->get();
+                \Log::info('All artist services', [
+                    'count' => $artistServices->count(),
+                    'serviceIds' => $artistServices->pluck('id')->toArray()
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error querying service_user table', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            // Check if the band exists
             if ($band) {
                 // Promoter Name
                 if (isset($userData['name']) && $band->name !== $userData['name']) {
@@ -529,21 +589,43 @@ class ProfileController extends Controller
                     $streamLinks = $userData['stream_links'];
                     $defaultPlatform = $userData['default_platform'] ?? null;
 
-                    // Clean null values and empty arrays
-                    $cleanedLinks = array_filter($streamLinks, function ($platformLinks) {
-                        return !empty($platformLinks[0]);
-                    });
+                    // Initialize default structure for stream platforms
+                    $defaultStructure = [
+                        "spotify" => "",
+                        "bandcamp" => "",
+                        "soundcloud" => "",
+                        "apple-music" => "",
+                        "amazon-music" => "",
+                        "youtube-music" => ""
+                    ];
 
-                    // Add default platform if set
-                    if ($defaultPlatform) {
-                        $cleanedLinks['default'] = $defaultPlatform;
+                    // Start with existing data or default structure
+                    $existingStreamLinks = json_decode($band->stream_urls, true) ?? [];
+                    $updatedLinks = array_merge($defaultStructure, $existingStreamLinks);
+
+                    // Process each platform from the form
+                    foreach ($streamLinks as $platform => $links) {
+                        if (is_array($links)) {
+                            // Filter out empty links and get the first valid one
+                            $validLinks = array_filter($links, function ($link) {
+                                return !empty(trim($link));
+                            });
+
+                            $updatedLinks[$platform] = !empty($validLinks) ? trim(reset($validLinks)) : "";
+                        } else {
+                            $updatedLinks[$platform] = !empty(trim($links)) ? trim($links) : "";
+                        }
                     }
 
-                    // Update only if links have changed
-                    $storedStreamLinks = json_decode($band->stream_urls, true) ?? [];
-                    if ($storedStreamLinks !== $cleanedLinks) {
-                        $band->update(['stream_urls' => json_encode($cleanedLinks)]);
+                    // Handle default platform
+                    if ($defaultPlatform && !empty($updatedLinks[$defaultPlatform])) {
+                        $updatedLinks['default'] = $defaultPlatform;
+                    } else {
+                        unset($updatedLinks['default']);
                     }
+
+                    // Update the band record
+                    $band->update(['stream_urls' => json_encode($updatedLinks)]);
                 }
 
                 // About
@@ -553,9 +635,30 @@ class ProfileController extends Controller
 
                 // Members
                 if (isset($userData['members'])) {
-                    $storedMembers = json_decode($band->members, true);
-                    if ($storedMembers !== $userData['members']) {
-                        $band->update(['members' => json_encode($userData['members'])]);
+                    $storedMembers = json_decode($band->members, true) ?: [];
+                    $updatedMembers = $userData['members'];
+
+                    // Handle profile picture uploads for members
+                    if ($request->hasFile('member_pic')) {
+                        foreach ($request->file('member_pic') as $index => $file) {
+                            if ($file->isValid()) {
+                                // Generate the file name using the member name and timestamp
+                                $memberName = $updatedMembers[$index]['name'] ?? 'band-member';
+                                $extension = $file->getClientOriginalExtension();
+                                $fileName = Str::slug($memberName) . '-' . time() . '.' . $extension;
+
+                                // Store the file in public storage
+                                $file->storeAs('public/images/members', $fileName);
+
+                                // Set the file path in the members data
+                                $updatedMembers[$index]['profile_pic'] = 'storage/images/members/' . $fileName;
+                            }
+                        }
+                    }
+
+                    // Update members with new data including profile pictures
+                    if ($storedMembers !== $updatedMembers) {
+                        $band->update(['members' => json_encode($updatedMembers)]);
                     }
                 }
 
@@ -592,10 +695,26 @@ class ProfileController extends Controller
                     'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
                 ]);
             } else {
-                // Handle case where no promoter is linked to the user
-                return response()->json(['error' => 'Band not found'], 404);
+                // Handle case where no band is linked to the user
+                \Log::error('Band not found for user', [
+                    'userId' => $userId,
+                    'dashboardType' => $dashboardType,
+                    'userEmail' => $user->email
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to find the band associated with your account. Please contact support.',
+                    'error' => 'Band not found'
+                ], 404);
             }
         }
+
+        // If we get here, it means the dashboard type is not artist
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid dashboard type. Expected "artist", got "' . $dashboardType . '"',
+        ], 400);
     }
 
     public function updatePhotographer($dashboardType, PhotographerProfileUpdateRequest $request, $user)
@@ -1167,7 +1286,7 @@ class ProfileController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log the error and return a response
-            \Log::error('Error removing role: ' . $e->getMessage());
+            Log::error('Error removing role: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while removing the role.'
@@ -1188,8 +1307,8 @@ class ProfileController extends Controller
         // Check if the file is uploaded
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $userId = auth()->id();
-            $user = auth()->user();
+            $userId = Auth::id();
+            $user = Auth::user();
 
             // Create a unique filename
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -1323,7 +1442,7 @@ class ProfileController extends Controller
 
     public function updateEnvironmentTypes(Request $request)
     {
-        $environmentTypes = $this->serviceDataHelper->getEnvironmentTypes(auth()->user());
+        $environmentTypes = $this->serviceDataHelper->getEnvironmentTypes(Auth::user());
 
         try {
             // Validate request
@@ -1333,7 +1452,7 @@ class ProfileController extends Controller
             ]);
 
             // Get photographer
-            $user = auth()->user();
+            $user = Auth::user();
             $photographer = OtherService::where('other_service_id', 1)
                 ->whereHas('linkedUsers', fn($query) => $query->where('user_id', $user->id))
                 ->first();
@@ -1366,11 +1485,11 @@ class ProfileController extends Controller
                     ->with('success', 'Environment types updated successfully!');
             } catch (\Exception $e) {
                 DB::rollBack();
-                \Log::error('Environment types update failed: ' . $e->getMessage());
+                Log::error('Environment types update failed: ' . $e->getMessage());
                 return redirect()->back()->with('error', 'Failed to update environment types.');
             }
         } catch (\Exception $e) {
-            \Log::error('Environment types validation failed: ' . $e->getMessage());
+            Log::error('Environment types validation failed: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Invalid environment types data.');
         }
     }
@@ -1381,7 +1500,7 @@ class ProfileController extends Controller
     public function saveGenres($dashboardType, Request $request)
     {
         $validated = $request;
-        $user = User::where('id', Auth::user()->id)->first();
+        $user = User::where('id', Auth::id())->first();
 
         // Get correct user type
         switch ($dashboardType) {
@@ -1441,7 +1560,7 @@ class ProfileController extends Controller
         $validated = $request->validated();
 
         $bandTypesData = $validated['band_types'];
-        $user = User::where('id', Auth::user()->id)->first();
+        $user = User::where('id', Auth::id())->first();
 
         if (!$bandTypesData['allTypes'] && empty($bandTypesData['bandTypes'])) {
             return response()->json([
@@ -1523,7 +1642,7 @@ class ProfileController extends Controller
         // Get default preferences from config
         $defaultPreferences = config('mailing_preferences.communication_preferences');
         if (!$defaultPreferences) {
-            \Log::error('Mailing preferences config not loaded');
+            Log::error('Mailing preferences config not loaded');
             return [];
         }
 
@@ -1562,5 +1681,29 @@ class ProfileController extends Controller
             })->toArray();
 
         return $modulesWithSettings;
+    }
+
+    public function toggleDocumentVisibility($dashboardType, $documentId, Request $request)
+    {
+        try {
+            // Find the document directly by ID
+            $document = Document::findOrFail($documentId);
+
+            // Toggle the private status
+            $document->private = !$document->private;
+            $document->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Document visibility updated successfully',
+                'is_public' => !$document->private
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error toggling document visibility: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update document visibility: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

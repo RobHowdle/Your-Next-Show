@@ -11,15 +11,33 @@
       <!-- Members Tab -->
       <div id="members" class="tab-panel hidden">
         @if (!empty($serviceData['members']))
-          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             @foreach ($serviceData['members'] as $member)
-              <div class="rounded-lg border border-gray-700 bg-black/30 p-6 backdrop-blur-sm">
-                <div class="flex flex-col items-center space-y-3">
-                  <h3 class="text-lg font-semibold text-white">
-                    {{ $member['name'] }}
-                  </h3>
-                  @if (!empty($member['role']))
-                    <p class="text-sm text-gray-400">{{ $member['role'] }}</p>
+              <div
+                class="rounded-lg border border-gray-700 bg-black/30 p-6 backdrop-blur-sm transition-all hover:border-yns_yellow">
+                <div class="flex flex-col items-center space-y-4">
+                  <!-- Member Profile Picture -->
+                  <div class="h-24 w-24 overflow-hidden rounded-full border border-gray-700 bg-gray-900">
+                    <img
+                      src="{{ !empty($member['profile_pic']) ? asset($member['profile_pic']) : asset('images/user-placeholder.png') }}"
+                      alt="{{ $member['name'] }}" class="h-full w-full object-cover" />
+                  </div>
+
+                  <!-- Member Info -->
+                  <div class="text-center">
+                    <h3 class="text-lg font-semibold text-white">
+                      {{ $member['name'] }}
+                    </h3>
+                    @if (!empty($member['role']))
+                      <p class="text-sm text-gray-400">{{ $member['role'] }}</p>
+                    @endif
+                  </div>
+
+                  <!-- Member Bio -->
+                  @if (!empty($member['bio']))
+                    <p class="mt-2 text-center text-sm text-gray-300">
+                      {{ $member['bio'] }}
+                    </p>
                   @endif
                 </div>
               </div>

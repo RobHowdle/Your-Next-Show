@@ -196,7 +196,34 @@ class SubNav extends Component
             $band = $bands->first();
             $this->bandId = $band->id;
             $this->gigsCountBandYtd = $this->calculateGigsCountBandYtd($band->id);
-            $this->overallRatingBand = $this->renderRatingIcons($band->overallRating);
+
+            // Calculate average across multiple rating fields
+            $reviews = \App\Models\BandReviews::where('other_services_id', $band->id)
+                ->where('other_services_list_id', 4)
+                ->get();
+
+            $fields = ['communication_rating', 'music_rating', 'promotion_rating', 'gig_quality_rating'];
+            $total = 0;
+            $count = 0;
+
+            foreach ($reviews as $review) {
+                $sum = 0;
+                $fieldCount = 0;
+                foreach ($fields as $field) {
+                    if (isset($review->$field)) {
+                        $sum += $review->$field;
+                        $fieldCount++;
+                    }
+                }
+                if ($fieldCount > 0) {
+                    $total += $sum / $fieldCount;
+                    $count++;
+                }
+            }
+
+            $averageRating = $count > 0 ? $total / $count : 0;
+
+            $this->overallRatingBand = $this->renderRatingIcons($averageRating);
             $this->totalProfitsBandYtd = $this->calculateTotalProfitsBandYtd($band->id);
         }
     }

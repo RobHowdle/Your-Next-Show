@@ -60,6 +60,8 @@ Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'f
 Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
 Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService')->middleware('log.minors');
 Route::post('/services/{serviceType}/{name}/submitReview', [OtherServiceController::class, 'submitReview'])->name('submit-single-service-review');
+// Route for downloading public documents
+Route::get('/document/{id}/download', [DocumentController::class, 'publicDownload'])->name('document.download');
 
 // Gig Guide
 Route::get('/gig-guide', [GigGuideController::class, 'index'])->name('gig-guide');
@@ -269,8 +271,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/profile/{dashboardType}/standard-profile-update/{user}', [ProfileController::class, 'updateStandardUser'])->name('standard-user.update');
     Route::put('/profile/{dashboardType}/designer-profile-update/{user}', [ProfileController::class, 'updateDesigner'])->name('designer.update');
     Route::put('/profile/{dashboardType}/videographer-profile-update/{user}', [ProfileController::class, 'updateVideographer'])->name('videographer.update');
+
+    // Portfolio
     Route::post('/profile/{dashboardType}/portfolio-image-upload', [ProfileController::class, 'uploadPortfolioImages'])->name('portfolio.upload');
+
+    // Settings
     Route::get('/profile/{dashboardType}/settings', [ProfileController::class, 'settings'])->name('settings.index');
+
+    // Documents
+    Route::post('/profile/{dashboardType}/documents/{documentId}/toggle-visibility', [ProfileController::class, 'toggleDocumentVisibility'])->name('profile.documents.toggle-visibility');
     Route::post('/profile/{dashboardType}/photographer-environment-types', [ProfileController::class, 'updateEnvironmentTypes'])->name('photographer.environment-types');
     Route::post('/profile/{dashboardType}/save-genres', [ProfileController::class, 'saveGenres'])->name('save-genres');
     Route::post('/profile/{dashboardType}/save-band-types', [ProfileController::class, 'saveBandTypes'])->name('save-band-types');

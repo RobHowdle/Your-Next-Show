@@ -21,7 +21,7 @@
                   'profileData' => match ($dashboardType) {
                       'venue' => $venueData,
                       'promoter' => $promoterData,
-                      'artist' => $bandData,
+                      'artist' => $artistData,
                       'photographer' => $photographerData,
                       'designer' => $designerData,
                       'videographer' => $videographerData,
@@ -35,7 +35,7 @@
                   'profileData' => match ($dashboardType) {
                       'venue' => $venueData,
                       'promoter' => $promoterData,
-                      'artist' => $bandData,
+                      'artist' => $artistData,
                       'photographer' => $photographerData,
                       'designer' => $designerData,
                       'videographer' => $videographerData,
@@ -49,7 +49,7 @@
                   'profileData' => match ($dashboardType) {
                       'venue' => $venueData,
                       'promoter' => $promoterData,
-                      'artist' => $bandData,
+                      'artist' => $artistData,
                       'photographer' => $photographerData,
                       'designer' => $designerData,
                       'videographer' => $videographerData,
@@ -63,7 +63,7 @@
                   'profileData' => match ($dashboardType) {
                       'venue' => $venueData,
                       'promoter' => $promoterData,
-                      'artist' => $bandData,
+                      'artist' => $artistData,
                       'photographer' => $photographerData,
                       'designer' => $designerData,
                       'videographer' => $videographerData,
@@ -108,7 +108,21 @@
             @endif
 
             @if ($dashboardType === 'artist')
-              {{-- @include('profile.sections.artist-tabs') --}}
+              <div x-show="activeTab === 'documents'">
+                @include('profile.sections.artist.documents', [
+                    'profileData' => $artistData,
+                ])
+              </div>
+              <div x-show="activeTab === 'stream-links'">
+                @include('profile.sections.artist.stream-links', [
+                    'profileData' => $artistData,
+                ])
+              </div>
+              <div x-show="activeTab === 'members'">
+                @include('profile.sections.artist.members', [
+                    'profileData' => $artistData,
+                ])
+              </div>
             @endif
 
             @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))

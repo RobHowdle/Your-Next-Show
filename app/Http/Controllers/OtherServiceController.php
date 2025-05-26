@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\BandReviews;
 use Illuminate\Support\Str;
 use App\Models\OtherService;
@@ -214,6 +215,7 @@ class OtherServiceController extends Controller
     {
         $formattedName = Str::title(str_replace('-', ' ', $name));
         $singleService = OtherService::where('name', $formattedName)->first();
+        $singleServiceId = $singleService->id;
 
         // Fetch genres for initial page load
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -235,7 +237,31 @@ class OtherServiceController extends Controller
         $overallReviews = [];
         $overallReviews[$singleService->id] = $this->renderRatingIcons($reviewScore);
 
+        // Fetch upcoming events for this artist (band)
+        // The events table has a JSON column 'band_ids' with band_id and role
+        $upcomingEvents = \App\Models\Event::whereJsonContains('band_ids', [['band_id' => (string)$singleServiceId]])
+            ->where('event_date', '>=', now())
+            ->where('event_date', '<=', now()->addMonth())
+            ->orderBy('event_date', 'asc')
+            ->with('venues') // eager load venues relationship
+            ->get();
 
+        // Optionally, you can map the role for this artist in each event
+        foreach ($upcomingEvents as $event) {
+            $bandIds = json_decode($event->band_ids, true);
+            $event->artist_role = null;
+            if (is_array($bandIds)) {
+                foreach ($bandIds as $band) {
+                    if ((int)($band['band_id'] ?? 0) === (int)$singleServiceId) {
+                        // Use the 'role' field directly (e.g., 'Headliner', 'Main Support', 'Artist', 'Opener')
+                        $event->artist_role = $band['role'] ?? null;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $singleService->upcomingEvents = $upcomingEvents;
 
         return view('single-service', [
             'singleService' => $singleService,
@@ -245,6 +271,7 @@ class OtherServiceController extends Controller
             'serviceData' => $serviceData,
             'genreNames' => $serviceData['genreNames'] ?? [],
             'hasMinors' => $serviceData['hasMinors'] ?? false,
+            'upcomingEvents' => $upcomingEvents,
         ]);
     }
 

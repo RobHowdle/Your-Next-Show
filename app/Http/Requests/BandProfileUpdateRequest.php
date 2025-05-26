@@ -45,6 +45,11 @@ class BandProfileUpdateRequest extends FormRequest
             'portfolio_link' => 'nullable|url',
             'services' => 'nullable|string',
             'members' => 'nullable|array',
+            'members.*.name' => 'nullable|string',
+            'members.*.role' => 'nullable|string',
+            'members.*.bio' => 'nullable|string',
+            'members.*.profile_pic' => 'nullable|string',
+            'member_pic.*' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
             'preferred_contact' => 'nullable|string',
         ];
     }
