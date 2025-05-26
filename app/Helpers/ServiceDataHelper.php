@@ -4,6 +4,8 @@ namespace App\Helpers;
 
 use App\Models\User;
 use App\Models\Event;
+use App\Models\Document;
+use PhpParser\Comment\Doc;
 use App\Models\OtherService;
 use Illuminate\Support\Facades\Storage;
 
@@ -31,19 +33,23 @@ class ServiceDataHelper
         $contactLinks = $artist ? json_decode($artist->contact_link, true) : [];
 
         $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+        $activePlatforms = [];
+
+        // Get the social platforms config file - this contains all platform information
+        $socialPlatformsConfig = config('social_platforms');
 
         // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
+        foreach (array_keys($socialPlatformsConfig) as $platform) {
             $platforms[$platform] = '';  // Set default to empty string
         }
 
         // Check if the contactLinks array exists and contains social links
         if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
+            foreach (array_keys($socialPlatformsConfig) as $platform) {
+                // Only add the link if the platform exists in the $contactLiIt nks array
+                if (isset($contactLinks[$platform]) && !empty($contactLinks[$platform])) {
                     $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                    $activePlatforms[] = $platform; // Track this platform as active
                 }
             }
         }
@@ -72,7 +78,17 @@ class ServiceDataHelper
         }
 
         $bandTypes = json_decode($artist->band_type) ?? [];
-        $streamLinks = json_decode($artist->stream_urls, true);
+
+        // Initialize stream links with default structure
+        $streamLinksRaw = json_decode($artist->stream_urls, true);
+        $streamLinks = $streamLinksRaw ?? [
+            'spotify' => '',
+            'apple-music' => '',
+            'youtube-music' => '',
+            'amazon-music' => '',
+            'bandcamp' => '',
+            'soundcloud' => ''
+        ];
 
         $streamPlatforms = [];
         $streamPlatformsToCheck = ['spotify', 'apple-music', 'youtube-music', 'amazon-music', 'bandcamp', 'soundcloud'];
@@ -94,6 +110,10 @@ class ServiceDataHelper
             }
         }
 
+        $documents = Document::where('serviceable_id', $artist->id)
+            ->where('serviceable_type', get_class($artist))
+            ->get();
+
         return [
             'artist' => $artist,
             'artistId' => $artist->id,
@@ -108,7 +128,8 @@ class ServiceDataHelper
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
+            'activePlatforms' => $activePlatforms,
+            'platformsToCheck' => $socialPlatformsConfig,
             'myEvents' => $myEvents,
             'genres' => $genres,
             'profileGenres' => $profileGenres,
@@ -121,6 +142,7 @@ class ServiceDataHelper
             'preferred_contact' => $preferredContact,
             'serviceableId' => $serviceableId,
             'serviceableType' => $serviceableType,
+            'documents' => $documents,
         ];
     }
 

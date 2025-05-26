@@ -200,4 +200,9 @@ class OtherService extends Model
     {
         return $this->morphMany(Opportunity::class, 'serviceable');
     }
+
+    public function documents()
+    {
+        return $this->morphMany(Document::class, 'serviceable');
+    }
 }
