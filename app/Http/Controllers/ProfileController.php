@@ -482,7 +482,7 @@ class ProfileController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
-        
+
         // Fetch the user
         $user = User::findOrFail($user);
         $userId = $user->id;
@@ -510,6 +510,16 @@ class ProfileController extends Controller
 
             // Check if the band exists
             if ($band) {
+                // Debug existing band data
+                \Log::debug('Band found for user', [
+                    'band_id' => $band->id,
+                    'band_name' => $band->name,
+                    'current_members_json' => $band->members,
+                    'current_members_decoded' => json_decode($band->members, true),
+                    'all_attributes' => $band->getAttributes(),
+                    'has_members_attribute' => array_key_exists('members', $band->getAttributes())
+                ]);
+
                 // Promoter Name
                 if (isset($userData['name']) && $band->name !== $userData['name']) {
                     $band->update(['name' => $userData['name']]);
@@ -600,9 +610,21 @@ class ProfileController extends Controller
                 }
 
                 // Members
+                \Log::info($userData);
                 if (isset($userData['members']) && is_array($userData['members'])) {
-                    $storedMembers = json_decode($band->members, true) ?: [];
+                    // Initialize $storedMembers properly when the field is null
+                    $storedMembers = [];
+                    if (!is_null($band->members)) {
+                        $storedMembers = json_decode($band->members, true) ?: [];
+                    }
+
                     $updatedMembers = $userData['members'];
+
+                    // Debug log the incoming members data
+                    \Log::debug('Incoming members data:', [
+                        'raw_members' => $userData['members'],
+                        'stored_members' => $storedMembers,
+                    ]);
 
                     // Handle profile picture uploads for members
                     if ($request->hasFile('member_pic')) {
@@ -620,8 +642,26 @@ class ProfileController extends Controller
                                         mkdir($directory, 0755, true);
                                     }
 
+                                    // Log the file details
+                                    \Log::debug('Member profile picture details', [
+                                        'file_name' => $fileName,
+                                        'file_size' => $file->getSize(),
+                                        'file_mime' => $file->getMimeType(),
+                                        'directory' => $directory,
+                                        'exists' => is_dir($directory) ? 'yes' : 'no',
+                                        'writable' => is_dir($directory) && is_writable($directory) ? 'yes' : 'no'
+                                    ]);
+
                                     // Store the file directly in the public directory
                                     $file->move($directory, $fileName);
+
+                                    // Check if file was moved successfully
+                                    $fullPath = $directory . '/' . $fileName;
+                                    if (file_exists($fullPath)) {
+                                        \Log::debug('File moved successfully to: ' . $fullPath);
+                                    } else {
+                                        \Log::error('File move seems to have failed. File not found at: ' . $fullPath);
+                                    }
 
                                     // Set the file path in the members data
                                     $updatedMembers[$index]['profile_pic'] = 'images/members/' . $fileName;
@@ -648,13 +688,68 @@ class ProfileController extends Controller
                         if (empty($member['profile_pic']) && isset($storedMembers[$index]['profile_pic'])) {
                             $updatedMembers[$index]['profile_pic'] = $storedMembers[$index]['profile_pic'];
                         }
+
+                        // Ensure all fields exist
+                        $updatedMembers[$index]['name'] = $member['name'] ?? 'Band Member';
+                        $updatedMembers[$index]['role'] = $member['role'] ?? '';
+                        $updatedMembers[$index]['bio'] = $member['bio'] ?? '';
+                        $updatedMembers[$index]['profile_pic'] = $updatedMembers[$index]['profile_pic'] ?? '';
                     }
-                    
+
                     // Update members with new data including profile pictures
-                    if ($storedMembers !== $updatedMembers) {
-                        $band->update(['members' => json_encode($updatedMembers)]);
+                    // Always update if $band->members is null or if the data has changed
+                    if (is_null($band->members) || $storedMembers !== $updatedMembers) {
+                        // Check for required fields in each member record
+                        foreach ($updatedMembers as $index => $member) {
+                            // Ensure each member has all required fields (name, role, bio, profile_pic)
+                            if (empty($member['name'])) {
+                                $updatedMembers[$index]['name'] = 'Band Member';
+                            }
+
+                            if (!isset($member['role'])) {
+                                $updatedMembers[$index]['role'] = '';
+                            }
+
+                            if (!isset($member['bio'])) {
+                                $updatedMembers[$index]['bio'] = '';
+                            }
+
+                            if (!isset($member['profile_pic'])) {
+                                $updatedMembers[$index]['profile_pic'] = '';
+                            }
+                        }                        // Debug log the final member data before saving
+                        \Log::debug('Final members data before saving:', [
+                            'updated_members' => $updatedMembers,
+                            'is_null_before' => is_null($band->members),
+                            'members_field_before' => $band->members
+                        ]);
+
+                        // Explicitly encode to JSON string
+                        $membersJson = json_encode($updatedMembers);
+
+                        // Try multiple approaches to ensure the data is saved
+
+                        // Approach 1: Standard Eloquent update
+                        $result = $band->update(['members' => $membersJson]);
+
+                        // Approach 2: Direct assignment and save
+                        if (!$result || is_null($band->members)) {
+                            $band->members = $membersJson;
+                            $result = $band->save();
+                        }
+
+                        // Approach 3: Direct DB query as last resort
+                        if (!$result || is_null($band->members)) {
+                            $result = DB::table('other_services')
+                                ->where('id', $band->id)
+                                ->update(['members' => $membersJson]);
+                        }
+
                         \Log::info('Updated band members', [
-                            'count' => count($updatedMembers)
+                            'count' => count($updatedMembers),
+                            'json_encode_result' => $membersJson,
+                            'update_success' => $result ? 'yes' : 'no',
+                            'band_id' => $band->id
                         ]);
                     }
                 }
@@ -686,6 +781,13 @@ class ProfileController extends Controller
                     $band->update(['logo_url' => $logoUrl]);
                 }
 
+                // Verify that the members were saved correctly
+                $refreshedBand = OtherService::findOrFail($band->id);
+                \Log::debug('Band data after updates', [
+                    'members_after_update' => $refreshedBand->members,
+                    'members_decoded' => json_decode($refreshedBand->members, true)
+                ]);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Profile updated successfully',
@@ -713,7 +815,7 @@ class ProfileController extends Controller
             'got' => $dashboardType,
             'user_id' => $user->id ?? null
         ]);
-        
+
         return response()->json([
             'success' => false,
             'message' => 'Invalid dashboard type. Expected "artist", got "' . $dashboardType . '"',

@@ -95,7 +95,7 @@ class OtherService extends Model
      */
     public static function bands()
     {
-        // Either use the exact service ID or use a more robust query that checks both name and service_id
+        // Use a more robust query that checks both name and service_id
         return self::where(function ($query) {
             $query->where('name', 'artist')
                 ->orWhere('other_service_id', 4);

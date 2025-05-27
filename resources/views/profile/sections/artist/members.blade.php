@@ -16,13 +16,6 @@
           ['role' => 'Vocals', 'name' => ''],
       ];
 
-      // Add debug logging for the members data
-      \Log::debug('Members data in template', [
-          'profileData_members_exists' => isset($profileData['members']),
-          'profileData_members_type' => isset($profileData['members']) ? gettype($profileData['members']) : 'not set',
-          'profileData_members' => isset($profileData['members']) ? $profileData['members'] : null
-      ]);
-
       $members = isset($profileData['members']) ? $profileData['members'] : $defaultMembers;
     @endphp
 
@@ -54,7 +47,7 @@
               <div class="w-full md:w-1/2">
                 <x-input-label-dark>Member Name</x-input-label-dark>
                 <x-text-input name="members[{{ $index }}][name]" value="{{ $member['name'] ?? '' }}"
-                  class="w-full" />
+                  class="w-full" required />
               </div>
               <div class="w-full md:w-1/2">
                 <x-input-label-dark>Role</x-input-label-dark>
@@ -197,11 +190,18 @@
     // Form submission
     form.addEventListener('submit', function(e) {
       e.preventDefault();
+
       const formData = new FormData(this);
       const artistId = '{{ $profileData['artistId'] ?? '' }}';
       const user = '{{ $user->id }}';
       formData.append('artist_id', artistId);
       formData.append('user', user);
+
+      // Log the form data for debugging
+      console.log('Form submission data:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
 
       // Display a loading spinner or message
       const submitButton = this.querySelector('button[type="submit"]');

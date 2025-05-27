@@ -33,7 +33,6 @@ class BandProfileUpdateRequest extends FormRequest
             'packages' => "nullable|array",
             'environment_type' => "nullable|array",
             'working_times' => "nullable|array",
-            'members' => "nullable|string",
             'default_platform' => "nullable|string",
             'stream_links' => "nullable|array",
             'band_types' => 'nullable|array',
