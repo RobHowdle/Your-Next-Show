@@ -487,10 +487,10 @@ class ProfileController extends Controller
         $user = User::findOrFail($user);
         $userId = $user->id;
         $userData = $request->validated();
+        // dd($userData);
 
         if ($dashboardType == 'artist') {
-            // Fetch the band associated with the user via the service_user pivot table
-            // First try the normal method
+            // Fetch the band associated with the user
             $band = OtherService::bands()->whereHas('linkedUsers', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })->first();
@@ -510,57 +510,40 @@ class ProfileController extends Controller
 
             // Check if the band exists
             if ($band) {
-                // Debug existing band data
-                \Log::debug('Band found for user', [
-                    'band_id' => $band->id,
-                    'band_name' => $band->name,
-                    'current_members_json' => $band->members,
-                    'current_members_decoded' => json_decode($band->members, true),
-                    'all_attributes' => $band->getAttributes(),
-                    'has_members_attribute' => array_key_exists('members', $band->getAttributes())
-                ]);
-
-                // Promoter Name
-                if (isset($userData['name']) && $band->name !== $userData['name']) {
-                    $band->update(['name' => $userData['name']]);
-                }
-                // Contact Name
-                if (isset($userData['contact_name']) && $band->contact_name !== $userData['contact_name']) {
-                    $band->update(['contact_name' => $userData['contact_name']]);
+                // Process basic fields
+                $basicFields = ['name', 'contact_name', 'contact_email', 'contact_number', 'preferred_contact'];
+                foreach ($basicFields as $field) {
+                    if (isset($userData[$field]) && $band->$field !== $userData[$field]) {
+                        $band->update([$field => $userData[$field]]);
+                    }
                 }
 
-                // Contact Email
-                if (isset($userData['contact_email']) && $band->contact_email !== $userData['contact_email']) {
-                    $band->update(['contact_email' => $userData['contact_email']]);
-                }
-
-                // Contact Number 
-                if (isset($userData['contact_number']) && $band->contact_number !== $userData['contact_number']) {
-                    $band->update(['contact_number' => $userData['contact_number']]);
+                // About/Description
+                if (isset($userData['about']) && $band->description !== $userData['about']) {
+                    $band->update(['description' => $userData['about']]);
                 }
 
                 // Contact Links
                 if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
-                    // Start with the existing `contact_links` array or an empty array if it doesn't exist
-                    $updatedLinks = !empty($band->contact_link) ? json_decode($band->contact_link, true) : [];
+                    // Get existing links
+                    $existingLinks = json_decode($band->contact_link, true) ?? [];
 
-                    // Iterate through the `contact_link` array from the request data
-                    foreach ($userData['contact_links'] as $platform => $links) {
-                        // Ensure we're setting only non-empty values
-                        $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                    // Get new links
+                    $newLinks = is_array($userData['contact_links'])
+                        ? $userData['contact_links']
+                        : json_decode($userData['contact_links'], true);
+
+                    if ($newLinks) {
+                        // Merge while preserving existing links that aren't being updated
+                        $mergedLinks = array_merge($existingLinks, $newLinks);
+
+                        // Update contact links
+                        $band->contact_link = json_encode($mergedLinks);
+                        $band->save();
                     }
-
-                    // Filter out null values to remove platforms with no links
-                    $updatedLinks = array_filter($updatedLinks);
-
-                    // Encode the array back to JSON for storage and update the promoter record
-                    $band->update(['contact_link' => json_encode($updatedLinks)]);
                 }
 
-                if (isset($userData['preferred_contact'])) {
-                    $band->update(['preferred_contact' => $userData['preferred_contact']]);
-                }
-
+                // Stream Links
                 if (isset($userData['stream_links'])) {
                     $streamLinks = $userData['stream_links'];
                     $defaultPlatform = $userData['default_platform'] ?? null;
@@ -604,154 +587,66 @@ class ProfileController extends Controller
                     $band->update(['stream_urls' => json_encode($updatedLinks)]);
                 }
 
-                // About
-                if (isset($userData['about']) && $band->description !== $userData['about']) {
-                    $band->update(['description' => $userData['about']]);
+                // dd($userData);
+
+                // Members - Prioritize members_json if it exists
+                if (isset($userData['members_json']) && is_string($userData['members_json'])) {
+                    \Log::info($userData['members_json']);
+                    $storedMembers = json_decode($band->members, true) ?: [];
+                    $updatedMembers = json_decode($userData['members_json'], true) ?: [];
+                } else {
+                    $storedMembers = json_decode($band->members, true) ?: [];
+                    $updatedMembers = [];
                 }
 
-                // Members
-                \Log::info($userData);
-                if (isset($userData['members']) && is_array($userData['members'])) {
-                    // Initialize $storedMembers properly when the field is null
-                    $storedMembers = [];
-                    if (!is_null($band->members)) {
-                        $storedMembers = json_decode($band->members, true) ?: [];
-                    }
-
-                    $updatedMembers = $userData['members'];
-
-                    // Debug log the incoming members data
-                    \Log::debug('Incoming members data:', [
-                        'raw_members' => $userData['members'],
-                        'stored_members' => $storedMembers,
-                    ]);
-
-                    // Handle profile picture uploads for members
-                    if ($request->hasFile('member_pic')) {
-                        foreach ($request->file('member_pic') as $index => $file) {
-                            if ($file->isValid()) {
-                                // Generate the file name using the member name and timestamp
+                // Handle profile picture uploads for members
+                if ($request->hasFile('member_pic')) {
+                    foreach ($request->file('member_pic') as $index => $file) {
+                        if ($file->isValid()) {
+                            try {
+                                // Generate file name and save it
                                 $memberName = $updatedMembers[$index]['name'] ?? 'band-member';
                                 $extension = $file->getClientOriginalExtension();
                                 $fileName = Str::slug($memberName) . '-' . time() . '.' . $extension;
 
-                                try {
-                                    // Make sure the directory exists in public
-                                    $directory = public_path('images/members');
-                                    if (!is_dir($directory)) {
-                                        mkdir($directory, 0755, true);
-                                    }
+                                $directory = public_path('images/members');
+                                $file->move($directory, $fileName);
 
-                                    // Log the file details
-                                    \Log::debug('Member profile picture details', [
-                                        'file_name' => $fileName,
-                                        'file_size' => $file->getSize(),
-                                        'file_mime' => $file->getMimeType(),
-                                        'directory' => $directory,
-                                        'exists' => is_dir($directory) ? 'yes' : 'no',
-                                        'writable' => is_dir($directory) && is_writable($directory) ? 'yes' : 'no'
-                                    ]);
-
-                                    // Store the file directly in the public directory
-                                    $file->move($directory, $fileName);
-
-                                    // Check if file was moved successfully
-                                    $fullPath = $directory . '/' . $fileName;
-                                    if (file_exists($fullPath)) {
-                                        \Log::debug('File moved successfully to: ' . $fullPath);
-                                    } else {
-                                        \Log::error('File move seems to have failed. File not found at: ' . $fullPath);
-                                    }
-
-                                    // Set the file path in the members data
-                                    $updatedMembers[$index]['profile_pic'] = 'images/members/' . $fileName;
-
-                                    // Log successful upload
-                                    \Log::info('Member profile picture uploaded successfully', [
-                                        'fileName' => $fileName,
-                                        'path' => 'images/members/' . $fileName,
-                                        'memberIndex' => $index
-                                    ]);
-                                } catch (\Exception $e) {
-                                    \Log::error('Failed to upload member profile picture', [
-                                        'error' => $e->getMessage(),
-                                        'memberIndex' => $index
-                                    ]);
-                                }
+                                // Update the member data with the image path
+                                $updatedMembers[$index]['profile_pic'] = 'images/members/' . $fileName;
+                                \Log::info('Member profile picture uploaded', [
+                                    'path' => 'images/members/' . $fileName,
+                                    'memberIndex' => $index
+                                ]);
+                            } catch (\Exception $e) {
+                                \Log::error('Failed to upload member profile picture', [
+                                    'error' => $e->getMessage(),
+                                    'memberIndex' => $index
+                                ]);
                             }
                         }
                     }
+                }
 
-                    // Ensure existing profile pics are preserved if not being updated
-                    foreach ($updatedMembers as $index => $member) {
-                        // If no profile_pic is set in the submitted data but we have one in stored data
-                        if (empty($member['profile_pic']) && isset($storedMembers[$index]['profile_pic'])) {
-                            $updatedMembers[$index]['profile_pic'] = $storedMembers[$index]['profile_pic'];
-                        }
-
-                        // Ensure all fields exist
-                        $updatedMembers[$index]['name'] = $member['name'] ?? 'Band Member';
-                        $updatedMembers[$index]['role'] = $member['role'] ?? '';
-                        $updatedMembers[$index]['bio'] = $member['bio'] ?? '';
-                        $updatedMembers[$index]['profile_pic'] = $updatedMembers[$index]['profile_pic'] ?? '';
+                // Ensure existing profile pics are preserved if not being updated
+                foreach ($updatedMembers as $index => $member) {
+                    if (empty($member['profile_pic']) && isset($storedMembers[$index]['profile_pic'])) {
+                        $updatedMembers[$index]['profile_pic'] = $storedMembers[$index]['profile_pic'];
                     }
+                }
 
-                    // Update members with new data including profile pictures
-                    // Always update if $band->members is null or if the data has changed
-                    if (is_null($band->members) || $storedMembers !== $updatedMembers) {
-                        // Check for required fields in each member record
-                        foreach ($updatedMembers as $index => $member) {
-                            // Ensure each member has all required fields (name, role, bio, profile_pic)
-                            if (empty($member['name'])) {
-                                $updatedMembers[$index]['name'] = 'Band Member';
-                            }
+                // Update members with new data including profile pictures
+                if ($storedMembers !== $updatedMembers) {
+                    \Log::info('Saving updated members:', [
+                        'members' => $updatedMembers
+                    ]);
+                    $band->update(['members' => json_encode($updatedMembers)]);
 
-                            if (!isset($member['role'])) {
-                                $updatedMembers[$index]['role'] = '';
-                            }
-
-                            if (!isset($member['bio'])) {
-                                $updatedMembers[$index]['bio'] = '';
-                            }
-
-                            if (!isset($member['profile_pic'])) {
-                                $updatedMembers[$index]['profile_pic'] = '';
-                            }
-                        }                        // Debug log the final member data before saving
-                        \Log::debug('Final members data before saving:', [
-                            'updated_members' => $updatedMembers,
-                            'is_null_before' => is_null($band->members),
-                            'members_field_before' => $band->members
-                        ]);
-
-                        // Explicitly encode to JSON string
-                        $membersJson = json_encode($updatedMembers);
-
-                        // Try multiple approaches to ensure the data is saved
-
-                        // Approach 1: Standard Eloquent update
-                        $result = $band->update(['members' => $membersJson]);
-
-                        // Approach 2: Direct assignment and save
-                        if (!$result || is_null($band->members)) {
-                            $band->members = $membersJson;
-                            $result = $band->save();
-                        }
-
-                        // Approach 3: Direct DB query as last resort
-                        if (!$result || is_null($band->members)) {
-                            $result = DB::table('other_services')
-                                ->where('id', $band->id)
-                                ->update(['members' => $membersJson]);
-                        }
-
-                        \Log::info('Updated band members', [
-                            'count' => count($updatedMembers),
-                            'json_encode_result' => $membersJson,
-                            'update_success' => $result ? 'yes' : 'no',
-                            'band_id' => $band->id
-                        ]);
-                    }
+                    // Verify the update succeeded
+                    $band->refresh();
+                    \Log::info('Band after member update:', [
+                        'saved_members' => $band->members
+                    ]);
                 }
 
                 // Genres
@@ -780,19 +675,6 @@ class ProfileController extends Controller
                     // Update database
                     $band->update(['logo_url' => $logoUrl]);
                 }
-
-                // Verify that the members were saved correctly
-                $refreshedBand = OtherService::findOrFail($band->id);
-                \Log::debug('Band data after updates', [
-                    'members_after_update' => $refreshedBand->members,
-                    'members_decoded' => json_decode($refreshedBand->members, true)
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Profile updated successfully',
-                    'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
-                ]);
             } else {
                 // Handle case where no band is linked to the user
                 \Log::error('Band not found for user', [
@@ -803,28 +685,15 @@ class ProfileController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unable to find the band associated with your account. Please contact support.',
-                    'error' => 'Band not found'
+                    'message' => 'Artist not found for user. Please Contact Support.',
+                    'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
                 ], 404);
             }
         }
 
-        // If we get here, it means the dashboard type is not artist
-        \Log::warning('Invalid dashboard type in updateBand', [
-            'expected' => 'artist',
-            'got' => $dashboardType,
-            'user_id' => $user->id ?? null
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid dashboard type. Expected "artist", got "' . $dashboardType . '"',
-            'debug' => [
-                'requestData' => $userData,
-                'dashboardType' => $dashboardType,
-                'userId' => $user->id ?? null
-            ]
-        ], 400);
+        return redirect()
+            ->back()
+            ->with('error', 'Invalid dashboard type. Expected "artist", got "' . $dashboardType . '"');
     }
 
     public function updatePhotographer($dashboardType, PhotographerProfileUpdateRequest $request, $user)
@@ -1298,7 +1167,7 @@ class ProfileController extends Controller
             $normalizedStandardUserGenres[$genreName] = [
                 'all' => $genreData['all'] ?? 'false',
                 'subgenres' => isset($genreData['subgenres'][0])
-                    ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'][0] : $genreData['subgenres'])
+                    ? (is_array($genreData['subgenres'][0]) ? $genreData['subgenres'] : $genreData['subgenres'])
                     : []
             ];
         }
@@ -1721,7 +1590,6 @@ class ProfileController extends Controller
         }
 
         $userType->update(['band_type' => json_encode($dataToStore)]);
-
         return response()->json([
             'success' => true,
             'message' => 'Band Types successfully updated',

@@ -2,9 +2,31 @@
   <h2 class="text-md font-heading font-medium text-white">{{ __('Members') }}</h2>
 </header>
 
-<form id="members-form" method="POST" enctype="multipart/form-data">
+<!-- Show any flash messages -->
+@if (session('success'))
+  <div class="mb-4 rounded-lg bg-green-100 p-4 text-green-700">
+    {{ session('success') }}
+  </div>
+@endif
+
+@if (session('error'))
+  <div class="mb-4 rounded-lg bg-red-100 p-4 text-red-700">
+    {{ session('error') }}
+  </div>
+@endif
+
+<form id="members-form" method="POST"
+  action="{{ route('artist.update', ['dashboardType' => $dashboardType, 'user' => $user->id]) }}"
+  enctype="multipart/form-data">
   @csrf
   @method('PUT')
+
+  <input type="hidden" name="about" value="{{ $profileData['about'] ?? '' }}">
+  <input type="hidden" name="name" value="{{ $profileData['name'] ?? '' }}">
+  <input type="hidden" name="artist_id" value="{{ $profileData['artistId'] ?? '' }}">
+
+  <!-- Create a hidden input for members_json that will be populated on submit -->
+  <input type="hidden" id="members_json" name="members_json" value="">
 
   <div class="members-container space-y-4">
     @php
@@ -90,12 +112,14 @@
 </form>
 
 <script>
+  // Helper functions for notifications
+  // ...existing code...
+
   document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('members-form');
     const container = document.querySelector('.members-container');
     const addButton = document.getElementById('add-member');
-    const dashboardType = '{{ $dashboardType }}';
-    const user = '{{ $user->id }}';
+    const membersJsonInput = document.getElementById('members_json');
 
     // Add new member row
     addButton.addEventListener('click', function() {
@@ -174,12 +198,20 @@
       if (e.target.classList.contains('member-profile-input')) {
         const file = e.target.files[0];
         if (file) {
+          // Get the current member row and index
+          const memberRow = e.target.closest('.member-row');
+          const memberIndex = Array.from(container.children).indexOf(memberRow);
+
           // Create a preview of the selected image
           const reader = new FileReader();
           const previewImg = e.target.closest('.profile-pic-container').querySelector('.member-preview-img');
 
           reader.onload = function(event) {
             previewImg.src = event.target.result;
+
+            // Mark that this member has a new image
+            memberRow.setAttribute('data-has-new-image', 'true');
+            console.log(`New image selected for member ${memberIndex}`);
           };
 
           reader.readAsDataURL(file);
@@ -187,55 +219,69 @@
       }
     });
 
-    // Form submission
+    // Prepare the form before submission
     form.addEventListener('submit', function(e) {
-      e.preventDefault();
+      // Collect member data for the hidden JSON field
+      const members = [];
+      const memberRows = document.querySelectorAll('.member-row');
 
+      memberRows.forEach((row, index) => {
+        const nameInput = row.querySelector('input[name*="[name]"]');
+        const roleInput = row.querySelector('input[name*="[role]"]');
+        const bioTextarea = row.querySelector('textarea[name*="[bio]"]');
+        const profilePicInput = row.querySelector('.member-profile-path');
+
+        // Create a member object
+        const member = {
+          name: nameInput ? nameInput.value || 'Band Member' : 'Band Member',
+          role: roleInput ? roleInput.value || '' : '',
+          bio: bioTextarea ? bioTextarea.value || '' : '',
+          profile_pic: profilePicInput ? profilePicInput.value || '' : ''
+        };
+
+        members.push(member);
+      });
+
+      // Update the hidden input with JSON representation
+      membersJsonInput.value = JSON.stringify(members);
+      console.log('Members JSON prepared for submission:', membersJsonInput.value);
+
+      // Switch to AJAX submission
+      e.preventDefault(); // Prevent normal form submission
+
+      // Get the form data
       const formData = new FormData(this);
-      const artistId = '{{ $profileData['artistId'] ?? '' }}';
-      const user = '{{ $user->id }}';
-      formData.append('artist_id', artistId);
-      formData.append('user', user);
 
-      // Log the form data for debugging
-      console.log('Form submission data:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
-
-      // Display a loading spinner or message
+      // Show a loading spinner
       const submitButton = this.querySelector('button[type="submit"]');
       const originalButtonText = submitButton.innerHTML;
       submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
       submitButton.disabled = true;
 
-      fetch(`/profile/${dashboardType}/band-profile-update/${user}`, {
-          method: 'PUT', // Changed from POST to PUT to match the route definition
-          headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
-          },
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            showSuccessNotification('Members updated successfully');
-            setTimeout(() => {
-              window.location.reload(data.redirect);
-            }, 1500);
-          } else {
-            throw new Error(data.message || 'Failed to update members');
-          }
-        })
-        .catch(error => {
-          showFailureNotification(error.message);
-          console.error('Error:', error);
-          // Restore button state
+      // Submit the form via AJAX
+      $.ajax({
+        url: this.action,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+          // Handle success
+          showSuccessNotification(response.message);
+          window.location.href = response.redirect;
+          console.log('Response:', response);
           submitButton.innerHTML = originalButtonText;
           submitButton.disabled = false;
-        });
-    });
+        },
+        error: function(xhr) {
+          // Handle error
+          showFailureNotification(xhr);
+          console.error('Error:', xhr);
+          submitButton.innerHTML = originalButtonText;
+          submitButton.disabled = false;
+        }
+      })
+    })
   });
 </script>
 
