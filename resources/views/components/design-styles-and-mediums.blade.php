@@ -26,8 +26,10 @@
       default => [],
   };
 
+  // Default empty arrays for environments and workingTimes if not provided
+  $environments = $environments ?? [];
+  $workingTimes = $workingTimes ?? [];
   $allowedTypes = ['designer', 'photographer', 'videographer'];
-
 @endphp
 
 @if (in_array($dashboardType, $allowedTypes))
@@ -130,33 +132,42 @@
       @endif
 
       {{-- Environments Tab (Photographer & Videographer Only) --}}
-      <div class="tab-pane hidden" id="environments-tab">
-        <div class="space-y-4">
-          @foreach ($options['environments'] as $category => $environmentTypes)
-            <div class="overflow-hidden rounded-xl border border-gray-700 bg-black/20">
-              <button type="button"
-                class="test-accordion flex w-full items-center justify-between p-4 text-white hover:bg-black/30">
-                <span class="text-sm font-semibold">{{ $category }}</span>
-                <svg class="h-5 w-5 transform transition-transform" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div class="test-content hidden border-t border-gray-700 p-4">
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  @foreach ($environmentTypes as $environment)
-                    <div class="flex items-center space-x-2">
-                      <x-input-checkbox id="environment_{{ Str::slug($environment) }}"
-                        name="environments[{{ $category }}][]" value="{{ $environment }}" :checked="isset($environments[$category]) && in_array($environment, $environments[$category])" />
-                      <span class="text-white">{{ $environment }}</span>
-                    </div>
-                  @endforeach
+      @if (in_array($dashboardType, ['photographer', 'videographer']) && isset($options['environments']))
+        <div class="tab-pane hidden" id="environments-tab">
+          <div class="space-y-4">
+            @foreach ($options['environments'] as $category => $environmentTypes)
+              <div class="overflow-hidden rounded-xl border border-gray-700 bg-black/20">
+                <button type="button"
+                  class="test-accordion flex w-full items-center justify-between p-4 text-white hover:bg-black/30">
+                  <span class="text-sm font-semibold">{{ $category }}</span>
+                  <svg class="h-5 w-5 transform transition-transform" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div class="test-content hidden border-t border-gray-700 p-4">
+                  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach ($environmentTypes as $environment)
+                      <div class="flex items-center space-x-2">
+                        <x-input-checkbox id="environment_{{ Str::slug($environment) }}"
+                          name="environments[{{ $category }}][]" value="{{ $environment }}" :checked="isset($environments[$category]) &&
+                              in_array($environment, $environments[$category])" />
+                        <span class="text-white">{{ $environment }}</span>
+                      </div>
+                    @endforeach
+                  </div>
                 </div>
               </div>
-            </div>
-          @endforeach
+            @endforeach
+          </div>
         </div>
-      </div>
+      @else
+        <div class="tab-pane hidden" id="environments-tab">
+          <div class="rounded-xl border border-gray-700 bg-black/20 p-4">
+            <p class="text-gray-400">No environment options available for this profile type.</p>
+          </div>
+        </div>
+      @endif
 
       {{-- Working Times Tab (Photographer & Videographer Only) --}}
       <div class="tab-pane hidden" id="times-tab">
@@ -208,6 +219,10 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Define important variables at the top scope
+    const dashboardType = '{{ $dashboardType }}';
+    const userId = {{ $user->id }};
+
     // Tab functionality variables
     const mobileSelect = document.getElementById('mobileTabSelect');
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -305,67 +320,145 @@
         inputs[1].value = '';
       });
     });
-  });
 
-  // Update the updateDesignerProfile function in your script
-  function updateProfile() {
-    // Collect styles data
-    let selectedStyles = jQuery('input[name="styles[]"]:checked').map(function() {
-      return jQuery(this).val();
-    }).get();
-
-    // Collect prints data (if designer)
-    let selectedPrints = jQuery('input[name="prints[]"]:checked').map(function() {
-      return jQuery(this).val();
-    }).get();
-
-    // Collect environments data (if photographer/videographer)
-    let environmentsData = {};
-    jQuery('input[name^="environments["]').each(function() {
-      if (this.checked) {
-        let matches = this.name.match(/environments\[(.*?)\]/);
-        if (matches) {
-          let category = matches[1];
-          if (!environmentsData[category]) {
-            environmentsData[category] = [];
-          }
-          environmentsData[category].push(this.value);
+    // Auto-save when checkboxes are changed
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        // Show loading indicator or feedback
+        showLoadingIndicator();
+        // Debounce the update to prevent too many requests
+        if (window.updateTimeout) {
+          clearTimeout(window.updateTimeout);
         }
-      }
+        window.updateTimeout = setTimeout(() => updateProfile(dashboardType, userId), 500);
+      });
     });
 
-    // Collect working times data
-    let workingTimesData = {};
-    jQuery('.working-times-input').each(function() {
-      let day = jQuery(this).data('day');
-      let type = jQuery(this).data('type');
-      let value = jQuery(this).val();
-
-      if (!workingTimesData[day]) {
-        workingTimesData[day] = {};
-      }
-      workingTimesData[day][type] = value;
+    // Auto-save when time inputs are changed
+    const timeInputs = document.querySelectorAll('.working-times-input');
+    timeInputs.forEach(input => {
+      input.addEventListener('change', function() {
+        // Show loading indicator or feedback
+        showLoadingIndicator();
+        // Debounce the update to prevent too many requests
+        if (window.updateTimeout) {
+          clearTimeout(window.updateTimeout);
+        }
+        window.updateTimeout = setTimeout(() => updateProfile(dashboardType, userId), 500);
+      });
     });
 
-    // Send combined data
-    jQuery.ajax({
-      url: `/profile/${dashboardType}/update/${userId}`,
-      method: 'POST',
-      data: {
-        _token: '{{ csrf_token() }}',
-        _method: 'PUT',
-        styles: selectedStyles,
-        prints: selectedPrints,
-        environments: environmentsData,
-        working_times: workingTimesData
-      },
-      success: function(response) {
-        showSuccessNotification(response.message);
-      },
-      error: function(xhr, status, error) {
-        showFailureNotification('Error updating profile');
-        console.error('Error:', error);
-      }
+    // Auto-save when "All Day" or "Unavailable" buttons are clicked
+    document.querySelectorAll('.all-day-btn, .unavailable-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        // Existing time-setting logic will run first
+
+        // Then trigger update after a brief delay to ensure time inputs are updated
+        setTimeout(() => {
+          showLoadingIndicator();
+          updateProfile(dashboardType, userId);
+        }, 100);
+      });
     });
-  }
+
+    function showLoadingIndicator() {
+      // You can add a subtle loading indicator or feedback here
+      const indicator = document.createElement('div');
+      indicator.id = 'saving-indicator';
+      indicator.className = 'fixed bottom-4 right-4 rounded bg-black/70 px-4 py-2 text-white text-sm z-50';
+      indicator.innerHTML = 'Saving...';
+
+      // Remove any existing indicators
+      const existingIndicator = document.getElementById('saving-indicator');
+      if (existingIndicator) {
+        existingIndicator.remove();
+      }
+
+      document.body.appendChild(indicator);
+    }
+
+    // Update profile function with proper parameters
+    function updateProfile(dashboardType, userId) {
+      console.log(`Updating profile for: ${dashboardType}, user: ${userId}`);
+
+      // Collect styles data
+      let selectedStyles = jQuery('input[name="styles[]"]:checked').map(function() {
+        return jQuery(this).val();
+      }).get();
+
+      // Collect prints data (if designer)
+      let selectedPrints = jQuery('input[name="prints[]"]:checked').map(function() {
+        return jQuery(this).val();
+      }).get();
+
+      // Collect environments data (if photographer/videographer)
+      let environmentsData = {};
+      jQuery('input[name^="environments["]').each(function() {
+        if (this.checked) {
+          let matches = this.name.match(/environments\[(.*?)\]/);
+          if (matches) {
+            let category = matches[1];
+            if (!environmentsData[category]) {
+              environmentsData[category] = [];
+            }
+            environmentsData[category].push(this.value);
+          }
+        }
+      });
+
+      // Collect working times data
+      let workingTimesData = {};
+      jQuery('.working-times-input').each(function() {
+        let day = jQuery(this).data('day');
+        let type = jQuery(this).data('type');
+        let value = jQuery(this).val();
+
+        if (!workingTimesData[day]) {
+          workingTimesData[day] = {};
+        }
+        workingTimesData[day][type] = value;
+      });
+
+      console.log('Sending AJAX request to update profile...');
+
+      // Send combined data
+      jQuery.ajax({
+        url: `/profile/${dashboardType}/designer-profile-update/${userId}`,
+        method: 'POST',
+        data: {
+          _token: '{{ csrf_token() }}',
+          _method: 'PUT',
+          styles: selectedStyles,
+          prints: selectedPrints,
+          environments: environmentsData,
+          working_times: workingTimesData
+        },
+        success: function(response) {
+          // Remove loading indicator
+          const indicator = document.getElementById('saving-indicator');
+          if (indicator) {
+            indicator.innerHTML = 'Saved!';
+            setTimeout(() => {
+              indicator.remove();
+            }, 1500);
+          }
+
+          showSuccessNotification(response.message || 'Profile updated successfully');
+        },
+        error: function(xhr, status, error) {
+          // Remove loading indicator
+          const indicator = document.getElementById('saving-indicator');
+          if (indicator) {
+            indicator.remove();
+          }
+
+          console.error('Error URL:', xhr.responseURL);
+          console.error('Status:', xhr.status);
+          console.error('Response:', xhr.responseText);
+          showFailureNotification('Error updating profile: ' + error);
+        }
+      });
+    }
+  });
 </script>

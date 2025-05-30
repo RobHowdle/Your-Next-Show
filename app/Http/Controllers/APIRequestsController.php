@@ -457,10 +457,18 @@ class APIRequestsController extends Controller
     /**
      * Save packages for a user
      */
-    public function updatePackages($dashboardType, StoreUpdatePackages $request)
+    public function updatePackages($dashboardType, $id, StoreUpdatePackages $request)
     {
         try {
-            $user = Auth::user();
+            // Log the request for debugging
+            \Log::info('Package update request received', [
+                'dashboardType' => $dashboardType,
+                'id' => $id,
+                'data' => $request->all()
+            ]);
+
+            // Find the specific user (might be different than authenticated user for admins)
+            $user = User::findOrFail($id);
             $validated = $request->validated();
 
             // Get the appropriate service based on dashboard type
@@ -494,21 +502,114 @@ class APIRequestsController extends Controller
                 ], 403);
             }
 
-            // Structure packages data
-            $packages = array_map(function ($package) {
+            // Log the incoming package data
+            \Log::info('Package data received:', ['data' => $validated['packages']]);
+
+            // Structure packages data with correct field names and ensure defaults
+            $packages = array_map(function ($package) use ($dashboardType) {
+                // Use default job type if empty based on dashboard type
+                $jobType = $package['job_type'] ?? '';
+
+                // Log the incoming job_type value for debugging
+                \Log::info("Processing package with job_type: '$jobType'", [
+                    'dashboard_type' => $dashboardType,
+                    'package_title' => $package['title'] ?? 'Untitled'
+                ]);
+
+                // Check if this is a known job type for this dashboard type
+                $knownJobTypes = [
+                    'photographer' => ['gig_shoot', 'portrait', 'band_promo', 'event_coverage'],
+                    'designer' => ['album_artwork', 'poster_design', 'logo_design'],
+                    'videographer' => ['music_video', 'live_video', 'promo_video', 'event_coverage'],
+                    'venue' => ['venue_booking', 'entertainment', 'event_hosting']
+                ];
+
+                // If we have a job type but it's not in the known list, log it
+                if (
+                    !empty($jobType) && isset($knownJobTypes[$dashboardType]) &&
+                    !in_array($jobType, $knownJobTypes[$dashboardType]) &&
+                    $jobType !== 'default_package'
+                ) {
+                    \Log::info("Found non-standard job type: $jobType for dashboard type: $dashboardType", [
+                        'package_title' => $package['title'] ?? 'Untitled'
+                    ]);
+                }
+
+                if (empty($jobType) || $jobType === 'default_package') {
+                    // Try to get first job type from config
+                    $jobTypesConfig = config('job_types.' . strtolower($dashboardType)) ?? [];
+
+                    \Log::info("Job types config for $dashboardType:", [
+                        'has_config' => !empty($jobTypesConfig),
+                        'config' => $jobTypesConfig
+                    ]);
+
+                    // First try to use a known job type for this dashboard type
+                    if (isset($knownJobTypes[$dashboardType]) && !empty($knownJobTypes[$dashboardType])) {
+                        $jobType = $knownJobTypes[$dashboardType][0];
+                        \Log::info("Selected known job type: $jobType for dashboard type: $dashboardType");
+                    }
+                    // Otherwise try to get from config
+                    else if (!empty($jobTypesConfig)) {
+                        $firstClient = array_key_first($jobTypesConfig);
+                        if (!empty($jobTypesConfig[$firstClient])) {
+                            $jobType = $jobTypesConfig[$firstClient][0]['id'] ?? 'default_package';
+                            \Log::info("Selected job type from config: $jobType");
+                        }
+                    }
+
+                    if (empty($jobType) || $jobType === 'default_package') {
+                        $jobType = 'default_package';
+                        \Log::info("Using default package type");
+                    }
+                }
+
                 return [
-                    'name' => $package['name'],
-                    'description' => $package['description'],
-                    'price' => $package['price'],
-                    'features' => $package['features'] ?? [],
-                    'is_active' => $package['is_active'] ?? true,
+                    'title' => $package['title'],
+                    'description' => $package['description'] ?? '',
+                    'price' => $package['price'] ?? 0,
+                    'job_type' => $jobType,
+                    'items' => $package['items'] ?? [],
+                    'lead_time' => $package['lead_time'] ?? null,
+                    'lead_time_unit' => $package['lead_time_unit'] ?? 'days',
+                    'is_active' => true,
                 ];
             }, $validated['packages']);
 
+            // Log the structured package data
+            \Log::info('Structured package data:', ['packages' => $packages]);
+
+            // Ensure we're not double-encoding JSON
+            $packagesJson = json_encode($packages);
+
+            // Log before saving
+            \Log::info('Saving packages JSON', [
+                'length' => strlen($packagesJson),
+                'first_100_chars' => substr($packagesJson, 0, 100)
+            ]);
+
             // Update packages in the database
             $service->update([
-                'packages' => json_encode($packages)
+                'packages' => $packagesJson
             ]);
+
+            // Double-check what was saved
+            $savedService = match ($dashboardType) {
+                'venue' => $user->venues()->first(),
+                'promoter' => $user->promoters()->first(),
+                'artist' => $user->otherService('Artist')->first(),
+                'photographer' => $user->otherService('Photography')->first(),
+                'designer' => $user->otherService('Designer')->first(),
+                'videographer' => $user->otherService('Videography')->first(),
+                default => null,
+            };
+
+            if ($savedService) {
+                \Log::info('Packages saved in database', [
+                    'raw_packages' => $savedService->packages,
+                    'decoded' => json_decode($savedService->packages)
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

@@ -115,9 +115,14 @@
     </div>
   </div>
 
+  @php
+    $service = Str::lower($singleService->services);
+  @endphp
   <!-- Add necessary modals -->
-  <x-review-modal title="{{ $singleService->name }}" serviceType="singleService" profileId="{{ $singleService->id }}"
-    service="{{ $singleService->name }}" />
+  @if (isset($singleService) && $singleService)
+    <x-review-modal title="{{ $singleService->name }}" serviceType="singleService"
+      profileId="{{ $singleService->id }}" service="{{ strtolower($singleService->services) }}" />
+  @endif
 </x-guest-layout>
 <style>
   .fade-in {
@@ -215,7 +220,14 @@
 
     // Attach click event listeners
     openMapLink.addEventListener("click", openMap);
-    openW3WLink && openW3WLink.addEventListener("click",
-      openW3W); // Conditional check in case the element doesn't exist
+    openW3WLink && openW3WLink.addEventListener("click", openW3W);
+  });
+</script>
+@vite('resources/js/components/review-modal.js')
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.initReviewModal) {
+      window.initReviewModal();
+    }
   });
 </script>

@@ -89,13 +89,16 @@ class OtherService extends Model
         return self::where('name', 'designer');
     }
 
-
     /**
      * Retrieve all bands (other services with `other_service_id` as 4).
      */
     public static function bands()
     {
-        return self::where('name', 'artist');
+        // Use a more robust query that checks both name and service_id
+        return self::where(function ($query) {
+            $query->where('name', 'artist')
+                ->orWhere('other_service_id', 4);
+        });
     }
     /**
      * Belongs to OtherServiceList relation.
@@ -199,5 +202,10 @@ class OtherService extends Model
     public function opportunities()
     {
         return $this->morphMany(Opportunity::class, 'serviceable');
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(Document::class, 'serviceable');
     }
 }

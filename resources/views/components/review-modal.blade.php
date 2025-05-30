@@ -18,24 +18,26 @@
         <form action="{{ $getFormAction() }}" method="POST">
           @csrf
           <input type="hidden" name="service_type" value="{{ $serviceType }}">
+          <input type="hidden" name="service" value="{{ $service }}">
           <input type="hidden" name="reviewer_ip" id="reviewer_ip">
 
           <!-- Rating Fields -->
           <div class="space-y-6">
             @php
-              $reviewFields = config('review_fields.' . strtolower($serviceType), []);
+              $reviewFields = config('review_fields.' . strtolower($service), []);
               $emptyIcon = asset('storage/images/system/ratings/empty.png');
               $fullIcon = asset('storage/images/system/ratings/full.png');
               $hotIcon = asset('storage/images/system/ratings/hot.png');
             @endphp
+
             @foreach ($reviewFields as $field => $label)
               <div class="rating-block flex items-center justify-between gap-4">
                 <p class="text-lg text-gray-300">{{ $label }}:</p>
                 <div class="rating flex gap-2" data-rating-group="{{ $field }}">
                   @for ($i = 1; $i <= 5; $i++)
-                    <input type="radio" name="{{ $field }}-rating" value="{{ $i }}"
-                      id="{{ $field }}-rating-{{ $i }}" class="rating-icon peer hidden" />
-                    <label for="{{ $field }}-rating-{{ $i }}"
+                    <input type="radio" name="{{ $field }}" value="{{ $i }}"
+                      id="{{ $field }}-{{ $i }}" class="rating-icon peer hidden" />
+                    <label for="{{ $field }}-{{ $i }}"
                       class="rating-label relative h-6 w-6 cursor-pointer" data-rating="{{ $i }}"
                       style="background-image: url('{{ $emptyIcon }}'); 
                    background-size: contain;

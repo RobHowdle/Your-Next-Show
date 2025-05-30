@@ -128,6 +128,12 @@ class ReviewController extends Controller
 
             // If value is provided, use it; otherwise toggle the current value
             $review->$field = $value ?? !$review->$field;
+
+            // If approving, also set display to true; if unapproving, set display to false
+            if ($field === 'review_approved') {
+                $review->display = (bool)$review->$field;
+            }
+
             $review->save();
 
             $status = $review->$field ? 'approved' : 'unapproved';
@@ -137,7 +143,8 @@ class ReviewController extends Controller
                 'message' => "Review {$status} successfully",
                 'review' => [
                     'id' => $review->id,
-                    'review_approved' => $review->review_approved
+                    'review_approved' => $review->review_approved,
+                    'display' => $review->display
                 ]
             ]);
         } catch (\Exception $e) {

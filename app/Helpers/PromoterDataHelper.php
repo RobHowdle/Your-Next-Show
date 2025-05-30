@@ -15,7 +15,7 @@ class PromoterDataHelper
         $this->serviceDataHelper = $serviceDataHelper;
     }
 
-    public function getPromoterData(User $user)
+    public function getPromoterData(User $user, $dashboardType)
     {
         $promoter = $user->promoters()->first();
 
@@ -36,17 +36,19 @@ class PromoterDataHelper
 
         $platforms = [];
         $activePlatforms = [];
-        $platformsToCheck = ['facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+
+        // Get the social platforms config file - this contains all platform information
+        $socialPlatformsConfig = config('social_platforms');
 
         // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
+        foreach (array_keys($socialPlatformsConfig) as $platform) {
             $platforms[$platform] = '';  // Set default to empty string
         }
 
         // Check if the contactLinks array exists and contains social links
         if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
+            foreach (array_keys($socialPlatformsConfig) as $platform) {
+                // Only add the link if the platform exists in the $contactLiIt nks array
                 if (isset($contactLinks[$platform]) && !empty($contactLinks[$platform])) {
                     $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
                     $activePlatforms[] = $platform; // Track this platform as active
@@ -56,15 +58,100 @@ class PromoterDataHelper
 
         $preferredContact = $promoter ? $promoter->preferred_contact : '';
 
-
         // About Section
         $description = $promoter ? $promoter->description : '';
 
-        // My Venues
-        $myVenues = $promoter ? $promoter->my_venues : '';
-
         // My Events
-        $myEvents = $promoter ? $promoter->events()->with('venues')->get() : collect();
+        $myEvents = $promoter ? $promoter->events()->with(['venues', 'bands'])->get() : collect();
+
+        // Extract all unique artists from all events
+        $allArtists = collect();
+        foreach ($myEvents as $event) {
+            // Use $event->bands() relationship method to get the artists
+            foreach ($event->bands()->get() as $artist) {
+                $allArtists->push($artist);
+            }
+        }
+        $uniqueArtists = $allArtists->unique('id')->values();
+
+        // Attach venues and events to each artist
+        $uniqueArtists = $uniqueArtists->map(function ($artist) use ($myEvents) {
+            // Find all events this artist performed at
+            $artistEvents = $myEvents->filter(function ($event) use ($artist) {
+                $eventArtists = $event->bands()->get();
+                return $eventArtists->pluck('id')->contains($artist->id);
+            });
+            // Collect all unique venues from those events
+            $venues = collect();
+            foreach ($artistEvents as $event) {
+                foreach ($event->venues as $venue) {
+                    $venues->push($venue);
+                }
+            }
+            $artist->venues = $venues->unique('id')->values();
+            $artist->events = $artistEvents->values();
+            return $artist;
+        });
+
+        // Venues
+        $groupedVenues = $myEvents->groupBy(function ($event) {
+            return $event->venues->first()->id ?? null;
+        })->filter(function ($events, $venueId) {
+            return $venueId !== null;
+        })->map(function ($events, $venueId) use ($dashboardType) {
+            $venue = $events->first()->venues->first();
+            // Add eventsForJs for Alpine.js modal
+            $eventsForJs = $events->map(function ($event) use ($dashboardType) {
+                return [
+                    'id' => $event->id,
+                    'name' => $event->event_name,
+                    'date' => $event->event_date,
+                    'url' => route('admin.dashboard.show-event', [
+                        'dashboardType' => $dashboardType,
+                        'id' => $event->id
+                    ]),
+                ];
+            })->values();
+            return [
+                'venue' => $venue,
+                'event_count' => $events->count(),
+                'events' => $events,
+                'eventsForJs' => $eventsForJs,
+            ];
+        });
+
+        // Group events by artist (for My Bands popup)
+        $groupedArtists = $myEvents->flatMap(function ($event) {
+            // Adjust 'artists' to your actual relationship name, e.g., 'bands'
+            return collect($event->artists)->map(function ($artist) use ($event) {
+                return [
+                    'artist' => $artist,
+                    'event' => $event
+                ];
+            });
+        })->groupBy(function ($item) {
+            return $item['artist']->id;
+        })->map(function ($items, $artistId) use ($dashboardType) {
+            $artist = $items->first()['artist'];
+            $events = collect($items)->pluck('event')->unique('id')->values();
+            $eventsForJs = $events->map(function ($event) use ($dashboardType) {
+                return [
+                    'id' => $event->id,
+                    'name' => $event->event_name,
+                    'date' => $event->event_date,
+                    'url' => route('admin.dashboard.show-event', [
+                        'dashboardType' => $dashboardType,
+                        'id' => $event->id
+                    ]),
+                ];
+            })->values();
+            return [
+                'artist' => $artist,
+                'event_count' => $events->count(),
+                'events' => $events,
+                'eventsForJs' => $eventsForJs,
+            ];
+        });
 
         // Genres
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -122,11 +209,12 @@ class PromoterDataHelper
             'contact_number' => $contact_number,
             'platforms' => $platforms,
             'activePlatforms' => $activePlatforms,
-            'platformsToCheck' => $platformsToCheck,
+            'platformsToCheck' => $socialPlatformsConfig,
             'preferred_contact' => $preferredContact,
-            'myVenues' => $myVenues,
+            'groupedVenues' => $groupedVenues,
             'myEvents' => $myEvents,
-            // 'uniqueBands' => $uniqueBands,
+            'uniqueArtists' => $uniqueArtists,
+            'groupedArtists' => $groupedArtists,
             'genres' => $genres,
             'profileGenres' => $profileGenres,
             'isAllGenres' => $isAllGenres,

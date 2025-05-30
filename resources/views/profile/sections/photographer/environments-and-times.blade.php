@@ -1,5 +1,5 @@
-<x-environments name="environment_types" label="Select Shooting Environments" :selected="old('environment_types', $environmentTypes)" :groups="$groups" />
-<x-working-times :workingTimes="$workingTimes" :dashboardType="$dashboardType" :user="$user" />
+<x-environments name="environment_types" label="Select Shooting Environments" :selected="old('environment_types', $profileData['environmentTypes'])" :groups="$profileData['groups']" />
+<x-working-times :workingTimes="$profileData['workingTimes']" :dashboardType="$dashboardType" :user="$user" />
 
 <script>
   jQuery(document).ready(function() {

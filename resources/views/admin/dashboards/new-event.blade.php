@@ -179,11 +179,13 @@
                     <div>
                       <x-input-label-dark>Promoter Name</x-input-label-dark>
                       <x-text-input id="promoter_name" name="promoter_name" autocomplete="off"
-                        placeholder="Type promoter name and press Enter" class="mt-1 block w-full"></x-text-input>
+                        placeholder="Type promoter name and press Enter" class="mt-1 block w-full"
+                        value="{{ $serviceData['promoter_name'] ?? '' }}"></x-text-input>
                       <ul id="promoter-suggestions"
                         class="absolute z-10 mt-1 hidden w-auto rounded-lg border border-gray-700 bg-gray-800"></ul>
                       <x-input-label-dark class="hidden">Promoter ID</x-input-label-dark>
-                      <x-text-input id="promoter_ids" name="promoter_ids" type="hidden"
+                      <x-text-input id="promoter_ids" name="promoter_ids"
+                        value="{{ $serviceData['promoter_id'] ?? '' }}" type="hidden"
                         class="mt-1 w-full"></x-text-input>
                     </div>
                   </div>

@@ -24,9 +24,9 @@ class StoreUpdatePackages extends FormRequest
         return [
             'packages' => 'required|array',
             'packages.*.title' => 'required|string|max:255',
-            'packages.*.description' => 'required|string',
-            'packages.*.price' => 'required|numeric|min:0',
-            'packages.*.job_type' => 'string',
+            'packages.*.description' => 'nullable|string',
+            'packages.*.price' => 'nullable|numeric|min:0',
+            'packages.*.job_type' => 'nullable|string',
             'packages.*.items' => 'array',
             'packages.*.items.*' => 'string|max:255',
             'packages.*.lead_time' => 'numeric',
@@ -39,8 +39,6 @@ class StoreUpdatePackages extends FormRequest
         return [
             'packages.required' => 'At least one package is required.',
             'packages.*.title.required' => 'Package title is required.',
-            'packages.*.description.required' => 'Package description is required.',
-            'packages.*.price.required' => 'Package price is required.',
             'packages.*.price.numeric' => 'Package price must be a number.',
             'packages.*.price.min' => 'Package price cannot be negative.',
             'packages.*.items.array' => 'Package items must be a list.',

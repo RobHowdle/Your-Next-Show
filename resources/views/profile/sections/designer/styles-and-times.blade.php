@@ -40,7 +40,7 @@
 
       // Send combined data
       $.ajax({
-        url: `/profile/${dashboardType}/designer-user-update/${userId}`,
+        url: `/profile/${dashboardType}/designer-profile-update/${userId}`,
         method: 'POST',
         data: {
           _token: '{{ csrf_token() }}',

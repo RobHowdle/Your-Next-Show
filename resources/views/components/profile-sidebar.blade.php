@@ -25,10 +25,34 @@
       <x-profile-nav-item icon="gift" label="Live Music Loyalty Card" tab="lmlc" />
     @endif
 
+    @if ($dashboardType === 'promoter')
+      <x-profile-nav-item icon="building" label="My Venues" tab="venues" />
+      <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+      <x-profile-nav-item icon="guitar" label="My Bands" tab="bands" />
+    @endif
+
     @if ($dashboardType === 'artist')
+      <x-profile-nav-item icon="music" label="Documents" tab="documents" />
       <x-profile-nav-item icon="music" label="Stream Links" tab="stream-links" />
       <x-profile-nav-item icon="users" label="Band Members" tab="members" />
       <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+    @endif
+
+    @if ($dashboardType === 'photographer')
+      <x-profile-nav-item icon="camera" label="Environments & Times" tab="environments-and-times" />
+      <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+      <x-profile-nav-item icon="camera" label="Packages" tab="packages" />
+    @endif
+
+    @if ($dashboardType === 'designer')
+      <x-profile-nav-item icon="palette" label="Styles & Times" tab="styles-and-times" />
+      <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+      <x-profile-nav-item icon="box-open" label="Packages" tab="packages" />
+    @endif
+    @if ($dashboardType === 'videographer')
+      <x-profile-nav-item icon="video" label="Environments & Times" tab="environments-and-times" />
+      <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+      <x-profile-nav-item icon="box-open" label="Packages" tab="packages" />
     @endif
 
     <!-- Settings Section -->

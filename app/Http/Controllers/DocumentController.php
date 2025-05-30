@@ -332,6 +332,32 @@ class DocumentController extends Controller
         }
     }
 
+    public function publicDownload($id)
+    {
+        try {
+            // Find the document and ensure it's public
+            $document = Document::where('id', $id)
+                ->where('private', false)
+                ->firstOrFail();
+
+            $filePath = storage_path("app/{$document->file_path}");
+
+            if (!file_exists($filePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File not found'
+                ], 404);
+            }
+
+            return response()->download($filePath);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error downloading file'
+            ], 500);
+        }
+    }
+
     public function delete($dashboardType, $id)
     {
         try {
