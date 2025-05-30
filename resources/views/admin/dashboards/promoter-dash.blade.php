@@ -20,7 +20,7 @@
             <span class="fas fa-guitar mb-4 h-14 w-14"></span>
             6 Available Bands
           </a>
-          <a href="{{ route('admin.dashboard.get-reviews', ['filter' => 'pending', 'dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('dashboard.reviews', ['filter' => 'pending', 'dashboardType' => $dashboardType]) }}"
             data-filter="pending"
             class="flex flex-col items-center text-center transition duration-150 ease-in-out hover:text-yns_yellow">
             <span class="fas fa-star mb-4 h-14 w-14"></span>
@@ -89,7 +89,7 @@
               class="fas fa-pound-sign mb-4 h-14 w-14 rounded-lg bg-white px-1 py-1 text-black transition duration-150 ease-in-out group-hover:text-yns_yellow"></span>
             Budgets
           </a>
-          <a href="{{ route('admin.dashboard.show-notes', ['dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('admin.dashboard.notes', ['dashboardType' => $dashboardType]) }}"
             class="group flex flex-col items-center text-center transition duration-150 ease-in-out hover:text-yns_yellow">
             <span
               class="fas fa-sticky-note mb-4 h-14 w-14 rounded-lg bg-white px-1 py-1 text-black transition duration-150 ease-in-out group-hover:text-yns_yellow"></span>

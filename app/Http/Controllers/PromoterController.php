@@ -2,23 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\Promoter;
 use Illuminate\Http\Request;
 use App\Models\PromoterReview;
+use App\Services\FilterService;
 use App\Helpers\SocialLinksHelper;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class PromoterController extends Controller
 {
-    protected $dashboardType;
-
-    public function __construct(Request $request)
-    {
-        $this->dashboardType = $request->dashboardType;
-        view()->share('dashboardType', $this->dashboardType);
-    }
-
     /**
      * Helper function to render rating icons
      */
@@ -63,43 +58,53 @@ class PromoterController extends Controller
      */
     public function index(Request $request)
     {
-        $searchQuery = $request->input('search_query');
+        $bandTypes = [
+            'original-bands',
+            'cover-bands',
+            'tribute-bands',
+            'all'
+        ];
 
-        $promoters = Promoter::whereNull('deleted_at')
-            ->with('venues')
-            ->when($searchQuery, function ($query, $searchQuery) {
-                return $query->where('postal_town', 'like', "%$searchQuery%");
-            })
-            ->paginate(10);
-
-        // Fetch genres for initial page load
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true);
+        $genresPath = file_get_contents(public_path('text/genre_list.json'));
+        $data = json_decode($genresPath, true);
         $genres = $data['genres'];
 
-        if ($request->ajax()) {
-            return response()->json([
-                'promoters' => $promoters,
-                'view' => view('partials.promoter-list', compact('promoters', 'genres'))->render()
-            ]);
+        $genres = $genres['genres'] ?? $genres;
+
+        // Convert to simple array if needed
+        if (isset($genres[0]['name'])) {
+            $genres = array_column($genres, 'name');
         }
 
-        // Process each promoter
-        $overallReviews = []; // Array to store overall reviews for each venue
-        foreach ($promoters as $promoter) {
-            $promoter->platforms = SocialLinksHelper::processSocialLinks($promoter->contact_link);
-            $overallScore = PromoterReview::calculateOverallScore($promoter->id);
-            $overallReviews[$promoter->id] = $this->renderRatingIcons($overallScore);
-        }
+        $locations = Promoter::distinct()
+            ->whereNotNull('postal_town')
+            ->pluck('postal_town')
+            ->sort()
+            ->values()
+            ->toArray();
 
+        // Get paginated promoters with 10 per page
+        $promoters = Promoter::orderBy('name')
+            ->paginate(10)
+            ->through(function ($promoter) {
+                $overallScore = PromoterReview::calculateOverallScore($promoter->id);
+                return [
+                    'id' => $promoter->id,
+                    'name' => $promoter->name,
+                    'postal_town' => $promoter->postal_town,
+                    'contact_number' => $promoter->contact_number,
+                    'contact_email' => $promoter->contact_email,
+                    'location' => $promoter->location,
+                    'is_verified' => $promoter->is_verified,
+                    'preferred_contact' => $promoter->preferred_contact,
+                    'platforms' => SocialLinksHelper::processSocialLinks($promoter->contact_link),
+                    'genres' => json_decode($promoter->genre) ?? [],
+                    'average_rating' => $overallScore,
+                    'rating_icons' => $this->renderRatingIcons($overallScore)
+                ];
+            });
 
-        $promoterVenueCount = isset($promoter['venues']) ? count($promoter['venues']) : 0;
-        return view('promoters', [
-            'promoters' => $promoters,
-            'genres' => $genres,
-            'overallReviews' => $overallReviews,
-            'promoterVenueCount' => $promoterVenueCount
-        ]);
+        return view('promoters', compact('promoters', 'genres', 'bandTypes', 'locations'));
     }
 
     /**
@@ -107,7 +112,12 @@ class PromoterController extends Controller
      */
     public function show(string $slug)
     {
-        $promoter = Promoter::where('name', $slug)->with('venues')->first();
+        $promoter = Promoter::with(['upcomingEvents' => function ($query) {
+            $query->where('event_date', '>=', now())
+                ->orderBy('event_date', 'asc');
+        }])->first()->where('name', 'LIKE', str_replace('-', ' ', $slug))
+            ->orWhere('name', 'LIKE', ucwords(str_replace('-', ' ', $slug)))
+            ->firstOrFail();
         $promoterId = $promoter->id;
         $existingVenues = $promoter->venues;
 
@@ -115,10 +125,6 @@ class PromoterController extends Controller
 
         $platforms = SocialLinksHelper::processSocialLinks($promoter->contact_link);
         $promoter->platforms = $platforms;
-
-        // Add the processed data to the venue
-        $recentReviews = PromoterReview::getRecentReviewsForPromoter($promoterId);
-        $promoter->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
         $overallScore = PromoterReview::calculateOverallScore($promoterId);
         $overallReviews[$promoterId] = $this->renderRatingIcons($overallScore);
@@ -129,29 +135,190 @@ class PromoterController extends Controller
         $averagePromotionRating = PromoterReview::calculateAverageScore($promoterId, 'promotion_rating');
         $averageQualityRating = PromoterReview::calculateAverageScore($promoterId, 'quality_rating');
         $reviewCount = PromoterReview::getReviewCount($promoterId);
+        $recentReviews = PromoterReview::getRecentReviews($promoterId);
+        $promoter->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
-        $genres = json_decode($promoter->genre);
+
+        $genres = json_decode($promoter->genre ?? '{}');
+        $genreNames = collect($genres)->keys()->toArray();
+
+        // Fetch upcoming events through the pivot table
+        $upcomingEvents = Event::whereHas('promoters', function ($query) use ($promoterId) {
+            $query->where('promoter_id', $promoterId);
+        })
+            ->where('event_date', '>=', now())
+            ->where('event_date', '<=', now()->addMonth())
+            ->orderBy('event_date', 'asc')
+            ->get();
+
+        $promoter->upcomingEvents = $upcomingEvents;
 
         return view('promoter', compact(
             'promoter',
             'promoterId',
-            'genres',
+            'genreNames',
             'overallScore',
             'overallReviews',
             'averageCommunicationRating',
             'averageRopRating',
             'averagePromotionRating',
             'averageQualityRating',
-            'reviewCount'
-        ))->with([
-            'venueWithHighestRating' => $suggestions['venue'],
-            'photographerWithHighestRating' => $suggestions['photographer'],
-            'videographerWithHighestRating' => $suggestions['videographer'],
-            'bandWithHighestRating' => $suggestions['artist'],
-            'designerWithHighestRating' => $suggestions['designer'],
-            'existingVenues' => $existingVenues,
-            'renderRatingIcons' => [$this, 'renderRatingIcons']
+            'reviewCount',
+            'recentReviews',
+            'platforms',
+            'upcomingEvents',
+        ))
+            ->with([
+                'venueWithHighestRating' => $suggestions['venue'],
+                'photographerWithHighestRating' => $suggestions['photographer'],
+                'videographerWithHighestRating' => $suggestions['videographer'],
+                'bandWithHighestRating' => $suggestions['artist'],
+                'designerWithHighestRating' => $suggestions['designer'],
+                'existingVenues' => $existingVenues,
+                'renderRatingIcons' => [$this, 'renderRatingIcons']
+            ]);
+    }
+
+    public function filter(Request $request)
+    {
+        $query = Promoter::query();
+
+        $filters = $request->input('filters', []);
+
+        if (!empty($filters['bandTypes'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['bandTypes'] as $type) {
+                    $q->orWhereJsonContains('band_type', $type);
+                }
+            });
+        }
+
+        if (!empty($filters['genres'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['genres'] as $genre) {
+                    $q->orWhere('genre', 'LIKE', '%"' . $genre . '"%');
+                }
+            });
+        }
+
+        if (!empty($filters['locations'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['locations'] as $location) {
+                    $q->orWhere('postal_town', $location);
+                }
+            });
+        }
+
+        // Apply search filter
+        if ($search = $request->input('filters.search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('postal_town', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply sorting
+        if ($sort = $request->input('sort')) {
+            $field = $sort['field'] ?? 'name';
+            $direction = $sort['direction'] ?? 'asc';
+
+            switch ($field) {
+                case 'rating':
+                    $query->orderBy('average_rating', $direction);
+                    break;
+                case 'location':
+                    $query->orderBy('postal_town', $direction);
+                    break;
+                default:
+                    $query->orderBy('name', $direction);
+            }
+        }
+
+        $promoters = $query->paginate(10);
+
+        $processedResults = $promoters->through(function ($promoter) {
+            $overallScore = PromoterReview::calculateOverallScore($promoter->id);
+            return [
+                'id' => $promoter->id,
+                'name' => $promoter->name,
+                'postal_town' => $promoter->postal_town,
+                'contact_number' => $promoter->contact_number,
+                'contact_email' => $promoter->contact_email,
+                'is_verified' => $promoter->is_verified,
+                'preferred_contact' => $promoter->preferred_contact,
+                'platforms' => SocialLinksHelper::processSocialLinks($promoter->contact_link),
+                'genres' => json_decode($promoter->genre, true),
+                'average_rating' => $overallScore,
+                'rating_icons' => $this->renderRatingIcons($overallScore)
+            ];
+        });
+
+
+        return response()->json([
+            'results' => $processedResults->items(),
+            'pagination' => view('components.pagination', ['paginator' => $promoters])->render()
         ]);
+    }
+
+    public function locations()
+    {
+        $locations = Promoter::whereNull('deleted_at')
+            ->select('postal_town', DB::raw('COUNT(*) as count'))
+            ->groupBy('postal_town')
+            ->get();
+
+        return view('locations', compact('locations'));
+    }
+
+    public function filterByCoordinates(Request $request)
+    {
+        $latitude = $request->input('latitude');
+        $longitude = $request->input('longitude');
+        $searchQuery = $request->input('search_query');
+        $town = null; // Initialize $town variable
+
+        $bandTypes = [
+            'original-bands',
+            'cover-bands',
+            'tribute-bands',
+            'all'
+        ];
+
+        $genreList = file_get_contents(public_path('text/genre_list.json'));
+        $data = json_decode($genreList, true);
+        $genres = $data['genres'];
+
+        $query = Promoter::query();
+
+        // If we have a search query with comma (town, address format)
+        if (strpos($searchQuery, ',') !== false) {
+            list($town, $address) = explode(',', $searchQuery);
+            $query->where(function ($q) use ($town, $latitude, $longitude) {
+                $q->where('postal_town', 'LIKE', "%$town%");
+            });
+        } else {
+            // Search by town name only
+            $town = $searchQuery; // Set $town to the search query
+            $query->where('postal_town', 'LIKE', "%$searchQuery%");
+        }
+
+        $promoters = $query->paginate(10)->appends([
+            'search_query' => $searchQuery,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            '_token' => $request->input('_token')
+        ]);
+
+        $overallReviews = [];
+
+        // Process social links
+        foreach ($promoters as $promoter) {
+            $promoter->platforms = SocialLinksHelper::processSocialLinks($promoter->contact_link);
+            $overallScore = PromoterReview::calculateOverallScore($promoter->id);
+            $overallReviews[$promoter->id] = $this->renderRatingIcons($overallScore);
+        }
+
+        return view('promoters', compact('promoters', 'genres', 'bandTypes', 'town', 'overallReviews'));
     }
 
     public function submitPromoterReview(Request $request, Promoter $id)
@@ -194,92 +361,23 @@ class PromoterController extends Controller
 
     public function filterCheckboxesSearch(Request $request)
     {
-        $query = Promoter::query();
-
-        // Search Results
-        $searchQuery = $request->input('search_query');
-        if ($searchQuery) {
-            $query->where(function ($query) use ($searchQuery) {
-                $query->where('postal_town', 'LIKE', "%$searchQuery%")
-                    ->orWhere('name', 'LIKE', "%$searchQuery%");
-            });
-        }
-
-        // Band Type Filter
-        if ($request->has('band_type')) {
-            $bandType = $request->input('band_type');
-            if (!empty($bandType)) {
-                $bandType = array_map('trim', $bandType);
-                $query->where(function ($query) use ($bandType) {
-                    foreach ($bandType as $type) {
-                        $query->orWhereRaw('JSON_CONTAINS(band_type, ?)', [json_encode($type)]);
-                    }
-                });
-            }
-        }
-
-        // Genre Filter
-        if ($request->has('genres')) {
-            $genres = $request->input('genres');
-            if (!empty($genres)) {
-                $genres = array_map('trim', $genres);
-                $query->where(function ($query) use ($genres) {
-                    foreach ($genres as $genre) {
-                        $query->orWhereRaw('JSON_CONTAINS(genre, ?)', [json_encode($genre)]);
-                    }
-                });
-            }
-        }
-
-        $promoters = $query->with('venues')->paginate(10);
-
-        // Process each venue
-        $transformedData = $promoters->getCollection()->map(function ($promoter) {
-            // Split the field containing multiple URLs into an array
-            $urls = explode(',', $promoter->contact_link);
-            $platforms = [];
-
-            foreach ($urls as $url) {
-                $matchedPlatform = 'Unknown';
-                $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
-
-                foreach ($platformsToCheck as $platform) {
-                    if (stripos($url, $platform) !== false) {
-                        $matchedPlatform = $platform;
-                        break;
-                    }
-                }
-
-                $platforms[] = [
-                    'url' => $url,
-                    'platform' => $matchedPlatform
+        $filters = [
+            'search_fields' => ['postal_town', 'name'], // Fields to search
+            'transform' => function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'postal_town' => $item->postal_town,
+                    'contact_number' => $item->contact_number,
+                    'contact_email' => $item->contact_email,
+                    'platforms' => explode(',', $item->contact_link),
+                    'average_rating' => \App\Models\PromoterReview::calculateOverallScore($item->id),
                 ];
-            }
+            },
+        ];
 
-            $overallScore = \App\Models\PromoterReview::calculateOverallScore($promoter->id);
+        $data = FilterService::filterEntities($request, Promoter::class, $filters);
 
-            return [
-                'id' => $promoter->id,
-                'name' => $promoter->name,
-                'postal_town' => $promoter->postal_town,
-                'contact_number' => $promoter->contact_number,
-                'contact_email' => $promoter->contact_email,
-                'platforms' => $platforms,
-                'promoters' => $promoter->venues,
-                'average_rating' => $overallScore,
-            ];
-        });
-
-
-        // Return the transformed data with pagination info
-        return response()->json([
-            'promoters' => $transformedData,
-            'pagination' => [
-                'current_page' => $promoters->currentPage(),
-                'last_page' => $promoters->lastPage(),
-                'total' => $promoters->total(),
-                'per_page' => $promoters->perPage(),
-            ]
-        ]);
+        return response()->json($data);
     }
 }

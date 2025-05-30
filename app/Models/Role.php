@@ -6,10 +6,11 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole
 {
-    protected $fillable = ['name', 'guard_name'];
-
-    // public function users()
-    // {
-    //     return $this->belongsToMany(User::class);
-    // }
+    protected $fillable = [
+        'name',
+        'guard_name',
+        'display_name',
+        'description',
+        'icon',
+    ];
 }

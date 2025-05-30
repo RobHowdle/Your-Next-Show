@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\User;
+use App\Models\ApiKey;
 use Illuminate\Support\Facades\Storage;
 
 class VenueDataHelper
@@ -25,7 +26,9 @@ class VenueDataHelper
         $long = $venue ? $venue->longitude : '';
         $w3w = $venue ? $venue->w3w : '';
         $logo = $venue && $venue->logo_url
-            ? (filter_var($venue->logo_url, FILTER_VALIDATE_URL) ? $venue->logo_url : Storage::url($venue->logo_url))
+            ? (filter_var($venue->logo_url, FILTER_VALIDATE_URL)
+                ? $venue->logo_url
+                : Storage::url($venue->logo_url))
             : asset('images/system/yns_no_image_found.png');
 
         $capacity = $venue ? $venue->capacity : '';
@@ -35,32 +38,40 @@ class VenueDataHelper
         $contactLinks = $venue ? json_decode($venue->contact_link, true) : [];
 
         $platforms = [];
-        $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+        $activePlatforms = [];
+
+        // Get the social platforms config file - this contains all platform information
+        $socialPlatformsConfig = config('social_platforms');
 
         // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
+        foreach (array_keys($socialPlatformsConfig) as $platform) {
             $platforms[$platform] = '';  // Set default to empty string
         }
 
         // Check if the contactLinks array exists and contains social links
         if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
+            foreach (array_keys($socialPlatformsConfig) as $platform) {
                 // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
+                if (isset($contactLinks[$platform]) && !empty($contactLinks[$platform])) {
                     $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                    $activePlatforms[] = $platform; // Track this platform as active
                 }
             }
         }
+
+        $preferredContact = $venue ? $venue->preferred_contact : '';
 
         // About Section
         $description = $venue ? $venue->description : '';
 
         // In House Gear
         $inHouseGear = $venue ? $venue->in_house_gear : '';
+        $depositRequired = $venue ? $venue->deposit_required : '';
+        $depositAmont = $venue ? $venue->deposit_amount : '';
 
         // My Events
         $myEvents = $venue ? $venue->events()->with('venues')->get() : collect();
-        $uniqueBands = $this->serviceDataHelper->getBandsData($venue->id);
+        $uniqueBands = $this->serviceDataHelper->getBandsData('Venue', $venue->id);
 
         // Genres
         $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -82,9 +93,31 @@ class VenueDataHelper
 
         $bandTypes = json_decode($venue->band_type) ?? [];
         $additionalInfo = $venue ? $venue->additional_info : '';
+        $apiProviders = config('integrations.ticket_platforms');
+        $apiKeys = ApiKey::where('serviceable_id', $venue->id)->where('serviceable_type', get_class($venue))->get();
+
+        if ($apiKeys) {
+            $apiKeys = $apiKeys->map(function ($apiKey) {
+                if ($apiKey->is_active) {
+                    return [
+                        'id' => $apiKey->id,
+                        'name' => $apiKey->name,
+                        'type' => $apiKey->key_type,
+                        'key' => $apiKey->api_key,
+                        'secret' => $apiKey->api_secret,
+                        'last_used_at' => $apiKey->last_used_at,
+                        'is_active' => $apiKey->is_active,
+                        'expires_at' => $apiKey->expires_at,
+                    ];
+                }
+            });
+        }
+
+        $packages = $venue ? json_decode($venue->packages) : [];
 
         return [
             'venue' => $venue,
+            'venueId' => $venue->id,
             'name' => $name,
             'location' => $location,
             'postalTown' => $postalTown,
@@ -97,7 +130,9 @@ class VenueDataHelper
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
+            'activePlatforms' => $activePlatforms,
+            'platformsToCheck' => $socialPlatformsConfig,
+            'preferred_contact' => $preferredContact,
             'inHouseGear' => $inHouseGear,
             'myEvents' => $myEvents,
             'uniqueBands' => $uniqueBands,
@@ -108,6 +143,11 @@ class VenueDataHelper
             'bandTypes' => $bandTypes,
             'capacity' => $capacity,
             'additionalInfo' => $additionalInfo,
+            'depositRequired' => $depositRequired,
+            'depositAmount' => $depositAmont,
+            'apiProviders' => $apiProviders,
+            'apiKeys' => $apiKeys,
+            'packages' => $packages,
         ];
     }
 }

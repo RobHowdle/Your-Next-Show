@@ -23,47 +23,43 @@
 
 
   <script src="https://kit.fontawesome.com/dd6bff54df.js" crossorigin="anonymous"></script>
+
+  <script type="module">
+    import {
+      showSuccessNotification,
+      showFailureNotification,
+      showWarningNotification,
+      showConfirmationNotification,
+      showScheduledNotification,
+      showTestNotification, //DEBUG
+    } from "{{ Vite::asset('resources/js/utils/swal.js') }}";
+    // Make notifications globally available
+    window.showSuccessNotification = showSuccessNotification;
+    window.showFailureNotification = showFailureNotification;
+    window.showWarningNotification = showWarningNotification;
+    window.showConfirmationNotification = showConfirmationNotification;
+    window.showScheduledNotification = showScheduledNotification;
+    window.showTestNotification = showTestNotification; // DEBUG
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <!-- Scripts -->
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="guest relative font-sans antialiased" x-data="{ sidebarOpen: false }">
+<body class="guest relative font-sans antialiased" x-data="{
+    sidebarOpen: false,
+    loading: true,
+    init() {
+        setTimeout(() => {
+            this.loading = false
+        }, 500)
+    }
+}">
   <div class="absolute inset-0 bg-cover bg-fixed bg-center bg-no-repeat"
     style="background-image: url('{{ asset('storage/images/system/hero-bg.jpg') }}'); z-index: -1;"></div>
-  <div x-data="{
-      startTime: performance.now(),
-      loadingTime: 0,
-      hideLoader() {
-          this.$nextTick(() => {
-              document.querySelector('#preloader').classList.remove('animation');
-              document.querySelector('#preloader').classList.add('over');
-              document.querySelector('.pre-overlay.o-1').style.height = '0%';
-              document.querySelector('.pre-overlay.o-2').style.height = '0%';
-          });
-      },
-      checkLoadingTime() {
-          this.loadingTime = performance.now() - this.startTime;
-          if (this.loadingTime > 1000) {
-              setTimeout(this.hideLoader, 4000); // Delay hiding the loader
-          } else {
-              this.hideLoader(); // Hide immediately if loading is fast
-          }
-      }
-  }" x-init="checkLoadingTime">
-    <!-- Preloader structure -->
-    <div id="preloader" class="animation">
-      <div class="decor">
-        <div class="bar"></div>
-      </div>
-      <p>Loading...</p>
-    </div>
-
-    <!-- Overlay elements -->
-    <div class="pre-overlay o-1" style="height: 100%;"></div>
-    <div class="pre-overlay o-2" style="height: 100%;"></div>
-  </div>
+  <x-loading-overlay x-show="loading" />
   @if (Route::has('login'))
     <nav class="fixed z-10 w-full bg-yns_dark_blue">
       <div class="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between px-2 py-4 md:px-4 md:py-8">
@@ -110,44 +106,88 @@
             </svg>
           </button>
 
-          <div x-show="sidebarOpen" class="fixed inset-0 z-50 flex justify-end" style="top: 0; left: auto;"
+          <!-- Replace the existing sidebar div -->
+          <div x-show="sidebarOpen" class="fixed inset-0 z-50 flex justify-end"
             x-transition:enter="transition transform ease-out duration-300" x-transition:enter-start="translate-x-full"
             x-transition:enter-end="translate-x-0" x-transition:leave="transition transform ease-in duration-300"
-            x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-            class="fixed inset-0 z-50 flex justify-end" x-cloak>
-            <div class="relative w-screen bg-gray-800 text-white shadow-lg md:w-64">
-              <button @click="sidebarOpen = false" class="absolute left-4 top-12 text-gray-400 hover:text-white">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                  </path>
+            x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" x-cloak>
+            <!-- Sidebar Content -->
+            <div
+              class="relative w-screen bg-gradient-to-br from-yns_dark_blue via-black to-yns_dark_blue backdrop-blur-md md:w-full">
+              <!-- Close Button -->
+              <button @click="sidebarOpen = false"
+                class="absolute right-4 top-6 rounded-full bg-black/50 px-0 py-2 text-gray-400 transition-colors hover:text-yns_yellow">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </button>
-              <div class="mt-24 space-y-4">
+
+              <!-- Logo Section -->
+              <div class="flex items-center space-x-3 px-2 py-4">
+                <img src="{{ asset('images/system/yns_logo.png') }}" class="h-16" alt="Logo">
+                <span class="font-heading text-xl font-bold text-white">{{ config('app.name') }}</span>
+              </div>
+
+              <!-- Navigation Links -->
+              <div class="mt-6 space-y-1 px-3">
                 <a href="{{ url('/venues') }}"
-                  class="{{ request()->is('venues*') ? 'dark:text-yns_yellow' : '' }} block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Venues</a>
+                  class="{{ request()->is('venues*') ? 'bg-yns_yellow/10 text-yns_yellow' : 'text-white hover:bg-white/5 hover:text-yns_yellow' }} group flex items-center rounded-lg px-4 py-3 text-lg font-semibold transition-all lg:hidden">
+                  <i class="fa-solid fa-location-dot mr-3 w-5"></i>
+                  Venues
+                </a>
                 <a href="{{ url('/promoters') }}"
-                  class="{{ request()->is('promoters*') ? 'dark:text-yns_yellow' : '' }} block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Promoters</a>
+                  class="{{ request()->is('promoters*') ? 'bg-yns_yellow/10 text-yns_yellow' : 'text-white hover:bg-white/5 hover:text-yns_yellow' }} group flex items-center rounded-lg px-4 py-3 text-lg font-semibold transition-all lg:hidden">
+                  <i class="fa-solid fa-users mr-3 w-5"></i>
+                  Promoters
+                </a>
                 <a href="{{ url('/services') }}"
-                  class="{{ request()->is('services*') ? 'dark:text-yns_yellow' : '' }} block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Other</a>
+                  class="{{ request()->is('services*') ? 'bg-yns_yellow/10 text-yns_yellow' : 'text-white hover:bg-white/5 hover:text-yns_yellow' }} group flex items-center rounded-lg px-4 py-3 text-lg font-semibold transition-all lg:hidden">
+                  <i class="fa-solid fa-guitar mr-3 w-5"></i>
+                  Other Services
+                </a>
+
+                <!-- Auth Links -->
                 @auth
                   <a href="{{ url('/dashboard') }}"
-                    class="block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Dashboard</a>
+                    class="group flex items-center rounded-lg px-4 py-3 text-lg font-semibold text-white transition-all hover:bg-white/5 hover:text-yns_yellow lg:hidden">
+                    <i class="fa-solid fa-gauge mr-3 w-5"></i>
+                    Dashboard
+                  </a>
                 @else
                   <a href="{{ url('/login') }}"
-                    class="block px-4 py-2 text-center hover:text-yns_yellow lg:hidden">Login</a>
+                    class="group flex items-center rounded-lg px-4 py-3 text-lg font-semibold text-white transition-all hover:bg-white/5 hover:text-yns_yellow lg:hidden">
+                    <i class="fa-solid fa-right-to-bracket mr-3 w-5"></i>
+                    Login
+                  </a>
                 @endauth
+
+                <!-- Additional Links -->
                 @guest
                   <a href="{{ route('register') }}"
-                    class="block px-4 py-2 text-center hover:text-yns_yellow">Register</a>
+                    class="group flex items-center rounded-lg px-4 py-3 text-lg font-semibold text-white transition-all hover:bg-white/5 hover:text-yns_yellow">
+                    <i class="fa-solid fa-user-plus mr-3 w-5"></i>
+                    Register
+                  </a>
                 @endguest
-                <a href="{{ route('gig-guide') }}" class="block px-4 py-2 text-center hover:text-yns_yellow">Gig
-                  Guide</a>
+
+                <div class="my-4 border-t border-white/10"></div>
+
+                <a href="{{ route('gig-guide') }}"
+                  class="group flex items-center rounded-lg px-4 py-3 text-lg font-semibold text-white transition-all hover:bg-white/5 hover:text-yns_yellow">
+                  <i class="fa-solid fa-calendar-days mr-3 w-5"></i>
+                  Gig Guide
+                </a>
+                <a href="{{ route('public-events') }}"
+                  class="group flex items-center rounded-lg px-4 py-3 text-lg font-semibold text-white transition-all hover:bg-white/5 hover:text-yns_yellow">
+                  <i class="fa-solid fa-music mr-3 w-5"></i>
+                  Events
+                </a>
               </div>
             </div>
-            <div @click="sidebarOpen = false" class="flex-1 bg-black opacity-50"></div>
-          </div>
 
+            <!-- Backdrop -->
+            <div @click="sidebarOpen = false" class="flex-1 bg-black/80 backdrop-blur-sm"></div>
+          </div>
         </div>
       </div>
     </nav>
@@ -213,19 +253,7 @@
     </div>
 
   </footer>
-  <script>
-    function initialize() {
-      // Your initialization code here
-      console.log('Google Maps API initialized');
-    }
-
-    // Ensure the function is available globally
-    window.initialize = initialize;
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initialize"
-    async defer></script>
+  @stack('scripts')
 </body>
 
 </html>

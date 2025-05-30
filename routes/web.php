@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobsController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TodoController;
@@ -18,6 +19,8 @@ use App\Http\Controllers\LinkedUserController;
 use App\Http\Controllers\What3WordsController;
 use App\Http\Controllers\APIRequestsController;
 use App\Http\Controllers\BandJourneyController;
+use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\OpportunityController;
 use App\Http\Controllers\OtherServiceController;
 use App\Http\Controllers\VenueJourneyController;
 use App\Http\Controllers\DesignerJourneyController;
@@ -37,28 +40,28 @@ use App\Http\Controllers\VideographerJourneyController;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+Route::get('/', [HomeController::class, 'index'])->name('welcome');
 
 Route::get('/venues', [VenueController::class, 'index'])->name('venues');
-Route::post('/venues/filter', [VenueController::class, 'filterCheckboxesSearch'])->name('venues.filterCheckboxesSearch');
+Route::post('/venues/filter', [VenueController::class, 'filter'])->name('venues.filter');
 Route::get('/venues/filterByCoordinates', [VenueController::class, 'filterByCoordinates'])
     ->name('venues.filterByCoordinates');
 Route::post('/venues/{slug}/submitReview', [VenueController::class, 'submitVenueReview'])->name('submit-venue-review');
-Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue');
+Route::get('/venues/{slug}', [VenueController::class, 'show'])->name('venue')->middleware('log.minors');
 Route::get('/promoter-suggestion', [VenueController::class, 'suggestPromoters'])->name('suggestPromoters');
 
 Route::get('/promoters', [PromoterController::class, 'index'])->name('promoters');
-Route::post('/promoters/filter', [PromoterController::class, 'filterCheckboxesSearch'])->name('promoters.filterCheckboxesSearch');
-Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter');
+Route::post('/promoters/filter', [PromoterController::class, 'filter'])->name('promoters.filter');
+Route::get('/promoters/{slug}', [PromoterController::class, 'show'])->name('promoter')->middleware('log.minors');
 Route::post('/promoters/{slug}/submitReview', [PromoterController::class, 'submitPromoterReview'])->name('submit-promoter-review');
 
 Route::get('/services', [OtherServiceController::class, 'index'])->name('other');
-Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filterCheckboxesSearch'])->name('other.filterCheckboxesSearch');
+Route::post('/services/{serviceType}/filter', [OtherServiceController::class, 'filter'])->name('other.filter');
 Route::get('/services/{serviceType}', [OtherServiceController::class, 'showGroup'])->name('singleServiceGroup');
-Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService');
+Route::get('/services/{serviceType}/{name}', [OtherServiceController::class, 'show'])->name('singleService')->middleware('log.minors');
 Route::post('/services/{serviceType}/{name}/submitReview', [OtherServiceController::class, 'submitReview'])->name('submit-single-service-review');
+// Route for downloading public documents
+Route::get('/document/{id}/download', [DocumentController::class, 'publicDownload'])->name('document.download');
 
 // Gig Guide
 Route::get('/gig-guide', [GigGuideController::class, 'index'])->name('gig-guide');
@@ -69,6 +72,7 @@ Route::view('/credits', 'credits');
 Route::view('/contact', 'contact');
 
 Route::get('/events', [EventController::class, 'getPublicEvents'])->name('public-events');
+Route::get('/events/filter', [EventController::class, 'filter'])->name('events.filter');
 Route::get('/events/{eventId}', [EventController::class, 'getSinglePublicEvent'])->name('public-event');
 
 
@@ -161,31 +165,28 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/users/new-user', [LinkedUserController::class, 'newUser'])->name('admin.dashboard.new-user');
         Route::get('/users/search-users', [LinkedUserController::class, 'searchUsers'])->name('admin.dashboard.search-users');
         Route::post('/users/add-user/{id}', [LinkedUserController::class, 'linkUser'])->name('admin.dashboard.link-user');
+        Route::post('/update-user-role', [LinkedUserController::class, 'updateUserRole'])->name('admin.dashboard.update-user-role');
         Route::delete('/users/delete-user/{id}', [LinkedUserController::class, 'deleteUser'])->name('admin.dashboard.delete-user');
     });
 
     // Notes
-    //TODO - Finish
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
-        Route::get('/notes', [NoteController::class, 'showNotes'])->name('admin.dashboard.show-notes');
-        Route::get('/note-items', [NoteController::class, 'getNotes'])->name('admin.dashboard.note-items');
+        Route::get('/notes', [NoteController::class, 'getNotes'])->name('admin.dashboard.notes');
         Route::post('/notes/new', [NoteController::class, 'newNoteItem'])->name('admin.dashboard.new-note-item');
         Route::post('/note-item/{id}/complete', [NoteController::class, 'completeNoteItem'])->name('admin.dashboard.complete-note');
-        Route::post('/note-item/{id}/uncomplete', [NoteController::class, 'uncompleteNoteItem'])->name('admin.dashboard.uncomplete-note-item');
+        Route::post('/note-item/{id}/uncomplete', [NoteController::class, 'uncompleteNoteItem'])->name('admin.dashboard.uncomplete-note');
         Route::delete('/note-item/{id}', [NoteController::class, 'deleteNoteItem'])->name('admin.dashboard.delete-note');
         Route::get('/note-item/completed-notes', [NoteController::class, 'showCompletedNoteItems'])->name('admin.dashboard.completed-notes');
     });
 
     // Reviews
-    Route::prefix('/dashboard/{dashboardType}')->group(function () {
-        Route::get('/reviews/{filter?}', [ReviewController::class, 'getReviews'])->name('admin.dashboard.get-reviews');
-        Route::get('/filtered-reviews/{filter?}', [ReviewController::class, 'fetchReviews'])->name('admin.dashboard.fetch-reviews');
-        Route::get('/reviews/pending', [ReviewController::class, 'showPendingReviews'])->name('admin.dashboard.show-pending-reviews');
-        Route::get('/reviews/all', [ReviewController::class, 'showAllReviews'])->name('admin.dashboard.show-all-reviews');
-        Route::post('/reviews/{reviewId}/approve', [ReviewController::class, 'approveReview'])->name('admin.dashboard.reviews.approve');
-        Route::post('/reviews/{reviewId}/show', [ReviewController::class, 'displayReview'])->name('admin.dashboard.reviews.show');
-        Route::post('/reviews/{reviewId}/hide', [ReviewController::class, 'hideReview'])->name('admin.dashboard.reviews.hide');
-        Route::delete('/reviews/{reviewId}/delete', [ReviewController::class, 'deleteReview'])->name('admin.dashboard.reviews.delete');
+    Route::prefix('dashboard/{dashboardType}/reviews')->group(function () {
+        Route::get('/', [ReviewController::class, 'getReviews'])->name('dashboard.reviews');
+        Route::get('/{filter}', [ReviewController::class, 'fetchReviews'])->name('dashboard.reviews.filter');
+        Route::post('/{id}/approve', [ReviewController::class, 'approveReview'])->name('dashboard.reviews.approve');
+        Route::post('/{id}/unapprove', [ReviewController::class, 'unapproveReview'])->name('dashboard.reviews.unapprove');
+        Route::post('/{id}/display', [ReviewController::class, 'displayReview'])->name('dashboard.reviews.display');
+        Route::delete('/{id}', [ReviewController::class, 'deleteReview'])->name('dashboard.reviews.delete');
     });
 
     // Documents
@@ -195,16 +196,17 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::get('/documents/{id}', [DocumentController::class, 'show'])->name('admin.dashboard.document.show');
         Route::get('/documents/{id}/edit', [DocumentController::class, 'edit'])->name('admin.dashboard.document.edit');
         Route::post('/document/file-upload', [DocumentController::class, 'fileUpload'])->name('admin.dashboard.document.file.upload');
+        Route::post('/document/file/delete', [DocumentController::class, 'deleteFile'])->name('admin.dashboard.document.file.delete');
         Route::post('/documents/store', [DocumentController::class, 'storeDocument'])->name('admin.dashboard.store-document');
         Route::put('/documents/{id}', [DocumentController::class, 'update'])->name('admin.dashboard.document.update');
-        Route::delete('/documents/{id}', [DocumentController::class, 'destroy'])->name('admin.dashboard.document.delete');
+        Route::delete('/documents/{id}', [DocumentController::class, 'delete'])->name('admin.dashboard.document.delete');
         Route::get('/documents/{id}/download', [DocumentController::class, 'download'])->name('admin.dashboard.document.download');
     });
 
     // Events
-    // TODO - Finish
     Route::prefix('/dashboard/{dashboardType}')->group(function () {
         Route::get('/events', [EventController::class, 'showEvents'])->name('admin.dashboard.show-events');
+        Route::post('/events/upload', [EventController::class, 'uploadPoster'])->name('admin.dashboard.upload-poster');
         Route::get('/events/load-more-upcoming', [EventController::class, 'loadMoreUpcomingEvents'])->name('admin.dashboard.load-more-upcoming-events');
         Route::get('/events/load-more-past', [EventController::class, 'loadMorePastEvents'])->name('admin.dashboard.load-more-past-events');
         Route::get('/events/create-event', [EventController::class, 'createNewEvent'])->name('admin.dashboard.create-new-event');
@@ -217,24 +219,28 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
         Route::post('/events/{id}/add-to-calendar', [CalendarController::class, 'addEventToInternalCalendar'])->name('admin.dashboard.add-event-to-calendar');
         Route::get('/events/{user}/check-linked-calendars', [CalendarController::class, 'checkLinkedCalendars']);
         Route::delete('/events/{id}/delete', [EventController::class, 'deleteEvent'])->name('admin.dashboard.delete-event');
+        Route::get('/events/promoters/search', [APIRequestsController::class, 'searchPromoters']);
+        Route::post('/events/promoters/create', [APIRequestsController::class, 'createPromoter']);
+        Route::get('/events/bands/search', [APIRequestsController::class, 'searchBands']);
+        Route::post('/events/bands/create', [APIRequestsController::class, 'createBand']);
+        Route::get('/events/venues/search', [APIRequestsController::class, 'searchVenues']);
+        Route::post('/events/venues/create', [APIRequestsController::class, 'createVenue']);
+    });
+
+    // Opportunities
+    Route::prefix('/dashboard/{dashboardType}')->group(function () {
+        Route::get('/opportunities/type/{type}/fields', [OpportunityController::class, 'getTypeFields'])->name('opps.fields');
+        Route::post('/opportunities/create', [OpportunityController::class, 'store'])->name('opps.store');
     });
 
     // To-Do List
-    Route::prefix('/dashboard/{dashboardType}/todo-list')->group(function () {
-        // View Routes
-        Route::get('/', [TodoController::class, 'showTodos'])->name('admin.dashboard.todo-list');
-        Route::get('/completed', [TodoController::class, 'showCompletedTodoItems'])->name('admin.dashboard.completed-todos');
-        Route::get('/uncompleted', [TodoController::class, 'showUncompletedTodoItems'])->name('admin.dashboard.uncompleted-todos');
-        Route::get('/load-more', [TodoController::class, 'loadMoreTodos'])->name('admin.dashboard.load-more-todos');
-
-        Route::post('/new', [TodoController::class, 'newTodoItem'])->name('admin.dashboard.new-todo');
-        Route::post('/{id}/complete', [TodoController::class, 'completeTodoItem'])->name('admin.dashboard.complete-todo');
-        Route::post('/{id}/uncomplete', [TodoController::class, 'uncompleteTodoItem'])->name('admin.dashboard.uncomplete-todo');
-        Route::delete('/{id}', [TodoController::class, 'deleteTodoItem'])->name('admin.dashboard.delete-todo');
-
-        // Status Check Routes
-        Route::get('/has-completed', [TodoController::class, 'hasCompletedTodos'])->name('admin.dashboard.has-completed-todos');
-        Route::get('/has-uncompleted', [TodoController::class, 'hasUncompletedTodos'])->name('admin.dashboard.has-cunompleted-todos');
+    Route::prefix('dashboard/{dashboardType}')->middleware(['auth'])->group(function () {
+        Route::get('todo-list', [TodoController::class, 'index'])->name('admin.dashboard.todo-list');
+        Route::get('todo-list/counts', [TodoController::class, 'getCounts']);
+        Route::post('todo-list/new', [TodoController::class, 'store']);
+        Route::get('todo-list/load-more', [TodoController::class, 'loadMore']);
+        Route::post('todo-list/{id}/complete', [TodoController::class, 'complete']);
+        Route::delete('todo-list/{id}', [TodoController::class, 'destroy']);
     });
 
     // Jobs
@@ -254,17 +260,26 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     // What3Words
     Route::post('/what3words/suggest', [What3WordsController::class, 'suggest'])->name('what3words.suggest');
-
+    Route::post('/what3words/convert-address', [What3WordsController::class, 'convertToW3W'])
+        ->name('what3words.convert-address');
     // More specific routes
     // Profile Updates
     Route::put('/profile/{dashboardType}/promoter-profile-update/{user}', [ProfileController::class, 'updatePromoter'])->name('promoter.update');
     Route::put('/profile/{dashboardType}/venue-profile-update/{user}', [ProfileController::class, 'updateVenue'])->name('venue.update');
     Route::put('/profile/{dashboardType}/band-profile-update/{user}', [ProfileController::class, 'updateBand'])->name('artist.update');
     Route::put('/profile/{dashboardType}/photographer-profile-update/{user}', [ProfileController::class, 'updatePhotographer'])->name('photographer.update');
-    Route::put('/profile/{dashboardType}/standard-user-update/{user}', [ProfileController::class, 'updateStandardUser'])->name('standard-user.update');
-    Route::put('/profile/{dashboardType}/designer-user-update/{user}', [ProfileController::class, 'updateDesigner'])->name('designer.update');
+    Route::put('/profile/{dashboardType}/standard-profile-update/{user}', [ProfileController::class, 'updateStandardUser'])->name('standard-user.update');
+    Route::put('/profile/{dashboardType}/designer-profile-update/{user}', [ProfileController::class, 'updateDesigner'])->name('designer.update');
+    Route::put('/profile/{dashboardType}/videographer-profile-update/{user}', [ProfileController::class, 'updateVideographer'])->name('videographer.update');
+
+    // Portfolio
     Route::post('/profile/{dashboardType}/portfolio-image-upload', [ProfileController::class, 'uploadPortfolioImages'])->name('portfolio.upload');
+
+    // Settings
     Route::get('/profile/{dashboardType}/settings', [ProfileController::class, 'settings'])->name('settings.index');
+
+    // Documents
+    Route::post('/profile/{dashboardType}/documents/{documentId}/toggle-visibility', [ProfileController::class, 'toggleDocumentVisibility'])->name('profile.documents.toggle-visibility');
     Route::post('/profile/{dashboardType}/photographer-environment-types', [ProfileController::class, 'updateEnvironmentTypes'])->name('photographer.environment-types');
     Route::post('/profile/{dashboardType}/save-genres', [ProfileController::class, 'saveGenres'])->name('save-genres');
     Route::post('/profile/{dashboardType}/save-band-types', [ProfileController::class, 'saveBandTypes'])->name('save-band-types');
@@ -273,9 +288,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/{dashboardType}/{user}/edit-role', [ProfileController::class, 'editRole'])->name('profile.edit-role');
     Route::delete('/profile/{dashboardType}/{user}/delete-role', [ProfileController::class, 'deleteRole'])->name('profile.delete-role');
     Route::post('/profile/{dashboardType}/{id}/packages/update', [APIRequestsController::class, 'updatePackages'])->name('settings.updatePackages');
+    Route::post('/profile/{dashboardType}/settings/update', [APIRequestsController::class, 'updateModule'])->name('settings.updateModule');
+    Route::get('/dashboard/{$dashboardType}/finances', [FinanceController::class, 'getFinanceData']);
+    Route::get('/{dashboardType}/jobs/search-clients', [APIRequestsController::class, 'searchClients']);
+    Route::post('/profile/{dashboardType}/{id}/update-api-keys', [APIRequestsController::class, 'updateAPI']);
+    Route::post('/profile/{dashboardType}/{id}/save-styles-and-print', [APIRequestsController::class, 'updateStylesAndPrint'])->name('profile.styles-and-print');
+    Route::post('/profile/{dashboardType}/communications/update', [APIRequestsController::class, 'updateCommunications'])->name('settings.updateCommunications');
+    Route::post('/profile/{dashboardType}/{id}/leave-service', [APIRequestsController::class, 'leaveService'])->name('settings.deleteModule');
+
+
+    Route::middleware(['auth'])->group(function () {
+        Route::post('/integrations/store', [IntegrationController::class, 'store'])
+            ->name('integrations.store');
+    });
 
     // API Key Routes
-    Route::put('/profile/{dashboardType}/update-api-key', [ProfileController::class, 'updateAPI'])->name('profile.update-api');
+    // Route::put('/profile/{dashboardType}/update-api-key', [ProfileController::class, 'updateAPI'])->name('profile.update-api');
     // Calendar-specific routes
     Route::get('/profile/events/{user}/apple/sync', [CalendarController::class, 'syncAllEventsToAppleCalendar'])->name('apple.sync');
     Route::get('/profile/{dashboardType}/events/{user}', [APIRequestsController::class, 'getUserCalendarEvents']);
@@ -291,5 +319,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/dashboard/{dashboardType}/google/sync', [CalendarController::class, 'syncGoogleCalendar'])->name('google.sync');
     Route::post('/dashboard/{dashboardType}/google/unlink', [CalendarController::class, 'unlinkGoogle'])->name('google.unlink');
 });
+
 
 require __DIR__ . '/auth.php';

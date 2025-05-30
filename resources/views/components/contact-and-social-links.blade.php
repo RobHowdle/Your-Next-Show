@@ -1,5 +1,6 @@
 @if ($item->contact_number && $item->contact_number != '00000000000')
-  <a class="mr-2 hover:text-yns_yellow" href="tel:{{ str_replace(' ', '', $item->contact_number) }}">
+  <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow"
+    href="tel:{{ str_replace(' ', '', $item->contact_number) }}">
     <span class="fas fa-phone"></span>
   </a>
 @endif
@@ -10,63 +11,23 @@
   </a>
 @endif
 
-@if ($item->platforms)
+@if (!empty($item->platforms))
   @foreach ($item->platforms as $platform)
-    @switch($platform['platform'])
-      @case('facebook')
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fab fa-facebook"></span>
-        </a>
-      @break
-
-      @case('twitter')
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fab fa-twitter"></span>
-        </a>
-      @break
-
-      @case('instagram')
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fab fa-instagram"></span>
-        </a>
-      @break
-
-      @case('snapchat')
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fab fa-snapchat-ghost"></span>
-        </a>
-      @break
-
-      @case('tiktok')
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fab fa-tiktok"></span>
-        </a>
-      @break
-
-      @case('youtube')
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fab fa-youtube"></span>
-        </a>
-      @break
-
-      @case('bluesky')
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fa-brands fa-bluesky"></span>
-        </a>
-      @break
-
-      @default
-        <a class="mr-2 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
-          target="_blank">
-          <span class="fas fa-globe"></span>
-        </a>
-    @endswitch
+    <a class="mr-2 text-gray-300 transition duration-150 ease-in-out hover:text-yns_yellow" href="{{ $platform['url'] }}"
+      target="_blank">
+      @if ($platform['platform'] == 'facebook')
+        <span class="fab fa-facebook"></span>
+      @elseif($platform['platform'] == 'instagram')
+        <span class="fab fa-instagram"></span>
+      @elseif($platform['platform'] == 'x' || $platform['platform'] == 'twitter')
+        <span class="fab fa-twitter"></span>
+      @elseif($platform['platform'] == 'youtube')
+        <span class="fab fa-youtube"></span>
+      @elseif($platform['platform'] == 'tiktok')
+        <span class="fab fa-tiktok"></span>
+      @else
+        <span class="fas fa-globe"></span>
+      @endif
+    </a>
   @endforeach
 @endif

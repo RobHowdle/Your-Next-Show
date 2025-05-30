@@ -108,8 +108,8 @@
 <script defer>
   const genres = @json($genres);
   const dashboardType = "{{ $dashboardType }}";
-  let artistGenres = @json($bandData['artistGenres']);
-  let artistBandTypes = @json($bandData['bandTypes']);
+  let artistGenres = @json($artistData['artistGenres']);
+  let artistBandTypes = @json($artistData['bandTypes']);
 
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("all-genres-checkbox")?.addEventListener("change", (e) => {

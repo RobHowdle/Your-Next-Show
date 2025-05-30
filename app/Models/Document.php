@@ -11,6 +11,7 @@ class Document extends Model
 
     protected $fillable = [
         'user_id',
+        'private',
         'serviceable_id',
         'serviceable_type',
         'service',

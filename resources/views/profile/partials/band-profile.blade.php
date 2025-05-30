@@ -14,13 +14,13 @@
   <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Genres & Band
     Types</span>
 </button>
-<button @click="activeTab = 'streamLinks'" class="hover:text-yns_pink block py-2 text-white transition"
-  :class="activeTab === 'portfolio' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+<button @click="activeTab = 'stream-links'" class="hover:text-yns_pink block py-2 text-white transition"
+  :class="activeTab === 'stream-links' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
   <i class="fa-brands fa-spotify h-5 w-5"></i>
   <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Stream Links</span>
 </button>
 <button @click="activeTab = 'members'" class="hover:text-yns_pink block py-2 text-white transition"
-  :class="activeTab === 'designAndHours' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+  :class="activeTab === 'members' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
   <i class="fa-solid fa-people-group h-5 w-5"></i>
   <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Members</span>
 </button>

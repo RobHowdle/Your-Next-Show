@@ -1,162 +1,223 @@
-<div class="fixed bottom-4 right-4">
-  <button id="toggle-notes"
-    class="relative flex h-16 w-16 items-center justify-center rounded-full bg-yns_light_gray text-white shadow-lg transition duration-150 ease-in-out hover:bg-yns_yellow">
-    <svg id="icon-note" class="absolute h-10 w-10 scale-100 transform transition-transform duration-300"
-      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-      <path fill="#ffffff"
-        d="M312 320h136V56c0-13.3-10.7-24-24-24H24C10.7 32 0 42.7 0 56v400c0 13.3 10.7 24 24 24h264V344c0-13.2 10.8-24 24-24zm129 55l-98 98c-4.5 4.5-10.6 7-17 7h-6V352h128v6.1c0 6.3-2.5 12.4-7 16.9z" />
-    </svg>
-    <svg id="icon-close" class="absolute h-10 w-10 scale-0 transform transition-transform duration-300"
-      xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-      <path fill="currentColor"
-        d="M12 10.586l6.293-6.293 1.414 1.414L13.414 12l6.293 6.293-1.414 1.414L12 13.414l-6.293 6.293-1.414-1.414L10.586 12 4.293 5.707 5.707 4.293z" />
-    </svg>
+<div class="fixed bottom-4 right-4 z-50">
+  {{-- Toggle Button --}}
+  <button id="notes-toggle"
+    class="flex h-14 w-14 items-center justify-center rounded-full bg-gray-800 text-white shadow-lg transition-all duration-300 hover:bg-yns_yellow focus:outline-none focus:ring-2 focus:ring-yellow-500/70">
+    <i class="fas fa-sticky-note text-2xl"></i>
   </button>
-</div>
 
-<div class="fixed bottom-4 right-24 z-50">
-  <div id="notes-popout" class="hidden rounded-lg border border-white bg-opac_8_black p-4 shadow-lg">
-    <h2 class="font-bold">Add a Note</h2>
-    <form id="notes-form" class="mt-4">
-      <div class="group mb-4">
-        <x-input-label-dark>Note Name</x-input-label-dark>
-        <x-text-input id="note-name" name="note-name"></x-text-input>
-      </div>
-      <div class="group mb-4">
-        <x-input-label-dark>Text</x-input-label-dark>
-        <x-textarea-input id="note-text"></x-textarea-input>
+  {{-- Notes Popup --}}
+  <div id="notes-popup" class="fixed bottom-20 right-4 hidden w-80">
+    <div class="rounded-lg border border-gray-700 bg-gray-900 p-4 shadow-lg">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-medium text-white">Quick Note</h2>
+        <div id="notes-status" class="text-sm"></div>
       </div>
 
-      <div class="group mb-4">
-        <x-input-label-dark>Date</x-input-label-dark>
-        <x-date-time-input id="note-date" value="{{ now()->format('Y-m-d') }}"></x-date-time-input>
-      </div>
+      <form id="notes-form" class="space-y-4">
+        @csrf
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Note Title</label>
+          <input type="text" name="name" required
+            class="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-yellow-500 focus:outline-none focus:ring-yellow-500/70">
+        </div>
 
-      <div class="group mb-4 flex flex-row-reverse justify-end gap-2">
-        <x-input-label-dark>Create Todo Item</x-input-label-dark>
-        <x-input-checkbox id="convert-to-todo" class="mb-2"></x-input-checkbox>
-      </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Date</label>
+          <input type="datetime-local" name="date" required
+            class="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-yellow-500 focus:outline-none focus:ring-yellow-500/70"
+            value="{{ now()->format('Y-m-d\TH:i') }}">
+        </div>
 
-      <button type="submit" id="save-note" class="w-full rounded bg-yns_yellow p-1 text-black">Save Note</button>
-    </form>
+        <div>
+          <label class="block text-sm font-medium text-gray-300">Note Text</label>
+          <textarea name="text" rows="3" required
+            class="mt-1 block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-yellow-500 focus:outline-none focus:ring-yellow-500/70"></textarea>
+        </div>
+
+        <div class="flex items-center">
+          <input type="checkbox" name="is_todo"
+            class="h-4 w-4 rounded border-gray-700 bg-gray-800 text-yellow-500 focus:ring-yellow-500/70">
+          <label class="ml-2 text-sm text-gray-300">Create Todo Item</label>
+        </div>
+
+        <div class="flex justify-end">
+          <button type="submit"
+            class="inline-flex items-center rounded-lg bg-yns_yellow px-4 py-2 text-sm font-medium text-gray-900 transition duration-200 hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500/70">
+            Add Note
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const toggleButton = document.getElementById("toggle-notes");
-    const newNoteButton = document.getElementById("new-note-button");
-    const popout = document.getElementById("notes-popout");
-    const iconNote = document.getElementById("icon-note");
-    const iconClose = document.getElementById("icon-close");
-    const form = document.getElementById("notes-form");
+  document.addEventListener('DOMContentLoaded', function() {
+    const popup = {
+      button: document.getElementById('notes-toggle'),
+      container: document.getElementById('notes-popup'),
+      form: document.getElementById('notes-form'),
+      status: document.getElementById('notes-status'),
+      isOpen: false,
+      newNoteButton: document.getElementById('new-note-btn'),
 
-    toggleButton.addEventListener("click", () => {
-      if (popout.classList.contains("hidden")) {
-        popout.classList.remove("hidden");
-        popout.classList.remove("slide-out");
-        popout.classList.add("slide-in");
+      toggle() {
+        this.isOpen = !this.isOpen;
+        this.container.classList.toggle('hidden', !this.isOpen);
+      },
 
-        // Morph icon
-        iconNote.classList.remove("scale-100");
-        iconNote.classList.add("scale-0");
-        iconClose.classList.remove("scale-0");
-        iconClose.classList.add("scale-100");
-      } else {
-        popout.classList.remove("slide-in");
-        popout.classList.add("slide-out");
+      close() {
+        this.isOpen = false;
+        this.container.classList.add('hidden');
+      },
 
-        // Morph icon back
-        iconClose.classList.remove("scale-100");
-        iconClose.classList.add("scale-0");
-        iconNote.classList.remove("scale-0");
-        iconNote.classList.add("scale-100");
-
-        setTimeout(() => {
-          popout.classList.add("hidden");
-        }, 300); // Match this timeout with the animation duration
+      showStatus(message, isError = false) {
+        this.status.textContent = message;
+        this.status.className = `text-sm ${isError ? 'text-red-400' : 'text-green-400'}`;
       }
-    });
+    };
 
-    if (newNoteButton) {
-      newNoteButton.addEventListener("click", (e) => {
-        e.preventDefault(); // Prevent default link behavior
-
-        // Open the notes popout
-        if (popout.classList.contains("hidden")) {
-          popout.classList.remove("hidden");
-          popout.classList.remove("slide-out");
-          popout.classList.add("slide-in");
-
-          // Morph icon
-          iconNote.classList.remove("scale-100");
-          iconNote.classList.add("scale-0");
-          iconClose.classList.remove("scale-0");
-          iconClose.classList.add("scale-100");
-        }
+    // Trigger popup from New Note button
+    if (popup.newNoteButton) {
+      popup.newNoteButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popup.toggle();
       });
     }
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      // Handle form submission, e.g., send a POST request to save the note
-      const noteData = {
-        'name': document.getElementById("note-name").value,
-        'text': document.getElementById("note-text").value,
-        'date': document.getElementById("note-date").value,
-        'isTodo': document.getElementById("convert-to-todo").checked,
-      };
-
-      console.log("Sending note data:", noteData); // Log the note data for debugging
-
-      fetch("/dashboard/notes/store-note", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": document
-              .querySelector('meta[name="csrf-token"]')
-              .getAttribute("content"),
-          },
-          body: JSON.stringify(noteData),
-        })
-        .then((response) => {
-          if (!response.ok) {
-            // Log the status and throw an error if the response is not ok
-            console.error("Network response was not ok:", response.statusText);
-            throw new Error("Network response was not ok: " + response.statusText);
-          }
-          return response.json(); // Parse JSON if response is okay
-        })
-        .then((data) => {
-          if (data.success) {
-            showSuccessNotification(data.success);
-
-            // Reset form
-            form.reset();
-
-            // Hide popout with animations
-            popout.classList.remove("slide-in");
-            popout.classList.add("slide-out");
-
-            // Morph icon back to the note icon
-            iconClose.classList.remove("scale-100");
-            iconClose.classList.add("scale-0");
-            iconNote.classList.remove("scale-0");
-            iconNote.classList.add("scale-100");
-
-            setTimeout(() => {
-              popout.classList.add("hidden");
-            }, 300); // Match the timeout to the animation duration
-          } else {
-            showFailureNotification(data.message);
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          showFailureNotification(error);
-        });
+    // Toggle popup
+    popup.button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      popup.toggle();
     });
 
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+      if (popup.isOpen && !popup.container.contains(e.target)) {
+        popup.close();
+      }
+    });
+
+    // Close on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && popup.isOpen) {
+        popup.close();
+      }
+    });
+
+    // Handle form submission
+    popup.form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(popup.form);
+
+      // Create data object with is_todo always present as boolean
+      const data = {
+        name: formData.get('name'),
+        date: formData.get('date'),
+        text: formData.get('text'),
+        is_todo: formData.get('is_todo') === 'on', // Convert 'on' to true, null/undefined to false
+        _token: document.querySelector('meta[name="csrf-token"]').content
+      };
+
+      try {
+        const response = await fetch(`/dashboard/{{ $dashboardType }}/notes/new`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) throw new Error(responseData.message || 'Failed to create note');
+
+        // Dispatch custom event to refresh notes
+        document.dispatchEvent(new CustomEvent('noteCreated', {
+          detail: {
+            dashboardType: '{{ $dashboardType }}'
+          }
+        }));
+
+        popup.showStatus('Note created successfully!');
+        popup.form.reset();
+
+        // Auto close after success
+        setTimeout(() => popup.close(), 1500);
+        loadNotes(currentPage, false);
+
+      } catch (error) {
+        popup.showStatus(error.message, true);
+      }
+    });
   });
 </script>
+
+<style>
+  .scale-0 {
+    transform: scale(0);
+  }
+
+  /* Animation classes */
+  .notes-enter {
+    opacity: 1 !important;
+    transform: scale(1) translateY(0) !important;
+    pointer-events: auto !important;
+  }
+
+  .notes-leave {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+    pointer-events: none;
+  }
+
+  /* Add subtle hover effects to form elements */
+  input:hover,
+  textarea:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+  }
+
+  input:focus,
+  textarea:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  button[type="submit"]:active {
+    transform: scale(0.98);
+  }
+
+  /* Add shake animation for errors */
+  @keyframes shake {
+
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+
+    25% {
+      transform: translateX(-5px);
+    }
+
+    75% {
+      transform: translateX(5px);
+    }
+  }
+
+  .shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  /* Update transition styles */
+  #notes-popout {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Remove duplicate transition class */
+  .notes-transition {
+    display: none;
+  }
+</style>

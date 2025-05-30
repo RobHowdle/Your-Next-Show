@@ -57,7 +57,7 @@
             <p class="my-4 text-xl font-bold">Incoming</p>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
               <div class="income group">
-                <x-input-label-dark>Presale Tickets</x-input-label-dark>
+                <x-input-label-dark>Presale Tickets (Total)</x-input-label-dark>
                 <x-number-input-pound id="income_presale" name="income_presale"
                   :value="old('income_presale')"></x-number-input-pound>
                 @error('income_presale')
@@ -66,7 +66,7 @@
               </div>
 
               <div class="income group">
-                <x-input-label-dark>On The Door Tickets</x-input-label-dark>
+                <x-input-label-dark>On The Door Tickets (Total)</x-input-label-dark>
                 <x-number-input-pound id="income_otd" name="income_otd" :value="old('income_otd')"></x-number-input-pound>
                 @error('income_otd')
                   <p class="yns_red mt-1 text-sm">{{ $message }}</p>

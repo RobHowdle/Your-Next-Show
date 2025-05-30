@@ -1324,7 +1324,7 @@ class PromoterDashboardController extends Controller
             $contactLinks = array_map('trim', $contactLinks);
             $platformLinks = [];
 
-            $platformsToCheck = ['facebook', 'twitter', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+            $platformsToCheck = ['facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
 
             foreach ($contactLinks as $link) {
                 $matchedPlatform = 'Unknown';

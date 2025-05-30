@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Event;
 use App\Models\Venue;
+use App\Models\ApiKey;
 use App\Models\ApiKeys;
 use App\Models\Promoter;
 use App\Models\ServiceUser;
@@ -350,13 +351,12 @@ class APIRequestsController extends Controller
             ]);
 
             $modelClass = $this->getModelClass($dashboardType);
-            // dd($modelClass);
 
             if (!$modelClass) {
                 return response()->json(['success' => false, 'message' => 'Invalid dashboard type'], 400);
             }
 
-            $newApiKey = ApiKeys::create([
+            $newApiKey = ApiKey::create([
                 'serviceable_type' => $modelClass,
                 'serviceable_id' => $validated['id'],
                 'name' => 'API Key',
@@ -410,19 +410,27 @@ class APIRequestsController extends Controller
             'userId' => 'required|integer|exists:users,id',
         ]);
 
-        $user = User::findOrFail($request->userId);
+        try {
+            $user = User::findOrFail($request->userId);
 
-        $mailingPreferences = $user->mailing_preferences ?? [];
+            $mailingPreferences = $user->mailing_preferences ?? [];
 
-        // Simply update the specific setting
-        $mailingPreferences[$request->setting] = $request->enabled;
+            // Update the specific setting
+            $mailingPreferences[$request->setting] = $request->enabled;
 
-        $user->update(['mailing_preferences' => $mailingPreferences]);
+            $user->update(['mailing_preferences' => $mailingPreferences]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Communications updated successfully'
-        ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Communications updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update communications'
+            ], 500);
+        }
     }
 
     public function updateStylesAndPrint(Request $request)
@@ -446,61 +454,177 @@ class APIRequestsController extends Controller
         ]);
     }
 
-    public function updatePackages($dashboardType, StoreUpdatePackages $request)
+    /**
+     * Save packages for a user
+     */
+    public function updatePackages($dashboardType, $id, StoreUpdatePackages $request)
     {
         try {
-            $user = Auth::user();
-
-            if (!$user) {
-                \Log::error('User not authenticated');
-                return response()->json(['error' => 'Unauthenticated'], 401);
-            }
-
-            $packages = $request->input('packages', []);
-
-            switch ($dashboardType) {
-                case 'venue':
-                    $model = $user->venues()->first();
-                    break;
-                case 'promoter':
-                    $model = $user->promoters()->first();
-                    break;
-                default:
-                    $model = $user->otherService('service')->first();
-            }
-
-            if (!$model) {
-                \Log::error('Model not found for package update', [
-                    'user_id' => $user->id,
-                    'type' => $request->input('type')
-                ]);
-                return response()->json(['error' => 'Service not found'], 404);
-            }
-
-            // Handle empty packages case
-            if (empty($packages)) {
-                $model->packages = json_encode([]);
-            } else {
-                $model->packages = json_encode($packages);
-            }
-
-            try {
-                $model->save();
-                return response()->json(['success' => true]);
-            } catch (\Exception $e) {
-                \Log::error('Failed to save packages:', [
-                    'error' => $e->getMessage(),
-                    'user_id' => $user->id,
-                    'packages' => $packages
-                ]);
-                return response()->json(['error' => 'Failed to save packages: ' . $e->getMessage()], 500);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Package update failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            // Log the request for debugging
+            \Log::info('Package update request received', [
+                'dashboardType' => $dashboardType,
+                'id' => $id,
+                'data' => $request->all()
             ]);
-            return response()->json(['error' => 'Update failed: ' . $e->getMessage()], 500);
+
+            // Find the specific user (might be different than authenticated user for admins)
+            $user = User::findOrFail($id);
+            $validated = $request->validated();
+
+            // Get the appropriate service based on dashboard type
+            $service = match ($dashboardType) {
+                'venue' => $user->venues()->first(),
+                'promoter' => $user->promoters()->first(),
+                'artist' => $user->otherService('Artist')->first(),
+                'photographer' => $user->otherService('Photography')->first(),
+                'designer' => $user->otherService('Designer')->first(),
+                'videographer' => $user->otherService('Videography')->first(),
+                default => null,
+            };
+
+            if (!$service) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service not found'
+                ], 404);
+            }
+
+            // Check if jobs module is enabled for this user
+            $jobsModuleEnabled = UserModuleSetting::where('user_id', $user->id)
+                ->where('module_name', 'jobs')
+                ->where('is_enabled', true)
+                ->exists();
+
+            if (!$jobsModuleEnabled) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jobs module is not enabled'
+                ], 403);
+            }
+
+            // Log the incoming package data
+            \Log::info('Package data received:', ['data' => $validated['packages']]);
+
+            // Structure packages data with correct field names and ensure defaults
+            $packages = array_map(function ($package) use ($dashboardType) {
+                // Use default job type if empty based on dashboard type
+                $jobType = $package['job_type'] ?? '';
+
+                // Log the incoming job_type value for debugging
+                \Log::info("Processing package with job_type: '$jobType'", [
+                    'dashboard_type' => $dashboardType,
+                    'package_title' => $package['title'] ?? 'Untitled'
+                ]);
+
+                // Check if this is a known job type for this dashboard type
+                $knownJobTypes = [
+                    'photographer' => ['gig_shoot', 'portrait', 'band_promo', 'event_coverage'],
+                    'designer' => ['album_artwork', 'poster_design', 'logo_design'],
+                    'videographer' => ['music_video', 'live_video', 'promo_video', 'event_coverage'],
+                    'venue' => ['venue_booking', 'entertainment', 'event_hosting']
+                ];
+
+                // If we have a job type but it's not in the known list, log it
+                if (
+                    !empty($jobType) && isset($knownJobTypes[$dashboardType]) &&
+                    !in_array($jobType, $knownJobTypes[$dashboardType]) &&
+                    $jobType !== 'default_package'
+                ) {
+                    \Log::info("Found non-standard job type: $jobType for dashboard type: $dashboardType", [
+                        'package_title' => $package['title'] ?? 'Untitled'
+                    ]);
+                }
+
+                if (empty($jobType) || $jobType === 'default_package') {
+                    // Try to get first job type from config
+                    $jobTypesConfig = config('job_types.' . strtolower($dashboardType)) ?? [];
+
+                    \Log::info("Job types config for $dashboardType:", [
+                        'has_config' => !empty($jobTypesConfig),
+                        'config' => $jobTypesConfig
+                    ]);
+
+                    // First try to use a known job type for this dashboard type
+                    if (isset($knownJobTypes[$dashboardType]) && !empty($knownJobTypes[$dashboardType])) {
+                        $jobType = $knownJobTypes[$dashboardType][0];
+                        \Log::info("Selected known job type: $jobType for dashboard type: $dashboardType");
+                    }
+                    // Otherwise try to get from config
+                    else if (!empty($jobTypesConfig)) {
+                        $firstClient = array_key_first($jobTypesConfig);
+                        if (!empty($jobTypesConfig[$firstClient])) {
+                            $jobType = $jobTypesConfig[$firstClient][0]['id'] ?? 'default_package';
+                            \Log::info("Selected job type from config: $jobType");
+                        }
+                    }
+
+                    if (empty($jobType) || $jobType === 'default_package') {
+                        $jobType = 'default_package';
+                        \Log::info("Using default package type");
+                    }
+                }
+
+                return [
+                    'title' => $package['title'],
+                    'description' => $package['description'] ?? '',
+                    'price' => $package['price'] ?? 0,
+                    'job_type' => $jobType,
+                    'items' => $package['items'] ?? [],
+                    'lead_time' => $package['lead_time'] ?? null,
+                    'lead_time_unit' => $package['lead_time_unit'] ?? 'days',
+                    'is_active' => true,
+                ];
+            }, $validated['packages']);
+
+            // Log the structured package data
+            \Log::info('Structured package data:', ['packages' => $packages]);
+
+            // Ensure we're not double-encoding JSON
+            $packagesJson = json_encode($packages);
+
+            // Log before saving
+            \Log::info('Saving packages JSON', [
+                'length' => strlen($packagesJson),
+                'first_100_chars' => substr($packagesJson, 0, 100)
+            ]);
+
+            // Update packages in the database
+            $service->update([
+                'packages' => $packagesJson
+            ]);
+
+            // Double-check what was saved
+            $savedService = match ($dashboardType) {
+                'venue' => $user->venues()->first(),
+                'promoter' => $user->promoters()->first(),
+                'artist' => $user->otherService('Artist')->first(),
+                'photographer' => $user->otherService('Photography')->first(),
+                'designer' => $user->otherService('Designer')->first(),
+                'videographer' => $user->otherService('Videography')->first(),
+                default => null,
+            };
+
+            if ($savedService) {
+                \Log::info('Packages saved in database', [
+                    'raw_packages' => $savedService->packages,
+                    'decoded' => json_decode($savedService->packages)
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Packages updated successfully',
+                'redirect' => route('profile.edit', [
+                    'dashboardType' => $dashboardType,
+                    'id' => $user->id
+                ])
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error saving packages: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save packages'
+            ], 500);
         }
     }
 
@@ -508,17 +632,53 @@ class APIRequestsController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            $service = $request->input('service');
 
-            // Delete service user relationship
-            ServiceUser::where('user_id', $id)
-                ->where('serviceable_type', 'like', '%' . $dashboardType . '%')
-                ->delete();
+            switch ($dashboardType) {
+                case 'venue':
+                    $service = $user->venues()->first();
+                    $serviceType = 'App\Models\Venue';
+                    break;
+                case 'promoter':
+                    $service = $user->promoters()->first();
+                    $serviceType = 'App\Models\Promoter';
+                    break;
+                case 'artist':
+                    $service = $user->otherService('Artist')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+                case 'designer':
+                    $service = $user->otherService('Designer')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+                case 'photographer':
+                    $service = $user->otherService('Photographer')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+                case 'videographer':
+                    $service = $user->otherService('Videographer')->first();
+                    $serviceType = 'App\Models\OtherService';
+                    break;
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Successfully left service'
-            ]);
+            $serviceUser = ServiceUser::where('user_id', $id)
+                ->where('serviceable_type', $serviceType)
+                ->where('serviceable_id', $service->id)
+                ->first();
+
+            if ($serviceUser) {
+                // Delete the found service user relationship
+                $serviceUser->delete();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Successfully left service'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service not found'
+                ], 404);
+            }
         } catch (\Exception $e) {
             \Log::error('Error leaving service:', [
                 'error' => $e->getMessage(),

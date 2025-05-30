@@ -27,80 +27,59 @@ class GigGuideController extends Controller
     public function filterGigs(Request $request)
     {
         try {
-            $distance = $request->get('distance', 100);
-            $latitude = $request->get('latitude');
-            $longitude = $request->get('longitude');
-            $startOfWeek = now()->startOfWeek();
-            $endOfWeek = now()->endOfWeek();
+            $validated = $request->validate([
+                'distance' => 'required|numeric|min:1|max:500',
+                'latitude' => 'required|numeric|between:-90,90',
+                'longitude' => 'required|numeric|between:-180,180',
+            ]);
 
+            // Get all events with their venues that have coordinates
             $events = Event::with(['venues', 'bands'])
-                ->whereBetween('event_date', [$startOfWeek, $endOfWeek])
+                ->whereHas('venues', function ($query) {
+                    $query->whereNotNull('latitude')
+                        ->whereNotNull('longitude');
+                })
+                ->where('event_date', '>=', now())
                 ->get();
 
-            $client = new \GuzzleHttp\Client();
-            $origin = "{$latitude},{$longitude}";
-            $filteredEvents = collect();
-
-            foreach ($events->chunk(25) as $eventChunk) {
-                // Filter out events without venues
-                $validEvents = $eventChunk->filter(function ($event) {
-                    return $event->venues && $event->venues->first();
-                });
-
-                if ($validEvents->isEmpty()) {
-                    continue;
-                }
-
-                $destinations = $validEvents->map(function ($event) {
-                    $venue = $event->venues->first();
-                    return "{$venue->latitude},{$venue->longitude}";
-                })->join('|');
-
-                $apiKey = env('GOOGLE_MAPS_API_KEY');
-                $response = $client->get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-                    'query' => [
-                        'origins' => $origin,
-                        'destinations' => $destinations,
-                        'key' => $apiKey,
-                        'units' => 'imperial'
-                    ]
-                ]);
-
-                $data = json_decode($response->getBody(), true);
-
-                if (!isset($data['rows']) || empty($data['rows']) || !isset($data['rows'][0]['elements'])) {
-                    continue;
-                }
-
-                foreach ($data['rows'][0]['elements'] as $index => $element) {
-                    if ($element['status'] === 'OK' && isset($element['distance']['value'])) {
-                        $event = $validEvents->values()->get($index);
-                        if (!$event || !$event->venues->first()) continue;
-
-                        $distanceInMiles = $element['distance']['value'] * 0.000621371;
-                        if ($distanceInMiles <= $distance) {
-                            $event->distance = round($distanceInMiles, 2);
-                            $filteredEvents->push($event);
-                        }
-                    }
-                }
-            }
-
-            $formattedEvents = $filteredEvents->sortBy('distance')->values()->map(function ($event) {
+            // Calculate distance for each event and filter
+            $filteredEvents = $events->map(function ($event) use ($validated) {
                 $venue = $event->venues->first();
-                if (!$venue) return null;
 
-                return [
-                    'id' => $event->id,
-                    'name' => $event->event_name,
-                    'date' => $event->event_date,
-                    'start_time' => $event->event_start_time,
-                    'venue_name' => $venue->name,
-                    'venue_town' => $venue->postal_town,
-                    'distance' => $event->distance,
-                    'headliner' => optional($event->bands)->name
-                ];
-            })->filter();
+                $distance = $this->calculateDistance(
+                    $validated['latitude'],
+                    $validated['longitude'],
+                    $venue->latitude,
+                    $venue->longitude
+                );
+
+                if ($distance <= $validated['distance']) {
+                    $event->distance = round($distance, 1);
+                    return $event;
+                }
+                return null;
+            })->filter(function ($event) {
+                return !is_null($event);
+            });
+
+            $formattedEvents = $filteredEvents->sortBy('distance')
+                ->values()
+                ->map(function ($event) {
+                    $venue = $event->venues->first();
+
+                    return [
+                        'id' => $event->id,
+                        'name' => $event->event_name,
+                        'date' => $event->event_date,
+                        'start_time' => $event->event_start_time,
+                        'venue_name' => $venue ? $venue->name : null,
+                        'venue_town' => $venue ? $venue->postal_town : null,
+                        'distance' => $event->distance,
+                        'headliner' => optional($event->bands)->name
+                    ];
+                })->filter(function ($event) {
+                    return !is_null($event['venue_name']);
+                })->values();
 
             return response()->json([
                 'success' => true,
@@ -120,6 +99,36 @@ class GigGuideController extends Controller
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        try {
+            $response = Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
+                'origins' => "{$lat1},{$lon1}",
+                'destinations' => "{$lat2},{$lon2}",
+                'mode' => 'driving',
+                'units' => 'imperial', // Use miles
+                'key' => config('services.google.maps_api_key')
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                if (isset($data['rows'][0]['elements'][0]['distance']['value'])) {
+                    // Convert meters to miles
+                    return $data['rows'][0]['elements'][0]['distance']['value'] * 0.000621371;
+                }
+            }
+
+            return $this->haversineDistance($lat1, $lon1, $lat2, $lon2);
+        } catch (\Exception $e) {
+            \Log::error('Error calculating distance', [
+                'error' => $e->getMessage()
+            ]);
+
+            return $this->haversineDistance($lat1, $lon1, $lat2, $lon2);
+        }
+    }
+
+    private function haversineDistance($lat1, $lon1, $lat2, $lon2)
     {
         $r = 3959; // Earth's radius in miles
 

@@ -1,13 +1,14 @@
 @props(['id' => null, 'name' => null, 'value' => null, 'disabled' => false, 'required' => false])
 
-<div class="flex items-center">
-  <span
-    class="inline-flex h-10 items-center rounded-l-md border border-r-0 border-yns_red bg-gray-200 px-3 text-gray-700 dark:border-yns_red dark:bg-gray-800 dark:text-gray-300">
-    £
-  </span>
-  <input type="number" id="{{ $id }}" name="{{ $name }}" value="{{ $value }}"
-    {{ $disabled ? 'disabled' : '' }} {{ $required ? 'required' : '' }} {!! $attributes->merge([
+<div class="relative">
+  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+    <span class="text-gray-400 sm:text-sm">£</span>
+  </div>
+  <input type="number" step="0.01" min="0" id="{{ $id }}" name="{{ $name }}"
+    value="{{ $value }}" @if ($disabled) disabled @endif
+    @if ($required) required @endif
+    {{ $attributes->merge([
         'class' =>
-            'border-yns_red w-full h-10 dark:border-yns_red dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-r-md shadow-sm',
-    ]) !!}>
+            'pl-7 block w-full rounded-md border-yns_red bg-gray-800/50 text-white placeholder-gray-500 focus:border-yns_yellow focus:ring-yns_yellow sm:text-sm',
+    ]) }}>
 </div>

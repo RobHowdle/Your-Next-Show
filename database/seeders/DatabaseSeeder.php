@@ -7,17 +7,10 @@ use Illuminate\Database\Seeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\VenuesSeeder;
 use Database\Seeders\AdminUserSeeder;
-use Database\Seeders\VenueTestSeeder;
 use Database\Seeders\PermissionsSeeder;
-use Database\Seeders\UserServiceSeeder;
 use Database\Seeders\OtherServiceSeeder;
-use Database\Seeders\PromoterTestSeeder;
-use Database\Seeders\TodoTestDataSeeder;
-use Database\Seeders\VenueExtraInfoSeeder;
-use Database\Seeders\FinanceTestDataSeeder;
+use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\OtherServicesListSeeder;
-use Database\Seeders\PromoterReviewTestSeeder;
-use Database\Seeders\PromoterVenueTestPivotSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -30,6 +23,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             PermissionsSeeder::class,
             RoleSeeder::class,
+            RolePermissionSeeder::class,
             // VenueTestSeeder::class, // For Testing Data
             VenuesSeeder::class,
             // VenueExtraInfoSeeder::class, // For Testing Data
@@ -43,5 +37,9 @@ class DatabaseSeeder extends Seeder
             // UserServiceSeeder::class,
             // TodoTestDataSeeder::class,
         ]);
+        $this->call(VenuesTableSeeder::class);
+        $this->call(PromotersTableSeeder::class);
+        $this->call(OtherServicesListTableSeeder::class);
+        $this->call(OtherServicesTableSeeder::class);
     }
 }

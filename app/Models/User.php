@@ -61,6 +61,7 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
+        'date_of_birth' => 'date',
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'last_logged_in' => 'datetime',
@@ -89,6 +90,11 @@ class User extends Authenticatable
         });
     }
 
+    public function isSuperAdmin()
+    {
+        return $this->email === env('ADMIN_EMAIL');
+    }
+
     public function hasActiveModule($user, $module)
     {
         return $user->moduleSettings()->where('module', $module)->where('status', 1)->exists();
@@ -115,7 +121,6 @@ class User extends Authenticatable
                 return null;
         }
     }
-
 
     public function services()
     {
@@ -230,5 +235,94 @@ class User extends Authenticatable
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function getCurrentService($dashboardType)
+    {
+        $serviceType = $this->getServiceType($dashboardType);
+
+        if (!$serviceType) {
+            return null;
+        }
+
+        $service = DB::table('service_user')
+            ->where('user_id', $this->id)
+            ->where('serviceable_type', $serviceType)
+            ->whereNull('deleted_at')
+            ->first();
+
+        return $service;
+    }
+
+    public function getCurrentServiceRole($dashboardType)
+    {
+        $serviceType = $this->getServiceType($dashboardType);
+        $currentService = $this->getCurrentService($dashboardType);
+
+        if (!$currentService) {
+            return null;
+        }
+
+        return $this->getServiceRole($currentService->serviceable_id, $serviceType);
+    }
+
+    public function getServiceType($dashboardType)
+    {
+        return match (strtolower($dashboardType)) {
+            'promoter' => 'App\Models\Promoter',
+            'venue' => 'App\Models\Venue',
+            'artist', 'designer', 'photographer', 'videographer' => 'App\Models\OtherService',
+            default => null,
+        };
+    }
+
+    public function getServiceRole($serviceId, $serviceType)
+    {
+        $serviceUser = DB::table('service_user')
+            ->where('user_id', $this->id)
+            ->where('serviceable_id', $serviceId)
+            ->where('serviceable_type', $serviceType)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$serviceUser || !$serviceUser->role_id) {
+            return null;
+        }
+
+        return DB::table('roles')
+            ->where('id', $serviceUser->role_id)
+            ->value('name');
+    }
+
+    public function isLinkedToEvent(Event $event): bool
+    {
+        // Get user's role and service
+        $role = $this->roles->first()->name;
+
+        switch ($role) {
+            case 'venue':
+                return $event->venues()
+                    ->where('venue_id', $this->venues->first()?->id)
+                    ->exists();
+
+            case 'promoter':
+                return $event->promoters()
+                    ->where('promoter_id', $this->promoters->first()?->id)
+                    ->exists();
+
+            case 'artist':
+                $service = $this->otherService()->where('services', 'Artist')->first();
+                if (!$service) return false;
+
+                return $event->bands()
+                    ->where('band_id', $service->id)
+                    ->exists();
+
+            case 'admin':
+                return true;
+
+            default:
+                return false;
+        }
     }
 }

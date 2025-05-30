@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\TrackChanges;
+use App\Models\EventView;
+use App\Models\TicketPlatform;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Event extends Model
@@ -23,6 +26,8 @@ class Event extends Model
         'event_start_time',
         'event_end_time',
         'event_description',
+        'genre',
+        'type',
         'facebook_event_url',
         'poster_url',
         'band_ids',
@@ -88,5 +93,43 @@ class Event extends Model
     public function eventBands()
     {
         return $this->hasMany(EventBand::class);
+    }
+
+    public function ticketPlatforms()
+    {
+        return $this->hasMany(TicketPlatform::class);
+    }
+
+    /**
+     * Scope a query to only include past events
+     */
+    public function scopePast(Builder $query): Builder
+    {
+        return $query->where('event_date', '<', now())
+            ->orderBy('event_date', 'desc');
+    }
+
+    /**
+     * Scope a query to only include upcoming events
+     */
+    public function scopeUpcoming(Builder $query): Builder
+    {
+        return $query->where('event_date', '>=', now())
+            ->orderBy('event_date', 'asc');
+    }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'related');
+    }
+
+    public function views()
+    {
+        return $this->hasMany(EventView::class);
+    }
+
+    public function getUniqueViewsCountAttribute()
+    {
+        return $this->views()->count();
     }
 }

@@ -45,6 +45,7 @@ class OtherService extends Model
         'services',
         'is_verified',
         'verified_at',
+        'preferred_contact',
     ];
 
     protected $casts = [
@@ -69,7 +70,7 @@ class OtherService extends Model
      */
     public static function photographers()
     {
-        return self::where('other_service_id', 1);
+        return self::where('name', 'photographer');
     }
 
     /**
@@ -77,7 +78,7 @@ class OtherService extends Model
      */
     public static function videographers()
     {
-        return self::where('other_service_id', 2);
+        return self::where('name', 'videographer');
     }
 
     /**
@@ -85,15 +86,19 @@ class OtherService extends Model
      */
     public static function designers()
     {
-        return self::where('other_service_id', 3);
+        return self::where('name', 'designer');
     }
 
     /**
      * Retrieve all bands (other services with `other_service_id` as 4).
      */
-    public function bands()
+    public static function bands()
     {
-        return $this->hasMany(OtherService::class, 'other_service_id')->where('other_service_id', 4);
+        // Use a more robust query that checks both name and service_id
+        return self::where(function ($query) {
+            $query->where('name', 'artist')
+                ->orWhere('other_service_id', 4);
+        });
     }
     /**
      * Belongs to OtherServiceList relation.
@@ -118,6 +123,15 @@ class OtherService extends Model
     {
         return $this->belongsToMany(Event::class, 'event_band', 'band_id', 'event_id');
     }
+
+    public function performedAtVenues()
+    {
+        return $this->belongsToMany(Venue::class,  'event_bands')
+            ->join('events', 'event_bands.event_id', '=', 'events.id')
+            ->join('event_venue', 'events.id', '=', 'event_venue.event_id')
+            ->where('other_services.other_service_id', 4);
+    }
+
 
     /**
      * Get the highest rated service of a specific type in a location.
@@ -183,5 +197,15 @@ class OtherService extends Model
             default:
                 return null;
         }
+    }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'serviceable');
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(Document::class, 'serviceable');
     }
 }

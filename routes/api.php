@@ -1,38 +1,18 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Rules\CompromisedPassword;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\JobsController;
-use App\Http\Controllers\FinanceController;
-use App\Http\Controllers\APIRequestsController;
+use App\Http\Controllers\IntegrationController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware(['web', 'auth:sanctum'])->group(function () {
+    Route::post('/webhook/eventbrite', [IntegrationController::class, 'webhook']);
+    Route::get('/platforms/{platform}/search', [IntegrationController::class, 'searchEvents']);
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard/{$dashboardType}/finances', [FinanceController::class, 'getFinanceData']);
-    Route::get('/bands/search', [APIRequestsController::class, 'searchBands']);
-    Route::post('/bands/create', [APIRequestsController::class, 'createBand']);
-    Route::get('/promoters/search', [APIRequestsController::class, 'searchPromoters']);
-    Route::post('/promoters/create', [APIRequestsController::class, 'createPromoter']);
-    Route::get('/venues/search', [APIRequestsController::class, 'searchVenues']);
-    Route::post('/venues/create', [APIRequestsController::class, 'createVenue']);
-    Route::get('/{dashboardType}/jobs/search-clients', [APIRequestsController::class, 'searchClients']);
-    Route::post('/profile/{dashboardType}/{id}/update-api-keys', [APIRequestsController::class, 'updateAPI']);
-    Route::post('/profile/{dashboardType}/{id}/save-styles-and-print', [APIRequestsController::class, 'updateStylesAndPrint'])->name('profile.styles-and-print');
-    Route::post('/profile/{dashboardType}/settings/update', [APIRequestsController::class, 'updateModule'])->name('settings.updateModule');
-    Route::post('/profile/{dashboardType}/communications/update', [APIRequestsController::class, 'updateCommunications'])->name('settings.updateCommunications');
-    Route::post('/profile/{dashboardType}/{id}/leave-service', [APIRequestsController::class, 'leaveService'])->name('settings.deleteModule');
-});
+Route::post('/check-password', function (Request $request) {
+    $rule = new CompromisedPassword();
+    return response()->json([
+        'compromised' => !$rule->passes('password', $request->input('password'))
+    ]);
+})->middleware('throttle:6,1');

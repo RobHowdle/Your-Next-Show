@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use App\Models\Venue;
 use App\Models\Promoter;
 use App\Models\OtherService;
 use Illuminate\Http\Request;
 use App\Services\TodoService;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\StoreUpdateNoteRequest;
 
 class NoteController extends Controller
 {
@@ -18,168 +20,150 @@ class NoteController extends Controller
         return Auth::id();
     }
 
-    public function showNotes($dashboardType, Request $request)
-    {
-        $modules = collect(session('modules', []));
-        $user = Auth::user()->load(['promoters', 'todos', 'otherService']);
-        $perPage = 6;
-        $page = $request->input('page', 1);
-        $notes = collect();
-
-        if ($dashboardType === 'promoter') {
-            $notes = Note::where('serviceable_type', Promoter::class)
-                ->whereIn('serviceable_id', $user->promoters->pluck('id'))
-                ->where('completed', false)
-                ->orderBy('created_at', 'DESC')
-                ->paginate($perPage, ['*'], 'page', $page);
-        } elseif ($dashboardType === 'artist') {
-            $notes = Note::where('serviceable_type', OtherService::class)
-                ->whereIn('serviceable_id', $user->otherService("Artist")->pluck('other_services.id'))
-                ->where('completed', false)
-                ->orderBy('created_at', 'DESC')
-                ->paginate($perPage, ['*'], 'page', $page);
-        } elseif ($dashboardType === 'designer') {
-            $notes = Note::where('serviceable_type', OtherService::class)
-                ->whereIn('serviceable_id', $user->otherService("Designer")->pluck('other_services.id'))
-                ->where('completed', false)
-                ->orderBy('created_at', 'DESC')
-                ->paginate($perPage, ['*'], 'page', $page);
-        }
-
-        return view('admin.dashboards.show-notes', [
-            'userId' => $this->getUserId(),
-            'dashboardType' => $dashboardType,
-            'modules' => $modules,
-            'notes' => $notes
-        ]);
-    }
-
     public function getNotes($dashboardType, Request $request)
     {
-        $user = Auth::user()->load(['promoters', 'notes', 'otherService']);
-        $perPage = 6;
-        $page = $request->input('page', 1);
-        $notes = collect();
+        try {
+            $user = Auth::user()->load(['promoters', 'venues', 'otherService']);
+            $perPage = 6;
+            $page = $request->input('page', 1);
+            $completed = $request->boolean('completed');
+            $isAjax = $request->ajax();
+            $notes = collect();
 
-        switch ($dashboardType) {
-            case 'promoter':
-                $promoterCompany = $user->promoters;
-                $serviceableId = $promoterCompany->pluck('id');
+            switch ($dashboardType) {
+                case 'promoter':
+                    $serviceableType = Promoter::class;
+                    $serviceableIds = $user->promoters->pluck('id');
+                    break;
 
-                if ($promoterCompany->isEmpty()) {
-                    return response()->json([
-                        'view' => view('components.note-items', ['notes' => collect()])->render(),
-                        'hasMore' => false,
-                    ]);
-                }
+                case 'venue':
+                    $serviceableType = Venue::class;
+                    $serviceableIds = $user->venues->pluck('id');
+                    break;
 
-                $notes = Note::where('serviceable_type', Promoter::class)
-                    ->whereIn('serviceable_id', $serviceableId)
-                    ->where('completed', false)
-                    ->orderBy('created_at', 'DESC')
-                    ->paginate($perPage);
+                case 'artist':
+                case 'designer':
+                case 'photographer':
+                case 'videographer':
+                    $serviceableType = OtherService::class;
+                    $serviceableIds = $user->otherService(ucfirst($dashboardType))->pluck('other_services.id');
+                    break;
 
-                break;
+                default:
+                    return $this->emptyResponse($isAjax);
+            }
 
-            case 'artist':
-                $bandServices = $user->otherService("Artist")->get();
-                $serviceableId = $bandServices->pluck('other_services.id');
+            // Return empty response if no services found
+            if ($serviceableIds->isEmpty()) {
+                return $this->emptyResponse($isAjax);
+            }
 
-                if ($bandServices->isEmpty()) {
-                    return response()->json([
-                        'view' => view('components.note-items', ['notes' => collect()])->render(),
-                        'hasMore' => false,
-                    ]);
-                }
+            // Build the query
+            $notes = Note::where('serviceable_type', $serviceableType)
+                ->whereIn('serviceable_id', $serviceableIds)
+                ->where('completed', $completed)
+                ->orderBy('created_at', 'DESC')
+                ->paginate($perPage);
 
-                $notes = Note::where('serviceable_type', OtherService::class)
-                    ->whereIn('serviceable_id', $serviceableId)
-                    ->where('completed', false)
-                    ->orderBy('created_at', 'DESC')
-                    ->paginate($perPage);
-
-                break;
-
-                // case 'designer':
-                //     $designerCompanies = $user->designers;
-                //     $serviceableId = $designerCompanies->pluck('id');
-
-                //     if ($designerCompanies->isEmpty()) {
-                //         return response()->json([
-                //             'view' => view('components.note-items', ['notes' => collect()])->render(),
-                //             'hasMore' => false,
-                //         ]);
-                //     }
-
-                //     $notes = Note::where('serviceable_type', Designer::class)
-                //         ->whereIn('serviceable_id', $serviceableId)
-                //         ->where('completed', false)
-                //         ->orderBy('created_at', 'DESC')
-                //         ->paginate($perPage);
-
-                //     break;
-
-            default:
+            if ($isAjax) {
                 return response()->json([
-                    'view' => view('components.note-items', ['notes' => collect()])->render(),
-                    'hasMore' => false,
+                    'view' => view('components.note-items', compact('notes'))->render(),
+                    'hasMore' => $notes->hasMorePages(),
                 ]);
+            }
+
+            return view('admin.dashboards.show-notes', [
+                'userId' => Auth::id(),
+                'dashboardType' => $dashboardType,
+                'modules' => collect(session('modules', [])),
+                'notes' => $notes,
+                'title' => ucfirst($dashboardType) . ' Notes'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error loading notes: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'error' => 'Failed to load notes',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+
+            abort(500, 'Error loading notes');
+        }
+    }
+
+    private function emptyResponse($isAjax)
+    {
+        if (!$isAjax) {
+            return view('admin.dashboards.show-notes', [
+                'notes' => collect(),
+                'modules' => collect(session('modules', [])),
+                'title' => 'Notes'
+            ]);
         }
 
         return response()->json([
-            'view' => view('components.note-items', compact('notes'))->render(),
-            'hasMore' => $notes->hasMorePages(),
+            'view' => '',
+            'hasMore' => false,
         ]);
     }
 
-    public function newNoteItem($dashboardType, Request $request)
+    public function newNoteItem($dashboardType, StoreUpdateNoteRequest $request)
     {
         $user = Auth::user();
-        $request->validate([
-            'name' => 'required|string',
-            'text' => 'required|string',
-            'date' => 'required|date',
-            'is_todo' => 'boolean'
-        ]);
+        $validated = $request->validated();
 
-        $servicealeableType = null;
+        $serviceableType = null;
         $serviceableId = null;
 
-        if ($dashboardType === 'promoter') {
-            $servicealeableType = Promoter::class;
-            $serviceableId = $user->promoters->first()->id;
-        } elseif ($dashboardType === 'artist') {
-            $servicealeableType = OtherService::class;
-            $serviceableId = $user->otherService('Artist')->first()->id;
-        } elseif ($dashboardType === 'designer') {
-            $servicealeableType = OtherService::class;
-            $serviceableId = $user->otherService('Designer')->first()->id;
-        } elseif ($dashboardType === 'photographer') {
-            $servicealeableType = OtherService::class;
-            $serviceableId = $user->otherService('Photographer')->first()->id;
-        } elseif ($dashboardType === 'videographer') {
-            $servicealeableType = OtherService::class;
-            $serviceableId = $user->otherService('Videographer')->first()->id;
-        } elseif ($dashboardType === 'venue') {
-            $servicealeableType = OtherService::class;
-            $serviceableId = $user->otherService('Venue')->first()->id;
-        } else {
-            $servicealeableType = null;
-            $serviceableId = null;
+        switch ($dashboardType) {
+            case 'promoter':
+                $serviceableType = Promoter::class;
+                $promoter = $user->promoters->first();
+                if (!$promoter) {
+                    return response()->json(['message' => 'No promoter found'], 404);
+                }
+                $serviceableId = $promoter->id;
+                break;
+
+            case 'venue':
+                $serviceableType = Venue::class;
+                $venue = $user->venues->first();
+                if (!$venue) {
+                    return response()->json(['message' => 'No venue found'], 404);
+                }
+                $serviceableId = $venue->id;
+                break;
+
+            case 'artist':
+            case 'designer':
+            case 'photographer':
+            case 'videographer':
+                $serviceableType = OtherService::class;
+                $service = $user->otherService(ucfirst($dashboardType))->first();
+                if (!$service) {
+                    return response()->json(['message' => "No {$dashboardType} service found"], 404);
+                }
+                $serviceableId = $service->id;
+                break;
+
+            default:
+                return response()->json(['message' => 'Invalid dashboard type'], 400);
         }
 
         $noteItem = Note::create([
             'serviceable_id' => $serviceableId,
-            'serviceable_type' => $servicealeableType,
-            'name' => $request->name,
-            'text' => $request->text,
-            'date' => $request->date,
-            'is_todo' => $request->is_todo ?? false,
+            'serviceable_type' => $serviceableType,
+            'name' => $validated['name'],
+            'text' => $validated['text'],
+            'date' => $validated['date'],
+            'is_todo' => $validated['is_todo'] ?? false,
         ]);
 
         if ($noteItem->is_todo) {
             $this->todoService->createTodoFromNote($noteItem);
-        };
+        }
 
         return response()->json([
             'message' => 'Note Added Successfully',

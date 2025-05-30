@@ -23,6 +23,28 @@
   <meta name="apple-mobile-web-app-title" content="YNS" />
   <link rel="manifest" href="/icons/site.webmanifest" />
 
+  <script>
+    window.mapsReadyPromise = new Promise((resolve) => {
+      window.initMap = function() {
+        window.mapsLoaded = true;
+        resolve();
+      };
+    });
+
+    window.handleMapsError = function(error) {
+      console.error('Maps API failed to load:', error);
+      const errorDivs = document.querySelectorAll('[id^="maps-error-"]');
+      errorDivs.forEach(div => {
+        div.textContent = 'Google Maps failed to load. Please refresh the page.';
+        div.classList.remove('hidden');
+      });
+    };
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=places&callback=initMap">
+  </script>
+
   <!-- Include jQuery -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"
     integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -50,9 +72,6 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Include Alpine.js -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-
   <!-- Full Calendar -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
@@ -62,53 +81,78 @@
   <script nomodule defer src="https://cdn.what3words.com/javascript-components@4.8.0/dist/what3words/what3words.js">
   </script>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Using a more specific selector to target only Summernote color pickers
+      const backColorPickers = document.querySelectorAll('.note-editor [id="backColorPicker"]');
+      const foreColorPickers = document.querySelectorAll('.note-editor [id="foreColorPicker"]');
+
+      // Add unique suffixes
+      backColorPickers.forEach((picker, index) => {
+        picker.id = `summernote-backColorPicker-${index + 1}`;
+      });
+
+      foreColorPickers.forEach((picker, index) => {
+        picker.id = `summernote-foreColorPicker-${index + 1}`;
+      });
+    });
+  </script>
+
+  <!-- Other scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
+
+  <script type="module">
+    import {
+      showSuccessNotification,
+      showFailureNotification,
+      showWarningNotification,
+      showConfirmationNotification,
+      showScheduledNotification,
+      showTestNotification, //DEBUG
+    } from "{{ Vite::asset('resources/js/utils/swal.js') }}";
+    // Make notifications globally available
+    window.showSuccessNotification = showSuccessNotification;
+    window.showFailureNotification = showFailureNotification;
+    window.showWarningNotification = showWarningNotification;
+    window.showConfirmationNotification = showConfirmationNotification;
+    window.showScheduledNotification = showScheduledNotification;
+    window.showTestNotification = showTestNotification; // DEBUG
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <!-- Include Summernote -->
   <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
 </head>
 
-<body class="relative font-sans antialiased">
+<body class="relative overflow-x-hidden font-sans antialiased">
   <div class="absolute inset-0 bg-cover bg-fixed bg-center bg-no-repeat"
     style="background-image: url('{{ asset('storage/images/system/hero-bg.jpg') }}'); z-index: -1;"></div>
-  <div class="min-h-screen text-white">
+  <div class="min-h-screen text-white" style="isolation: isolate;">
     @include('layouts.navigation', [
         'dashboardType' => $dashboardType,
         'modules' => $modules,
     ])
 
     @if (isset($header))
-      <header class="bg-white shadow dark:bg-gray-800">
+      <header class="bg-yns_dark_blue">
         <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           {{ $header }}
         </div>
       </header>
     @endif
 
-    <div class="{{ request()->routeIs('profile.*') ? '' : 'px-2' }} flex min-h-screen flex-col">
-      <div class="flex-grow backdrop-brightness-50">
+    <div class="flex min-h-screen flex-col">
+      <div class="{{ request()->routeIs('profile.*') ? '' : 'px-2' }} flex-grow backdrop-brightness-50">
         {{ $slot }}
       </div>
-      <x-notes></x-notes>
+      <x-notes :dashboard-type="$dashboardType"></x-notes>
     </div>
   </div>
 
   @stack('scripts')
-  <script>
-    function initialize() {
-      // Your initialization code here
-      console.log('Google Maps API initialized');
-    }
-
-    // Ensure the function is available globally
-    window.initialize = initialize;
-  </script>
 </body>
 
 </html>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js" defer></script>
-
-<!-- Google Maps API -->
-<script
-  src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initializeMaps"
-  async defer></script>

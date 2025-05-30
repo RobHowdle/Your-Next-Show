@@ -39,7 +39,7 @@ class BandReviews extends Model
         return $this->belongsTo(OtherServiceList::class, 'other_services_list_id');
     }
 
-    public static function getRecentReviewsForBand($otherServiceId)
+    public static function getRecentReviews($otherServiceId)
     {
         return self::where('other_services_id', $otherServiceId)
             ->whereNull('deleted_at')
@@ -62,35 +62,37 @@ class BandReviews extends Model
 
     public static function calculateOverallScore($otherServiceId)
     {
-        $reviews = self::where('other_services_id', $otherServiceId)->where('review_approved', 1)->get();
+        $reviews = self::where('other_services_id', $otherServiceId)
+            ->where('review_approved', 1)
+            ->get();
 
-        // Calculate the total and count of each rating
-        $totalCommunication = 0;
-        $totalMusic = 0;
-        $totalPromotion = 0;
-        $totalGigQuality = 0;
         $totalReviews = $reviews->count();
 
-        foreach ($reviews as $review) {
-            $totalCommunication += intval($review->communication_rating);
-            $totalMusic += intval($review->music_rating);
-            $totalPromotion += intval($review->promotion_rating);
-            $totalGigQuality += intval($review->gig_quality_rating);
+        if ($totalReviews === 0) {
+            return 0;
         }
 
-        // Calculate the average for each rating
-        $averageCommunication = $totalReviews > 0 ? $totalCommunication / $totalReviews : 0;
-        $averageROP = $totalReviews > 0 ? $totalMusic / $totalReviews : 0;
-        $averagePromotion = $totalReviews > 0 ? $totalPromotion / $totalReviews : 0;
-        $averageQuality = $totalReviews > 0 ? $totalGigQuality / $totalReviews : 0;
+        $totals = $reviews->reduce(function ($carry, $review) {
+            return [
+                'communication' => $carry['communication'] + (float)$review->communication_rating,
+                'music' => $carry['music'] + (float)$review->music_rating,
+                'promotion' => $carry['promotion'] + (float)$review->promotion_rating,
+                'quality' => $carry['quality'] + (float)$review->gig_quality_rating
+            ];
+        }, [
+            'communication' => 0,
+            'music' => 0,
+            'promotion' => 0,
+            'quality' => 0
+        ]);
 
-        // Calculate the overall score
-        $overallScore = $totalReviews > 0 ? ($averageCommunication + $averageROP + $averagePromotion + $averageQuality) / 4 : 0;
+        $averages = array_map(function ($total) use ($totalReviews) {
+            return $total / $totalReviews;
+        }, $totals);
 
-        // Round it 2dp
-        $overallScore = round($overallScore, 2);
+        $overallScore = array_sum($averages) / count($averages);
 
-        return $overallScore;
+        return round($overallScore, 2);
     }
 
     public static function calculateAverageScore($otherServiceId, $field)

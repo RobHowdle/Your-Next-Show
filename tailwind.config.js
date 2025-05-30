@@ -25,6 +25,7 @@ export default {
                 heading: ["Roboto", "sans-serif"],
             },
             colors: {
+                yns_black: "#000000",
                 opac_black: "rgba(0,0,0,0.4)",
                 opac_5_black: "rgba(0,0,0,0.5)",
                 opac_8_black: "rgba(0,0,0,0.8)",

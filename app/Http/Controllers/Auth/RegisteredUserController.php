@@ -46,6 +46,7 @@ class RegisteredUserController extends Controller
 
     public function store(RegisterUserRequest $request): JsonResponse
     {
+
         // Check if the selected role is not an administrator
         $adminRoleId = Role::where('name', 'administrator')->pluck('id')->first();
 
@@ -60,8 +61,16 @@ class RegisteredUserController extends Controller
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
                 ]);
-                \Log::info($request->role);
-                $role = Role::findOrFail($request->role);
+
+                $role = Role::where('name', $request->input('role'))->first();
+
+                if (!$role) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Role not found.'
+                    ], 404);
+                }
+
                 $user->assignRole($role->name);
 
                 // Create standard user service if role is standard
@@ -192,6 +201,8 @@ class RegisteredUserController extends Controller
 
     protected function createStandardUserService($user): void
     {
+        $standardRoleId = Role::where('name', 'standard')->pluck('id')->first();
+
         $standardUser = StandardUser::create([
             'name' => $user->first_name . ' ' . $user->last_name,
             'location' => 'United Kingdom',
@@ -206,7 +217,7 @@ class RegisteredUserController extends Controller
             'user_id' => $user->id,
             'serviceable_id' => $standardUser->id,
             'serviceable_type' => StandardUser::class,
-            'role' => 'Standard',
+            'role_id' => $standardRoleId,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
         ]);

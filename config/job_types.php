@@ -1,6 +1,25 @@
 <?php
 
 return [
+    'venue' => [
+        'service' => [
+            [
+                'id' => 'entertainment',
+                'name' => 'Entertainment',
+                'description' => 'Entertainment services'
+            ],
+            [
+                'id' => 'venue_booking',
+                'name' => 'Venue Booking',
+                'description' => 'Venue booking services'
+            ],
+            [
+                'id' => 'event_hosting',
+                'name' => 'Event Hosting',
+                'description' => 'Event hosting services'
+            ],
+        ]
+    ],
     'designer' => [
         'artist' => [
             [

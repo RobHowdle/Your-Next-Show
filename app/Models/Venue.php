@@ -41,6 +41,8 @@ class Venue extends Model
         'logo_url',
         'is_verified',
         'verified_at',
+        'preferred_contact',
+        'packages',
     ];
 
     protected $casts = [
@@ -85,12 +87,40 @@ class Venue extends Model
     public function linkedUsers(): MorphToMany
     {
         return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id')
-            ->withPivot('created_at', 'updated_at', 'role')
+            ->withPivot('created_at', 'updated_at', 'role_id')
+            ->join('roles', 'service_user.role_id', '=', 'roles.id')
+            ->select('users.*', 'roles.name as role_name')
             ->whereNull('service_user.deleted_at');
     }
 
     public function apiKeys()
     {
         return $this->morphMany(ApiKey::class, 'serviceable');
+    }
+
+    public function performingBands()
+    {
+        return $this->belongsToMany(OtherService::class, 'event_venue')
+            ->join('events', 'event_venue.event_id', '=', 'events.id')
+            ->join('event_band', 'events.id', '=', 'event_band.event_id')
+            ->where('other_services.other_service_id', 4);
+    }
+
+    public function bands()
+    {
+        return $this->belongsToMany(OtherService::class, 'event_band')
+            ->where('other_services.other_service_id', 4);
+    }
+
+    public function upcomingEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_venue')
+            ->where('events.event_date', '>=', now())
+            ->orderBy('events.event_date', 'asc');
+    }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'serviceable');
     }
 }

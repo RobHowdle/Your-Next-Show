@@ -39,3 +39,16 @@
   <i class="fa-solid fa-circle-question h-5 w-5"></i>
   <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Additional Info</span>
 </button>
+@if (isset($modules['jobs']) && $modules['jobs']['is_enabled'])
+  <button @click="activeTab = 'packages'" class="hover:text-yns_pink block py-2 text-white transition"
+    :class="activeTab === 'packages' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+    <i class="fa-solid fa-box-open h-5 w-5"></i>
+    <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Packages</span>
+  </button>
+@endif
+<button @click="activeTab = 'lmlc'" class="hover:text-yns_pink block py-2 text-white transition"
+  :class="activeTab === 'lmlc' ? 'text-yns_yellow' : 'text-yns_pink bg-black/20'">
+  <i class="fa-solid fa-gift h-5 w-5"></i>
+  <span x-show="publicProfileOpen && sidebarOpen" class="ml-3 transition-opacity duration-300">Live Music Loyalty
+    Card</span>
+</button>

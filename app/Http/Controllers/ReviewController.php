@@ -2,297 +2,157 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Promoter;
-use App\Models\BandReviews;
-use App\Models\VenueReview;
-use Illuminate\Http\Request;
-use App\Models\PromoterReview;
-use App\Models\DesignerReviews;
-use App\Models\OtherServicesReview;
+use App\Services\ReviewService;
 use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
-    protected function getUserId()
+    protected $reviewService;
+
+    public function __construct(ReviewService $reviewService)
     {
-        return Auth::id();
+        $this->reviewService = $reviewService;
     }
 
     public function getReviews($dashboardType, $filter = 'all')
     {
-        $modules = collect(session('modules', []));
-
-        switch ($filter) {
-            case 'pending':
-                $filter = 'pending';
-                break;
-            case 'all':
-                $filter = 'all';
-                break;
-        }
-
         return view('admin.dashboards.show-reviews', [
-            'userId' => $this->getUserId(),
+            'userId' => Auth::id(),
             'dashboardType' => $dashboardType,
-            'modules' => $modules,
+            'modules' => collect(session('modules', [])),
             'filter' => $filter,
         ]);
     }
 
     public function fetchReviews($dashboardType, $filter = 'all')
     {
-        $user = Auth::user()->load(['promoters', 'venues', 'otherService']);
-        $reviews = collect();
-
         try {
-            switch (strtolower($dashboardType)) {
-                case 'promoter':
-                    $query = PromoterReview::where('promoter_id', $user->promoters->pluck('id'));
-                    break;
+            $user = Auth::user()->load(['promoters', 'venues', 'otherService']);
 
-                case 'artist':
-                    $query = OtherServicesReview::where('other_services_id', $user->otherService("Artist")->pluck('other_services.id'))
-                        ->where('other_services_list_id', 4);
-                    break;
-
-                case 'designer':
-                    $serviceIds = $user->otherService("Designer")
-                        ->pluck('other_services.id')
-                        ->unique()
-                        ->values()
-                        ->toArray();
-
-                    $query = DesignerReviews::whereIn('other_services_id', $serviceIds);
-                    break;
-
-                case 'photographer':
-                    $query = OtherServicesReview::where('other_services_id', $user->otherService("Photography")->pluck('other_services.id'))
-                        ->where('other_services_list_id', 1);
-                    break;
-
-                case 'videographer':
-                    $query = OtherServicesReview::where('other_services_id', $user->otherService("Videography")->pluck('other_services.id'))
-                        ->where('other_services_list_id', 2);
-                    break;
-
-                case 'venue':
-                    $query = VenueReview::where('venue_id', $user->venues->pluck('id'));
-                    break;
-
-                default:
-                    return response()->json(['error' => 'Invalid service type'], 400);
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
             }
 
-            if ($filter === 'pending') {
-                $query->where('review_approved', 0);
+            $query = $this->reviewService->getReviewQuery($dashboardType, $user);
+
+            if (!$query) {
+                return response()->json(['error' => 'Invalid dashboard type'], 400);
             }
 
-            $reviews = $query->orderBy('created_at', 'DESC')->get();
+            // Apply filters and select fields
+            $query->when($filter === 'pending', fn($q) => $q->where('review_approved', 0))
+                ->select([
+                    'id',
+                    'author',
+                    'review',
+                    'review_approved',
+                    'display',
+                    'created_at'
+                ]);
 
-            return response()->json(['reviews' => $reviews]);
+            // Add rating fields to select
+            $ratingFields = $this->reviewService->getRatingFields($dashboardType);
+            foreach ($ratingFields as $rating) {
+                $query->addSelect($rating);
+            }
+
+            $reviews = $query->orderBy('created_at', 'DESC')->paginate(6);
+
+            return response()->json([
+                'reviews' => $reviews->items(),
+                'hasMorePages' => $reviews->hasMorePages(),
+                'totalItems' => $reviews->total(),
+                'currentPage' => $reviews->currentPage(),
+                'itemsPerPage' => 6
+            ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching reviews:', [
                 'error' => $e->getMessage(),
-                'service_type' => $dashboardType
+                'dashboardType' => $dashboardType,
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['error' => 'Failed to fetch reviews'], 500);
+
+            return response()->json([
+                'error' => 'Failed to fetch reviews',
+                'message' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
     }
 
     public function approveReview($dashboardType, $reviewId)
     {
-        try {
-            switch ($dashboardType) {
-                case 'promoter':
-                    $review = PromoterReview::findOrFail($reviewId);
-                    break;
-                case 'artist':
-                    $review = BandReviews::findOrFail($reviewId);
-                    break;
-                case 'designer':
-                    $review = DesignerReviews::findOrFail($reviewId);
-                    break;
-                case 'photographer':
-                    $review = OtherServicesReview::findOrFail($reviewId);
-                    break;
-                case 'videographer':
-                    $review = OtherServicesReview::findOrFail($reviewId);
-                    break;
-                case 'venue':
-                    $review = VenueReview::findOrFail($reviewId);
-                    break;
-                default:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid service type'
-                    ]);
-            }
+        return $this->updateReviewStatus($dashboardType, $reviewId, 'review_approved', true);
+    }
 
-            if (!$review) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Review not found'
-                ]);
-            }
-
-            $review->review_approved = !$review->review_approved;
-            $review->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => $review->review_approved ? 'Review approved successfully' : 'Review unapproved successfully'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error approving review:', [
-                'error' => $e->getMessage(),
-                'service_type' => $dashboardType
-            ]);
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to approve review'
-            ], 500);
-        }
+    public function unapproveReview($dashboardType, $reviewId)
+    {
+        return $this->updateReviewStatus($dashboardType, $reviewId, 'review_approved', false);
     }
 
     public function displayReview($dashboardType, $reviewId)
     {
-        try {
-            switch ($dashboardType) {
-                case 'promoter':
-                    $review = PromoterReview::findOrFail($reviewId);
-                    break;
-                case 'artist':
-                    $review = BandReviews::findOrFail($reviewId);
-                    break;
-                case 'designer':
-                    $review = DesignerReviews::findOrFail($reviewId);
-                    break;
-                case 'photographer':
-                    $review = OtherServicesReview::findOrFail($reviewId);
-                    break;
-                case 'videographer':
-                    $review = OtherServicesReview::findOrFail($reviewId);
-                    break;
-                case 'venue':
-                    $review = VenueReview::findOrFail($reviewId);
-                    break;
-                default:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid service type'
-                    ]);
-            }
-
-            if (!$review) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Review not found'
-                ]);
-            }
-
-            $review->display = !$review->display;
-            $review->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => $review->display ? 'Review displayed successfully' : 'Review hidden successfully'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error displaying review:', [
-                'error' => $e->getMessage(),
-                'service_type' => $dashboardType
-            ]);
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to display review'
-            ], 500);
-        }
-    }
-
-    public function hideReview($dashboardType, $reviewId)
-    {
-        try {
-            switch ($dashboardType) {
-                case 'promoter':
-                    $review = PromoterReview::findOrFail($reviewId);
-                    break;
-                case 'artist':
-                    $review = BandReviews::findOrFail($reviewId);
-                    break;
-                case 'designer':
-                    $review = DesignerReviews::findOrFail($reviewId);
-                    break;
-                case 'photographer':
-                    $review = OtherServicesReview::findOrFail($reviewId);
-                    break;
-                case 'videographer':
-                    $review = OtherServicesReview::findOrFail($reviewId);
-                    break;
-                case 'venue':
-                    $review = VenueReview::findOrFail($reviewId);
-                    break;
-                default:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Invalid service type'
-                    ]);
-            }
-
-            if (!$review) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Review not found'
-                ]);
-            }
-
-            $review->display = !$review->display;
-            $review->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => $review->display ? 'Review hidden successfully' : 'Review hidden successfully'
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error hiding review:', [
-                'error' => $e->getMessage(),
-                'service_type' => $dashboardType
-            ]);
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to hide review'
-            ], 500);
-        }
+        return $this->updateReviewStatus($dashboardType, $reviewId, 'display');
     }
 
     public function deleteReview($dashboardType, $reviewId)
     {
-        $review = collect();
+        try {
+            $user = Auth::user()->load(['promoters', 'venues', 'otherService']);
+            $query = $this->reviewService->getReviewQuery($dashboardType, $user);
+            $review = $query->findOrFail($reviewId);
 
-        if ($dashboardType === 'promoter') {
-            $review = PromoterReview::findOrFail($reviewId);
+            // Soft delete the review
+            $review->delete();
 
-            if ($review) {
-                $review->delete();
-
-                return response()->json(['success' => true, 'message' => 'Review deleted successfully.']);
-            }
-        } elseif ($dashboardType === 'artist') {
-            $review = OtherServicesReview::findOrFail($reviewId);
-
-            if ($review) {
-                $review->delete();
-
-                return response()->json(['success' => true, 'message' => 'Review deleted successfully.']);
-            }
-        } elseif ($dashboardType === 'designer') {
-            $review = OtherServicesReview::findOrFail($reviewId);
-
-            if ($review) {
-                $review->delete();
-
-                return response()->json(['success' => true, 'message' => 'Review deleted successfully.']);
-            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Review deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("Error deleting review:", [
+                'error' => $e->getMessage(),
+                'dashboardType' => $dashboardType
+            ]);
+            return response()->json(['error' => "Failed to delete review"], 500);
         }
-        return response()->json(['success' => false, 'message' => 'Review not found']);
+    }
+
+    protected function updateReviewStatus($dashboardType, $reviewId, $field, $value = null)
+    {
+        try {
+            $user = Auth::user()->load(['promoters', 'venues', 'otherService']);
+            $query = $this->reviewService->getReviewQuery($dashboardType, $user);
+            $review = $query->findOrFail($reviewId);
+
+            // If value is provided, use it; otherwise toggle the current value
+            $review->$field = $value ?? !$review->$field;
+
+            // If approving, also set display to true; if unapproving, set display to false
+            if ($field === 'review_approved') {
+                $review->display = (bool)$review->$field;
+            }
+
+            $review->save();
+
+            $status = $review->$field ? 'approved' : 'unapproved';
+
+            return response()->json([
+                'success' => true,
+                'message' => "Review {$status} successfully",
+                'review' => [
+                    'id' => $review->id,
+                    'review_approved' => $review->review_approved,
+                    'display' => $review->display
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("Error updating review {$field}:", [
+                'error' => $e->getMessage(),
+                'dashboardType' => $dashboardType
+            ]);
+            return response()->json(['error' => "Failed to update review status"], 500);
+        }
     }
 }

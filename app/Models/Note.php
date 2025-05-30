@@ -25,6 +25,13 @@ class Note extends Model
         'completed_at',
     ];
 
+    protected $casts = [
+        'date' => 'datetime',
+        'completed_at' => 'datetime',
+        'is_todo' => 'boolean',
+        'completed' => 'boolean',
+    ];
+
     public function serviceable()
     {
         return $this->morphTo();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\Role;
 use App\Models\Venue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,11 +71,25 @@ class VenueJourneyController extends Controller
             ], 400);
         }
 
+        // Check if this is the first user for this venue
+        $isFirstUser = !$venue->users()->exists();
+
+        // Get the appropriate role ID
+        $roleId = $isFirstUser
+            ? Role::where('name', 'service-owner')->first()->id
+            : Role::where('name', 'service-member')->first()->id;
+
+        // Attach user to venue with the role
         $user->venues()->attach($serviceableId, [
             'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
+            'updated_at' => Carbon::now(),
+            'role_id' => $roleId
         ]);
 
+        $venue->update([
+            'is_verified' => 1,
+            'verified_at' => Carbon::now()
+        ]);
 
         return response()->json([
             'success' => true,

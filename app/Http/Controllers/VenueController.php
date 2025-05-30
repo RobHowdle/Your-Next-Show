@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\Venue;
 use App\Models\Promoter;
 use App\Models\VenueReview;
@@ -58,44 +59,48 @@ class VenueController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $searchQuery = $request->input('search_query');
+        $bandTypes = [
+            'original-bands',
+            'cover-bands',
+            'tribute-bands',
+            'all'
+        ];
 
-        $venues = Venue::whereNull('deleted_at')
-            ->with('extraInfo', 'promoters')
-            ->when($searchQuery, function ($query, $searchQuery) {
-                return $query->where('postal_town', 'like', "%$searchQuery%");
-            })
-            ->paginate(10);
-
-        // Fetch genres for initial page load
-        $genreList = file_get_contents(public_path('text/genre_list.json'));
-        $data = json_decode($genreList, true);
+        $genresPath = file_get_contents(public_path('text/genre_list.json'));
+        $data = json_decode($genresPath, true);
         $genres = $data['genres'];
 
-        if ($request->ajax()) {
-            return response()->json([
-                'venues' => $venues,
-                'view' => view('partials.venue-list', compact('venues', 'genres'))->render()
-            ]);
+        $genres = $genres['genres'] ?? $genres;
+
+        // Convert to simple array if needed
+        if (isset($genres[0]['name'])) {
+            $genres = array_column($genres, 'name');
         }
 
-        $overallReviews = [];
-        foreach ($venues as $venue) {
-            $venue->platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
-            $overallScore = VenueReview::calculateOverallScore($venue->id);
-            $overallReviews[$venue->id] = $this->renderRatingIcons($overallScore);
-        }
+        // Get paginated venues with 10 per page
+        $venues = Venue::orderBy('name')
+            ->paginate(10)
+            ->through(function ($venue) {
+                $overallScore = VenueReview::calculateOverallScore($venue->id);
+                return [
+                    'id' => $venue->id,
+                    'name' => $venue->name,
+                    'postal_town' => $venue->postal_town,
+                    'contact_number' => $venue->contact_number,
+                    'contact_email' => $venue->contact_email,
+                    'location' => $venue->location,
+                    'capacity' => $venue->capacity,
+                    'is_verified' => $venue->is_verified,
+                    'preferred_contact' => $venue->preferred_contact,
+                    'platforms' => SocialLinksHelper::processSocialLinks($venue->contact_link),
+                    'average_rating' => $overallScore,
+                    'rating_icons' => $this->renderRatingIcons($overallScore)
+                ];
+            });
 
-
-        $venuePromoterCount = isset($venue['promoters']) ? count($venue['promoters']) : 0;
-        return view('venues', [
-            'venues' => $venues,
-            'genres' => $genres,
-            'overallReviews' => $overallReviews,
-            'venuePromoterCount' => $venuePromoterCount
-        ]);
+        return view('venues', compact('venues', 'genres', 'bandTypes'));
     }
 
     /**
@@ -103,7 +108,12 @@ class VenueController extends Controller
      */
     public function show(string $slug)
     {
-        $venue = Venue::where('name', '=', $slug)->with('extraInfo')->first();
+        $venue = Venue::with(['extraInfo', 'upcomingEvents' => function ($query) {
+            $query->where('event_date', '>=', now())
+                ->orderBy('event_date', 'asc');
+        }])->first()->where('name', 'LIKE', str_replace('-', ' ', $slug))
+            ->orWhere('name', 'LIKE', ucwords(str_replace('-', ' ', $slug)))
+            ->firstOrFail();
         $venueId = $venue->id;
         $existingPromoters = $venue->promoters;
 
@@ -111,9 +121,6 @@ class VenueController extends Controller
 
         $platforms = SocialLinksHelper::processSocialLinks($venue->contact_link);
         $venue->platforms = $platforms;
-
-        $recentReviews = VenueReview::getRecentReviewsForVenue($venueId);
-        $venue->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
         $overallScore = VenueReview::calculateOverallScore($venueId);
         $overallReviews[$venueId] = $this->renderRatingIcons($overallScore);
@@ -124,21 +131,51 @@ class VenueController extends Controller
         $averagePromotionRating = VenueReview::calculateAverageScore($venueId, 'promotion_rating');
         $averageQualityRating = VenueReview::calculateAverageScore($venueId, 'quality_rating');
         $reviewCount = VenueReview::getReviewCount($venueId);
+        $recentReviews = VenueReview::getRecentReviews($venueId);
+        $venue->recentReviews = $recentReviews->isNotEmpty() ? $recentReviews : null;
 
         $genres = json_decode($venue->genre);
         $genreNames = collect($genres)->keys()->toArray();
+
+        $filteredGenres = collect($genres)->filter(function ($genreData, $genreName) {
+            return $genreData->all === true || (isset($genreData->subgenres) && count($genreData->subgenres) > 0);
+        })->toArray();
+
+        // Prepare a structured array for the view
+        $processedGenres = [];
+        foreach ($filteredGenres as $genreName => $genreData) {
+            $processedGenres[$genreName] = [
+                'all' => $genreData->all,
+                'subgenres' => $genreData->subgenres ?? []
+            ];
+        }
+
+        // Fetch upcoming events through the pivot table
+        $upcomingEvents = Event::whereHas('venues', function ($query) use ($venueId) {
+            $query->where('venue_id', $venueId);
+        })
+            ->where('event_date', '>=', now())
+            ->where('event_date', '<=', now()->addMonth())
+            ->orderBy('event_date', 'asc')
+            ->get();
+
+        $venue->upcomingEvents = $upcomingEvents;
 
         return view('venue', compact(
             'venue',
             'venueId',
             'genreNames',
+            'processedGenres',
             'overallScore',
             'overallReviews',
             'averageCommunicationRating',
             'averageRopRating',
             'averagePromotionRating',
             'averageQualityRating',
-            'reviewCount'
+            'reviewCount',
+            'recentReviews',
+            'platforms',
+            'upcomingEvents',
         ))
             ->with([
                 'promoterWithHighestRating' => $suggestions['promoter'],
@@ -149,6 +186,92 @@ class VenueController extends Controller
                 'existingPromoters' => $existingPromoters,
                 'renderRatingIcons' => [$this, 'renderRatingIcons']
             ]);
+    }
+
+    public function filter(Request $request)
+    {
+        $query = Venue::query()->with(['review']);
+
+        $filters = $request->input('filters', []);
+
+        if (!empty($filters['bandTypes'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['bandTypes'] as $type) {
+                    $q->orWhereJsonContains('band_type', $type);
+                }
+            });
+        }
+
+        if (!empty($filters['genres'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['genres'] as $genre) {
+                    $q->orWhere('genre', 'LIKE', '%"' . $genre . '"%');
+                }
+            });
+        }
+
+        // Apply search filter
+        if ($search = $request->input('filters.search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('postal_town', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply capacity filters
+        if ($minCapacity = $request->input('filters.minCapacity')) {
+            $query->where('capacity', '>=', $minCapacity);
+        }
+
+        if ($maxCapacity = $request->input('filters.maxCapacity')) {
+            $query->where('capacity', '<=', $maxCapacity);
+        }
+
+        // Apply sorting
+        if ($sort = $request->input('sort')) {
+            $field = $sort['field'] ?? 'name';
+            $direction = $sort['direction'] ?? 'asc';
+
+            switch ($field) {
+                case 'rating':
+                    $query->orderBy('average_rating', $direction);
+                    break;
+                case 'capacity':
+                    $query->orderBy('capacity', $direction);
+                    break;
+                case 'location':
+                    $query->orderBy('postal_town', $direction);
+                    break;
+                default:
+                    $query->orderBy('name', $direction);
+            }
+        }
+
+        $venues = $query->paginate(10);
+
+        // Transform the venues to include rating icons
+        $transformedVenues = $venues->through(function ($venue) {
+            $overallScore = VenueReview::calculateOverallScore($venue->id);
+            return [
+                'id' => $venue->id,
+                'name' => $venue->name,
+                'postal_town' => $venue->postal_town,
+                'contact_number' => $venue->contact_number,
+                'contact_email' => $venue->contact_email,
+                'location' => $venue->location,
+                'capacity' => $venue->capacity,
+                'is_verified' => $venue->is_verified,
+                'preferred_contact' => $venue->preferred_contact,
+                'platforms' => SocialLinksHelper::processSocialLinks($venue->contact_link),
+                'average_rating' => $overallScore,
+                'rating_icons' => $this->renderRatingIcons($overallScore)
+            ];
+        });
+
+        return response()->json([
+            'results' => $transformedVenues->items(),
+            'pagination' => view('components.pagination', ['paginator' => $venues])->render()
+        ]);
     }
 
     public function locations()
@@ -166,6 +289,14 @@ class VenueController extends Controller
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
         $searchQuery = $request->input('search_query');
+        $town = null; // Initialize $town variable
+
+        $bandTypes = [
+            'original-bands',
+            'cover-bands',
+            'tribute-bands',
+            'all'
+        ];
 
         $genreList = file_get_contents(public_path('text/genre_list.json'));
         $data = json_decode($genreList, true);
@@ -178,18 +309,19 @@ class VenueController extends Controller
             list($town, $address) = explode(',', $searchQuery);
             $query->where(function ($q) use ($town, $latitude, $longitude) {
                 $q->where('postal_town', 'LIKE', "%$town%");
-                // ->where('latitude', $latitude)
-                // ->where('longitude', $longitude);
             });
         } else {
             // Search by town name only
+            $town = $searchQuery; // Set $town to the search query
             $query->where('postal_town', 'LIKE', "%$searchQuery%");
-            // ->where('latitude', $latitude)
-            // ->where('longitude', $longitude);
         }
 
-        // Get paginated results
-        $venues = $query->paginate(10);
+        $venues = $query->paginate(10)->appends([
+            'search_query' => $searchQuery,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            '_token' => $request->input('_token')
+        ]);
 
         $overallReviews = [];
 
@@ -202,7 +334,7 @@ class VenueController extends Controller
 
         $venuePromoterCount = isset($venue['promoters']) ? count($venue['promoters']) : 0;
 
-        return view('venues', compact('venues', 'genres', 'venuePromoterCount', 'overallReviews'));
+        return view('venues', compact('venues', 'genres', 'bandTypes', 'town', 'venuePromoterCount', 'overallReviews'));
     }
 
     public function filterCheckboxesSearch(Request $request)
@@ -279,5 +411,11 @@ class VenueController extends Controller
             'venueId' => $venueId,
             'promotersByLocation' => $promotersByLocation
         ]);
+    }
+
+    // Admin Functions
+    public function edit(Venue $venue)
+    {
+        return view('admin.venues.edit', compact('venue'));
     }
 }

@@ -31,7 +31,7 @@ class VenueReview extends Model
         return $this->belongsTo(Venue::class, 'venue_id');
     }
 
-    public static function getRecentReviewsForVenue($venueId)
+    public static function getRecentReviews($venueId)
     {
         return self::where('venue_id', $venueId)
             ->whereNull('deleted_at')

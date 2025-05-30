@@ -35,6 +35,8 @@ class Promoter extends Model
         'contact_link',
         'is_verified',
         'verified_at',
+        'preferred_contact',
+        'packages',
     ];
 
     protected $casts = [
@@ -54,7 +56,9 @@ class Promoter extends Model
     public function linkedUsers(): MorphToMany
     {
         return $this->morphToMany(User::class, 'serviceable', 'service_user', 'serviceable_id', 'user_id')
-            ->withPivot('created_at', 'updated_at', 'role')
+            ->withPivot('created_at', 'updated_at', 'role_id')
+            ->join('roles', 'service_user.role_id', '=', 'roles.id')
+            ->select('users.*', 'roles.name as role_name')
             ->whereNull('service_user.deleted_at');
     }
 
@@ -76,5 +80,17 @@ class Promoter extends Model
     public function apiKeys()
     {
         return $this->morphMany(ApiKey::class, 'serviceable');
+    }
+
+    public function upcomingEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_promoter')
+            ->where('events.event_date', '>=', now())
+            ->orderBy('events.event_date', 'asc');
+    }
+
+    public function opportunities()
+    {
+        return $this->morphMany(Opportunity::class, 'serviceable');
     }
 }
