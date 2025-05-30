@@ -6,7 +6,6 @@
     <div x-show="!loading" x-cloak class="flex h-screen overflow-hidden">
       <!-- Sidebar Navigation -->
       <x-profile-sidebar :dashboardType="$dashboardType" :standardUserData="$standardUserData ?? null" />
-      {{ $dashboardType }}
       <!-- Main Content Area -->
       <div class="flex-1 overflow-y-auto">
         <div class="container mx-auto p-6">
