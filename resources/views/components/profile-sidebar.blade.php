@@ -38,6 +38,23 @@
       <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
     @endif
 
+    @if ($dashboardType === 'photographer')
+      <x-profile-nav-item icon="camera" label="Environments & Times" tab="environments-and-times" />
+      <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+      <x-profile-nav-item icon="camera" label="Packages" tab="packages" />
+    @endif
+
+    @if ($dashboardType === 'designer')
+      <x-profile-nav-item icon="palette" label="Styles & Times" tab="styles-and-times" />
+      <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+      <x-profile-nav-item icon="box-open" label="Packages" tab="packages" />
+    @endif
+    @if ($dashboardType === 'videographer')
+      <x-profile-nav-item icon="video" label="Environments & Times" tab="environments-and-times" />
+      <x-profile-nav-item icon="calendar-days" label="My Events" tab="events" />
+      <x-profile-nav-item icon="box-open" label="Packages" tab="packages" />
+    @endif
+
     <!-- Settings Section -->
     <div x-data="{ open: false }" class="flex flex-col">
       <button @click="open = !open"

@@ -82,11 +82,11 @@ class ProfileController extends Controller
         $profileData = match ($dashboardType) {
             'promoter' => $this->getPromoterData($user, $dashboardType),
             'artist' => $this->getOtherServicData('artist', $user),
-            'venue' => $this->getVenueData($user),
+            'venue' => $this->getVenueData($user, $dashboardType),
             'photographer' => $this->getOtherServicData('photographer', $user),
             'designer' => $this->getOtherServicData('designer', $user),
             'videographer' => $this->getOtherServicData('videographer', $user),
-            'standard' => $this->getStandardUserData($user),
+            'standard' => $this->getStandardUserData($user, $dashboardType),
             default => [],
         };
 
@@ -587,8 +587,6 @@ class ProfileController extends Controller
                     $band->update(['stream_urls' => json_encode($updatedLinks)]);
                 }
 
-                // dd($userData);
-
                 // Members - Prioritize members_json if it exists
                 if (isset($userData['members_json']) && is_string($userData['members_json'])) {
                     \Log::info($userData['members_json']);
@@ -644,8 +642,10 @@ class ProfileController extends Controller
 
                     // Verify the update succeeded
                     $band->refresh();
-                    \Log::info('Band after member update:', [
-                        'saved_members' => $band->members
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Band members updated successfully!',
+                        'redirect' => url()->previous() // Return to the same page
                     ]);
                 }
 
@@ -834,131 +834,163 @@ class ProfileController extends Controller
 
     public function updateDesigner($dashboardType, DesignerProfileUpdateRequest $request, $user)
     {
-        $user = User::findOrFail($user);
-        $userId = $user->id;
-        $userData = $request->validated();
+        try {
+            $user = User::findOrFail($user);
+            $userId = $user->id;
+            $userData = $request->validated();
 
-        if ($dashboardType == 'designer') {
-            $designer = OtherService::designers()->whereHas('linkedUsers', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })->first();
+            if ($dashboardType == 'designer') {
+                $designer = OtherService::designers()->whereHas('linkedUsers', function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                })->first();
 
-            if ($designer) {
-                try {
-                    // Designer Name
-                    if (isset($userData['name']) && $designer->name !== $userData['name']) {
-                        $designer->update(['name' => $userData['name']]);
-                    }
-
-                    // Contact Name
-                    if (isset($userData['contact_name']) && $designer->contact_name !== $userData['contact_name']) {
-                        $designer->update(['contact_name' => $userData['contact_name']]);
-                    }
-
-                    // Contact Email
-                    if (isset($userData['contact_email']) && $designer->contact_email !== $userData['contact_email']) {
-                        $designer->update(['contact_email' => $userData['contact_email']]);
-                    }
-
-                    // Contact Number
-                    if (isset($userData['contact_number']) && $designer->contact_number !== $userData['contact_number']) {
-                        $designer->update(['contact_number' => $userData['contact_number']]);
-                    }
-
-                    // Contact Links
-                    if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
-                        // Start with the existing `contact_links` array or an empty array if it doesn't exist
-                        $updatedLinks = !empty($designer->contact_link) ? json_decode($designer->contact_link, true) : [];
-
-                        // Iterate through the `contact_link` array from the request data
-                        foreach ($userData['contact_links'] as $platform => $links) {
-                            // Ensure we're setting only non-empty values
-                            $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                if ($designer) {
+                    DB::beginTransaction();
+                    try {
+                        // Designer Name
+                        if (isset($userData['name']) && $designer->name !== $userData['name']) {
+                            $designer->update(['name' => $userData['name']]);
                         }
 
-                        // Filter out null values to remove platforms with no links
-                        $updatedLinks = array_filter($updatedLinks);
+                        // Contact Name
+                        if (isset($userData['contact_name']) && $designer->contact_name !== $userData['contact_name']) {
+                            $designer->update(['contact_name' => $userData['contact_name']]);
+                        }
 
-                        // Encode the array back to JSON for storage and update the promoter record
-                        $designer->update(['contact_link' => json_encode($updatedLinks)]);
-                    }
+                        // Contact Email
+                        if (isset($userData['contact_email']) && $designer->contact_email !== $userData['contact_email']) {
+                            $designer->update(['contact_email' => $userData['contact_email']]);
+                        }
 
-                    // Location
-                    if (isset($userData['location']) && isset($userData['latitude']) && isset($userData['longitude']) && isset($userData['postal_town'])) {
-                        $designer->update([
-                            'location' => $userData['location'],
-                            'latitude' => $userData['latitude'],
-                            'longitude' => $userData['longitude'],
-                            'postal_town' => $userData['postal_town'],
-                        ]);
-                    }
+                        // Contact Number
+                        if (isset($userData['contact_number']) && $designer->contact_number !== $userData['contact_number']) {
+                            $designer->update(['contact_number' => $userData['contact_number']]);
+                        }
 
-                    // Description
-                    if (isset($userData['description']) && $designer->description !== $userData['description']) {
-                        $designer->update(['description' => $userData['description']]);
-                    }
+                        // Contact Links
+                        if (isset($userData['contact_links']) && is_array($userData['contact_links'])) {
+                            // Start with the existing `contact_links` array or an empty array if it doesn't exist
+                            $updatedLinks = !empty($designer->contact_link) ? json_decode($designer->contact_link, true) : [];
 
-                    // Logo
-                    if (isset($userData['logo_url'])) {
-                        $logoPath = $this->uploadLogo($userData['logo_url'], $userData['name']);
-                        $designer->update(['logo_url' => $logoPath]);
-                    }
+                            // Iterate through the `contact_link` array from the request data
+                            foreach ($userData['contact_links'] as $platform => $links) {
+                                // Ensure we're setting only non-empty values
+                                $updatedLinks[$platform] = !empty($links[0]) ? $links[0] : null;
+                            }
 
-                    // Working Times
-                    if (isset($userData['working_times'])) {
-                        $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                            // Filter out null values to remove platforms with no links
+                            $updatedLinks = array_filter($updatedLinks);
 
-                        // Sort and validate working times
-                        $sortedWorkingTimes = array_merge(
-                            array_flip($weekDaysOrder),
-                            array_intersect_key($userData['working_times'], array_flip($weekDaysOrder))
-                        );
+                            // Encode the array back to JSON for storage and update the promoter record
+                            $designer->update(['contact_link' => json_encode($updatedLinks)]);
+                        }
 
-                        $sortedWorkingTimes = array_filter($sortedWorkingTimes, fn($value) => $value !== null);
+                        // Location
+                        if (isset($userData['location']) && isset($userData['latitude']) && isset($userData['longitude']) && isset($userData['postal_town'])) {
+                            $designer->update([
+                                'location' => $userData['location'],
+                                'latitude' => $userData['latitude'],
+                                'longitude' => $userData['longitude'],
+                                'postal_town' => $userData['postal_town'],
+                            ]);
+                        }
 
-                        // Validate time ranges
-                        foreach ($sortedWorkingTimes as $day => $time) {
-                            if (is_array($time)) {
-                                $start = $time['start'] ?? null;
-                                $end = $time['end'] ?? null;
+                        // Description
+                        if (isset($userData['description']) && $designer->description !== $userData['description']) {
+                            $designer->update(['description' => $userData['description']]);
+                        }
 
-                                if ($start && $end) {
-                                    if ($start >= $end) {
-                                        DB::rollBack();
-                                        return response()->json([
-                                            'success' => false,
-                                            'message' => "Start time must be earlier than end time for $day."
-                                        ], 422);
+                        // Logo
+                        if (isset($userData['logo_url'])) {
+                            $logoPath = $this->uploadLogo($userData['logo_url'], $userData['name']);
+                            $designer->update(['logo_url' => $logoPath]);
+                        }
+
+                        // Working Times
+                        if (isset($userData['working_times'])) {
+                            $weekDaysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+                            // Sort and validate working times
+                            $sortedWorkingTimes = array_merge(
+                                array_flip($weekDaysOrder),
+                                array_intersect_key($userData['working_times'], array_flip($weekDaysOrder))
+                            );
+
+                            $sortedWorkingTimes = array_filter($sortedWorkingTimes, fn($value) => $value !== null);
+
+                            // Validate time ranges
+                            foreach ($sortedWorkingTimes as $day => $time) {
+                                if (is_array($time)) {
+                                    $start = $time['start'] ?? null;
+                                    $end = $time['end'] ?? null;
+
+                                    if ($start && $end) {
+                                        if ($start >= $end) {
+                                            DB::rollBack();
+                                            return response()->json([
+                                                'success' => false,
+                                                'message' => "Start time must be earlier than end time for $day."
+                                            ], 422);
+                                        }
                                     }
                                 }
                             }
+
+                            $designer->update(['working_times' => json_encode($sortedWorkingTimes)]);
                         }
 
-                        $designer->update(['working_times' => json_encode($sortedWorkingTimes)]);
-                    }
+                        // Styles
+                        if (isset($userData['styles'])) {
+                            // Convert to array if needed
+                            $styles = is_array($userData['styles']) ? $userData['styles'] : [$userData['styles']];
+                            // Filter out any empty values
+                            $styles = array_filter($styles);
+                            $designer->update(['styles' => json_encode($styles)]);
+                        }
 
-                    // Styles
-                    if (isset($userData['styles'])) {
-                        $designer->update(['styles' => json_encode($userData['styles'])]);
-                    }
+                        // Print
+                        if (isset($userData['prints'])) {
+                            // Convert to array if needed
+                            $prints = is_array($userData['prints']) ? $userData['prints'] : [$userData['prints']];
+                            // Filter out any empty values
+                            $prints = array_filter($prints);
+                            $designer->update(['print' => json_encode($prints)]);
+                        }
 
-                    // Print
-                    if (isset($userData['print'])) {
-                        $designer->update(['print' => json_encode($userData['print'])]);
-                    }
+                        DB::commit();
 
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Profile updated successfully',
-                        'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
-                    ]);
-                } catch (\Exception $e) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Profile updated successfully',
+                            'redirect' => route('profile.edit', ['dashboardType' => $dashboardType, 'id' => $user->id])
+                        ]);
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        Log::error('Designer profile update failed', [
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Failed to update profile: ' . $e->getMessage()
+                        ], 500);
+                    }
+                } else {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Failed to update profile: ' . $e->getMessage()
-                    ], 500);
+                        'message' => 'Designer profile not found'
+                    ], 404);
                 }
             }
+        } catch (\Exception $e) {
+            Log::error('Designer profile update error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
         }
     }
 

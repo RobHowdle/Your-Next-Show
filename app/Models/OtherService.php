@@ -89,7 +89,6 @@ class OtherService extends Model
         return self::where('name', 'designer');
     }
 
-
     /**
      * Retrieve all bands (other services with `other_service_id` as 4).
      */

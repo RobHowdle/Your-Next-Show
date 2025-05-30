@@ -59,6 +59,8 @@ class DesignerProfileUpdateRequest extends FormRequest
             'working_times.*.start' => 'nullable|required_with:working_times.*.end|date_format:H:i',
             'working_times.*.end' => 'nullable|required_with:working_times.*.start|date_format:H:i|after:working_times.*.start',
             'styles.*' => 'nullable|string',
+            'prints' => 'nullable|array',
+            'prints.*' => 'nullable|string',
             'print.*' => 'nullable|string',
         ];
     }

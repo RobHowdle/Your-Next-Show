@@ -20,7 +20,7 @@
             <span class="fa-solid fa-pencil mb-4 h-14 w-14"></span>
             6 Available Jobs
           </a>
-          <a href="{{ route('admin.dashboard.get-reviews', ['filter' => 'pending', 'dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('dashboard.reviews', ['dashboardType' => $dashboardType]) }}"
             class="flex flex-col items-center text-center transition duration-150 ease-in-out hover:text-yns_yellow">
             <span class="fas fa-star mb-4 h-14 w-14"></span>
             {{ $pendingReviews }} Pending Review{{ $pendingReviews > 1 ? 's' : '' }}

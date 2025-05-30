@@ -97,16 +97,19 @@ class ServiceDataHelper
         $members = [];
 
         if (!empty($membersData)) {
+            // Convert to array if it's a string
             if (is_string($membersData)) {
                 $decodedMembers = json_decode($membersData, true);
                 if (json_last_error() === JSON_ERROR_NONE) {
-                    $members = array_map(function ($member) {
-                        return [
-                            'name' => $member['name'] ?? null,
-                            'role' => $member['role'] ?? null
-                        ];
-                    }, $decodedMembers);
+                    $members = $decodedMembers; // Keep all properties including bio and profile_pic
+                } else {
+                    \Log::warning('Failed to decode band members JSON: ' . json_last_error_msg(), [
+                        'raw_data' => $membersData
+                    ]);
                 }
+            } else if (is_array($membersData)) {
+                // Already an array, use it directly
+                $members = $membersData;
             }
         }
 
@@ -189,6 +192,7 @@ class ServiceDataHelper
 
             $preferredContact = $designer ? $designer->preferred_contact : '';
             $description = $designer ? $designer->description : '';
+            $myEvents = $designer ? $designer->events()->with('venues')->get() : collect();
 
             // Genres
             $genreList = file_get_contents(public_path('text/genre_list.json'));
@@ -268,7 +272,8 @@ class ServiceDataHelper
                 'styles' => $styles,
                 'print' => $print,
                 'packages' => $packages,
-                'preferred_contact' => $preferredContact
+                'preferred_contact' => $preferredContact,
+                'myEvents' => $myEvents
             ];
         }
     }
@@ -286,34 +291,60 @@ class ServiceDataHelper
         $postalTown = $photographer ? $photographer->postal_town : '';
         $lat = $photographer ? $photographer->latitude : '';
         $long = $photographer ? $photographer->longitude : '';
-        $logo = $photographer && $photographer->logo_url
-            ? (filter_var($photographer->logo_url, FILTER_VALIDATE_URL) ? $photographer->logo_url : Storage::url($photographer->logo_url))
-            : asset('images/system/yns_no_image_found.png');
+        // Handle logo URL safely
+        $logo = asset('images/system/yns_no_image_found.png'); // Default image
+        if ($photographer && !empty($photographer->logo_url)) {
+            try {
+                // Check if it's a full URL (including http/https)
+                if (filter_var($photographer->logo_url, FILTER_VALIDATE_URL)) {
+                    // Check URL scheme is present and valid to avoid ERR_NAME_NOT_RESOLVED
+                    $parsedUrl = parse_url($photographer->logo_url);
+                    if (isset($parsedUrl['scheme']) && in_array($parsedUrl['scheme'], ['http', 'https'])) {
+                        $logo = $photographer->logo_url;
+                    } else {
+                        // If scheme is missing, default to https
+                        $logo = 'https://' . ltrim($photographer->logo_url, '/');
+                    }
+                } else {
+                    // Handle as local storage path
+                    $logo = Storage::url($photographer->logo_url);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error processing logo URL: ' . $e->getMessage(), [
+                    'logo_url' => $photographer->logo_url ?? 'null'
+                ]);
+            }
+        }
         $contact_name = $photographer ? $photographer->contact_name : '';
         $contact_number = $photographer ? $photographer->contact_number : '';
         $contact_email = $photographer ? $photographer->contact_email : '';
         $contactLinks = $photographer ? json_decode($photographer->contact_link, true) : [];
 
         $platforms = [];
-        $platformsToCheck = ['website', 'facebook', 'x', 'instagram', 'snapchat', 'tiktok', 'youtube', 'bluesky'];
+        $activePlatforms = [];
+
+        // Get the social platforms config file - this contains all platform information
+        $socialPlatformsConfig = config('social_platforms');
 
         // Initialize the platforms array with empty strings for each platform
-        foreach ($platformsToCheck as $platform) {
+        foreach (array_keys($socialPlatformsConfig) as $platform) {
             $platforms[$platform] = '';  // Set default to empty string
         }
 
         // Check if the contactLinks array exists and contains social links
         if ($contactLinks) {
-            foreach ($platformsToCheck as $platform) {
-                // Only add the link if the platform exists in the $contactLinks array
-                if (isset($contactLinks[$platform])) {
+            foreach (array_keys($socialPlatformsConfig) as $platform) {
+                // Only add the link if the platform exists in the $contactLiIt nks array
+                if (isset($contactLinks[$platform]) && !empty($contactLinks[$platform])) {
                     $platforms[$platform] = $contactLinks[$platform];  // Store the link for the platform
+                    $activePlatforms[] = $platform; // Track this platform as active
                 }
             }
         }
 
         $preferredContact = $photographer ? $photographer->preferred_contact : '';
         $description = $photographer ? $photographer->description : '';
+        $myEvents = $photographer ? $photographer->events()->with('venues')->get() : collect();
 
         $genreList = file_get_contents(public_path('text/genre_list.json'));
         $data = json_decode($genreList, true) ?? [];
@@ -375,7 +406,54 @@ class ServiceDataHelper
         }
 
         $bandTypes = json_decode($photographer->band_type) ?? [];
-        $packages = $photographer ? json_decode($photographer->packages) : [];
+        // Ensure packages are properly decoded from JSON
+        $packagesRaw = $photographer->packages;
+        $packages = [];
+
+        if (!empty($packagesRaw)) {
+            if (is_string($packagesRaw)) {
+                try {
+                    // First try to decode as JSON
+                    $decoded = json_decode($packagesRaw, true);
+
+                    // If it's still a string (JSON-encoded twice), try decoding again
+                    if (is_string($decoded)) {
+                        $decoded = json_decode($decoded, true);
+                    }
+
+                    // If we ended up with null, set to empty array
+                    if ($decoded === null) {
+                        $packages = [];
+                    } else {
+                        $packages = $decoded;
+                    }
+
+                    // Normalize package data structure
+                    $normalizedPackages = [];
+                    foreach ($packages as $index => $package) {
+                        // Convert stdClass to array if needed
+                        if (is_object($package)) {
+                            $package = (array)$package;
+                        }
+
+                        // Ensure job_type is set
+                        if (!isset($package['job_type']) || empty($package['job_type'])) {
+                            // Try to determine job type from context or set default
+                            $package['job_type'] = $package['job_type'] ?? 'photography';
+                        }
+
+                        $normalizedPackages[$index] = $package;
+                    }
+                    $packages = $normalizedPackages;
+                } catch (\Exception $e) {
+                    \Log::error('Failed to decode packages: ' . $e->getMessage());
+                    $packages = [];
+                }
+            } elseif (is_array($packagesRaw)) {
+                $packages = $packagesRaw;
+            }
+        }
+
         $styles = is_array($photographer->styles) ? $photographer->styles : json_decode($photographer->styles, true);
 
         return [
@@ -392,7 +470,8 @@ class ServiceDataHelper
             'contact_email' => $contact_email,
             'contact_number' => $contact_number,
             'platforms' => $platforms,
-            'platformsToCheck' => $platformsToCheck,
+            'activePlatforms' => $activePlatforms,
+            'platformsToCheck' => $socialPlatformsConfig,
             'genres' => $genres,
             'profileGenres' => $profileGenres,
             'isAllGenres' => $isAllGenres,
@@ -407,7 +486,8 @@ class ServiceDataHelper
             'workingTimes' => $workingTimes,
             'styles' => $styles,
             'packages' => $packages,
-            'preferred_contact' => $preferredContact
+            'preferred_contact' => $preferredContact,
+            'myEvents' => $myEvents
         ];
     }
 
@@ -453,6 +533,7 @@ class ServiceDataHelper
 
             $preferredContact = $videographer ? $videographer->preferred_contact : '';
             $description = $videographer ? $videographer->description : '';
+            $myEvents = $videographer ? $videographer->events()->with('venues')->get() : collect();
 
             $genreList = file_get_contents(public_path('text/genre_list.json'));
             $data = json_decode($genreList, true) ?? [];
@@ -529,7 +610,8 @@ class ServiceDataHelper
                 'workingTimes' => $workingTimes,
                 'styles' => $styles,
                 'packages' => $packages,
-                'preferred_contact' => $preferredContact
+                'preferred_contact' => $preferredContact,
+                'myEvents' => $myEvents
             ];
         }
     }

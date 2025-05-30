@@ -6,7 +6,7 @@
     <div x-show="!loading" x-cloak class="flex h-screen overflow-hidden">
       <!-- Sidebar Navigation -->
       <x-profile-sidebar :dashboardType="$dashboardType" :standardUserData="$standardUserData ?? null" />
-
+      {{ $dashboardType }}
       <!-- Main Content Area -->
       <div class="flex-1 overflow-y-auto">
         <div class="container mx-auto p-6">
@@ -84,11 +84,7 @@
                     'profileData' => $venueData,
                 ])
               </div>
-              @if (isset($modules['jobs']) && $modules['jobs']['is_enabled'])
-                <div x-show="activeTab === 'packages'">
-                  @include('profile.sections.packages')
-                </div>
-              @endif
+
               <div x-show="activeTab === 'lmlc'">
                 @include('profile.sections.venue.lmlc')
               </div>
@@ -125,8 +121,38 @@
               </div>
             @endif
 
-            @if (in_array($dashboardType, ['designer', 'photographer', 'videographer']))
-              {{-- @include('profile.sections.creative-tabs') --}}
+            @if ($dashboardType === 'photographer' || $dashboardType === 'videographer')
+              <div x-show="activeTab === 'environments-and-times'">
+                @include('profile.sections.photographer.environments-and-times', [
+                    'profileData' => match ($dashboardType) {
+                        'photographer' => $photographerData,
+                        'videographer' => $videographerData,
+                        default => [],
+                    },
+                ])
+              </div>
+            @endif
+
+            @if ($dashboardType === 'designer')
+              <div x-show="activeTab === 'styles-and-times'">
+                @include('profile.sections.designer.styles-and-times', [
+                    'profileData' => $designerData,
+                ])
+              </div>
+            @endif
+
+            @if (
+                $dashboardType === 'photographer' ||
+                    $dashboardType === 'designer' ||
+                    $dashboardType === 'videographer' ||
+                    $dashboardType === 'venue')
+              @if (isset($modules['jobs']) && $modules['jobs']['is_enabled'])
+                <div x-show="activeTab === 'packages'">
+                  @include('profile.sections.packages', [
+                      'profileData' => $photographerData ?? ($designerData ?? ($videographerData ?? $venueData)),
+                  ])
+                </div>
+              @endif
             @endif
 
             <!-- Settings Sections -->
@@ -147,6 +173,7 @@
 
   @push('scripts')
     <script>
+      // Add this debug code to your profileManager() function
       function profileManager() {
         return {
           sidebarOpen: localStorage.getItem('sidebarOpen') === 'true',
@@ -155,12 +182,19 @@
 
           init() {
             this.$watch('sidebarOpen', value => localStorage.setItem('sidebarOpen', value))
-            this.$watch('activeTab', value => localStorage.setItem('activeTab', value))
+            this.$watch('activeTab', value => {
+              localStorage.setItem('activeTab', value)
+            })
 
             setTimeout(() => {
               this.loading = false
               window.scrollTo(0, 0)
             }, 100)
+          },
+
+          // Add a debug method to manually switch tabs
+          setTab(tab) {
+            this.activeTab = tab;
           }
         }
       }

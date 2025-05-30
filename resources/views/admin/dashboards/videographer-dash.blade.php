@@ -21,7 +21,7 @@
             <span class="fa-solid fa-pencil mb-4 h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14"></span>
             <span class="text-sm sm:text-base">6 Available Jobs</span>
           </a>
-          <a href="{{ route('admin.dashboard.get-reviews', ['filter' => 'pending', 'dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('dashboard.reviews', ['dashboardType' => $dashboardType]) }}"
             class="flex flex-col items-center text-center transition duration-150 ease-in-out hover:text-yns_yellow">
             <span class="fas fa-star mb-4 h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14"></span>
             <span class="text-sm sm:text-base">{{ $pendingReviews }} Pending Review{{ $pendingReviews > 1 ? 's' : '' }}

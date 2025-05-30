@@ -15,7 +15,7 @@
             ? route('admin.dashboard.todo-list', ['dashboardType' => $dashboardType])
             : null,
         'reviews' => $user->can('view_reviews')
-            ? route('admin.dashboard.get-reviews', [
+            ? route('dashboard.reviews', [
                 'filter' => 'all',
                 'dashboardType' => $dashboardType,
             ])
@@ -57,7 +57,7 @@
             <span class="text-sm font-medium text-gray-400 sm:text-base">6 Available Jobs</span>
           </div>
           {{-- Pending Reviews --}}
-          <a href="{{ route('admin.dashboard.get-reviews', ['filter' => 'pending', 'dashboardType' => $dashboardType]) }}"
+          <a href="{{ route('dashboard.reviews', ['dashboardType' => $dashboardType]) }}"
             class="group flex flex-col items-center rounded-lg border border-gray-800 bg-gray-900 p-4 text-center transition duration-150 ease-in-out hover:bg-gray-800">
             <span
               class="fas fa-star mb-3 h-10 w-10 transform text-yns_yellow transition-transform group-hover:scale-110 sm:h-14 sm:w-14"></span>
