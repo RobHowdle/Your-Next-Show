@@ -173,6 +173,11 @@
       @endif
     </div>
   </div>
+  <div class="ip-debug"
+    style="margin-top: 2rem; padding: 0.75rem; background-color: rgba(0,0,0,0.5); border-radius: 8px; font-family: monospace; max-width: 100%; overflow-x: auto;">
+    <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #ffd800;">Your IP Address:</p>
+    <code style="font-size: 1.1rem;">{{ request()->ip() }}</code>
+  </div>
 </body>
 
 </html>

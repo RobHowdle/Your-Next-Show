@@ -24,7 +24,7 @@ class CheckForMaintenanceMode extends BaseMaintenance
      */
     protected $allowedIPs = [
         '81.99.92.105',
-        // Add any other IPs you want to allow
+        '192.168.65.1',
     ];
 
     /**
