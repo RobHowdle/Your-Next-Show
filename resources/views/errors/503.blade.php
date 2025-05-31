@@ -1,92 +1,183 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintenance Mode | Your Next Show</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --color-orange: #ffbc00;
+      --color-purple: #9429ff;
+      --color-black: rgba(0, 0, 0, 0.8);
+      --color-yellow: #ffd800;
+    }
 
-  <title>{{ config('app.name', 'Laravel') }}</title>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.bunny.net">
-  <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    body {
+      font-family: 'Nunito', sans-serif;
+      /* Match the welcome page background */
+      background: linear-gradient(to bottom, var(--color-orange), var(--color-purple));
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
 
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-  <script src="https://kit.fontawesome.com/dd6bff54df.js" crossorigin="anonymous"></script>
+    /* Background overlay like welcome page */
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 0;
+    }
 
-  <!-- Scripts -->
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
+    .page-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 3rem;
+      border-radius: 15px;
+      max-width: 650px;
+      width: 100%;
+      box-shadow: 0 8px 25px -5px rgba(255, 255, 255, 0.15);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .logo {
+      margin-bottom: 2rem;
+      max-width: 200px;
+      height: auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    h1 span {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: normal;
+      color: var(--color-yellow);
+      margin-top: 0.5rem;
+    }
+
+    p {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .message {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 1.5rem;
+      border-left: 4px solid var(--color-yellow);
+    }
+
+    .icons {
+      margin-top: 2.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .icons a {
+      color: white;
+      font-size: 1.5rem;
+      transition: color 0.3s;
+    }
+
+    .icons a:hover {
+      color: var(--color-yellow);
+    }
+
+    .rejoin-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background-color: var(--color-yellow);
+      color: black;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      margin-top: 1.5rem;
+      text-decoration: none;
+      transition: background-color 0.2s;
+    }
+
+    .rejoin-button:hover {
+      background-color: #e6c400;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 2rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      p {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
 </head>
 
-<body class="font-sans antialiased">
-  <div id="preloader" class="animation">
-    <div class="decor">
-      <div class="bar"></div>
+<body>
+  <div class="page-wrapper">
+    <div class="container">
+      <!-- Add your logo here -->
+      <img src="{{ asset('images/system/yns_logo.png') }}" alt="Your Next Show" class="logo"
+        onerror="this.style.display='none'">
+
+      <h1>
+        Your Next Show
+        <span>Will Be Back Soon</span>
+      </h1>
+
+      <p>We're currently making some improvements to better connect bands with venues across the UK.</p>
+
+      <p>Thank you for your patience while we enhance your experience.</p>
+
+      @if (isset($data['message']))
+        <div class="message">
+          <p>{{ $data['message'] }}</p>
+        </div>
+      @endif
     </div>
-    <p>Loading...</p>
   </div>
-
-  <div class="pre-overlay o-1"></div>
-  <div class="pre-overlay o-2"></div>
-
-  <div class="flex h-screen w-full flex-col items-center justify-center gap-24 px-2 backdrop-brightness-50">
-    <div class="flex items-center space-x-3 rtl:space-x-reverse">
-      <img src="{{ asset('images/system/yns_logo.png') }}" class="h-16"
-        alt="{{ config('app.name', 'Laravel') }} Logo" />
-      <span
-        class="hidden self-center whitespace-nowrap text-lg font-semibold text-white sm:block xl:text-2xl">{{ config('app.name') }}</span>
-    </div>
-
-    <div class="text text-center text-white">
-      <p class="mb-4 text-4xl">Knock Knock...who's there? Not us.</p>
-      <p class="mb-4 text-xl">We'll be back soon! We are currently deploying and testing some big updates to our system.
-        Please check
-        back later.</p>
-      <p class="text-lg">Thank you for your patience!</p>
-    </div>
-
-    <div class="flex flex-col items-center space-x-4">
-      <p class="mb-4 text-lg">Keep up to date on our socials for when we will be back up and running</p>
-      <a href="https://linktr.ee/yournextshow" target="_blank" class="hover:text-yns_blue text-white">
-        Linktree
-      </a>
-    </div>
-
-    <script>
-      jQuery(document).ready(function() {
-        var startTime = performance.now(); // Record the start time when the document is ready
-
-        // Function to hide the loader and overlay
-        function hideLoader() {
-          jQuery("#preloader").delay(100).removeClass("animation").addClass("over");
-          jQuery(".pre-overlay").css({
-            "height": "0%"
-          });
-        }
-
-        // Function to calculate loading time and decide whether to show the loader
-        function checkLoadingTime() {
-          var endTime = performance.now(); // Record the end time after the document is fully loaded
-          var loadingTime = endTime - startTime; // Calculate the loading time in milliseconds
-
-          // Check if the loading time exceeds a threshold (e.g., 1000 milliseconds)
-          if (loadingTime > 1000) {
-            // Show the loader if loading time exceeds the threshold
-            setTimeout(hideLoader, 4000);
-          } else {
-            // Hide the loader if loading time is fast
-            hideLoader();
-          }
-        }
-
-        // Call the function to check loading time when the document is fully loaded
-        jQuery(window).on('load', function() {
-          checkLoadingTime();
-        });
-      });
-    </script>
+  <div class="ip-debug"
+    style="margin-top: 2rem; padding: 0.75rem; background-color: rgba(0,0,0,0.5); border-radius: 8px; font-family: monospace; max-width: 100%; overflow-x: auto;">
+    <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #ffd800;">Your IP Address:</p>
+    <code style="font-size: 1.1rem;">{{ request()->ip() }}</code>
+  </div>
 </body>
 
 </html>
