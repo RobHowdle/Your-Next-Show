@@ -193,10 +193,7 @@ class RegisteredUserController extends Controller
         $user->mailing_preferences = $preferences;
         $user->save();
 
-        // Optionally, you can return a success response
-        return response()->json([
-            'message' => 'Default mailing preferences set successfully.'
-        ]);
+        return true;
     }
 
     protected function createStandardUserService($user): void
