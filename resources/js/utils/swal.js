@@ -67,33 +67,57 @@ export function showWarningNotification(message, timer = DEFAULT_TIMER) {
 }
 
 /**
- * Shows a confirmation dialog
- * @param {Object} options - Configuration options
- * @param {string} options.text - The confirmation message
- * @param {Function} options.onConfirm - Callback function when confirmed
+ * Shows a confirmation notification
+ * @param {string|Object} messageOrOptions - Either a message string or options object
+ * @param {number} [timer=DEFAULT_TIMER] - Duration in milliseconds (used when first param is a string)
  * @returns {Promise} SweetAlert2 promise
  */
-export function showConfirmationNotification(options) {
-    return Swal.fire({
-        showConfirmButton: true,
-        confirmButtonText: "I understand",
-        showCancelButton: true,
-        toast: false,
-        customClass: {
-            popup: "bg-yns_dark_gray !important rounded-lg font-heading",
-            title: "text-white",
-            htmlContainer: "!text-white", // Changed from text to htmlContainer
-            confirmButton: "bg-yns_yellow text-black",
-            cancelButton: "bg-gray-600 text-white",
-        },
-        icon: "warning",
-        title: "Are you sure?",
-        text: options.text,
-    }).then((result) => {
-        if (result.isConfirmed && typeof options.onConfirm === "function") {
-            options.onConfirm();
-        }
-    });
+export function showConfirmationNotification(
+    messageOrOptions,
+    timer = DEFAULT_TIMER
+) {
+    // Check if first parameter is a string (simple usage) or an object (advanced usage)
+    if (typeof messageOrOptions === "string") {
+        // Simple usage: showConfirmationNotification("Your message", 3000)
+        return Swal.fire({
+            showConfirmButton: false,
+            toast: true,
+            position: "top-end",
+            timer: timer,
+            timerProgressBar: true,
+            customClass: {
+                popup: "bg-yns_dark_gray !important rounded-lg font-heading",
+                title: "text-black",
+                htmlContainer: "text-black",
+            },
+            icon: "info",
+            title: "Information",
+            text: messageOrOptions,
+        });
+    } else {
+        // Advanced usage: showConfirmationNotification({text: "Are you sure?", onConfirm: () => {}})
+        const options = messageOrOptions;
+        return Swal.fire({
+            showConfirmButton: true,
+            confirmButtonText: "I understand",
+            showCancelButton: true,
+            toast: false,
+            customClass: {
+                popup: "bg-yns_dark_gray !important rounded-lg font-heading",
+                title: "text-white",
+                htmlContainer: "!text-white",
+                confirmButton: "bg-yns_yellow text-black",
+                cancelButton: "bg-gray-600 text-white",
+            },
+            icon: "warning",
+            title: "Are you sure?",
+            text: options.text,
+        }).then((result) => {
+            if (result.isConfirmed && typeof options.onConfirm === "function") {
+                options.onConfirm();
+            }
+        });
+    }
 }
 
 /**

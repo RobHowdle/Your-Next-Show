@@ -22,67 +22,67 @@ class ProfileSidebar extends Component
     /**
      * Get navigation items based on dashboard type.
      */
-    public function getNavigationItems(): array
-    {
-        $items = [
-            [
-                'icon' => 'user',
-                'label' => 'User Details',
-                'tab' => 'profile'
-            ],
-            [
-                'icon' => 'info-circle',
-                'label' => 'Basic Information',
-                'tab' => 'basic-info'
-            ],
-            [
-                'icon' => 'pen',
-                'label' => 'Description',
-                'tab' => 'description'
-            ],
-        ];
+    // public function getNavigationItems(): array
+    // {
+    //     $items = [
+    //         [
+    //             'icon' => 'user',
+    //             'label' => 'User Details',
+    //             'tab' => 'profile'
+    //         ],
+    //         [
+    //             'icon' => 'info-circle',
+    //             'label' => 'Basic Information',
+    //             'tab' => 'basic-info'
+    //         ],
+    //         [
+    //             'icon' => 'pen',
+    //             'label' => 'Description',
+    //             'tab' => 'description'
+    //         ],
+    //     ];
 
-        // Add role-specific navigation items
-        switch ($this->dashboardType) {
-            case 'venue':
-                $items = array_merge($items, [
-                    [
-                        'icon' => 'building',
-                        'label' => 'Venue Details',
-                        'tab' => 'venue-details'
-                    ],
-                    [
-                        'icon' => 'music',
-                        'label' => 'In-House Gear',
-                        'tab' => 'gear'
-                    ]
-                ]);
-                break;
-            case 'artist':
-                $items = array_merge($items, [
-                    [
-                        'icon' => 'music',
-                        'label' => 'Stream Links',
-                        'tab' => 'stream-links'
-                    ],
-                    [
-                        'icon' => 'users',
-                        'label' => 'Band Members',
-                        'tab' => 'members'
-                    ]
-                ]);
-                break;
-        }
+    //     // Add role-specific navigation items
+    //     switch ($this->dashboardType) {
+    //         case 'venue':
+    //             $items = array_merge($items, [
+    //                 [
+    //                     'icon' => 'building',
+    //                     'label' => 'Venue Details',
+    //                     'tab' => 'venue-details'
+    //                 ],
+    //                 [
+    //                     'icon' => 'music',
+    //                     'label' => 'In-House Gear',
+    //                     'tab' => 'gear'
+    //                 ]
+    //             ]);
+    //             break;
+    //         case 'artist':
+    //             $items = array_merge($items, [
+    //                 [
+    //                     'icon' => 'music',
+    //                     'label' => 'Stream Links',
+    //                     'tab' => 'stream-links'
+    //                 ],
+    //                 [
+    //                     'icon' => 'users',
+    //                     'label' => 'Band Members',
+    //                     'tab' => 'members'
+    //                 ]
+    //             ]);
+    //             break;
+    //     }
 
-        // Add settings as the last item
-        $items[] = [
-            'icon' => 'cog',
-            'label' => 'Settings',
-            'tab' => 'settings'
-        ];
+    //     // Add settings as the last item
+    //     $items[] = [
+    //         'icon' => 'cog',
+    //         'label' => 'Settings',
+    //         'tab' => 'settings'
+    //     ];
 
-        return $items;
-    }
+    //     return $items;
+    // }
 
     /**
      * Get the view / contents that represent the component.
@@ -90,7 +90,7 @@ class ProfileSidebar extends Component
     public function render(): View|Closure|string
     {
         return view('components.profile-sidebar', [
-            'navigationItems' => $this->getNavigationItems()
+            // 'navigationItems' => $this->getNavigationItems()
         ]);
     }
 }
